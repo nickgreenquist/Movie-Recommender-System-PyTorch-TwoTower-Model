@@ -1,18 +1,4 @@
----
-layout: post
-title:  "Building a Two-Tower Deep Learning Movie Recommender System in Pytorch (from scratch)"
-date:   2024-02-04 07:05:14 -0500
-categories: Projects
----
-<style type="text/css">
-    .center-image
-    {
-        margin: 0 auto;
-        display: block;
-    }
-</style>
-
-![Main]({{ "assets/main.jpg" | absolute_url }}){:width="800px" .center-image}
+![Main](assets/main.jpg)
 
 <a id="introduction"></a>
 ## Introduction
@@ -36,7 +22,7 @@ Recommender systems are used to decide:
 ### Sneak Peek of this Post
 Just to give an idea of what we are going to build here, it's going to be a movie recommendation system that can give us recommendations for users like:
 
-![Horror Movie Recs]({{ "/assets/horror_recs.png" | absolute_url }}){:width="500px" .center-image}
+![Horror Movie Recs](/assets/horror_recs.png)
 
 > TLDR: Please follow this [link](https://github.com/nickgreenquist/recsys/blob/main/MovieLens_Two_Tower_Embedding_NN.ipynb) to go straight to the Colab notebook with the PyTorch code discussed in this post.
 
@@ -148,11 +134,11 @@ df_movies = pd.read_csv('movies.csv')
 
 The data will consists of two Pandas Dataframes we will read in:
 
-| ![Ratings Table]({{ "/assets/df_ratings.png" | absolute_url }}){:width="300px"} |
+| ![Ratings Table](assets/df_ratings.png) |
 |:--:| 
 | *Ratings Table* |
 
-| ![Movies Table]({{ "/assets/df_movies.png" | absolute_url }}){:width="600px"} |
+| ![Movies Table](assets/df_movies.png) |
 |:--:| 
 | *Movies Table* |
 
@@ -320,7 +306,7 @@ The above code looks complicated, but actually all it is doing is finding all th
 
 The Dataframe now looks like this (and has one row per user):
 
-| ![Ratings Table Aggregated]({{ "/assets/df_ratings_agg.png" | absolute_url }}){:width="600px"} |
+| ![Ratings Table Aggregated](assets/df_ratings_agg.png) |
 |:--:| 
 | *Aggregated Ratings Table* |
 
@@ -776,7 +762,7 @@ plt.plot([i*1000 for i in range(1, len(loss_val))], loss_val[1:])
 
 It will look something like this:
 
-| ![]({{ "/assets/medium-small-loss.png" | absolute_url }}){:width="300px"} |
+| ![](assets/medium-small-loss.png) |
 |:--:| 
 | *Example train vs val loss plot* |
 
@@ -1306,7 +1292,7 @@ for movieId in top_movies[0:25]:
 plt.grid('minor')
 ```
 
-![Movies in 2D]({{ "/assets/2d_plot2.png" | absolute_url }}){:width="900px"}
+![Movies in 2D](assets/2d_plot2.png)
 
 <a id="training-runs"></a>
 ### Example Training Runs
@@ -1315,14 +1301,14 @@ Below we will train the model on different datasets and with different model par
 
 | Dataset | Model Size | Observation | Loss Plot  
 |---------|------------|-------------|-----------|
-| Small | Small | Overfitting | ![]({{ "/assets/small-small-loss.png" | absolute_url }}){:width="600px"}
+| Small | Small | Overfitting | ![](assets/small-small-loss.png)
 | Small | Medium | Extreme Overfitting | ![]({{ "/assets/small-medium-loss.png"| absolute_url }}){:width="600px"}
-| Medium | Small | Loss is not great. Could keep learning but probably not worth it | ![]({{ "/assets/medium-small-loss.png" | absolute_url }}){:width="600px"}
-| Medium | Medium | Training loss getting better but slight overfitting | ![]({{ "/assets/medium-medium-loss.png" | absolute_url }}){:width="600px"}
-| Medium | Large | same as above | ![]({{ "/assets/medium-large-loss.png" | absolute_url }}){:width="600px"}
-| Large | Small | No overfitting, but not learning well | ![]({{ "/assets/large-small-loss.png" | absolute_url }}){:width="600px"}
+| Medium | Small | Loss is not great. Could keep learning but probably not worth it | ![](assets/medium-small-loss.png)
+| Medium | Medium | Training loss getting better but slight overfitting | ![](/assets/medium-medium-loss.png)
+| Medium | Large | same as above | ![](assets/medium-large-loss.png)
+| Large | Small | No overfitting, but not learning well | ![](assets/large-small-loss.png)
 | Large | Medium | No overfitting, but hitting a wall | ![]({{ "/assets/large-medium-loss.png" | absolute_url }}){:width="600px"}
-| Large | Large | Looking much better. Loss much lower than pervious runs | ![]({{ "/assets/large-large-loss.png" | absolute_url }}){:width="600px"}
+| Large | Large | Looking much better. Loss much lower than pervious runs | ![](assets/large-large-loss.png)
 
 <a id="other-domains"></a>
 ### Applying Recommendations to Other Domains
