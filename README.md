@@ -1315,8 +1315,8 @@ Below we will train the model on different datasets and with different model par
 
 > NOTE: The below user/item features might be subpar for some domains. These ideas are how I would approach recommending items in each domain as a start. If you want more advanced descriptions, companies usually post techincal blogs about how they recommend content. 
 
-| Domain | User Features | Item Features
-|--------|---------------|
+| Domain | User Features | Item Features |
+|--------|---------------| ------------- |
 | Online Shopping | Purchases <br> Returns (negative signal) <br> Reviews/Ratings <br> Favorite Categories <br> Country/City/State <br> Yearly Purchase Count <br> Yearly Purchase USD | Brand <br> Title <br> Price <br> Category <br> Reviews <br> Number of Returns |
 | Books | Liked/Disliked Books <br> Liked/Disliked Genres <br>Liked/Disliked Authors | Title <br>Genres <br>Book text (bag of words) <br>Published Year |
 | Music Streaming | Listened to Songs (with counts) <br> Listened to Artists (with counts) <br> Favorite Genres <br> Time of Day of Listens <br> Day of week of listens <br> Country/State/City <br> Language | Title <br> Genre <br> Artist <br> Listens <br> Release Date <br> *ADVANCED*: Embedding of Audio File |
