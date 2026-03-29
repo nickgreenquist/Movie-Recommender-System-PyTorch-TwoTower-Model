@@ -36,26 +36,27 @@ Only movies with 1,000+ ratings are kept (~2,070 movies). Only users with 20–5
 
 ```
 User Tower:
-  avg_pool(item_embeddings[watch_history])  →  history_emb (size: item_movieId_embedding_size)
-  user_genre_tower(avg_genre_ratings)       →  genre_emb   (size: user_genre_embedding_size)
-  timestamp_embedding(watch_month)          →  ts_emb      (size: timestamp_feature_embedding_size)
+  avg_pool(item_embeddings[watch_history])      →  history_emb (size: item_movieId_embedding_size)
+  user_genre_tower([avg_rating | watch_frac])   →  genre_emb   (size: user_genre_embedding_size)
+  user_tag_tower(avg_tag_vector[watch_history]) →  tag_emb     (size: user_tag_embedding_size)
+  timestamp_embedding(watch_month)              →  ts_emb      (size: timestamp_feature_embedding_size)
   concat → user_combined
 
 Item Tower:
   item_genre_tower(genre_onehot)            →  item_genre_emb  (size: item_genre_embedding_size)
-  item_tag_tower(tag_vector)               →  item_tag_emb    (size: item_tag_embedding_size)
-  item_embedding_tower(movie_id)           →  item_emb        (size: item_movieId_embedding_size)
-  year_embedding_tower(release_year)       →  year_emb        (size: item_year_embedding_size)
+  item_tag_tower(tag_vector)                →  item_tag_emb    (size: item_tag_embedding_size)
+  item_embedding_tower(movie_id)            →  item_emb        (size: item_movieId_embedding_size)
+  year_embedding_tower(release_year)        →  year_emb        (size: item_year_embedding_size)
   concat → item_combined
 
 Prediction: dot_product(user_combined, item_combined)
 ```
 
-**Critical dimension constraint:** `len(user_combined) == len(item_combined)` must hold for the dot product. In v3:
-- user side = `item_movieId_embedding_size + user_genre_embedding_size + timestamp_feature_embedding_size`
+**Critical dimension constraint:** `len(user_combined) == len(item_combined)` must hold for the dot product:
+- user side = `item_movieId_embedding_size + user_genre_embedding_size + user_tag_embedding_size + timestamp_feature_embedding_size`
 - item side = `item_genre_embedding_size + item_tag_embedding_size + item_movieId_embedding_size + item_year_embedding_size`
 
-Default embedding sizes (v3): item_genre=10, item_tag=40, item_movieId=40, item_year=10, user_genre=50, timestamp=10 → both sides = 100.
+Default embedding sizes: item_genre=10, item_tag=40, item_movieId=40, item_year=10, user_genre=30, user_tag=20, timestamp=10 → both sides = 100.
 
 ## Training Details
 
@@ -104,8 +105,7 @@ Roughly ordered by implementation cost:
 3. **Rating variance per genre** — consistency signal (always loves horror vs. sometimes likes it)
 4. **Explicit dislikes** — low-rated movies (1–2 stars) pooled separately as a negative taste embedding
 5. **Short-term vs. long-term history** — two pooled embeddings (e.g., last 10 vs. all history) concatenated
-6. **Tag-based user profile** — average the tag vectors of all watched movies (weighted by rating), mirroring the item tag tower
-7. **Transformer over history** — replace avg pooling with a small Transformer encoder; `[CLS]` token becomes the history embedding
+6. **Transformer over history** — replace avg pooling with a small Transformer encoder; `[CLS]` token becomes the history embedding
 
 ## Git Workflow
 
