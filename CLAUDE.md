@@ -95,6 +95,22 @@ The key v3 innovation: user watch history is represented as the **unweighted mea
 - Removing `item_embedding_tower` causes severe genre clustering — do not remove it
 - Fantasy/Horror genre drift is a known open problem
 
+## Future User Tower Improvements
+
+Roughly ordered by implementation cost:
+
+1. **Rating-weighted pooling** — weight each movie embedding by the user's rating instead of equal weights
+2. **Recency-weighted pooling** — exponential decay so recent watches matter more than old ones
+3. **Rating variance per genre** — consistency signal (always loves horror vs. sometimes likes it)
+4. **Explicit dislikes** — low-rated movies (1–2 stars) pooled separately as a negative taste embedding
+5. **Short-term vs. long-term history** — two pooled embeddings (e.g., last 10 vs. all history) concatenated
+6. **Tag-based user profile** — average the tag vectors of all watched movies (weighted by rating), mirroring the item tag tower
+7. **Transformer over history** — replace avg pooling with a small Transformer encoder; `[CLS]` token becomes the history embedding
+
+## Git Workflow
+
+Never commit and push in the same command. Always commit first, then ask before pushing.
+
 ## Canary Users for Eval
 
 Use these synthetic users to quickly assess model quality after training:
