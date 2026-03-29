@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A PyTorch Two-Tower neural network recommender system trained on the MovieLens 32M dataset. The model learns separate user and item embeddings and predicts ratings via dot product — enabling scalable, cold-start-friendly recommendations.
+A PyTorch Two-Tower neural network recommender system trained on the MovieLens 32M dataset. The model predicts ratings via dot product of user and item embeddings. There is no user ID embedding — users are represented entirely by their watch history (average pooling of watched movie embeddings) and genre affinity (average rating per genre). This makes the model cold-start-friendly and generalizable to new users.
 
 ## Running the Code
 
