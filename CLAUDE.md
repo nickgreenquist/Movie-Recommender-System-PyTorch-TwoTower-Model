@@ -25,10 +25,19 @@ The notebooks run top-to-bottom. Each notebook is self-contained (data loading t
 The `ml-32m/` directory must be present (not in git). Required files:
 - `ratings.csv` — 33M rows: userId, movieId, rating, timestamp
 - `movies.csv` — 86k movies: movieId, title, genres (pipe-separated)
-- `genome-scores.csv` — tag relevance scores per movie
-- `genome-tags.csv` — tag index
+- `tags.csv` — free-form user-applied tags (userId, movieId, tag, timestamp) — **currently used**
+- `genome-scores.csv` — ML-derived relevance scores (0–1) per (movie, tag) pair
+- `genome-tags.csv` — curated vocabulary of ~1,128 genome tag names
 
 Only movies with 1,000+ ratings are kept (~2,070 movies). Only users with 20–500 ratings are kept.
+
+### Tag data: current state and planned improvement
+
+The model currently uses **`tags.csv`** (user free-form tags). Each movie's tag vector is built by counting how many users applied each tag, then normalizing to sum to 1. Only tags applied 1,000+ times across all movies are kept (306 tags survive).
+
+**This is a known limitation.** User tag counts are sparse and depend on whether users bothered to apply genre-describing tags. For example, Toy Story 2's tag vector has 0.0 for `animation`, `family`, `children`, and `fun` — because users described it as "action", "masterpiece", "funny" instead. This is a root cause of the Children's genre boundary failure.
+
+**Planned: switch to `genome-scores.csv`.** Genome relevance scores are ML-derived from multiple signals and give non-zero values for semantically relevant tags even when users didn't explicitly apply them. Switching would likely give Toy Story 2 non-zero scores for `animation`, `family`, and `children`, which should help the Children's and Fantasy genre boundaries. The genome covers ~1,128 tags for a subset of the catalog; movies without genome coverage would fall back to an all-zero tag vector.
 
 ## Model Architecture (v3 — canonical)
 
