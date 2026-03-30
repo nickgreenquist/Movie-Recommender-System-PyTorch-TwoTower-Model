@@ -29,7 +29,9 @@ The `ml-32m/` directory must be present (not in git). Required files:
 - `genome-scores.csv` — ML-derived relevance scores (0–1) per (movie, tag) pair
 - `genome-tags.csv` — curated vocabulary of ~1,128 genome tag names
 
-Only movies with 1,000+ ratings are kept (~2,070 movies). Only users with 20–500 ratings are kept.
+Only movies with **1,000+ ratings** are kept (~4,461 movies). Only users with 20–500 ratings are kept.
+
+> **Note:** The threshold was lowered from 3,000 → 1,000 ratings. Earlier architectures were unstable at 4,461 movies, but the current v3 architecture (rating-weighted pooling + genome tags) handles the larger corpus well and produces better recommendations.
 
 ### Tag data: current state and planned improvement
 
@@ -109,11 +111,12 @@ The key v3 innovation: user watch history is represented as the **rating-weighte
 
 Roughly ordered by implementation cost:
 
-1. **Recency-weighted pooling** — exponential decay so recent watches matter more than old ones
-2. **Rating variance per genre** — consistency signal (always loves horror vs. sometimes likes it)
-3. **Explicit dislikes** — low-rated movies (1–2 stars) pooled separately as a negative taste embedding
-4. **Short-term vs. long-term history** — two pooled embeddings (e.g., last 10 vs. all history) concatenated
-5. **Transformer over history** — replace avg pooling with a small Transformer encoder; `[CLS]` token becomes the history embedding
+1. **User genome tag affinity context** — analogous to the genre context vector, compute avg genome tag relevance scores over a user's watch history (weighted by rating). This mirrors the item-side genome tag tower and should give the user tower a richer semantic signal than genre alone. Likely high impact since the item side already uses genome scores.
+2. **Recency-weighted pooling** — exponential decay so recent watches matter more than old ones
+3. **Rating variance per genre** — consistency signal (always loves horror vs. sometimes likes it)
+4. **Explicit dislikes** — low-rated movies (1–2 stars) pooled separately as a negative taste embedding
+5. **Short-term vs. long-term history** — two pooled embeddings (e.g., last 10 vs. all history) concatenated
+6. **Transformer over history** — replace avg pooling with a small Transformer encoder; `[CLS]` token becomes the history embedding
 
 ## Git Workflow
 
