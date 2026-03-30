@@ -95,7 +95,7 @@ Checkpoints are weights-only (~500–600KB). The `saved_models/` directory is gi
 | `MovieLens_Two_Tower_Embedding_NN-v2.ipynb` | v2 — refactored to nn.Module, adds tags/year/timestamp features |
 | `MovieLens_Two_Tower_Embedding_NN_v3_user_embedding_avg_pooling.ipynb` | **v3 (latest)** — avg pooling over watch history embeddings |
 
-The key v3 innovation: user watch history is represented as the **unweighted mean of watched movie embeddings** (with padding mask) rather than categorical features. This is more expressive and handles variable-length histories naturally.
+The key v3 innovation: user watch history is represented as the **rating-weighted mean of watched movie embeddings** (with padding mask) rather than categorical features. Each movie embedding is weighted by the user's debiased rating (abs-value normalized). This is more expressive and handles variable-length histories naturally.
 
 ## Known Issues
 
@@ -109,12 +109,11 @@ The key v3 innovation: user watch history is represented as the **unweighted mea
 
 Roughly ordered by implementation cost:
 
-1. **Rating-weighted pooling** — weight each movie embedding by the user's rating instead of equal weights
-2. **Recency-weighted pooling** — exponential decay so recent watches matter more than old ones
-3. **Rating variance per genre** — consistency signal (always loves horror vs. sometimes likes it)
-4. **Explicit dislikes** — low-rated movies (1–2 stars) pooled separately as a negative taste embedding
-5. **Short-term vs. long-term history** — two pooled embeddings (e.g., last 10 vs. all history) concatenated
-6. **Transformer over history** — replace avg pooling with a small Transformer encoder; `[CLS]` token becomes the history embedding
+1. **Recency-weighted pooling** — exponential decay so recent watches matter more than old ones
+2. **Rating variance per genre** — consistency signal (always loves horror vs. sometimes likes it)
+3. **Explicit dislikes** — low-rated movies (1–2 stars) pooled separately as a negative taste embedding
+4. **Short-term vs. long-term history** — two pooled embeddings (e.g., last 10 vs. all history) concatenated
+5. **Transformer over history** — replace avg pooling with a small Transformer encoder; `[CLS]` token becomes the history embedding
 
 ## Git Workflow
 
