@@ -8,13 +8,14 @@ import glob
 import os
 from itertools import zip_longest
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
 
 from src.dataset import FeatureStore
 from src.model import MovieRecommender
-from src.train import build_model, get_config
+from src.train import build_model, get_config, print_model_summary
 
 
 # ── Canary user definitions ───────────────────────────────────────────────────
@@ -183,25 +184,21 @@ def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
             emb_idx  = torch.tensor([fs.item_emb_movieId_to_i[mid]])
             year_idx = torch.tensor([fs.year_to_i[fs.movieId_to_year[mid]]])
 
-            d['MOVIEID_EMBEDDING']      = model.item_embedding_tower(
-                                            model.item_embedding_lookup(emb_idx))
-            d['MOVIE_YEAR_EMBEDDING']   = model.year_embedding_tower(
-                                            model.year_embedding_lookup(year_idx))
-            d['MOVIE_GENRE_EMBEDDING']  = model.item_genre_tower(
-                                            torch.tensor([fs.movieId_to_genre_context[mid]]))
-
-            item_parts = [d['MOVIE_GENRE_EMBEDDING']]
-            if model.use_item_tag_tower:
-                d['MOVIE_TAG_EMBEDDING'] = model.item_tag_tower(
-                    torch.tensor([fs.movieId_to_tag_context[mid]]))
-                item_parts.append(d['MOVIE_TAG_EMBEDDING'])
-            if model.use_item_genome_tag_tower:
-                d['MOVIE_GENOME_TAG_EMBEDDING'] = model.item_genome_tag_tower(
-                    torch.tensor([fs.movieId_to_genome_tag_context[mid]]))
-                item_parts.append(d['MOVIE_GENOME_TAG_EMBEDDING'])
-
-            item_parts += [d['MOVIEID_EMBEDDING'], d['MOVIE_YEAR_EMBEDDING']]
-            d['MOVIE_EMBEDDING_COMBINED'] = torch.cat(item_parts, dim=1)
+            d['MOVIEID_EMBEDDING']          = model.item_embedding_tower(
+                                                model.item_embedding_lookup(emb_idx))
+            d['MOVIE_YEAR_EMBEDDING']       = model.year_embedding_tower(
+                                                model.year_embedding_lookup(year_idx))
+            d['MOVIE_GENRE_EMBEDDING']      = model.item_genre_tower(
+                                                torch.tensor([fs.movieId_to_genre_context[mid]]))
+            d['MOVIE_TAG_EMBEDDING']        = model.item_tag_tower(
+                                                torch.tensor([fs.movieId_to_tag_context[mid]]))
+            d['MOVIE_GENOME_TAG_EMBEDDING'] = model.item_genome_tag_tower(
+                                                torch.tensor([fs.movieId_to_genome_tag_context[mid]]))
+            d['MOVIE_EMBEDDING_COMBINED']   = torch.cat([
+                d['MOVIE_GENRE_EMBEDDING'], d['MOVIE_TAG_EMBEDDING'],
+                d['MOVIE_GENOME_TAG_EMBEDDING'], d['MOVIEID_EMBEDDING'],
+                d['MOVIE_YEAR_EMBEDDING'],
+            ], dim=1)
             movieId_to_embedding[mid] = d
 
     return movieId_to_embedding
@@ -255,29 +252,33 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
     else:
         history_emb = torch.zeros(1, model.item_embedding_lookup.embedding_dim)
 
+    # Genome pooling — mirrors history pooling but in content space (shared tower)
+    genome_contexts = []
+    genome_weights  = []
+    for t, w in zip(fav_movies + dis_movies,
+                    [VALUE_FAVORITE_MOVIE_RATING] * len(fav_movies) +
+                    [VALUE_DISLIKED_MOVIE_RATING] * len(dis_movies)):
+        if t not in fs.title_to_movieId:
+            continue
+        mid = fs.title_to_movieId[t]
+        if mid in fs.movieId_to_genome_tag_context:
+            genome_contexts.append(fs.movieId_to_genome_tag_context[mid])
+            genome_weights.append(w)
+
+    if genome_contexts:
+        gc_tensor  = torch.tensor(np.array(genome_contexts, dtype=np.float32))  # (n, genome_tags_len)
+        ge_embs    = model.item_genome_tag_tower(gc_tensor)                      # (n, genome_dim)
+        wts        = torch.tensor(genome_weights)                                # (n,)
+        wt_sum_g   = wts.abs().sum().clamp(min=1e-6)
+        genome_emb = (ge_embs * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_g  # (1, genome_dim)
+    else:
+        genome_emb = torch.zeros(1, model.item_genome_tag_tower[0].out_features)
+
     X_inf      = torch.tensor([ctx])
     genre_emb  = model.user_genre_tower(X_inf)
     ts_emb     = model.timestamp_embedding_tower(model.timestamp_embedding_lookup(ts_inference))
 
-    user_parts = [history_emb, genre_emb]
-    if model.use_user_tag_tower:
-        # Tag profile: avg of liked seed movies' tag vectors
-        tag_ctx = [0.0] * len(fs.tags_ordered)
-        n_tagged = 0
-        for t in fav_movies:
-            if t not in fs.title_to_movieId:
-                continue
-            mid = fs.title_to_movieId[t]
-            if mid in fs.movieId_to_tag_context:
-                for j, v in enumerate(fs.movieId_to_tag_context[mid]):
-                    tag_ctx[j] += v
-                n_tagged += 1
-        if n_tagged > 0:
-            tag_ctx = [v / n_tagged for v in tag_ctx]
-        user_parts.append(model.user_tag_tower(torch.tensor([tag_ctx])))
-
-    user_parts.append(ts_emb)
-    return torch.cat(user_parts, dim=1)
+    return torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
 
 
 def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
@@ -368,7 +369,6 @@ def probe_tag(model: MovieRecommender, tags: list, movie_embeddings: dict,
     Passes the tag vector through item_tag_tower, then compares via cosine similarity
     against every movie's MOVIE_TAG_EMBEDDING.
     """
-    assert model.use_item_tag_tower, "Item tag tower disabled."
     ctx = [0.0] * len(fs.tags_ordered)
     for tag in tags:
         if tag in fs.tag_to_i:
@@ -398,7 +398,6 @@ def probe_genome_tag(model: MovieRecommender, genome_tags: list, movie_embedding
     MOVIE_GENOME_TAG_EMBEDDING vectors as the query, then compares via cosine similarity
     against all movies' MOVIE_GENOME_TAG_EMBEDDING. Avoids synthetic OOD inputs entirely.
     """
-    assert model.use_item_genome_tag_tower, "Genome tag tower disabled."
     name_to_idx = {
         fs.genome_tag_names[tid]: fs.genome_tag_to_i[tid]
         for tid in fs.genome_tag_to_i
@@ -456,41 +455,16 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
     model = build_model(config, fs)
     model.load_state_dict(state_dict)
     model.eval()
+    print_model_summary(model)
 
     m = model
-    history_dim  = m.item_embedding_lookup.embedding_dim
-    genre_dim    = m.user_genre_tower[0].out_features
-    ts_dim       = m.timestamp_embedding_lookup.embedding_dim
-    user_tag_dim = m.user_tag_tower[0].out_features if m.use_user_tag_tower else 0
-    user_total   = history_dim + genre_dim + ts_dim + user_tag_dim
-
-    item_genre_dim   = m.item_genre_tower[0].out_features
-    item_tag_dim     = m.item_tag_tower[0].out_features        if m.use_item_tag_tower        else 0
-    genome_tag_dim   = m.item_genome_tag_tower[0].out_features if m.use_item_genome_tag_tower else 0
-    item_movieId_dim = m.item_embedding_tower[0].out_features
-    year_dim         = m.year_embedding_tower[0].out_features
-    item_total       = item_genre_dim + item_tag_dim + genome_tag_dim + item_movieId_dim + year_dim
-
-    print(f"\n── Model dimensions ──")
-    print(f"  User side:  history({history_dim}) + genre({genre_dim}) + ts({ts_dim})"
-          + (f" + user_tag({user_tag_dim})" if m.use_user_tag_tower else "")
-          + f"  =  {user_total}")
-    print(f"  Item side:  genre({item_genre_dim})"
-          + (f" + tag({item_tag_dim})"      if m.use_item_tag_tower        else "")
-          + (f" + genome({genome_tag_dim})" if m.use_item_genome_tag_tower else "")
-          + f" + movieId({item_movieId_dim}) + year({year_dim})  =  {item_total}")
-    print(f"  Towers:  use_user_tag={m.use_user_tag_tower}  "
-          f"use_item_tag={m.use_item_tag_tower}  "
-          f"use_item_genome_tag={m.use_item_genome_tag_tower}")
-
-    top_movies_len  = m.item_embedding_lookup.num_embeddings - 1
-    genres_len      = m.item_genre_tower[0].in_features
-    tags_len        = (m.item_tag_tower[0].in_features    if m.use_item_tag_tower
-                       else m.user_tag_tower[0].in_features if m.use_user_tag_tower else "n/a")
-    genome_tags_len = m.item_genome_tag_tower[0].in_features if m.use_item_genome_tag_tower else "n/a"
-    all_years_len   = m.year_embedding_lookup.num_embeddings
-    ts_num_bins     = m.timestamp_embedding_lookup.num_embeddings
-    user_ctx_size   = m.user_genre_tower[0].in_features
+    top_movies_len    = m.item_embedding_lookup.num_embeddings - 1
+    genres_len        = m.item_genre_tower[0].in_features
+    tags_len          = m.item_tag_tower[0].in_features
+    genome_tags_len   = m.item_genome_tag_tower[0].in_features
+    all_years_len     = m.year_embedding_lookup.num_embeddings
+    ts_num_bins       = m.timestamp_embedding_lookup.num_embeddings
+    user_ctx_size     = m.user_genre_tower[0].in_features
     n_genres_from_ctx = user_ctx_size // 2
     print(f"\n── Required vocab sizes ──")
     print(f"  top_movies:      {top_movies_len}")
@@ -594,11 +568,9 @@ def run_probes(data_dir: str = 'data', checkpoint_path: str = None,
     print("\n── Embedding probes ──")
     probe_genre(model, 'Horror', movie_embeddings, fs)
     probe_genre(model, 'Sci-Fi', movie_embeddings, fs)
-    if model.use_item_tag_tower:
-        probe_tag(model, ['pixar', 'animation'], movie_embeddings, fs)
-    if model.use_item_genome_tag_tower:
-        probe_genome_tag(model, ['horror', 'gore', 'torture'], movie_embeddings, fs)
-        probe_genome_tag(model, ['martial arts', 'kung fu'], movie_embeddings, fs)
+    probe_tag(model, ['pixar', 'animation'], movie_embeddings, fs)
+    probe_genome_tag(model, ['horror', 'gore', 'torture'], movie_embeddings, fs)
+    probe_genome_tag(model, ['martial arts', 'kung fu'], movie_embeddings, fs)
     probe_similar(movie_embeddings, fs, all_ids, all_norm, PROBE_SIMILAR_TITLES)
 
 

@@ -51,16 +51,16 @@ Only movies with **1,000+ ratings** are kept (~4,461 movies). Only users with 20
 
 ```
 User Tower:
-  rating_weighted_avg_pool(item_embeddings[watch_history])  →  history_emb  (size: item_movieId_embedding_size)
-  user_genre_tower([avg_rating_per_genre | watch_frac])     →  genre_emb    (size: user_genre_embedding_size)
-  user_tag_tower(avg_tag_vector[watch_history])             →  tag_emb      (size: user_tag_embedding_size)   [optional]
-  timestamp_embedding_tower(watch_month)                    →  ts_emb       (size: timestamp_feature_embedding_size)
+  rating_weighted_avg_pool(item_embeddings[watch_history])              →  history_emb  (size: item_movieId_embedding_size)
+  rating_weighted_avg_pool(item_genome_tag_tower(genome_ctx[history]))  →  genome_emb   (size: item_genome_tag_embedding_size)  [shared tower]
+  user_genre_tower([avg_rating_per_genre | watch_frac])                 →  genre_emb    (size: user_genre_embedding_size)
+  timestamp_embedding_tower(watch_month)                                →  ts_emb       (size: timestamp_feature_embedding_size)
   concat → user_combined
 
 Item Tower:
   item_genre_tower(genre_onehot)        →  item_genre_emb       (size: item_genre_embedding_size)
-  item_tag_tower(tag_vector)            →  item_tag_emb         (size: item_tag_embedding_size)         [optional]
-  item_genome_tag_tower(genome_scores)  →  item_genome_tag_emb  (size: item_genome_tag_embedding_size)  [optional]
+  item_tag_tower(tag_vector)            →  item_tag_emb         (size: item_tag_embedding_size)
+  item_genome_tag_tower(genome_scores)  →  item_genome_tag_emb  (size: item_genome_tag_embedding_size)  [shared with user genome pool]
   item_embedding_tower(movie_id)        →  item_emb             (size: item_movieId_embedding_size)
   year_embedding_tower(release_year)    →  year_emb             (size: item_year_embedding_size)
   concat → item_combined
@@ -70,23 +70,11 @@ Prediction: dot_product(user_combined, item_combined)
 
 All towers use `nn.Linear → Tanh`. Weights initialized with Xavier uniform (gain=0.01).
 
-### Tower flags
-
-```python
-USE_USER_TAG_TOWER        = False   # user tag profile (avg of watched movies' user-applied tag vectors)
-USE_ITEM_TAG_TOWER        = True    # item tower: user-applied tags (tags.csv, 306 tags)
-USE_ITEM_GENOME_TAG_TOWER = True    # item tower: genome relevance scores (genome-scores.csv, 1128 tags)
-```
+**Shared tower:** `item_genome_tag_tower` is used for both the item side (target movie genome scores) and the user genome pooling (each watched movie's genome context → pool). This ensures both live in the same embedding space so the dot product is directly meaningful. The genome contexts are stored in a `genome_context_buffer` registered as a non-trainable buffer in the model, indexed by the same embedding indices already in `user_watch_history` — no dataset changes required.
 
 ### Critical dimension constraint
 
 `len(user_combined) == len(item_combined)` must hold for the dot product. The model raises `ValueError` at construction if violated.
-
-The genre budget absorbs freed dims automatically:
-```python
-user_genre_embedding_size = 70 - user_tag_embedding_size
-item_genre_embedding_size = 70 - item_tag_embedding_size - item_genome_tag_embedding_size
-```
 
 ### Current embedding sizes (120-dim)
 
@@ -94,16 +82,20 @@ item_genre_embedding_size = 70 - item_tag_embedding_size - item_genome_tag_embed
 item_movieId_embedding_size      = 40   # shared: user history pool + item tower
 item_year_embedding_size         = 10
 timestamp_feature_embedding_size = 10
+item_tag_embedding_size          = 15
+item_genome_tag_embedding_size   = 35   # shared: item tower + user genome pool
+user_genome_tag_embedding_size   = 35   # = item_genome_tag_embedding_size (shared tower)
+user_genre_embedding_size        = 35   # = 70 - user_genome_tag_embedding_size
+item_genre_embedding_size        = 20   # = 70 - item_tag_embedding_size - item_genome_tag_embedding_size
 
-user_tag_embedding_size        = 0    # USE_USER_TAG_TOWER = False
-item_tag_embedding_size        = 15   # if USE_ITEM_TAG_TOWER else 0
-item_genome_tag_embedding_size = 35   # if USE_ITEM_GENOME_TAG_TOWER else 0
+# user:  40 + 35 + 35 + 10       = 120
+# item:  20 + 15 + 35 + 40 + 10  = 120  ✓
+```
 
-user_genre_embedding_size = 70   # = 70 - 0
-item_genre_embedding_size = 20   # = 70 - 15 - 35
-
-# user:  40 + 70 + 10       = 120
-# item:  20 + 15 + 35 + 40 + 10 = 120  ✓
+**Previous model (120-dim, no user genome pooling):**
+```
+user_genre=70, no user genome pool
+user: 40+70+10=120 / item: 20+15+35+40+10=120
 ```
 
 **Previous model (80-dim, checkpoint `best_checkpoint_20260403_210601.pth`):**
@@ -115,6 +107,8 @@ user: 20+50+10=80 / item: 10+15+25+20+10=80
 ### Key implementation notes
 
 - **Shared item embedding:** `item_embedding_lookup` is shared between the item tower (target movie) and the user history avg pool. The lookup has `padding_idx = top_movies_len`. History pooling output size = `item_movieId_embedding_size` — they cannot be decoupled without adding a projection layer.
+- **Shared genome tower:** `item_genome_tag_tower` is shared between item side and user genome pooling. `nn.Linear` + `nn.Tanh` broadcast over leading dims, so `(batch, hist_len, 1128)` → `(batch, hist_len, 35)` works without reshaping.
+- **genome_context_buffer:** Registered as a non-trainable buffer (saved in state_dict, device-portable). Row `i` = genome context for movie at embedding index `i`; last row = zeros (pad index). Built in `build_model()` from `fs.movieId_to_genome_tag_context`.
 - **Rating-weighted avg pool:** Each watched movie embedding is weighted by the user's debiased rating. Abs-value normalization prevents negative ratings from cancelling positive ones in the denominator.
 - **Removing `item_embedding_tower` causes severe genre clustering** — do not remove it.
 - **Tanh saturation:** Small sub-embedding spaces (genre=20, tag=15) saturate after training, causing sub-embedding cosine probes to return 1.0 for many movies. This is a known limitation. ReLU + larger dims would fix it but requires retraining.

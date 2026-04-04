@@ -14,6 +14,7 @@ import glob
 import os
 
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn.functional as F
 
@@ -62,8 +63,29 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
     torch.save(movie_embeddings, emb_path)
     print(f"Saved {emb_path}  ({os.path.getsize(emb_path) / 1e6:.1f} MB)")
 
+    # ── Popularity ordering (for app dropdowns) ──────────────────────────────
+    print("Computing popularity order ...")
+    watch_df    = pd.read_parquet(os.path.join(data_dir, 'base_ratings_watch.parquet'))
+    mid_counts  = watch_df.groupby('movieId').size()
+    sorted_mids = mid_counts.sort_values(ascending=False).index.tolist()
+    # Keep only top_movies, preserve popularity rank
+    top_set             = set(fs.top_movies)
+    popularity_ordered_titles = [
+        fs.movieId_to_title[mid]
+        for mid in sorted_mids
+        if mid in top_set and mid in fs.movieId_to_title
+    ]
+    # Append any movies missing from watch data at the end
+    covered = set(popularity_ordered_titles)
+    for mid in fs.top_movies:
+        t = fs.movieId_to_title.get(mid)
+        if t and t not in covered:
+            popularity_ordered_titles.append(t)
+
     # ── feature_store.pt ─────────────────────────────────────────────────────
     feature_store = {
+        # Movie titles ordered by rating count (for app dropdowns)
+        'popularity_ordered_titles': popularity_ordered_titles,
         # Vocabularies
         'top_movies':              fs.top_movies,
         'genres_ordered':          fs.genres_ordered,

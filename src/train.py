@@ -19,42 +19,37 @@ from src.model import MovieRecommender
 # ── Hyperparameters ───────────────────────────────────────────────────────────
 
 def get_config() -> dict:
-    """
-    All training hyperparameters in one place.
-
-    Tower flags:
-      user side: history(40) + user_genre(70) + ts(10) + user_tag = 120
-      item side: item_genre(20) + item_tag(15) + genome(35) + movieId(40) + year(10) = 120
-        user_genre = 70 - user_tag_embedding_size
-        item_genre = 70 - item_tag_embedding_size - item_genome_tag_embedding_size
-    """
-    USE_USER_TAG_TOWER        = False
-    USE_ITEM_TAG_TOWER        = True
-    USE_ITEM_GENOME_TAG_TOWER = True
-
+    """All training hyperparameters in one place."""
+    # ── Embedding sizes ───────────────────────────────────────────────────────
+    # item_movieId_embedding_size also controls the user history embedding size:
+    # history pooling uses the shared item_embedding_lookup, so its output dim
+    # equals this value. They cannot be set independently.
     item_movieId_embedding_size      = 40
     item_year_embedding_size         = 10
     timestamp_feature_embedding_size = 10
+    item_tag_embedding_size          = 15
+    item_genome_tag_embedding_size   = 35   # also controls user genome tag embedding size (shared embedding)
+    user_genome_tag_embedding_size   = 35
+    user_genre_embedding_size        = 35
+    item_genre_embedding_size        = 20
 
-    user_tag_embedding_size        = 20 if USE_USER_TAG_TOWER        else 0
-    item_tag_embedding_size        = 15 if USE_ITEM_TAG_TOWER        else 0
-    item_genome_tag_embedding_size = 35 if USE_ITEM_GENOME_TAG_TOWER else 0
-
-    user_genre_embedding_size = 70 - user_tag_embedding_size
-    item_genre_embedding_size = 70 - item_tag_embedding_size - item_genome_tag_embedding_size
+    user_total = item_movieId_embedding_size + user_genome_tag_embedding_size + user_genre_embedding_size + timestamp_feature_embedding_size
+    item_total = item_genre_embedding_size + item_tag_embedding_size + item_genome_tag_embedding_size + item_movieId_embedding_size + item_year_embedding_size
+    assert user_total == item_total, (
+        f"Tower size mismatch — user={user_total} "
+        f"(history={item_movieId_embedding_size} + genome={user_genome_tag_embedding_size} + genre={user_genre_embedding_size} + ts={timestamp_feature_embedding_size}), "
+        f"item={item_total} "
+        f"(genre={item_genre_embedding_size} + tag={item_tag_embedding_size} + genome={item_genome_tag_embedding_size} + movieId={item_movieId_embedding_size} + year={item_year_embedding_size})"
+    )
 
     return {
-        # Tower flags
-        'USE_USER_TAG_TOWER':        USE_USER_TAG_TOWER,
-        'USE_ITEM_TAG_TOWER':        USE_ITEM_TAG_TOWER,
-        'USE_ITEM_GENOME_TAG_TOWER': USE_ITEM_GENOME_TAG_TOWER,
         # Embedding sizes
         'item_movieId_embedding_size':      item_movieId_embedding_size,
         'item_year_embedding_size':         item_year_embedding_size,
         'timestamp_feature_embedding_size': timestamp_feature_embedding_size,
-        'user_tag_embedding_size':          user_tag_embedding_size,
         'item_tag_embedding_size':          item_tag_embedding_size,
         'item_genome_tag_embedding_size':   item_genome_tag_embedding_size,
+        'user_genome_tag_embedding_size':   user_genome_tag_embedding_size,
         'user_genre_embedding_size':        user_genre_embedding_size,
         'item_genre_embedding_size':        item_genre_embedding_size,
         # Training
@@ -71,6 +66,15 @@ def get_config() -> dict:
 # ── Model factory ─────────────────────────────────────────────────────────────
 
 def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
+    # Build genome context buffer: (top_movies_len + 1, genome_tags_len)
+    # Row i = genome tag context for movie at embedding index i; last row = zeros (pad)
+    genome_matrix = np.array(
+        [fs.movieId_to_genome_tag_context[mid] for mid in fs.top_movies],
+        dtype=np.float32,
+    )
+    pad_row = np.zeros((1, genome_matrix.shape[1]), dtype=np.float32)
+    genome_context_buffer = torch.from_numpy(np.vstack([genome_matrix, pad_row]))
+
     model = MovieRecommender(
         genres_len=len(fs.genres_ordered),
         tags_len=len(fs.tags_ordered),
@@ -79,21 +83,39 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
         all_years_len=len(fs.years_ordered),
         timestamp_num_bins=fs.timestamp_num_bins,
         user_context_size=fs.user_context_size,
+        genome_context_buffer=genome_context_buffer,
         item_genre_embedding_size=config['item_genre_embedding_size'],
         item_tag_embedding_size=config['item_tag_embedding_size'],
         item_genome_tag_embedding_size=config['item_genome_tag_embedding_size'],
         item_movieId_embedding_size=config['item_movieId_embedding_size'],
         item_year_embedding_size=config['item_year_embedding_size'],
         user_genre_embedding_size=config['user_genre_embedding_size'],
-        user_tag_embedding_size=config['user_tag_embedding_size'],
         timestamp_feature_embedding_size=config['timestamp_feature_embedding_size'],
-        use_user_tag_tower=config['USE_USER_TAG_TOWER'],
-        use_item_tag_tower=config['USE_ITEM_TAG_TOWER'],
-        use_item_genome_tag_tower=config['USE_ITEM_GENOME_TAG_TOWER'],
     )
-    n_params = sum(p.nelement() for p in model.parameters() if p.requires_grad)
-    print(f"Model parameters: {n_params:,}")
     return model
+
+
+def print_model_summary(model: MovieRecommender) -> None:
+    """Print tower dimensions and parameter count for a built model."""
+    m = model
+    history_dim      = m.item_embedding_lookup.embedding_dim
+    genome_dim       = m.item_genome_tag_tower[0].out_features
+    genre_dim        = m.user_genre_tower[0].out_features
+    ts_dim           = m.timestamp_embedding_lookup.embedding_dim
+    user_total       = history_dim + genome_dim + genre_dim + ts_dim
+    item_genre_dim   = m.item_genre_tower[0].out_features
+    item_tag_dim     = m.item_tag_tower[0].out_features
+    genome_tag_dim   = m.item_genome_tag_tower[0].out_features
+    item_movieId_dim = m.item_embedding_tower[0].out_features
+    year_dim         = m.year_embedding_tower[0].out_features
+    item_total       = item_genre_dim + item_tag_dim + genome_tag_dim + item_movieId_dim + year_dim
+    n_params         = sum(p.nelement() for p in model.parameters() if p.requires_grad)
+
+    print(f"\n── Model dimensions ──")
+    print(f"  User side:  history({history_dim}) + genome({genome_dim}) + genre({genre_dim}) + ts({ts_dim})  =  {user_total}")
+    print(f"  Item side:  genre({item_genre_dim}) + tag({item_tag_dim}) + genome({genome_tag_dim})"
+          f" + movieId({item_movieId_dim}) + year({year_dim})  =  {item_total}")
+    print(f"  Parameters: {n_params:,}")
 
 
 # ── Training loop ─────────────────────────────────────────────────────────────
@@ -115,6 +137,8 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
     (X_val, X_history_val, X_history_ratings_val, X_tag_val, timestamp_val,
      Y_val, target_movieId_val, target_movieId_genre_val, target_movieId_tag_val,
      target_movieId_genome_val, target_movieId_year_val) = val_data
+
+    print_model_summary(model)
 
     pad_idx          = len(fs.top_movies)
     loss_fn          = torch.nn.MSELoss()
@@ -142,22 +166,35 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
         is_val = (i % log_every == 0)
 
         if is_val:
-            hist_batch  = pad_history_batch(X_history_val, pad_idx)
-            rat_batch   = pad_history_ratings_batch(X_history_ratings_val)
+            # Batch the val pass — genome pooling creates (n, hist_len, 1128) which is
+            # too large to process all at once.
+            val_batch_size = 1024
+            n_val          = X_val.shape[0]
+            sq_sum         = 0.0
+            n_preds        = 0
             model.eval()
             with torch.no_grad():
-                preds = model(X_val, X_tag_val, hist_batch, rat_batch, timestamp_val,
-                              target_movieId_genre_val, target_movieId_tag_val,
-                              target_movieId_genome_val, target_movieId_year_val,
-                              target_movieId_val)
-                output = loss_fn(preds, Y_val)
-            loss_val.append(output.item())
+                for v0 in range(0, n_val, val_batch_size):
+                    v1        = min(v0 + val_batch_size, n_val)
+                    vix       = list(range(v0, v1))
+                    hb        = pad_history_batch([X_history_val[j] for j in vix], pad_idx)
+                    rb        = pad_history_ratings_batch([X_history_ratings_val[j] for j in vix])
+                    vp        = model(X_val[v0:v1], hb, rb, timestamp_val[v0:v1],
+                                      target_movieId_genre_val[v0:v1],
+                                      target_movieId_tag_val[v0:v1],
+                                      target_movieId_genome_val[v0:v1],
+                                      target_movieId_year_val[v0:v1],
+                                      target_movieId_val[v0:v1])
+                    sq_sum  += ((vp - Y_val[v0:v1]) ** 2).sum().item()
+                    n_preds += (v1 - v0)
+            output_val = sq_sum / n_preds
+            loss_val.append(output_val)
         else:
             ix = torch.randint(0, X_train.shape[0], (minibatch_size,)).tolist()
             hist_batch = pad_history_batch([X_history_train[j] for j in ix], pad_idx)
             rat_batch  = pad_history_ratings_batch([X_history_ratings_train[j] for j in ix])
             model.train()
-            preds = model(X_train[ix], X_tag_train[ix], hist_batch, rat_batch,
+            preds = model(X_train[ix], hist_batch, rat_batch,
                           timestamp_train[ix],
                           target_movieId_genre_train[ix], target_movieId_tag_train[ix],
                           target_movieId_genome_train[ix], target_movieId_year_train[ix],
@@ -171,8 +208,8 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
         if is_val:
             elapsed = time.time() - start
             start   = time.time()
-            avg_train = np.mean(loss_train[i-log_every:i]) if i >= log_every else output.item()
-            val_loss  = output.item()
+            avg_train = np.mean(loss_train[i-log_every:i]) if i >= log_every else loss_train[-1] if loss_train else 0.0
+            val_loss  = output_val
             pbar.set_postfix(train=f"{avg_train:.4f}", val=f"{val_loss:.4f}")
             print(f"[{i:06d}]  train_loss={avg_train:.4f}  val_loss={val_loss:.4f}  "
                   f"({elapsed:.0f}s)")
