@@ -10,6 +10,8 @@ Usage:
     python main.py canary <path>       # Canary user recommendations (specific checkpoint)
     python main.py probe               # Embedding probes (most recent checkpoint)
     python main.py probe <path>        # Embedding probes (specific checkpoint)
+    python main.py export              # Stage 5: export serving/ artifacts for Streamlit app
+    python main.py export <path>       # Export using specific checkpoint
     python main.py                     # Run all stages in order
 """
 import sys
@@ -65,6 +67,10 @@ def cmd_probe(checkpoint_path=None):
     run_probes(data_dir=DATA_DIR, checkpoint_path=checkpoint_path, version=VERSION)
 
 
+def cmd_export(checkpoint_path=None):
+    from src.export import run_export
+    run_export(data_dir=DATA_DIR, checkpoint_path=checkpoint_path, version=VERSION)
+
 
 COMMANDS = {
     'preprocess': cmd_preprocess,
@@ -73,6 +79,7 @@ COMMANDS = {
     'train':      cmd_train,
     'canary':     cmd_canary,
     'probe':      cmd_probe,
+    'export':     cmd_export,
 }
 
 if __name__ == '__main__':
@@ -86,7 +93,7 @@ if __name__ == '__main__':
         cmd_train()
         cmd_canary()
     elif args[0] in COMMANDS:
-        if args[0] in ('canary', 'probe') and len(args) > 1:
+        if args[0] in ('canary', 'probe', 'export') and len(args) > 1:
             COMMANDS[args[0]](checkpoint_path=args[1])
         else:
             COMMANDS[args[0]]()

@@ -281,7 +281,8 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
 
 
 def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
-                    movie_embeddings: dict, top_n: int = 10) -> None:
+                    movie_embeddings: dict, all_ids: list, all_embs: torch.Tensor,
+                    top_n: int = 10) -> None:
     """Run all canary users and print recommendation tables."""
     model.eval()
 
@@ -297,10 +298,8 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
             fav_set  = set(USER_TYPE_TO_FAVORITE_MOVIES[user_type])
             dis_set  = set(USER_TYPE_TO_DISLIKED_MOVIES[user_type])
 
-            scores = {}
-            for movieId in tqdm(fs.top_movies, desc=user_type, leave=False):
-                item_emb = movie_embeddings[movieId]['MOVIE_EMBEDDING_COMBINED']
-                scores[movieId] = torch.einsum('ij,ij->i', user_emb, item_emb).item()
+            raw_scores = (all_embs @ user_emb.T).squeeze(-1)
+            scores     = {all_ids[i]: raw_scores[i].item() for i in range(len(all_ids))}
 
             recs = []
             for mid, _ in sorted(scores.items(), key=lambda x: x[1], reverse=True):
@@ -506,18 +505,23 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
     print("\nBuilding movie embeddings ...")
     movie_embeddings = build_movie_embeddings(model, fs)
 
-    return model, fs, movie_embeddings
+    print("Precomputing embedding matrix ...")
+    all_ids  = list(movie_embeddings.keys())
+    all_embs = torch.cat([movie_embeddings[m]['MOVIE_EMBEDDING_COMBINED'] for m in all_ids], dim=0)
+    all_norm = F.normalize(all_embs, dim=1)
+
+    return model, fs, movie_embeddings, all_ids, all_embs, all_norm
 
 
 # ── Orchestrators ─────────────────────────────────────────────────────────────
 
 def run_canary(data_dir: str = 'data', checkpoint_path: str = None,
                version: str = 'v1') -> None:
-    model, fs, movie_embeddings = _setup(data_dir, checkpoint_path, version)
+    model, fs, movie_embeddings, all_ids, all_embs, all_norm = _setup(data_dir, checkpoint_path, version)
     if model is None:
         return
     print("\n── Canary user evaluation ──")
-    run_canary_eval(model, fs, movie_embeddings)
+    run_canary_eval(model, fs, movie_embeddings, all_ids, all_embs)
 
 
 PROBE_SIMILAR_TITLES = [
@@ -533,17 +537,12 @@ PROBE_SIMILAR_TITLES = [
 
 
 def probe_similar(movie_embeddings: dict, fs: FeatureStore,
+                  all_ids: list, all_norm: torch.Tensor,
                   titles: list, top_n: int = 5) -> None:
     """
     For each query title, find the top-N most similar movies by cosine similarity
-    on MOVIE_EMBEDDING_COMBINED.
+    on MOVIE_EMBEDDING_COMBINED. Uses pre-normalized all_norm matrix from _setup.
     """
-    # Stack all embeddings into a matrix for batched cosine similarity
-    all_ids  = list(movie_embeddings.keys())
-    all_embs = torch.cat([movie_embeddings[m]['MOVIE_EMBEDDING_COMBINED'] for m in all_ids], dim=0)
-    # Normalize rows for cosine similarity via dot product
-    all_norm = F.normalize(all_embs, dim=1)
-
     TRUNC = 28  # max chars per cell
 
     def trunc(s: str) -> str:
@@ -589,7 +588,7 @@ def probe_similar(movie_embeddings: dict, fs: FeatureStore,
 
 def run_probes(data_dir: str = 'data', checkpoint_path: str = None,
                version: str = 'v1') -> None:
-    model, fs, movie_embeddings = _setup(data_dir, checkpoint_path, version)
+    model, fs, movie_embeddings, all_ids, all_embs, all_norm = _setup(data_dir, checkpoint_path, version)
     if model is None:
         return
     print("\n── Embedding probes ──")
@@ -600,6 +599,6 @@ def run_probes(data_dir: str = 'data', checkpoint_path: str = None,
     if model.use_item_genome_tag_tower:
         probe_genome_tag(model, ['horror', 'gore', 'torture'], movie_embeddings, fs)
         probe_genome_tag(model, ['martial arts', 'kung fu'], movie_embeddings, fs)
-    probe_similar(movie_embeddings, fs, PROBE_SIMILAR_TITLES)
+    probe_similar(movie_embeddings, fs, all_ids, all_norm, PROBE_SIMILAR_TITLES)
 
 

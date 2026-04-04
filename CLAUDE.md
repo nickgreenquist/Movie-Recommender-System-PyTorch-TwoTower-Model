@@ -158,6 +158,9 @@ Three sub-embedding probes + one combined-space probe:
 ## Canary Users for Eval
 
 Use these synthetic users to quickly assess model quality after training:
+
+> **Timestamp:** canary users are synthetic and have no real watch timestamps. All canary users receive `ts_max_bin` (the most recent timestamp bin in the training data), meaning the timestamp tower sees them as current users. This is set once in `run_canary_eval` and passed to every `_build_user_embedding` call.
+
 - **Horror Lover** and **Sci-Fi Lover** — most sensitive to genre drift; if these are wrong, the model is failing
 - **Comedy Lover** and **Romance Lover** — tend to work well across all runs; good sanity checks
 - **Thriller Lover** and **Crime Lover** — stress tests for edge cases; expect imperfect results due to genre overlap
