@@ -8,21 +8,29 @@ A PyTorch Two-Tower neural network recommender system trained on the MovieLens 3
 
 ## Running the Code
 
-All code lives in Jupyter notebooks. There are no standalone scripts, Makefile, or CLI entrypoints.
+The project is a Python CLI (`main.py`). Notebooks in `jupyter/` are archived references only — the canonical code is in `src/`.
 
 ```bash
-# Start Jupyter
-jupyter notebook
-
-# Open the latest version
-# MovieLens_Two_Tower_Embedding_NN_v3_user_embedding_avg_pooling.ipynb
+python main.py preprocess      # Stage 1: raw CSVs → data/base_*.parquet
+python main.py features        # Stage 2: base parquets → data/features_*.parquet
+python main.py dataset         # Stage 3: features → data/dataset_*_v1.pt (cached tensor splits)
+python main.py train           # Stage 4: load cached splits, train, save checkpoints
+python main.py canary          # Canary user recommendations (most recent checkpoint)
+python main.py canary <path>   # Canary user recommendations (specific checkpoint)
+python main.py probe           # Embedding probes (most recent checkpoint)
+python main.py probe <path>    # Embedding probes (specific checkpoint)
+python main.py                 # Run all stages in order
 ```
 
-The notebooks run top-to-bottom. Each notebook is self-contained (data loading through inference). GPU acceleration uses Apple MPS when available (`torch.device("mps")`).
+Stages 1–3 are slow and cache results to disk. Re-run only what changed:
+- Changed raw data → rerun from `preprocess`
+- Changed feature engineering → rerun from `features`
+- Changed train/val split logic → rerun from `dataset`
+- Changed model/hyperparams only → rerun from `train` (skip 1–3)
 
 ## Dataset
 
-The `ml-32m/` directory must be present (not in git). Required files:
+The `data/ml-32m/` directory must be present (not in git). Required files:
 - `ratings.csv` — 33M rows: userId, movieId, rating, timestamp
 - `movies.csv` — 86k movies: movieId, title, genres (pipe-separated)
 - `tags.csv` — free-form user-applied tags (userId, movieId, tag, timestamp)
@@ -30,8 +38,6 @@ The `ml-32m/` directory must be present (not in git). Required files:
 - `genome-tags.csv` — curated vocabulary of ~1,128 genome tag names
 
 Only movies with **1,000+ ratings** are kept (~4,461 movies). Only users with 20–500 ratings are kept.
-
-> **Note:** The threshold was lowered from 3,000 → 1,000 ratings. Earlier architectures were unstable at this corpus size, but the current v3 architecture (rating-weighted pooling + genome tags) handles it well and produces better recommendations.
 
 ### Tag data
 
@@ -66,8 +72,6 @@ All towers use `nn.Linear → Tanh`. Weights initialized with Xavier uniform (ga
 
 ### Tower flags
 
-Three independent boolean flags in the hyperparameter cell:
-
 ```python
 USE_USER_TAG_TOWER        = False   # user tag profile (avg of watched movies' user-applied tag vectors)
 USE_ITEM_TAG_TOWER        = True    # item tower: user-applied tags (tags.csv, 306 tags)
@@ -78,37 +82,42 @@ USE_ITEM_GENOME_TAG_TOWER = True    # item tower: genome relevance scores (genom
 
 `len(user_combined) == len(item_combined)` must hold for the dot product. The model raises `ValueError` at construction if violated.
 
-- user side = `item_movieId_embedding_size + user_genre_embedding_size + timestamp_feature_embedding_size + (user_tag if enabled else 0)`
-- item side = `item_genre_embedding_size + (item_tag if enabled else 0) + (genome_tag if enabled else 0) + item_movieId_embedding_size + item_year_embedding_size`
-
-The genre towers absorb freed dims automatically:
+The genre budget absorbs freed dims automatically:
 ```python
-user_genre_embedding_size = 50 - user_tag_embedding_size
-item_genre_embedding_size = 50 - item_tag_embedding_size - item_genome_tag_embedding_size
+user_genre_embedding_size = 70 - user_tag_embedding_size
+item_genre_embedding_size = 70 - item_tag_embedding_size - item_genome_tag_embedding_size
 ```
 
-### Default embedding sizes (current)
+### Current embedding sizes (120-dim)
 
 ```python
-item_movieId_embedding_size      = 40   # fixed
-item_year_embedding_size         = 10   # fixed
-timestamp_feature_embedding_size = 10   # fixed
+item_movieId_embedding_size      = 40   # shared: user history pool + item tower
+item_year_embedding_size         = 10
+timestamp_feature_embedding_size = 10
 
-user_tag_embedding_size        = 20   # if USE_USER_TAG_TOWER else 0
+user_tag_embedding_size        = 0    # USE_USER_TAG_TOWER = False
 item_tag_embedding_size        = 15   # if USE_ITEM_TAG_TOWER else 0
-item_genome_tag_embedding_size = 25   # if USE_ITEM_GENOME_TAG_TOWER else 0
+item_genome_tag_embedding_size = 35   # if USE_ITEM_GENOME_TAG_TOWER else 0
 
-user_genre_embedding_size = 50 - user_tag_embedding_size           # = 50 (with user_tag off)
-item_genre_embedding_size = 50 - item_tag_embedding_size - item_genome_tag_embedding_size  # = 10
-# user: 40 + 50 + 10 + 0  = 100
-# item: 10 + 15 + 25 + 40 + 10 = 100  ✓
+user_genre_embedding_size = 70   # = 70 - 0
+item_genre_embedding_size = 20   # = 70 - 15 - 35
+
+# user:  40 + 70 + 10       = 120
+# item:  20 + 15 + 35 + 40 + 10 = 120  ✓
+```
+
+**Previous model (80-dim, checkpoint `best_checkpoint_20260403_210601.pth`):**
+```
+item_movieId=20, genre_budget=50, item_tag=15, genome=25
+user: 20+50+10=80 / item: 10+15+25+20+10=80
 ```
 
 ### Key implementation notes
 
-- **Shared item embedding:** `item_embedding_lookup` is shared between the item tower (target movie) and the user history avg pool. The lookup has `padding_idx = top_movies_len`.
+- **Shared item embedding:** `item_embedding_lookup` is shared between the item tower (target movie) and the user history avg pool. The lookup has `padding_idx = top_movies_len`. History pooling output size = `item_movieId_embedding_size` — they cannot be decoupled without adding a projection layer.
 - **Rating-weighted avg pool:** Each watched movie embedding is weighted by the user's debiased rating. Abs-value normalization prevents negative ratings from cancelling positive ones in the denominator.
 - **Removing `item_embedding_tower` causes severe genre clustering** — do not remove it.
+- **Tanh saturation:** Small sub-embedding spaces (genre=20, tag=15) saturate after training, causing sub-embedding cosine probes to return 1.0 for many movies. This is a known limitation. ReLU + larger dims would fix it but requires retraining.
 
 ## Training Details
 
@@ -123,54 +132,42 @@ item_genre_embedding_size = 50 - item_tag_embedding_size - item_genome_tag_embed
 
 ## Saving / Loading Models
 
-```python
-# Save (done automatically by training loop)
-torch.save(model.state_dict(), 'saved_models/best_checkpoint_{run_timestamp}.pth')
+Checkpoints are weights-only (`~1MB`). The `saved_models/` directory is gitignored.
 
-# Load — must instantiate model with same flags and sizes as when it was saved
-model = MovieRecommender(
-    genres_len=len(genres),
-    tags_len=len(final_movie_tags),
-    genome_tags_len=len(final_movie_genome_tags),
-    top_movies_len=len(top_movies),
-    all_years_len=len(year_to_num_movies),
-    timestamp_num_bins=timestamp_num_bins,
-    user_context_size=user_context_size,
-    item_genre_embedding_size=item_genre_embedding_size,
-    item_tag_embedding_size=item_tag_embedding_size,
-    item_genome_tag_embedding_size=item_genome_tag_embedding_size,
-    item_movieId_embedding_size=item_movieId_embedding_size,
-    item_year_embedding_size=item_year_embedding_size,
-    user_genre_embedding_size=user_genre_embedding_size,
-    user_tag_embedding_size=user_tag_embedding_size,
-    timestamp_feature_embedding_size=timestamp_feature_embedding_size,
-    use_user_tag_tower=USE_USER_TAG_TOWER,
-    use_item_tag_tower=USE_ITEM_TAG_TOWER,
-    use_item_genome_tag_tower=USE_ITEM_GENOME_TAG_TOWER,
-)
-model.load_state_dict(torch.load(PATH, weights_only=True))
-model.eval()
+```bash
+python main.py canary saved_models/best_checkpoint_<timestamp>.pth
+python main.py probe  saved_models/best_checkpoint_<timestamp>.pth
 ```
 
-Checkpoints are weights-only (~500–600KB). The `saved_models/` directory is gitignored.
+The evaluate setup loads the checkpoint first (fast, ~1MB), then features (slow). If the checkpoint is invalid it fails immediately before the slow features load.
 
-## Notebook Versions
+## Embedding Probes (`python main.py probe`)
 
-| Notebook | Description |
-|---|---|
-| `MovieLens_Two_Tower_Embedding_NN.ipynb` | v1 — raw tensor ops, no nn.Module |
-| `MovieLens_Two_Tower_Embedding_NN-v2.ipynb` | v2 — refactored to nn.Module, adds tags/year/timestamp features |
-| `MovieLens_Two_Tower_Embedding_NN_v3_user_embedding_avg_pooling.ipynb` | **v3 (latest)** — rating-weighted avg pooling over watch history embeddings, genome tag tower |
+Three sub-embedding probes + one combined-space probe:
 
-The key v3 innovation: user watch history is represented as the **rating-weighted mean of watched movie embeddings** (with padding mask). Each movie embedding is weighted by the user's debiased rating (abs-value normalized). This is more expressive and handles variable-length histories naturally.
+**`probe_genre(genre)`** — one-hot genre vector → `item_genre_tower` → cosine vs all `MOVIE_GENRE_EMBEDDING`. Shows what the item genre embedding space learned. Scores near 1.0 indicate Tanh saturation (embedding space too small).
 
-## Known Issues
+**`probe_tag(tags)`** — tag vector → `item_tag_tower` → cosine vs all `MOVIE_TAG_EMBEDDING`. Default query: `['pixar', 'animation']`.
 
-- **Fantasy Lover** drifts to arthouse/surreal films (Stalker, Wings of Desire, City of Lost Children) — persistent open problem
-- **Sci-Fi Lover** drifts to "cerebral/surreal" cluster (Videodrome, Eraserhead, Naked Lunch) — prestige sci-fi shares too many signals with arthouse cinema
-- **War Lover** drifts to epic adventure/blockbuster (Star Wars, Dark Knight) — structural issue with "acclaimed serious film" cluster
-- **Thriller Lover** drifts to disaster/action movies — Thriller genre is too broad to separate psychological from action-thriller
-- **Crime Lover** drifts to comedy — Pulp Fiction and Fargo carry Comedy genre tag which dominates
+**`probe_genome_tag(genome_tags)`** — finds top-k_anchors most representative movies by raw genome score, averages their `MOVIE_GENOME_TAG_EMBEDDING` as query, cosine vs all `MOVIE_GENOME_TAG_EMBEDDING`. Seeds are marked `[seed]` in output. Avoids synthetic OOD inputs. Default queries: `['horror', 'gore', 'torture']` and `['martial arts', 'kung fu']`.
+
+**`probe_similar(titles)`** — computes pairwise cosine similarity on `MOVIE_EMBEDDING_COMBINED` (full 120-dim space). Most reliable probe — uses the space the model actually optimizes. Output is a table: seed title | top-1 | top-2 | ... | top-5.
+
+> **Note on genome tag probing:** Genome scores are dense (0–1, nearly every movie has non-zero scores for most tags). Synthetic 0-filled vectors are OOD for the genome tower. The anchor approach avoids this by using real movie embeddings as the query.
+
+## Canary Users for Eval
+
+Use these synthetic users to quickly assess model quality after training:
+- **Horror Lover** and **Sci-Fi Lover** — most sensitive to genre drift; if these are wrong, the model is failing
+- **Comedy Lover** and **Romance Lover** — tend to work well across all runs; good sanity checks
+- **Thriller Lover** and **Crime Lover** — stress tests for edge cases; expect imperfect results due to genre overlap
+
+### Known persistent issues (as of 120-dim model)
+
+- **Fantasy Lover** drifts to arthouse/surreal (Howl's Moving Castle is correct; Brazil, Dark City, After Hours are not)
+- **Sci-Fi Lover** drifts to arthouse/cult (Videodrome, Naked Lunch, Blue Velvet) — prestige sci-fi shares genome signals with surreal cinema
+- **War Lover** drifts to epic/action (LotR, Matrix, Doctor Strange) — "acclaimed serious film" cluster
+- **Thriller Lover** drifts to horror/action (Saw series, Final Destination) — Thriller genre too broad
 - Removing `item_embedding_tower` causes severe genre clustering — do not remove it
 
 ## Future User Tower Improvements
@@ -184,13 +181,29 @@ Roughly ordered by implementation cost:
 5. **Short-term vs. long-term history** — two pooled embeddings (e.g., last 10 vs. all history) concatenated
 6. **Transformer over history** — replace avg pooling with a small Transformer encoder; `[CLS]` token becomes the history embedding
 
+## Richer Cross-Signal Features to Explore
+
+The key insight: when two signals are concatenated into the **same tower**, the linear layer can learn cross-term interactions between them. This is more powerful than separate towers, which can only learn each signal independently.
+
+### User side — additions to the genre context tower
+
+Currently the genre context tower takes `[avg_debiased_rating_per_genre | watch_frac_per_genre]` (2 × n_genres). Good candidates to add alongside:
+
+- **Rating variance per genre** — `high watch + high avg + low variance` = genuine fan; `high watch + low avg + high variance` = casual/completionist watcher.
+- **Recency weight per genre** — fraction of the user's *last N* watches that were genre X, alongside the all-time fraction.
+
+### Item side — cross-signal tower opportunities
+
+- **Genre + year in the same tower** — genre conventions change drastically by decade. Currently year and genre are completely separate towers with no interaction — directly attacks era confusion in recommendations.
+- **Genre + genome tags in the same tower** — genre labels are coarse (20 categories); genome tags are 1128 fine-grained signals. Cross-learning discovers sub-genres.
+- **Global avg rating + genre** (new feature, not currently used) — highly-rated Drama is fundamentally different from low-rated Drama. Directly attacks the War/Drama clustering problem.
+
+### Priority
+
+1. **Genre + year (item side)** — directly attacks era confusion, low implementation cost
+2. **Rating variance (user side)** — sharpens genre signals by distinguishing fans from casual watchers
+3. **Genre + genome tags (item side)** — highest potential impact but requires merging two large input spaces
+
 ## Git Workflow
 
 Never commit and push in the same command. Always commit first, then ask before pushing.
-
-## Canary Users for Eval
-
-Use these synthetic users to quickly assess model quality after training:
-- **Horror Lover** and **Sci-Fi Lover** — most sensitive to genre drift; if these are wrong, the model is failing
-- **Comedy Lover** and **Romance Lover** — tend to work well across all runs; good sanity checks
-- **Thriller Lover** and **Crime Lover** — stress tests for edge cases; expect imperfect results due to genre overlap
