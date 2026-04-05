@@ -8,17 +8,21 @@ Requires:     serving/model.pth
 
 Generate serving/ with: python main.py export
 """
+import importlib
 import numpy as np
 import pandas as pd
 import streamlit as st
 import torch
 import torch.nn.functional as F
 
+import src.evaluate
+importlib.reload(src.evaluate)
 from src.evaluate import (
     USER_TYPE_TO_FAVORITE_GENRES,
     USER_TYPE_TO_WORST_GENRES,
     USER_TYPE_TO_FAVORITE_MOVIES,
     USER_TYPE_TO_DISLIKED_MOVIES,
+    USER_TYPE_TO_GENOME_TAGS,
 )
 from src.model import MovieRecommender
 
@@ -236,32 +240,23 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference):
         st.session_state['rec_liked_genres']    = USER_TYPE_TO_FAVORITE_GENRES[profile]
         st.session_state['rec_disliked_genres'] = USER_TYPE_TO_WORST_GENRES[profile]
 
-    col1, col2 = st.columns(2)
-    liked_titles    = col1.multiselect("Favorite Movies 😊", all_titles, key='rec_liked')
-    disliked_titles = col2.multiselect("Least Favorite Movies 🤮", all_titles, key='rec_disliked')
+    liked_titles = st.multiselect("Favorite Movies 😊", all_titles, key='rec_liked')
+    liked_genres = st.multiselect("Favorite Genres 😊", genres, key='rec_liked_genres')
 
-    col3, col4 = st.columns(2)
-    liked_genres    = col3.multiselect("Favorite Genres 😊", genres, key='rec_liked_genres')
-    disliked_genres = col4.multiselect("Least Favorite Genres 🤮", genres, key='rec_disliked_genres')
+    with st.expander("Exclude what you don't like (optional)"):
+        col1, col2 = st.columns(2)
+        disliked_titles = col1.multiselect("Least Favorite Movies 🤮", all_titles, key='rec_disliked')
+        disliked_genres = col2.multiselect("Least Favorite Genres 🤮", genres, key='rec_disliked_genres')
 
     with st.expander("Refine by Genome Tags (optional)"):
 
         st.caption(
             "Select content descriptors — tones, themes, settings, cultural touchstones "
             "(e.g. 'atmospheric', 'cyberpunk', 'world war ii'). "
-            "The 3 most representative movies for these tags will be added as implicit likes."
+            "The 5 most representative movies for these tags will be added as implicit likes."
         )
         genome_tag_names     = sorted(fs['genome_tag_names'][tid] for tid in fs['genome_tag_names'])
         selected_genome_tags = st.multiselect("Genome tags", genome_tag_names, key='rec_genome_tags')
-
-    with st.expander("Example Profiles — click one to pre-fill the form"):
-        cols_per_row = 3
-        for i in range(0, len(EXAMPLE_PROFILES), cols_per_row):
-            cols = st.columns(cols_per_row)
-            for col, name in zip(cols, EXAMPLE_PROFILES[i:i + cols_per_row]):
-                if col.button(name, use_container_width=True):
-                    st.session_state['_load_profile'] = name
-                    st.rerun()
 
     st.markdown("""
         <style>
@@ -322,6 +317,80 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference):
             ))
         df = _score_movies(user_emb, all_ids, all_embs, fs,
                            exclude_titles=liked_titles + disliked_titles)
+        st.dataframe(df, use_container_width=True, hide_index=True)
+
+
+# ── Tab: Recommend (Examples) ─────────────────────────────────────────────────
+
+def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference):
+    st.caption("Click a pre-built user profile to instantly see what the model recommends for that taste.")
+    selected_profile = st.session_state.get('examples_profile', None)
+    cols_per_row = 3
+    for i in range(0, len(EXAMPLE_PROFILES), cols_per_row):
+        cols = st.columns(cols_per_row)
+        for col, name in zip(cols, EXAMPLE_PROFILES[i:i + cols_per_row]):
+            label = f"▶ {name}" if name == selected_profile else name
+            if col.button(label, use_container_width=True):
+                st.session_state['examples_profile'] = name
+                st.rerun()
+
+    if selected_profile:
+        fav_movies   = USER_TYPE_TO_FAVORITE_MOVIES[selected_profile]
+        dis_movies   = USER_TYPE_TO_DISLIKED_MOVIES[selected_profile]
+        fav_genres   = USER_TYPE_TO_FAVORITE_GENRES[selected_profile]
+        worst_genres = USER_TYPE_TO_WORST_GENRES[selected_profile]
+        genome_tags  = USER_TYPE_TO_GENOME_TAGS.get(selected_profile, [])
+
+        # For genome-driven profiles, compute anchor movies from tags
+        anchor_tag_title_pairs = []
+        if genome_tags:
+            name_to_idx = {
+                fs['genome_tag_names'][tid]: fs['genome_tag_to_i'][tid]
+                for tid in fs['genome_tag_to_i']
+            }
+            seen_titles = set()
+            for tag in genome_tags:
+                if tag not in name_to_idx:
+                    continue
+                tag_idx = name_to_idx[tag]
+                sorted_mids = sorted(
+                    fs['top_movies'],
+                    key=lambda mid: float(fs['movieId_to_genome_tag_context'][mid][tag_idx]),
+                    reverse=True,
+                )
+                count = 0
+                for mid in sorted_mids:
+                    if count >= _ANCHORS_PER_TAG:
+                        break
+                    title = fs['movieId_to_title'][mid]
+                    if title not in seen_titles:
+                        anchor_tag_title_pairs.append((tag, title))
+                        seen_titles.add(title)
+                        count += 1
+
+        liked_with_weights = (
+            [(t, _LIKED_MOVIE)  for t in fav_movies] +
+            [(t, _ANCHOR_MOVIE) for _, t in anchor_tag_title_pairs]
+        )
+
+        # Debug: report any fav_movies that didn't resolve to a corpus title
+        missing = [t for t in fav_movies if t not in fs['title_to_movieId']]
+        if missing:
+            st.warning("⚠️ Not found in corpus (check title format): " + ", ".join(missing))
+
+        with torch.no_grad():
+            user_emb = _build_user_embedding(
+                model, fs, liked_with_weights, dis_movies,
+                fav_genres, worst_genres, ts_inference,
+            )
+        if anchor_tag_title_pairs:
+            st.caption("Genome anchors — " + " · ".join(
+                f"{tag}: {title}" for tag, title in anchor_tag_title_pairs
+            ))
+        df = _score_movies(user_emb, all_ids, all_embs, fs,
+                           exclude_titles=fav_movies + dis_movies +
+                                          [t for _, t in anchor_tag_title_pairs])
+        st.subheader(f"Recommendations for: {selected_profile}")
         st.dataframe(df, use_container_width=True, hide_index=True)
 
 
@@ -416,7 +485,7 @@ def tab_explore_genome(model, me, fs):
         "Select genome tags to describe what you're looking for — genres, tones, themes, "
         "settings, time periods, plot elements, or cultural touchstones "
         "(e.g. 'atmospheric', 'cyberpunk', 'world war ii', 'studio ghibli'). "
-        "The model anchors on the 3 most representative movies for those tags, "
+        "The model anchors on the 5 most representative movies for those tags, "
         "then finds similar movies in the genome embedding space."
     )
     genome_tag_names = sorted(fs['genome_tag_names'][tid] for tid in fs['genome_tag_names'])
@@ -607,12 +676,15 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-recommend_tab, similar_tab, genres_tab, genome_tab, about_tab = st.tabs(
-    ["Recommend", "Similar", "Genres", "Genome", "About"]
+recommend_tab, examples_tab, similar_tab, genres_tab, genome_tab, about_tab = st.tabs(
+    ["Recommend", "Examples", "Similar", "Genres", "Genome", "About"]
 )
 
 with recommend_tab:
     tab_recommend(model, fs, all_ids, all_embs, ts_inference)
+
+with examples_tab:
+    tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference)
 
 with similar_tab:
     tab_similar(me, fs, all_ids, all_norm)

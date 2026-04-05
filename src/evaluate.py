@@ -19,29 +19,47 @@ from src.train import build_model, get_config, print_model_summary
 # ── Canary user definitions ───────────────────────────────────────────────────
 
 USER_TYPE_TO_FAVORITE_GENRES = {
-    'Fantasy Lover':          ['Fantasy'],
-    "Children's Movie Lover": ['Children'],
-    'Horror Lover':           ['Horror'],
-    'Sci-Fi Lover':           ['Sci-Fi'],
-    'Comedy Lover':           ['Comedy'],
-    'Romance Lover':          ['Romance'],
-    'War Movie Lover':        ['War'],
-    'Thriller Lover':         ['Thriller'],
-    'Crime Lover':            ['Crime'],
+    'Fantasy Lover':           ['Fantasy'],
+    "Children's Movie Lover":  ['Children'],
+    'Horror Lover':            ['Horror'],
+    'Sci-Fi Lover':            ['Sci-Fi'],
+    'Comedy Lover':            ['Comedy'],
+    'Romance Lover':           ['Romance'],
+    'War Movie Lover':         ['War'],
+    'Thriller Lover':          ['Thriller'],
+    'Crime Lover':             ['Crime'],
+    'Heist Lover':             [],
+    'Action Junkie':           [],
+    'Arthouse Lover':          [],
+    'Superhero Lover':         [],
+    'WW2 Lover':               [],
+    'Sports Lover':            [],
+    'Western Lover':           [],
+    'Anime Lover':             [],
+    'Martial Arts Lover':      [],
     'Myself': ['Fantasy', 'War', 'Horror', 'Drama', 'Action'],
 }
 
 USER_TYPE_TO_WORST_GENRES = {
-    'Fantasy Lover':          ['Horror', 'Children'],
-    "Children's Movie Lover": ['Horror', 'Romance', 'Drama', 'Action'],
-    'Horror Lover':           ['Children'],
-    'Sci-Fi Lover':           ['Romance', 'Children'],
-    'Comedy Lover':           ['Children'],
-    'Romance Lover':          ['Children', 'Horror'],
-    'War Movie Lover':        ['Children'],
-    'Thriller Lover':         ['Children', 'Comedy'],
-    'Crime Lover':            ['Children', 'Fantasy', 'Romance', 'Comedy'],
-    'Myself':                 ['Romance'],
+    'Fantasy Lover':           ['Horror', 'Children'],
+    "Children's Movie Lover":  ['Horror', 'Romance', 'Drama', 'Action'],
+    'Horror Lover':            ['Children'],
+    'Sci-Fi Lover':            ['Romance', 'Children'],
+    'Comedy Lover':            ['Children'],
+    'Romance Lover':           ['Children', 'Horror'],
+    'War Movie Lover':         ['Children'],
+    'Thriller Lover':          ['Children', 'Comedy'],
+    'Crime Lover':             ['Children', 'Fantasy', 'Romance', 'Comedy'],
+    'Heist Lover':             [],
+    'Action Junkie':           [],
+    'Arthouse Lover':          [],
+    'Superhero Lover':         [],
+    'WW2 Lover':               [],
+    'Sports Lover':            [],
+    'Western Lover':           [],
+    'Anime Lover':             [],
+    'Martial Arts Lover':      [],
+    'Myself':                  ['Romance'],
 }
 
 USER_TYPE_TO_FAVORITE_MOVIES = {
@@ -53,15 +71,10 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'Hobbit: An Unexpected Journey, The (2012)',
     ],
     "Children's Movie Lover": [
-        'Toy Story 2 (1999)', 'Finding Nemo (2003)', 'Monsters, Inc. (2001)',
-        'Toy Story (1995)', 'Lion King, The (1994)', 'Shrek (2001)',
-        'Babe (1995)', "Charlotte's Web (1973)", 'Road to El Dorado, The (2000)',
+        'Toy Story 2 (1999)', 'Finding Nemo (2003)',
     ],
     'Horror Lover': [
-        'Blair Witch Project, The (1999)', 'Silence of the Lambs, The (1991)',
-        'Shining, The (1980)', "Rosemary's Baby (1968)", 'Halloween (1978)',
-        'Get Out (2017)', 'Psycho (1960)', 'Birds, The (1963)',
-        'Poltergeist (1982)', 'Nightmare on Elm Street, A (1984)',
+        'Blair Witch Project, The (1999)'
     ],
     'Sci-Fi Lover': [
         'Matrix, The (1999)', 'Terminator, The (1984)', '2001: A Space Odyssey (1968)',
@@ -75,15 +88,12 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
     'Comedy Lover': [
         'American Pie (1999)', 'Dumb & Dumber (Dumb and Dumber) (1994)',
         'Big Lebowski, The (1998)', 'Monty Python and the Holy Grail (1975)',
-        'Airplane! (1980)', 'Spaceballs (1987)', "Ferris Bueller's Day Off (1986)",
-        'Clerks (1994)', 'Office Space (1999)',
-        "Monty Python's Life of Brian (1979)",
+        'Airplane! (1980)', 'Spaceballs (1987)'
     ],
     'Romance Lover': [
         'Shakespeare in Love (1998)', 'Sense and Sensibility (1995)',
         'When Harry Met Sally... (1989)', 'Sleepless in Seattle (1993)',
-        'Notting Hill (1999)', 'Four Weddings and a Funeral (1994)',
-        'Annie Hall (1977)', 'Casablanca (1942)', 'Jerry Maguire (1996)',
+        'Notting Hill (1999)'
     ],
     'War Movie Lover': [
         'Saving Private Ryan (1998)', 'Apocalypse Now (1979)',
@@ -103,6 +113,15 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'L.A. Confidential (1997)', 'Departed, The (2006)',
         'Scarface (1983)', 'Casino (1995)',
     ],
+    'Heist Lover':         ['Heist (2001)', 'Ocean\'s Eleven (2001)'],
+    'Action Junkie':       ['Die Hard 2 (1990)'],
+    'Arthouse Lover':      ['The Lobster (2015)'],
+    'Superhero Lover':     ['Guardians of the Galaxy (2014)'],
+    'WW2 Lover':           ['Stalingrad (1993)', 'Run Silent Run Deep (1958)', 'Great Escape, The (1963)'],
+    'Sports Lover':        ['Miracle (2004)', 'Coach Carter (2005)'],
+    'Western Lover':       ['True Grit (1969)', 'High Plains Drifter (1973)', 'Unforgiven (1992)', 'Cool Hand Luke (1967)'],
+    'Anime Lover':         ['Princess Mononoke (Mononoke-hime) (1997)', 'Howl\'s Moving Castle (Hauru no ugoku shiro) (2004)'],
+    'Martial Arts Lover':  ['Ong-Bak: The Thai Warrior (Ong Bak) (2003)', 'Ip Man (2008)'],
     'Myself': [
         'Lord of the Rings: The Fellowship of the Ring, The (2001)',
         'Lord of the Rings: The Return of the King, The (2003)',
@@ -157,7 +176,28 @@ USER_TYPE_TO_DISLIKED_MOVIES = {
         'Lord of the Rings: The Fellowship of the Ring, The (2001)',
         'Casablanca (1942)', 'Pretty Woman (1990)',
     ],
+    'Heist Lover':         [],
+    'Action Junkie':       ['Friday the 13th Part VI: Jason Lives (1986)', 'Friday the 13th (1980)'],
+    'Arthouse Lover':      [],
+    'Superhero Lover':     ['Twilight (2008)', 'Twilight Saga: New Moon, The (2009)', 'Twilight Saga: Eclipse, The (2010)'],
+    'WW2 Lover':           ['Fifty Shades of Grey (2015)', 'Twilight (2008)', 'Piper (2016)', 'Planet Earth II (2016)', 'Shawshank Redemption, The (1994)', '12 Angry Men (1957)', 'Girl Who Kicked the Hornet\'s Nest, The (Luftslottet som sprängdes) (2009)'],
+    'Sports Lover':        ['Fifty Shades of Grey (2015)', 'Hidden Figures (2016)', 'Beverly Hills Cop (1984)', 'Time to Kill, A (1996)'],
+    'Western Lover':       ['Akira (1988)'],
+    'Anime Lover':         [],
+    'Martial Arts Lover':  [],
     'Myself': [],
+}
+
+USER_TYPE_TO_GENOME_TAGS = {
+    'Heist Lover':           ['heist', 'con artist'],
+    'Action Junkie':         ['explosions', 'adrenaline'],
+    'Arthouse Lover':        ['art house', 'slow burn'],
+    'Superhero Lover':       ['superhero', 'superheroes'],
+    'WW2 Lover':             ['world war ii', 'wwii'],
+    'Sports Lover':          ['sports', 'football', 'baseball'],
+    'Western Lover':         ['spaghetti western', 'gunfight'],
+    'Anime Lover':           ['japanese animation', 'studio ghibli'],
+    'Martial Arts Lover':    ['matial arts', 'kung fu', 'fight scenes'],
 }
 
 VALUE_FAVORITE_GENRE_RATING = 4.0
