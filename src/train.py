@@ -25,19 +25,21 @@ def get_config() -> dict:
     # history pooling uses the shared item_embedding_lookup, so its output dim
     # equals this value. They cannot be set independently.
     item_movieId_embedding_size      = 40
-    item_year_embedding_size         = 10
-    timestamp_feature_embedding_size = 10
-    item_tag_embedding_size          = 15
-    item_genome_tag_embedding_size   = 35   # also controls user genome tag embedding size (shared embedding)
-    user_genome_tag_embedding_size   = 35
-    user_genre_embedding_size        = 35
+    item_year_embedding_size         = 5
+    timestamp_feature_embedding_size = 5
+    item_tag_embedding_size          = 10
+    # item_genome_tag_embedding_size also controls the user genome pool embedding size:
+    # genome pooling uses the shared item_genome_tag_tower, so its output dim
+    # equals this value. They cannot be set independently.
+    item_genome_tag_embedding_size   = 35
+    user_genre_embedding_size        = 30
     item_genre_embedding_size        = 20
 
-    user_total = item_movieId_embedding_size + user_genome_tag_embedding_size + user_genre_embedding_size + timestamp_feature_embedding_size
+    user_total = item_movieId_embedding_size + item_genome_tag_embedding_size + user_genre_embedding_size + timestamp_feature_embedding_size
     item_total = item_genre_embedding_size + item_tag_embedding_size + item_genome_tag_embedding_size + item_movieId_embedding_size + item_year_embedding_size
     assert user_total == item_total, (
         f"Tower size mismatch — user={user_total} "
-        f"(history={item_movieId_embedding_size} + genome={user_genome_tag_embedding_size} + genre={user_genre_embedding_size} + ts={timestamp_feature_embedding_size}), "
+        f"(history={item_movieId_embedding_size} + genome={item_genome_tag_embedding_size} + genre={user_genre_embedding_size} + ts={timestamp_feature_embedding_size}), "
         f"item={item_total} "
         f"(genre={item_genre_embedding_size} + tag={item_tag_embedding_size} + genome={item_genome_tag_embedding_size} + movieId={item_movieId_embedding_size} + year={item_year_embedding_size})"
     )
@@ -49,7 +51,6 @@ def get_config() -> dict:
         'timestamp_feature_embedding_size': timestamp_feature_embedding_size,
         'item_tag_embedding_size':          item_tag_embedding_size,
         'item_genome_tag_embedding_size':   item_genome_tag_embedding_size,
-        'user_genome_tag_embedding_size':   user_genome_tag_embedding_size,
         'user_genre_embedding_size':        user_genre_embedding_size,
         'item_genre_embedding_size':        item_genre_embedding_size,
         # Training
@@ -113,8 +114,8 @@ def print_model_summary(model: MovieRecommender) -> None:
 
     print(f"\n── Model dimensions ──")
     print(f"  User side:  history({history_dim}) + genome({genome_dim}) + genre({genre_dim}) + ts({ts_dim})  =  {user_total}")
-    print(f"  Item side:  genre({item_genre_dim}) + tag({item_tag_dim}) + genome({genome_tag_dim})"
-          f" + movieId({item_movieId_dim}) + year({year_dim})  =  {item_total}")
+    print(f"  Item side:  movieId({item_movieId_dim}) + genome({genome_tag_dim}) + genre({item_genre_dim})"
+          f" + tag({item_tag_dim}) + year({year_dim})  =  {item_total}")
     print(f"  Parameters: {n_params:,}")
 
 
