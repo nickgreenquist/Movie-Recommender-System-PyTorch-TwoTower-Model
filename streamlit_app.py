@@ -538,6 +538,33 @@ never existed when the model was trained.
 # ── Layout ────────────────────────────────────────────────────────────────────
 
 st.set_page_config(page_title="Movie Recommender", layout="wide")
+st.markdown("""
+    <style>
+    div[data-testid="stTabs"] > div:first-child {
+        overflow-x: auto;
+        white-space: nowrap;
+        flex-wrap: nowrap;
+    }
+    /* Prevent any content from causing horizontal page overflow on mobile */
+    .main .block-container {
+        overflow-x: hidden;
+        max-width: 100%;
+    }
+    table {
+        display: block;
+        overflow-x: auto;
+        max-width: 100%;
+    }
+    div[data-testid="stDataFrame"] {
+        overflow-x: auto;
+        max-width: 100%;
+    }
+    div[data-testid="stCaptionContainer"] p {
+        word-break: break-word;
+        white-space: normal;
+    }
+    </style>
+""", unsafe_allow_html=True)
 st.title("Movie Recommender")
 model, fs, me, all_ids, all_embs, all_norm, ts_inference = load_artifacts()
 
@@ -547,7 +574,7 @@ st.markdown(
 )
 
 recommend_tab, similar_tab, genres_tab, genome_tab, about_tab = st.tabs(
-    ["Movie Recommendations for You", "Explore Similar Movies", "Explore Genres", "Explore Genome Tags", "About"]
+    ["Recommend", "Similar", "Genres", "Genome", "About"]
 )
 
 with recommend_tab:
