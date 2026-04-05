@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 import torch
-from tqdm import tqdm
 
 
 TIMESTAMP_NUM_BINS = 1_500
@@ -240,6 +239,7 @@ def build_dataset(users: list, fs: FeatureStore) -> tuple:
     target_movieId_year            = []
     Y                              = []
 
+    from tqdm import tqdm
     for user in tqdm(users, desc="Collecting samples"):
         for movieId, rating in fs.user_to_movie_to_rating_LABEL[user].items():
             movieId = int(movieId)
