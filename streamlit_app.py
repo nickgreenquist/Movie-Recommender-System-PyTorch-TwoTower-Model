@@ -391,22 +391,37 @@ def tab_explore_genome(model, me, fs):
             st.warning("Select at least one genome tag.")
             return
 
+        ANCHORS_PER_TAG = 3
         name_to_idx = {
             fs['genome_tag_names'][tid]: fs['genome_tag_to_i'][tid]
             for tid in fs['genome_tag_to_i']
         }
-        raw_scores = {
-            mid: sum(
-                float(fs['movieId_to_genome_tag_context'][mid][name_to_idx[t]])
-                for t in selected_tags if t in name_to_idx
+        anchor_tag_title_pairs = []
+        seen_titles = set()
+        for tag in selected_tags:
+            if tag not in name_to_idx:
+                continue
+            tag_idx     = name_to_idx[tag]
+            sorted_mids = sorted(
+                fs['top_movies'],
+                key=lambda mid: float(fs['movieId_to_genome_tag_context'][mid][tag_idx]),
+                reverse=True,
             )
-            for mid in fs['top_movies']
-        }
-        anchors   = sorted(raw_scores, key=raw_scores.get, reverse=True)[:3]
-        query_emb = torch.stack([
-            me[m]['MOVIE_GENOME_TAG_EMBEDDING'].view(-1) for m in anchors
+            count = 0
+            for mid in sorted_mids:
+                if count >= ANCHORS_PER_TAG:
+                    break
+                title = fs['movieId_to_title'][mid]
+                if title not in seen_titles:
+                    anchor_tag_title_pairs.append((tag, mid, title))
+                    seen_titles.add(title)
+                    count += 1
+
+        anchor_mids = [mid for _, mid, _ in anchor_tag_title_pairs]
+        anchor_set  = set(anchor_mids)
+        query_emb   = torch.stack([
+            me[m]['MOVIE_GENOME_TAG_EMBEDDING'].view(-1) for m in anchor_mids
         ]).mean(dim=0)
-        anchor_set = set(anchors)
 
         sims = {
             mid: F.cosine_similarity(
@@ -426,8 +441,8 @@ def tab_explore_genome(model, me, fs):
             for mid, s in sorted(sims.items(), key=lambda x: x[1], reverse=True)[:20]
         ]
         st.caption(
-            "Anchored on: "
-            + " · ".join(fs['movieId_to_title'][m] for m in anchors)
+            "Genome anchors — "
+            + " · ".join(f"{tag}: {title}" for tag, _, title in anchor_tag_title_pairs)
         )
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
