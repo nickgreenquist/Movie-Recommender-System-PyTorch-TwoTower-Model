@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A PyTorch Two-Tower neural network recommender system trained on the MovieLens 32M dataset. The model predicts ratings via dot product of user and item embeddings. There is no user ID embedding — users are represented entirely by their watch history (rating-weighted avg pooling of movie embeddings), genre affinity, and tag signals. This makes the model cold-start-friendly and generalizable to new users.
+A PyTorch Two-Tower neural network recommender system trained on the MovieLens 32M dataset. The model predicts ratings via dot product of user and item embeddings.
+
+**Critical design choice: no user ID embedding.** Most recommender tutorials embed unique user IDs, which means inference is only possible for users seen during training. A new user has no embedding — the only options are full retraining, partial fine-tuning, or proxying to a similar existing user. This model deliberately avoids that trap. Users are represented entirely by their taste signals: watch history (rating-weighted avg pooling of movie embeddings), genre affinity, genome content pooling, and timestamp. Any user can be represented at inference time as long as you have even a few movies they liked — no retraining required. This makes the model production-friendly and eliminates user-level cold start.
 
 ## Running the Code
 
@@ -83,9 +85,8 @@ item_movieId_embedding_size      = 40   # shared: user history pool + item tower
 item_year_embedding_size         = 10
 timestamp_feature_embedding_size = 10
 item_tag_embedding_size          = 15
-item_genome_tag_embedding_size   = 35   # shared: item tower + user genome pool
-user_genome_tag_embedding_size   = 35   # = item_genome_tag_embedding_size (shared tower)
-user_genre_embedding_size        = 35   # = 70 - user_genome_tag_embedding_size
+item_genome_tag_embedding_size   = 35   # shared: item tower + user genome pool (cannot be set independently)
+user_genre_embedding_size        = 35
 item_genre_embedding_size        = 20   # = 70 - item_tag_embedding_size - item_genome_tag_embedding_size
 
 # user:  40 + 35 + 35 + 10       = 120
