@@ -9,7 +9,6 @@ import os
 import re
 
 import pandas as pd
-from tqdm import tqdm
 
 
 # ── Constants ────────────────────────────────────────────────────────────────
@@ -170,6 +169,7 @@ def split_user_history(dfs: dict, top_movies: list) -> tuple:
     label_rows  = []
     too_few = too_many = 0
 
+    from tqdm import tqdm
     for _, row in tqdm(df_agg.iterrows(), total=len(df_agg), desc="Splitting user histories"):
         n = len(row['movieId'])
         if n < MIN_RATINGS_PER_USER:
@@ -215,6 +215,7 @@ def _build_movie_tag_counts(dfs: dict, top_movies: list, vocab_df: pd.DataFrame)
 
     # movieId → {tag: count}
     tag_counts: dict = {}
+    from tqdm import tqdm
     for _, row in tqdm(df_tags.iterrows(), total=len(df_tags), desc="Building movie tag counts"):
         mid = int(row['movieId'])
         if mid not in top_movies_set:

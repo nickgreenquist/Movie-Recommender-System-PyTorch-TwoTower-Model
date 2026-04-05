@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from tqdm import tqdm
 
 
 FEATURES_VERSION = 'v1'
@@ -76,6 +75,7 @@ def build_movie_features(base: dict, vocab: dict) -> pd.DataFrame:
     movieId_to_genres = {int(r['movieId']): r['genres'] for _, r in movies_df.iterrows()}
 
     # Per-movie tag context
+    from tqdm import tqdm
     movieId_to_tag_ctx = {}
     for _, row in tqdm(movie_tags_df.iterrows(), total=len(movie_tags_df), desc="Movie tag contexts"):
         mid   = int(row['movieId'])
@@ -208,6 +208,7 @@ def build_user_features(base: dict, movie_df: pd.DataFrame, vocab: dict) -> pd.D
     watch_by_user = {int(r['userId']): r for _, r in watch_agg.iterrows()}
     label_by_user = {int(r['userId']): r for _, r in label_agg.iterrows()}
 
+    from tqdm import tqdm
     rows = []
     for uid in tqdm(all_uids, desc="User features"):
         uid     = int(uid)
