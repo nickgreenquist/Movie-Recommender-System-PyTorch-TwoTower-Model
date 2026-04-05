@@ -10,8 +10,6 @@ from datetime import datetime
 
 import numpy as np
 import torch
-from tqdm import tqdm
-
 from src.dataset import FeatureStore, pad_history_batch, pad_history_ratings_batch
 from src.model import MovieRecommender
 
@@ -162,6 +160,7 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
     print(f"\nStarting training loop  ({training_steps:,} steps) ...")
     start = time.time()
 
+    from tqdm import tqdm
     pbar = tqdm(range(training_steps), desc="Training")
     for i in pbar:
         is_val = (i % log_every == 0)
