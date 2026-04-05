@@ -11,8 +11,6 @@ from itertools import zip_longest
 import numpy as np
 import torch
 import torch.nn.functional as F
-from tqdm import tqdm
-
 from src.dataset import FeatureStore
 from src.model import MovieRecommender
 from src.train import build_model, get_config, print_model_summary
