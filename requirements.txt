@@ -1,0 +1,4 @@
+torch==2.9.1
+streamlit==1.56.0
+pandas==2.3.3
+numpy==2.3.5
