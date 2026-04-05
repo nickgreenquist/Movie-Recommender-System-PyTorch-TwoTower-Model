@@ -30,6 +30,12 @@ _LIKED_MOVIE    =  2.0
 _DISLIKED_MOVIE = -2.0
 _LIKED_GENRE    =  4.0
 _DISLIKED_GENRE = -2.0
+# Genome anchor movies are synthetic/implicit — we use more of them (5 per tag) to push
+# the model toward the selected tags, but each one carries half the weight of an explicitly
+# chosen favorite movie. A user saying "this is my favorite" is a stronger signal than
+# an anchor we added under the hood.
+_ANCHOR_MOVIE   =  1.0
+_ANCHORS_PER_TAG = 5
 
 
 # ── Startup ───────────────────────────────────────────────────────────────────
@@ -81,18 +87,47 @@ def load_artifacts():
     return model, fs, me, all_ids, all_embs, all_norm, ts_inference
 
 
+
 # ── Inference helpers ─────────────────────────────────────────────────────────
 
-def _build_user_embedding(model, fs, liked_titles, disliked_titles,
+def _build_user_embedding(model, fs, liked_titles_with_weights, disliked_titles,
                            liked_genres, disliked_genres, ts_inference):
     """
     Build a combined user embedding from title and genre signals.
-    Direct port of evaluate.py:_build_user_embedding.
-    Title → movieId lookup happens here; callers pass raw title strings.
+    liked_titles_with_weights: list of (title, weight) tuples.
+      Explicit liked movies use _LIKED_MOVIE; genome anchors use _ANCHOR_MOVIE.
+    disliked_titles: flat list of title strings (always weighted _DISLIKED_MOVIE).
     """
     n_genres = len(fs['genres_ordered'])
     ctx = [0.0] * (2 * n_genres)
 
+    # Derive genre context from liked/disliked movies — ensures ctx is never
+    # all-zeros when the user picks movies but skips the genre selectors.
+    all_titles_with_weights = (
+        list(liked_titles_with_weights) +
+        [(t, _DISLIKED_MOVIE) for t in disliked_titles]
+    )
+    genre_rating_sum   = {}
+    genre_movie_count  = {}
+    total_movies       = 0
+    for t, w in all_titles_with_weights:
+        mid = fs['title_to_movieId'].get(t)
+        if mid is None:
+            continue
+        total_movies += 1
+        for g in fs['movieId_to_genres'].get(mid, []):
+            genre_rating_sum[g]  = genre_rating_sum.get(g, 0.0)  + w
+            genre_movie_count[g] = genre_movie_count.get(g, 0)   + 1
+
+    for g, rsum in genre_rating_sum.items():
+        avg_r = rsum / genre_movie_count[g]
+        frac  = genre_movie_count[g] / max(total_movies, 1)
+        if g in fs['user_context_genre_avg_rating_to_i']:
+            ctx[fs['user_context_genre_avg_rating_to_i'][g]]   = avg_r
+        if g in fs['user_context_genre_watch_count_to_i']:
+            ctx[fs['user_context_genre_watch_count_to_i'][g]]  = frac
+
+    # Explicit genre selections override — stronger signal than movie-derived estimates
     for g in liked_genres:
         if g in fs['user_context_genre_avg_rating_to_i']:
             ctx[fs['user_context_genre_avg_rating_to_i'][g]] = _LIKED_GENRE
@@ -103,8 +138,8 @@ def _build_user_embedding(model, fs, liked_titles, disliked_titles,
             ctx[fs['user_context_genre_avg_rating_to_i'][g]] = _DISLIKED_GENRE
 
     liked_hist = [
-        (fs['item_emb_movieId_to_i'][fs['title_to_movieId'][t]], _LIKED_MOVIE)
-        for t in liked_titles
+        (fs['item_emb_movieId_to_i'][fs['title_to_movieId'][t]], w)
+        for t, w in liked_titles_with_weights
         if t in fs['title_to_movieId'] and fs['title_to_movieId'][t] in fs['item_emb_movieId_to_i']
     ]
     dis_hist = [
@@ -113,7 +148,7 @@ def _build_user_embedding(model, fs, liked_titles, disliked_titles,
         if t in fs['title_to_movieId'] and fs['title_to_movieId'][t] in fs['item_emb_movieId_to_i']
     ]
     history = liked_hist + dis_hist
-    ratings = [_LIKED_MOVIE] * len(liked_hist) + [_DISLIKED_MOVIE] * len(dis_hist)
+    ratings = [h[1] for h in liked_hist] + [_DISLIKED_MOVIE] * len(dis_hist)
 
     if history:
         hist_ids    = torch.tensor([h[0] for h in history], dtype=torch.long).unsqueeze(0)
@@ -127,8 +162,7 @@ def _build_user_embedding(model, fs, liked_titles, disliked_titles,
     # Genome pooling — mirrors history pooling in content space (shared tower)
     genome_contexts = []
     genome_weights  = []
-    for t, w in zip(liked_titles + disliked_titles,
-                    [_LIKED_MOVIE] * len(liked_titles) + [_DISLIKED_MOVIE] * len(disliked_titles)):
+    for t, w in list(liked_titles_with_weights) + [(t, _DISLIKED_MOVIE) for t in disliked_titles]:
         mid = fs['title_to_movieId'].get(t)
         if mid and mid in fs['movieId_to_genome_tag_context']:
             genome_contexts.append(fs['movieId_to_genome_tag_context'][mid])
@@ -248,8 +282,6 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference):
         if not liked_titles and not liked_genres and not selected_genome_tags:
             st.warning("Select at least one liked movie, genre, or genome tag.")
             return
-        # Top ANCHORS_PER_TAG movies per selected genome tag, deduplicated across tags.
-        ANCHORS_PER_TAG = 3
         anchor_tag_title_pairs = []
         if selected_genome_tags:
             name_to_idx = {
@@ -268,17 +300,20 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference):
                 )
                 count = 0
                 for mid in sorted_mids:
-                    if count >= ANCHORS_PER_TAG:
+                    if count >= _ANCHORS_PER_TAG:
                         break
                     title = fs['movieId_to_title'][mid]
                     if title not in seen_titles:
                         anchor_tag_title_pairs.append((tag, title))
                         seen_titles.add(title)
                         count += 1
-        anchor_titles = [title for _, title in anchor_tag_title_pairs]
+        liked_with_weights = (
+            [(t, _LIKED_MOVIE)  for t in liked_titles] +
+            [(t, _ANCHOR_MOVIE) for _, t in anchor_tag_title_pairs]
+        )
         with torch.no_grad():
             user_emb = _build_user_embedding(
-                model, fs, liked_titles + anchor_titles, disliked_titles,
+                model, fs, liked_with_weights, disliked_titles,
                 liked_genres, disliked_genres, ts_inference,
             )
         if anchor_tag_title_pairs:
@@ -391,7 +426,6 @@ def tab_explore_genome(model, me, fs):
             st.warning("Select at least one genome tag.")
             return
 
-        ANCHORS_PER_TAG = 3
         name_to_idx = {
             fs['genome_tag_names'][tid]: fs['genome_tag_to_i'][tid]
             for tid in fs['genome_tag_to_i']
@@ -409,7 +443,7 @@ def tab_explore_genome(model, me, fs):
             )
             count = 0
             for mid in sorted_mids:
-                if count >= ANCHORS_PER_TAG:
+                if count >= _ANCHORS_PER_TAG:
                     break
                 title = fs['movieId_to_title'][mid]
                 if title not in seen_titles:
