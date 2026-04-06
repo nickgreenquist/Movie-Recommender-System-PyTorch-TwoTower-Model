@@ -323,16 +323,13 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference):
 # ── Tab: Recommend (Examples) ─────────────────────────────────────────────────
 
 def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference):
-    st.caption("Click a pre-built user profile to instantly see what the model recommends for that taste.")
-    selected_profile = st.session_state.get('examples_profile', None)
-    cols_per_row = 3
-    for i in range(0, len(EXAMPLE_PROFILES), cols_per_row):
-        cols = st.columns(cols_per_row)
-        for col, name in zip(cols, EXAMPLE_PROFILES[i:i + cols_per_row]):
-            label = f"▶ {name}" if name == selected_profile else name
-            if col.button(label, use_container_width=True):
-                st.session_state['examples_profile'] = name
-                st.rerun()
+    st.caption("Select a pre-built user profile to see what the model recommends for that taste.")
+    selected_profile = st.selectbox(
+        "Profile",
+        options=[None] + EXAMPLE_PROFILES,
+        format_func=lambda x: "Choose a profile..." if x is None else x,
+        label_visibility="collapsed",
+    )
 
     if selected_profile:
         fav_movies   = USER_TYPE_TO_FAVORITE_MOVIES[selected_profile]
@@ -383,14 +380,16 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference):
                 model, fs, liked_with_weights, dis_movies,
                 fav_genres, worst_genres, ts_inference,
             )
-        if anchor_tag_title_pairs:
-            st.caption("Genome anchors — " + " · ".join(
-                f"{tag}: {title}" for tag, title in anchor_tag_title_pairs
-            ))
         df = _score_movies(user_emb, all_ids, all_embs, fs,
                            exclude_titles=fav_movies + dis_movies +
                                           [t for _, t in anchor_tag_title_pairs])
         st.subheader(f"Recommendations for: {selected_profile}")
+        if fav_movies:
+            st.caption("Because you like these movies: " + ", ".join(fav_movies))
+        if fav_genres:
+            st.caption("Because you like these genres: " + ", ".join(fav_genres))
+        if genome_tags:
+            st.caption("Because you like these genome tags: " + ", ".join(genome_tags))
         st.dataframe(df, use_container_width=True, hide_index=True)
 
 
@@ -553,40 +552,38 @@ def tab_explore_genome(model, me, fs):
 # ── Tab: About ───────────────────────────────────────────────────────────────
 
 def tab_about():
-    st.header("What is this?")
-    st.markdown(
-        "A PyTorch two-tower neural network trained on the MovieLens 32M dataset. "
-        "A dot product of the user and item embeddings predicts a de-biased rating."
-    )
+    col, _ = st.columns([1, 1])
+    with col:
+        st.header("What is this?")
+        st.markdown(
+            "A PyTorch two-tower neural network trained on the MovieLens 32M dataset. "
+            "A dot product of the user and item embeddings predicts a de-biased rating."
+        )
 
-    st.subheader("The core design choice: no user ID")
-    st.markdown("""
-Most recommender systems embed a unique ID for every user in the training set. This works, but has a
-fundamental limitation: **inference is only possible for users the model has already seen.** If a new
-user signs up, you have no embedding for them. Your options are:
-
+        st.subheader("The core design choice: no user ID")
+        st.markdown("Most recommender systems embed a unique ID for every user in the training set.")
+        st.markdown("This works, but has a fundamental limitation: **inference is only possible for users the model has already seen.**")
+        st.markdown("If a new user signs up, you have no embedding for them. Your options are:")
+        st.markdown("""
 - Retrain the entire model
 - Partially fine-tune the new user in with a few gradient steps
 - Find an existing user who seems similar and use their embedding as a proxy
-
-This model takes a different approach. **There is no user ID embedding.** Instead, every user is
-represented as a function of their taste signals — watch history, genre affinity, content texture,
-and timestamp. The model learns to embed *features of the user*, not the user themselves.
-
-This means the model can generate recommendations for **any user** as long as you can provide even a
-small amount of signal: a few movies they liked, some genres they prefer. No retraining required.
-No cold-start problem at the user level. The same trained model works in production for users who
-never existed when the model was trained.
 """)
+        st.markdown("This model takes a different approach. **There is no user ID embedding.**")
+        st.markdown("Instead, every user is represented as a function of their taste signals — watch history, genre affinity, content texture, and timestamp. The model learns to embed *features of the user*, not the user themselves.")
+        st.markdown("This means the model can generate recommendations for **any user** as long as you can provide even a small amount of signal: a few movies they liked, some genres they prefer.")
+        st.markdown("No retraining required. No cold-start problem at the user level. The same trained model works in production for users who never existed when the model was trained.")
 
     st.image('diagram.png')
 
-    st.header("User Tower")
-    st.markdown(
-        "Each component encodes a different aspect of taste into a fixed-size vector. "
-        "All four are concatenated into a single 120-dim user embedding."
-    )
-    st.markdown("""
+    col, _ = st.columns([1, 1])
+    with col:
+        st.header("User Tower")
+        st.markdown(
+            "Each component encodes a different aspect of taste into a fixed-size vector. "
+            "All four are concatenated into a single 110-dim user embedding."
+        )
+        st.markdown("""
 | Component | Input | What it learns |
 |---|---|---|
 | Rating-Weighted Avg Pool | Watch history — movie IDs weighted by your ratings | Collaborative taste — liked movies pull the user toward similar items in embedding space |
@@ -595,11 +592,11 @@ never existed when the model was trained.
 | timestamp_embedding_tower | Month bin of most recent watch activity | Temporal context — captures era-based taste shifts |
 """)
 
-    st.header("Item Tower")
-    st.markdown(
-        "Each movie is encoded from five independent signals into a single 120-dim item embedding."
-    )
-    st.markdown("""
+        st.header("Item Tower")
+        st.markdown(
+            "Each movie is encoded from five independent signals into a single 110-dim item embedding."
+        )
+        st.markdown("""
 | Component | Input | What it learns |
 |---|---|---|
 | item_embedding_tower | Movie ID (shared lookup with user history pool) | Collaborative identity — a learned fingerprint for each movie based on who watches it together |
@@ -609,28 +606,40 @@ never existed when the model was trained.
 | year_embedding_tower | Release year | Era — captures stylistic and cultural shifts across decades |
 """)
 
-    st.header("Shared Embeddings")
-    st.markdown(
-        "Two components are shared between the user and item towers — same weights, same embedding space:"
-    )
-    st.markdown("""
-**item_embedding_lookup** — The same embedding table is used for the target movie's ID *and* for each movie in the user's watch history pool. This forces the user's history representation and the item's identity into the same space: a movie you liked pulls your user embedding directly toward that movie's embedding.
+        st.header("Shared Embeddings")
+        st.markdown(
+            "Two components are shared between the user and item towers — same weights, same embedding space:"
+        )
+        st.markdown("""
+**item_embedding_lookup** — The same embedding table is used for the target movie's ID
+*and* for each movie in the user's watch history pool.
 
-**item_genome_tag_tower** — The same linear layer processes genome scores for the target movie *and* for each watched movie in the user's genome pool. This ensures your content taste vector and the item's content vector are directly comparable via dot product.
+This forces the user's history representation and the item's identity into the same
+space: a movie you liked pulls your user embedding directly toward that movie's embedding.
+
+**item_genome_tag_tower** — The same linear layer processes genome scores for the target
+movie *and* for each watched movie in the user's genome pool.
+
+This ensures your content taste vector and the item's content vector are directly
+comparable via dot product.
 """)
 
-    st.header("Training")
-    st.markdown("""
+        st.header("Training")
+        st.markdown("""
 - **Dataset:** MovieLens 32M — ~33M ratings from ~200K users across ~86K movies
 - **Corpus:** filtered to movies with 1,000+ ratings (~4,461 movies) and users with 20–500 ratings
 - **Loss:** MSE on de-biased ratings (raw rating minus user mean)
 - **Optimizer:** SGD, lr=0.005, momentum=0.9, batch size 64
 - **Steps:** 150,000
-- **Split:** user-based 90/10 — 90% of users are exclusively in train, 10% exclusively in val; no user appears in both. Within each user, ratings are sorted by timestamp: the earliest 90% form the watch history context and the latest 10% are the prediction labels, so the model never uses future watches as context when predicting earlier ones
+- **Split:** user-based 90/10 — 90% of users are exclusively in train, 10% exclusively
+  in val; no user appears in both
+- **History / labels:** Within each user, ratings are sorted by timestamp. The earliest
+  90% form the watch history context and the latest 10% are the prediction labels —
+  the model never uses future watches as context when predicting earlier ones
 """)
 
-    st.header("Limitations")
-    st.markdown("""
+        st.header("Limitations")
+        st.markdown("""
 - No user ID — personalization is limited to the signals you provide in the app
 - 4,461-movie corpus — films with fewer than 1,000 ratings are not included
 - War and Sci-Fi genres can bleed into prestige/arthouse due to overlapping genome signals
