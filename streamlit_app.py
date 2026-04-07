@@ -628,7 +628,7 @@ comparable via dot product.
         st.header("Training")
         st.markdown("""
 - **Dataset:** MovieLens 32M — ~33M ratings from ~200K users across ~86K movies
-- **Corpus:** filtered to movies with 1,000+ ratings (~4,461 movies) and users with 20–500 ratings
+- **Corpus:** filtered to movies with 200+ ratings (~9,375 movies) and users with 20–500 ratings
 - **Loss:** MSE on de-biased ratings (raw rating minus user mean)
 - **Optimizer:** SGD, lr=0.005, momentum=0.9, batch size 64
 - **Steps:** 150,000
@@ -641,7 +641,7 @@ comparable via dot product.
         st.header("Limitations")
         st.markdown("""
 - No user ID — personalization is limited to the signals you provide in the app
-- 4,461-movie corpus — films with fewer than 1,000 ratings are not included
+- 9,375-movie corpus — films with fewer than 200 ratings are not included
 - War and Sci-Fi genres can bleed into prestige/arthouse due to overlapping genome signals
 - The timestamp tower is a weak signal in the app — all users receive the most recent timestamp bin
 """)
