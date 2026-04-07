@@ -21,15 +21,20 @@ MAX_HISTORY_LEN  = 50   # cap watch history to most recent N movies
 # ── Loaders ───────────────────────────────────────────────────────────────────
 
 def load_base(data_dir: str) -> dict:
-    return {
-        'movies':       pd.read_parquet(os.path.join(data_dir, 'base_movies.parquet')),
-        'vocab':        pd.read_parquet(os.path.join(data_dir, 'base_vocab.parquet')),
-        'watch':        pd.read_parquet(os.path.join(data_dir, 'base_ratings_watch.parquet')),
-        'labels':       pd.read_parquet(os.path.join(data_dir, 'base_ratings_labels.parquet')),
-        'timestamps':   pd.read_parquet(os.path.join(data_dir, 'base_timestamps.parquet')),
-        'movie_tags':   pd.read_parquet(os.path.join(data_dir, 'base_movie_tags.parquet')),
-        'movie_genome': pd.read_parquet(os.path.join(data_dir, 'base_movie_genome.parquet')),
-    }
+    files = [
+        ('movies',       'base_movies.parquet'),
+        ('vocab',        'base_vocab.parquet'),
+        ('watch',        'base_ratings_watch.parquet'),
+        ('labels',       'base_ratings_labels.parquet'),
+        ('timestamps',   'base_timestamps.parquet'),
+        ('movie_tags',   'base_movie_tags.parquet'),
+        ('movie_genome', 'base_movie_genome.parquet'),
+    ]
+    result = {}
+    for key, filename in files:
+        print(f"  Loading {filename} ...")
+        result[key] = pd.read_parquet(os.path.join(data_dir, filename))
+    return result
 
 
 def parse_vocab(vocab_df: pd.DataFrame) -> dict:

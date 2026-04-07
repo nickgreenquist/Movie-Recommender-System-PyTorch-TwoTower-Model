@@ -570,7 +570,8 @@ def tab_about():
 - Find an existing user who seems similar and use their embedding as a proxy
 """)
         st.markdown("This model takes a different approach. **There is no user ID embedding.**")
-        st.markdown("Instead, every user is represented as a function of their taste signals — watch history, genre affinity, content texture, and timestamp. The model learns to embed *features of the user*, not the user themselves.")
+        st.markdown("Instead, every user is represented as a function of their taste signals — watch history, genre affinity, content texture, and timestamp.")
+        st.markdown("The model learns to embed *features of the user*, not the user themselves.")
         st.markdown("This means the model can generate recommendations for **any user** as long as you can provide even a small amount of signal: a few movies they liked, some genres they prefer.")
         st.markdown("No retraining required. No cold-start problem at the user level. The same trained model works in production for users who never existed when the model was trained.")
 
@@ -586,11 +587,11 @@ def tab_about():
         st.markdown("""
 | Component | Input | What it learns |
 |---|---|---|
-| Rating-Weighted Avg Pool | Watch history — movie IDs weighted by your ratings | Collaborative taste — liked movies pull the user toward similar items in embedding space |
-| Rating-Weighted Genome Pool | Genome scores for each watched movie, passed through the shared genome tower | Content texture of your taste — the kinds of films you like (atmospheric, cerebral, gritty, etc.) weighted by how much you liked them |
-| user_genre_tower | Avg rating per genre + watch fraction per genre | Genre affinity — how strongly you lean toward or away from each of the 20 broad genre categories |
-| timestamp_embedding_tower | Month bin of most recent watch activity | Temporal context — captures era-based taste shifts |
-""")
+| Rating-Weighted Avg Pool | Watch history — movie IDs weighted by your ratings | Collaborative taste — liked movies pull the user<br>toward similar items in embedding space |
+| Rating-Weighted Genome Pool | Genome scores for each watched movie,<br>passed through the shared genome tower | Content texture — the kinds of films you like<br>(atmospheric, cerebral, gritty, etc.) weighted by how much you liked them |
+| user_genre_tower | Avg rating per genre + watch fraction per genre | Genre affinity — how strongly you lean toward<br>or away from each of the 20 broad genre categories |
+| timestamp_embedding_tower | Month bin of most recent watch activity | Temporal context —<br>captures era-based taste shifts |
+""", unsafe_allow_html=True)
 
         st.header("Item Tower")
         st.markdown(
@@ -599,12 +600,12 @@ def tab_about():
         st.markdown("""
 | Component | Input | What it learns |
 |---|---|---|
-| item_embedding_tower | Movie ID (shared lookup with user history pool) | Collaborative identity — a learned fingerprint for each movie based on who watches it together |
-| item_genome_tag_tower | 1,128 ML-derived relevance scores (shared tower with user genome pool) | Content texture — the film's vibe, themes, and tone in a dense semantic space |
+| item_embedding_tower | Movie ID (shared lookup with user history pool) | Collaborative identity — a learned fingerprint<br>for each movie based on who watches it together |
+| item_genome_tag_tower | 1,128 ML-derived relevance scores<br>(shared tower with user genome pool) | Content texture — the film's vibe, themes,<br>and tone in a dense semantic space |
 | item_genre_tower | 20-dim genre one-hot vector | Broad genre positioning |
-| item_tag_tower | 306 user-applied tag counts (normalized) | Crowd-sourced descriptors — how the community collectively labels the film |
-| year_embedding_tower | Release year | Era — captures stylistic and cultural shifts across decades |
-""")
+| item_tag_tower | 306 user-applied tag counts (normalized) | Crowd-sourced descriptors —<br>how the community collectively labels the film |
+| year_embedding_tower | Release year | Era — captures stylistic and<br>cultural shifts across decades |
+""", unsafe_allow_html=True)
 
         st.header("Shared Embeddings")
         st.markdown(
@@ -633,9 +634,8 @@ comparable via dot product.
 - **Steps:** 150,000
 - **Split:** user-based 90/10 — 90% of users are exclusively in train, 10% exclusively
   in val; no user appears in both
-- **History / labels:** Within each user, ratings are sorted by timestamp. The earliest
-  90% form the watch history context and the latest 10% are the prediction labels —
-  the model never uses future watches as context when predicting earlier ones
+- **History context:** Within each user, ratings are sorted by timestamp. The earliest 90% form the watch history context.
+- **Labels:** The latest 10% are the prediction labels — the model never uses future watches as context when predicting earlier ones
 """)
 
         st.header("Limitations")

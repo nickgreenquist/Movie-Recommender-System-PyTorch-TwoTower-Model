@@ -1,6 +1,9 @@
 data/
+data_4k_backup/
 results/
 .DS_Store
 saved_models/
+saved_models_4k_backup/
+serving_4k_backup/
 .ipynb_checkpoints/
 __pycache__

@@ -13,7 +13,7 @@ import pandas as pd
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
-MIN_RATINGS_PER_MOVIE = 1_000
+MIN_RATINGS_PER_MOVIE = 200
 MIN_RATINGS_PER_USER  = 20
 MAX_RATINGS_PER_USER  = 500
 MIN_NUM_TAGS          = 1_000       # user-applied tags must appear this often across all movies
