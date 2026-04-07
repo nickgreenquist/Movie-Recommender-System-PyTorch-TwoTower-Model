@@ -26,7 +26,6 @@ USER_TYPE_TO_FAVORITE_GENRES = {
     'Comedy Lover':            ['Comedy'],
     'Romance Lover':           ['Romance'],
     'War Movie Lover':         ['War'],
-    'Thriller Lover':          ['Thriller'],
     'Crime Lover':             ['Crime'],
     'Heist Lover':             [],
     'Action Junkie':           [],
@@ -48,8 +47,7 @@ USER_TYPE_TO_WORST_GENRES = {
     'Comedy Lover':            ['Children'],
     'Romance Lover':           ['Children', 'Horror'],
     'War Movie Lover':         ['Children'],
-    'Thriller Lover':          ['Children', 'Comedy'],
-    'Crime Lover':             ['Children', 'Fantasy', 'Romance', 'Comedy'],
+    'Crime Lover':             ['Children', 'Horror'],
     'Heist Lover':             [],
     'Action Junkie':           [],
     'Arthouse Lover':          [],
@@ -95,15 +93,8 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'Downfall (Untergang, Der) (2004)', '1917 (2019)',
         'Enemy at the Gates (2001)',
     ],
-    'Thriller Lover': [
-        'Seven (a.k.a. Se7en) (1995)', 'Memento (2000)',
-        'Usual Suspects, The (1995)', 'Zodiac (2007)',
-        'Fight Club (1999)', 'Game, The (1997)', 'Vertigo (1958)',
-    ],
     'Crime Lover': [
-        'Godfather, The (1972)', 'Goodfellas (1990)', 'Reservoir Dogs (1992)',
-        'L.A. Confidential (1997)', 'Departed, The (2006)',
-        'Scarface (1983)', 'Casino (1995)',
+        'Goodfellas (1990)', 'Reservoir Dogs (1992)', 'Donnie Brasco (1997)', 'The Irishman (2019)', 'Casino (1995)'
     ],
     'Heist Lover':         ['Heist (2001)', 'Ocean\'s Eleven (2001)'],
     'Action Junkie':       ['Die Hard 2 (1990)', 'Rambo III (1988)'],
@@ -130,7 +121,6 @@ USER_TYPE_TO_DISLIKED_MOVIES = {
     'Comedy Lover':           [],
     'Romance Lover':          [],
     'War Movie Lover':        [],
-    'Thriller Lover':         [],
     'Crime Lover':            [],
     'Heist Lover':            [],
     'Action Junkie':          [],
@@ -145,6 +135,7 @@ USER_TYPE_TO_DISLIKED_MOVIES = {
 }
 
 USER_TYPE_TO_GENOME_TAGS = {
+    'Crime Lover':           ['crime', 'gangs'],
     'Heist Lover':           ['heist', 'con artist'],
     'Action Junkie':         ['explosions', 'adrenaline'],
     'Arthouse Lover':        ['art house', 'slow burn'],
