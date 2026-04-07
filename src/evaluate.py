@@ -65,25 +65,17 @@ USER_TYPE_TO_WORST_GENRES = {
 USER_TYPE_TO_FAVORITE_MOVIES = {
     'Fantasy Lover': [
         'Lord of the Rings: The Fellowship of the Ring, The (2001)',
-        'Princess Bride, The (1987)', 'Willow (1988)', 'Excalibur (1981)',
-        'Labyrinth (1986)', 'Legend (1985)', 'Dark Crystal, The (1982)',
-        'Fantastic Beasts and Where to Find Them (2016)',
         'Hobbit: An Unexpected Journey, The (2012)',
     ],
     "Children's Movie Lover": [
         'Toy Story 2 (1999)', 'Finding Nemo (2003)',
     ],
     'Horror Lover': [
-        'Blair Witch Project, The (1999)'
+        'Blair Witch Project, The (1999)', 'Texas Chainsaw Massacre, The (2003)'
     ],
     'Sci-Fi Lover': [
-        'Matrix, The (1999)', 'Terminator, The (1984)', '2001: A Space Odyssey (1968)',
-        'Blade Runner (1982)', 'Arrival (2016)', 'Interstellar (2014)',
-        'Blade Runner 2049 (2017)', 'Contact (1997)',
-        'Ghost in the Shell (Kôkaku kidôtai) (1995)',
-        'Terminator 2: Judgment Day (1991)',
-        'Star Wars: Episode IV - A New Hope (1977)',
-        'Independence Day (a.k.a. ID4) (1996)',
+        '2001: A Space Odyssey (1968)',
+        'Blade Runner (1982)', 'Arrival (2016)', 'Contact (1997)',
     ],
     'Comedy Lover': [
         'American Pie (1999)', 'Dumb & Dumber (Dumb and Dumber) (1994)',
@@ -114,14 +106,14 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'Scarface (1983)', 'Casino (1995)',
     ],
     'Heist Lover':         ['Heist (2001)', 'Ocean\'s Eleven (2001)'],
-    'Action Junkie':       ['Die Hard 2 (1990)'],
-    'Arthouse Lover':      ['The Lobster (2015)'],
-    'Superhero Lover':     ['Guardians of the Galaxy (2014)'],
+    'Action Junkie':       ['Die Hard 2 (1990)', 'Rambo III (1988)'],
+    'Arthouse Lover':      ['The Lobster (2015)', 'Antichrist (2009)'],
+    'Superhero Lover':     ['Guardians of the Galaxy (2014)', 'Iron Man 3 (2013)', 'Avengers: Age of Ultron (2015)'],
     'WW2 Lover':           ['Stalingrad (1993)', 'Run Silent Run Deep (1958)', 'Great Escape, The (1963)'],
-    'Sports Lover':        ['Miracle (2004)', 'Coach Carter (2005)'],
-    'Western Lover':       ['True Grit (1969)', 'High Plains Drifter (1973)', 'Unforgiven (1992)', 'Cool Hand Luke (1967)'],
-    'Anime Lover':         ['Princess Mononoke (Mononoke-hime) (1997)', 'Howl\'s Moving Castle (Hauru no ugoku shiro) (2004)'],
-    'Martial Arts Lover':  ['Ong-Bak: The Thai Warrior (Ong Bak) (2003)', 'Ip Man (2008)'],
+    'Sports Lover':        ['Miracle (2004)', 'Coach Carter (2005)', 'Invincible (2006)'],
+    'Western Lover':       ['True Grit (1969)', 'High Plains Drifter (1973)', 'Unforgiven (1992)', 'Cool Hand Luke (1967)', 'Wild Bill (1995)', 'Wyatt Earp (1994)'],
+    'Anime Lover':         ['Princess Mononoke (Mononoke-hime) (1997)', 'Howl\'s Moving Castle (Hauru no ugoku shiro) (2004)', 'Spirited Away (Sen to Chihiro no kamikakushi) (2001)'],
+    'Martial Arts Lover':  ['Ong-Bak: The Thai Warrior (Ong Bak) (2003)', 'Ip Man (2008)', 'Ip Man 2 (2010)', 'Jet Li\'s Fearless (Huo Yuan Jia) (2006)', 'Protector, The (a.k.a. Warrior King) (Tom yum goong) (2005)', 'Unleashed (Danny the Dog) (2005)'],
     'Myself': [
         'Lord of the Rings: The Fellowship of the Ring, The (2001)',
         'Lord of the Rings: The Return of the King, The (2003)',
@@ -131,61 +123,25 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
 }
 
 USER_TYPE_TO_DISLIKED_MOVIES = {
-    'Fantasy Lover': [
-        'Get Out (2017)', 'Poltergeist (1982)', 'Nightmare on Elm Street, A (1984)',
-        'Coco (2017)', 'Iron Giant, The (1999)',
-    ],
-    "Children's Movie Lover": [
-        'Get Out (2017)', 'Nightmare on Elm Street, A (1984)',
-        'Casablanca (1942)', 'Jerry Maguire (1996)', "Schindler's List (1993)",
-        'Die Hard (1988)', 'Terminator 2: Judgment Day (1991)',
-        'Predator (1987)', 'RoboCop (1987)',
-        'First Blood (Rambo: First Blood) (1982)',
-        'Fast & Furious 6 (Fast and the Furious 6, The) (2013)',
-        'Furious 7 (2015)',
-    ],
-    'Horror Lover': [
-        'Coco (2017)', 'My Neighbor Totoro (Tonari no Totoro) (1988)',
-        'Iron Giant, The (1999)',
-    ],
-    'Sci-Fi Lover': [
-        'Casablanca (1942)', 'Jerry Maguire (1996)',
-        'Coco (2017)', 'My Neighbor Totoro (Tonari no Totoro) (1988)',
-    ],
-    'Comedy Lover': [
-        'Coco (2017)', 'My Neighbor Totoro (Tonari no Totoro) (1988)',
-        'Iron Giant, The (1999)',
-    ],
-    'Romance Lover': [
-        'Get Out (2017)', 'Poltergeist (1982)',
-        'Coco (2017)', 'My Neighbor Totoro (Tonari no Totoro) (1988)',
-    ],
-    'War Movie Lover': [
-        'Coco (2017)', 'My Neighbor Totoro (Tonari no Totoro) (1988)',
-        'Iron Giant, The (1999)',
-        'Lord of the Rings: The Fellowship of the Ring, The (2001)',
-        'Avengers, The (2012)',
-        'Raiders of the Lost Ark (Indiana Jones and the Raiders of the Lost Ark) (1981)',
-    ],
-    'Thriller Lover': [
-        'Finding Nemo (2003)', 'My Neighbor Totoro (Tonari no Totoro) (1988)',
-        'Ace Ventura: Pet Detective (1994)', 'Mrs. Doubtfire (1993)',
-    ],
-    'Crime Lover': [
-        'Finding Nemo (2003)', 'My Neighbor Totoro (Tonari no Totoro) (1988)',
-        'Lord of the Rings: The Fellowship of the Ring, The (2001)',
-        'Casablanca (1942)', 'Pretty Woman (1990)',
-    ],
-    'Heist Lover':         [],
-    'Action Junkie':       ['Friday the 13th Part VI: Jason Lives (1986)', 'Friday the 13th (1980)'],
-    'Arthouse Lover':      [],
-    'Superhero Lover':     ['Twilight (2008)', 'Twilight Saga: New Moon, The (2009)', 'Twilight Saga: Eclipse, The (2010)'],
-    'WW2 Lover':           ['Fifty Shades of Grey (2015)', 'Twilight (2008)', 'Piper (2016)', 'Planet Earth II (2016)', 'Shawshank Redemption, The (1994)', '12 Angry Men (1957)', 'Girl Who Kicked the Hornet\'s Nest, The (Luftslottet som sprängdes) (2009)'],
-    'Sports Lover':        ['Fifty Shades of Grey (2015)', 'Hidden Figures (2016)', 'Beverly Hills Cop (1984)', 'Time to Kill, A (1996)'],
-    'Western Lover':       ['Akira (1988)'],
-    'Anime Lover':         [],
-    'Martial Arts Lover':  [],
-    'Myself': [],
+    'Fantasy Lover':          [],
+    "Children's Movie Lover": [],
+    'Horror Lover':           [],
+    'Sci-Fi Lover':           [],
+    'Comedy Lover':           [],
+    'Romance Lover':          [],
+    'War Movie Lover':        [],
+    'Thriller Lover':         [],
+    'Crime Lover':            [],
+    'Heist Lover':            [],
+    'Action Junkie':          [],
+    'Arthouse Lover':         [],
+    'Superhero Lover':        [],
+    'WW2 Lover':              [],
+    'Sports Lover':           [],
+    'Western Lover':          [],
+    'Anime Lover':            [],
+    'Martial Arts Lover':     ['Captain America: The First Avenger (2011)'],
+    'Myself':                 [],
 }
 
 USER_TYPE_TO_GENOME_TAGS = {
@@ -197,13 +153,15 @@ USER_TYPE_TO_GENOME_TAGS = {
     'Sports Lover':          ['sports', 'football', 'baseball'],
     'Western Lover':         ['spaghetti western', 'gunfight'],
     'Anime Lover':           ['japanese animation', 'studio ghibli'],
-    'Martial Arts Lover':    ['matial arts', 'kung fu', 'fight scenes'],
+    'Martial Arts Lover':    ['kung fu', 'fight scenes'],
 }
 
 VALUE_FAVORITE_GENRE_RATING = 4.0
 VALUE_DISLIKED_GENRE_RATING = -2.0
 VALUE_FAVORITE_MOVIE_RATING = 2.0
 VALUE_DISLIKED_MOVIE_RATING = -2.0
+VALUE_ANCHOR_MOVIE_RATING   = 1.0
+ANCHORS_PER_TAG             = 5
 
 
 # ── Movie embedding cache ─────────────────────────────────────────────────────
@@ -244,32 +202,83 @@ def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
 
 # ── Canary user inference ─────────────────────────────────────────────────────
 
+def _get_anchor_titles(fs: FeatureStore, genome_tags: list, exclude: set) -> list:
+    """Return up to ANCHORS_PER_TAG top movies per genome tag, skipping titles in exclude."""
+    name_to_idx = {fs.genome_tag_names[tid]: fs.genome_tag_to_i[tid] for tid in fs.genome_tag_to_i}
+    anchor_titles = []
+    seen = set(exclude)
+    for tag in genome_tags:
+        if tag not in name_to_idx:
+            continue
+        tag_idx = name_to_idx[tag]
+        sorted_mids = sorted(
+            fs.top_movies,
+            key=lambda mid: float(fs.movieId_to_genome_tag_context[mid][tag_idx]),
+            reverse=True,
+        )
+        count = 0
+        for mid in sorted_mids:
+            if count >= ANCHORS_PER_TAG:
+                break
+            title = fs.movieId_to_title[mid]
+            if title not in seen:
+                anchor_titles.append(title)
+                seen.add(title)
+                count += 1
+    return anchor_titles
+
+
 def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: str,
                           ts_inference: torch.Tensor) -> torch.Tensor:
-    """Build the combined user embedding for a canary user type."""
+    """Build the combined user embedding for a canary user type. Mirrors website logic."""
     fav_genres   = USER_TYPE_TO_FAVORITE_GENRES[user_type]
     worst_genres = USER_TYPE_TO_WORST_GENRES[user_type]
     fav_movies   = USER_TYPE_TO_FAVORITE_MOVIES[user_type]
     dis_movies   = USER_TYPE_TO_DISLIKED_MOVIES[user_type]
+    genome_tags  = USER_TYPE_TO_GENOME_TAGS.get(user_type, [])
 
+    # Genome anchor movies — top ANCHORS_PER_TAG movies per genome tag
+    anchor_titles = _get_anchor_titles(fs, genome_tags, exclude=set(fav_movies))
+
+    liked_with_weights = (
+        [(t, VALUE_FAVORITE_MOVIE_RATING) for t in fav_movies] +
+        [(t, VALUE_ANCHOR_MOVIE_RATING)   for t in anchor_titles]
+    )
+    # Genre context — derive from movies first, then override with explicit genres
     n_genres = len(fs.genres_ordered)
-
-    # Genre context
     ctx = [0.0] * (2 * n_genres)
+    genre_rating_sum  = {}
+    genre_movie_count = {}
+    total_movies = 0
+    for t, w in liked_with_weights + [(t, VALUE_DISLIKED_MOVIE_RATING) for t in dis_movies]:
+        mid = fs.title_to_movieId.get(t)
+        if mid is None:
+            continue
+        total_movies += 1
+        for g in fs.movieId_to_genres.get(mid, []):
+            genre_rating_sum[g]  = genre_rating_sum.get(g, 0.0) + w
+            genre_movie_count[g] = genre_movie_count.get(g, 0)  + 1
+    for g, rsum in genre_rating_sum.items():
+        avg_r = rsum / genre_movie_count[g]
+        frac  = genre_movie_count[g] / max(total_movies, 1)
+        if g in fs.user_context_genre_avg_rating_to_i:
+            ctx[fs.user_context_genre_avg_rating_to_i[g]]  = avg_r
+        if g in fs.user_context_genre_watch_count_to_i:
+            ctx[fs.user_context_genre_watch_count_to_i[g]] = frac
+    # Explicit genre selections override
     for g in fav_genres:
         if g in fs.user_context_genre_avg_rating_to_i:
-            ctx[fs.user_context_genre_avg_rating_to_i[g]] = VALUE_FAVORITE_GENRE_RATING
+            ctx[fs.user_context_genre_avg_rating_to_i[g]]  = VALUE_FAVORITE_GENRE_RATING
+        if g in fs.user_context_genre_watch_count_to_i:
+            ctx[fs.user_context_genre_watch_count_to_i[g]] = 1.0 / max(len(fav_genres), 1)
     for g in worst_genres:
         if g in fs.user_context_genre_avg_rating_to_i:
-            ctx[fs.user_context_genre_avg_rating_to_i[g]] = VALUE_DISLIKED_GENRE_RATING
-    for g in fav_genres:
-        if g in fs.user_context_genre_watch_count_to_i:
-            ctx[fs.user_context_genre_watch_count_to_i[g]] = 1.0 / len(fav_genres)
+            ctx[fs.user_context_genre_avg_rating_to_i[g]]  = VALUE_DISLIKED_GENRE_RATING
 
     # Watch history
     liked_hist = [
-        (fs.item_emb_movieId_to_i[fs.title_to_movieId[t]], VALUE_FAVORITE_MOVIE_RATING)
-        for t in fav_movies
+        (fs.item_emb_movieId_to_i[fs.title_to_movieId[t]], w)
+        for t, w in liked_with_weights
         if t in fs.title_to_movieId and fs.title_to_movieId[t] in fs.item_emb_movieId_to_i
     ]
     dis_hist = [
@@ -278,8 +287,7 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
         if t in fs.title_to_movieId and fs.title_to_movieId[t] in fs.item_emb_movieId_to_i
     ]
     history = liked_hist + dis_hist
-    ratings = ([VALUE_FAVORITE_MOVIE_RATING] * len(liked_hist) +
-               [VALUE_DISLIKED_MOVIE_RATING] * len(dis_hist))
+    ratings = [h[1] for h in liked_hist] + [VALUE_DISLIKED_MOVIE_RATING] * len(dis_hist)
 
     if history:
         hist_ids  = torch.tensor([h[0] for h in history], dtype=torch.long).unsqueeze(0)
@@ -293,22 +301,18 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
     # Genome pooling — mirrors history pooling but in content space (shared tower)
     genome_contexts = []
     genome_weights  = []
-    for t, w in zip(fav_movies + dis_movies,
-                    [VALUE_FAVORITE_MOVIE_RATING] * len(fav_movies) +
-                    [VALUE_DISLIKED_MOVIE_RATING] * len(dis_movies)):
-        if t not in fs.title_to_movieId:
-            continue
-        mid = fs.title_to_movieId[t]
-        if mid in fs.movieId_to_genome_tag_context:
+    for t, w in liked_with_weights + [(t, VALUE_DISLIKED_MOVIE_RATING) for t in dis_movies]:
+        mid = fs.title_to_movieId.get(t)
+        if mid and mid in fs.movieId_to_genome_tag_context:
             genome_contexts.append(fs.movieId_to_genome_tag_context[mid])
             genome_weights.append(w)
 
     if genome_contexts:
-        gc_tensor  = torch.tensor(np.array(genome_contexts, dtype=np.float32))  # (n, genome_tags_len)
-        ge_embs    = model.item_genome_tag_tower(gc_tensor)                      # (n, genome_dim)
-        wts        = torch.tensor(genome_weights)                                # (n,)
+        gc_tensor  = torch.tensor(np.array(genome_contexts, dtype=np.float32))
+        ge_embs    = model.item_genome_tag_tower(gc_tensor)
+        wts        = torch.tensor(genome_weights)
         wt_sum_g   = wts.abs().sum().clamp(min=1e-6)
-        genome_emb = (ge_embs * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_g  # (1, genome_dim)
+        genome_emb = (ge_embs * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_g
     else:
         genome_emb = torch.zeros(1, model.item_genome_tag_tower[0].out_features)
 
@@ -333,9 +337,12 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
 
     with torch.no_grad():
         for user_type in USER_TYPE_TO_FAVORITE_GENRES:
-            user_emb = _build_user_embedding(model, fs, user_type, ts_max_bin)
-            fav_set  = set(USER_TYPE_TO_FAVORITE_MOVIES[user_type])
-            dis_set  = set(USER_TYPE_TO_DISLIKED_MOVIES[user_type])
+            user_emb    = _build_user_embedding(model, fs, user_type, ts_max_bin)
+            fav_movies  = USER_TYPE_TO_FAVORITE_MOVIES[user_type]
+            dis_movies  = USER_TYPE_TO_DISLIKED_MOVIES[user_type]
+            genome_tags = USER_TYPE_TO_GENOME_TAGS.get(user_type, [])
+            anchor_titles = _get_anchor_titles(fs, genome_tags, exclude=set(fav_movies))
+            exclude_set = set(fav_movies) | set(dis_movies) | set(anchor_titles)
 
             raw_scores = (all_embs @ user_emb.T).squeeze(-1)
             scores     = {all_ids[i]: raw_scores[i].item() for i in range(len(all_ids))}
@@ -345,17 +352,17 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
                 if len(recs) >= top_n:
                     break
                 title = fs.movieId_to_title[mid]
-                if title not in fav_set and title not in dis_set:
+                if title not in exclude_set:
                     recs.append(title)
 
             liked_genres    = ', '.join(USER_TYPE_TO_FAVORITE_GENRES[user_type])
             disliked_genres = ', '.join(USER_TYPE_TO_WORST_GENRES[user_type])
-            liked_movies    = USER_TYPE_TO_FAVORITE_MOVIES[user_type]
-            disliked_movies = USER_TYPE_TO_DISLIKED_MOVIES[user_type]
 
-            col_w      = min(55, max((len(t) for t in liked_movies + disliked_movies), default=20))
+            col_w      = min(55, max((len(t) for t in fav_movies + dis_movies), default=20))
             rec_w      = min(55, max((len(r) for r in recs), default=20))
             title_line = f"{user_type}  |  Likes: {liked_genres}  |  Dislikes: {disliked_genres}"
+            if genome_tags:
+                title_line += f"  |  Genome: {', '.join(genome_tags)}"
             bar_w      = max(col_w * 2 + rec_w + 6, len(title_line))
 
             print(f"\n{'═' * bar_w}")
@@ -364,7 +371,7 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
             header = f"{'Liked Movies':<{col_w}}  {'Disliked Movies':<{col_w}}  Recommendations"
             print(header)
             print('─' * bar_w)
-            for a, b, c in zip_longest(liked_movies, disliked_movies, recs, fillvalue=''):
+            for a, b, c in zip_longest(fav_movies, dis_movies, recs, fillvalue=''):
                 print(f"{a:<{col_w}}  {b:<{col_w}}  {c}")
 
 
