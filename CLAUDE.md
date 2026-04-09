@@ -39,7 +39,7 @@ The `data/ml-32m/` directory must be present (not in git). Required files:
 - `genome-scores.csv` — ML-derived relevance scores (0–1) per (movie, tag) pair
 - `genome-tags.csv` — curated vocabulary of ~1,128 genome tag names
 
-Only movies with **1,000+ ratings** are kept (~4,461 movies). Only users with 20–500 ratings are kept.
+Only movies with **200+ ratings** are kept (~9,375 movies). Only users with 20–500 ratings are kept.
 
 ### Tag data
 
@@ -78,19 +78,25 @@ All towers use `nn.Linear → Tanh`. Weights initialized with Xavier uniform (ga
 
 `len(user_combined) == len(item_combined)` must hold for the dot product. The model raises `ValueError` at construction if violated.
 
-### Current embedding sizes (120-dim)
+### Current embedding sizes (110-dim)
 
 ```python
 item_movieId_embedding_size      = 40   # shared: user history pool + item tower
-item_year_embedding_size         = 10
-timestamp_feature_embedding_size = 10
-item_tag_embedding_size          = 15
+item_year_embedding_size         = 5
+timestamp_feature_embedding_size = 5
+item_tag_embedding_size          = 10
 item_genome_tag_embedding_size   = 35   # shared: item tower + user genome pool (cannot be set independently)
-user_genre_embedding_size        = 35
-item_genre_embedding_size        = 20   # = 70 - item_tag_embedding_size - item_genome_tag_embedding_size
+user_genre_embedding_size        = 30
+item_genre_embedding_size        = 20
 
-# user:  40 + 35 + 35 + 10       = 120
-# item:  20 + 15 + 35 + 40 + 10  = 120  ✓
+# user:  40 + 35 + 30 + 5       = 110
+# item:  20 + 10 + 35 + 40 + 5  = 110  ✓
+```
+
+**Previous model (120-dim, with user genome pooling):**
+```
+item_year=10, ts=10, item_tag=15, user_genre=35
+user: 40+35+35+10=120 / item: 20+15+35+40+10=120
 ```
 
 **Previous model (120-dim, no user genome pooling):**
@@ -158,15 +164,31 @@ Use these synthetic users to quickly assess model quality after training:
 
 - **Horror Lover** and **Sci-Fi Lover** — most sensitive to genre drift; if these are wrong, the model is failing
 - **Comedy Lover** and **Romance Lover** — tend to work well across all runs; good sanity checks
-- **Thriller Lover** and **Crime Lover** — stress tests for edge cases; expect imperfect results due to genre overlap
+- **Crime Lover** — stress test for edge cases; expect imperfect results due to genre overlap
 
 ### Known persistent issues (as of 120-dim model)
 
 - **Fantasy Lover** drifts to arthouse/surreal (Howl's Moving Castle is correct; Brazil, Dark City, After Hours are not)
 - **Sci-Fi Lover** drifts to arthouse/cult (Videodrome, Naked Lunch, Blue Velvet) — prestige sci-fi shares genome signals with surreal cinema
-- **War Lover** drifts to epic/action (LotR, Matrix, Doctor Strange) — "acclaimed serious film" cluster
-- **Thriller Lover** drifts to horror/action (Saw series, Final Destination) — Thriller genre too broad
+- **War Movie Lover** drifts to epic/action (LotR, Matrix, Doctor Strange) — "acclaimed serious film" cluster
 - Removing `item_embedding_tower` causes severe genre clustering — do not remove it
+
+## Future Training Objective Improvements
+
+1. **Sampled softmax (implicit feedback)** — replace MSE regression on ratings with sampled softmax
+   classification over the item corpus (YouTube DNN, 2016). Frame recommendation as "predict the
+   next watched item" rather than "predict a rating". Use implicit feedback (every watch = positive
+   example) with sampled negatives and cross-entropy loss. Yields orders of magnitude more training
+   signal since ratings are sparse but watches are plentiful. At serving time reduces to the same
+   nearest neighbor search in dot product space. Requires: new label construction (item IDs, not
+   ratings), dropping debiasing, adding negative sampling to the training loop.
+
+2. **Implicit vs explicit feedback tradeoff** — explicit ratings (current) give clean preference
+   signal but are sparse. Implicit feedback (watches) is abundant but noisy — a user may finish
+   a movie they disliked. Consider a hybrid: use implicit feedback for candidate generation
+   (softmax) and explicit ratings for a separate ranking stage.
+
+---
 
 ## Future User Tower Improvements
 
