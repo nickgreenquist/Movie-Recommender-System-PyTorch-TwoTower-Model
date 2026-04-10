@@ -224,6 +224,16 @@ Currently the genre context tower takes `[avg_debiased_rating_per_genre | watch_
 2. **Rating variance (user side)** — sharpens genre signals by distinguishing fans from casual watchers
 3. **Genre + genome tags (item side)** — highest potential impact but requires merging two large input spaces
 
+## Known Code Inconsistencies (to fix)
+
+- **Label movieIds stored as raw IDs, watch history as embedding indices** — in `features.py`,
+  `watch_history` is mapped to embedding indices via `item_emb_movieId_to_i` at feature
+  engineering time, but `label_movieIds` are stored as raw movie IDs and only mapped to embedding
+  indices later in `dataset.py:251`. Both work correctly but the inconsistency is confusing.
+  Fix: map label movieIds to embedding indices in `features.py` the same way watch history is.
+
+---
+
 ## Git Workflow
 
 Never commit and push in the same command. Always commit first, then ask before pushing.
