@@ -129,11 +129,11 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
        target_movieId, target_movieId_genre, target_movieId_tag,
        target_movieId_genome, target_movieId_year)
     """
-    (X_train, X_history_train, X_history_ratings_train, X_tag_train, timestamp_train,
+    (X_train, X_history_train, X_history_ratings_train, timestamp_train,
      Y_train, target_movieId_train, target_movieId_genre_train, target_movieId_tag_train,
      target_movieId_genome_train, target_movieId_year_train) = train_data
 
-    (X_val, X_history_val, X_history_ratings_val, X_tag_val, timestamp_val,
+    (X_val, X_history_val, X_history_ratings_val, timestamp_val,
      Y_val, target_movieId_val, target_movieId_genre_val, target_movieId_tag_val,
      target_movieId_genome_val, target_movieId_year_val) = val_data
 

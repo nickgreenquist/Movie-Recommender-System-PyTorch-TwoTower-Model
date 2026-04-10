@@ -129,12 +129,11 @@ def build_movie_features(base: dict, vocab: dict) -> pd.DataFrame:
 
 # ── Per-user features ─────────────────────────────────────────────────────────
 
-def build_user_features(base: dict, movie_df: pd.DataFrame, vocab: dict) -> pd.DataFrame:
+def build_user_features(base: dict, vocab: dict) -> pd.DataFrame:
     """
     Returns DataFrame with one row per user:
       userId, avg_rating, genre_context, watch_history (emb indices),
-      watch_history_ratings, tag_context,
-      label_movieIds, label_ratings, label_timestamps
+      watch_history_ratings, label_movieIds, label_ratings, label_timestamps
     All list columns are list[float] or list[int].
     """
     watch_df   = base['watch']
@@ -144,15 +143,11 @@ def build_user_features(base: dict, movie_df: pd.DataFrame, vocab: dict) -> pd.D
     genre_to_i = vocab['genre_to_i']
     genres_ord = vocab['genres_ordered']
     n_genres   = len(genre_to_i)
-    n_tags     = len(vocab['tag_to_i'])
 
     top_movies            = movies_df['movieId'].tolist()
     item_emb_movieId_to_i = {int(mid): i for i, mid in enumerate(top_movies)}
 
     movieId_to_genres = {int(r['movieId']): r['genres'] for _, r in movies_df.iterrows()}
-
-    # movieId → tag_context (from movie_df)
-    movieId_to_tag_ctx = {int(r['movieId']): r['tag_context'] for _, r in movie_df.iterrows()}
 
     # Per-user avg rating
     avg_ratings = watch_df.groupby('userId')['rating'].mean().to_dict()
@@ -191,14 +186,6 @@ def build_user_features(base: dict, movie_df: pd.DataFrame, vocab: dict) -> pd.D
     genre_ctx_matrix[_ctx['row'].values, _ctx['col_avg'].values]   = _ctx['val_avg'].values
     genre_ctx_matrix[_ctx['row'].values, _ctx['col_watch'].values] = _ctx['val_watch'].values
 
-    # Pre-build tag matrix (n_top_movies × n_tags) for fast numpy row-mean
-    print("  Building tag matrix ...")
-    tag_matrix = np.zeros((len(top_movies), n_tags), dtype=np.float32)
-    for mid, idx in item_emb_movieId_to_i.items():
-        ctx = movieId_to_tag_ctx.get(mid)
-        if ctx:
-            tag_matrix[idx] = ctx
-
     # Aggregate watch/label history per user
     watch_agg = (watch_df
                  .groupby('userId')
@@ -235,12 +222,6 @@ def build_user_features(base: dict, movie_df: pd.DataFrame, vocab: dict) -> pd.D
         hist_ids     = [p[0] for p in pairs]
         hist_ratings = [p[1] for p in pairs]
 
-        # Tag context — numpy row-mean over watched movie tag vectors
-        if hist_ids:
-            tag_ctx = tag_matrix[hist_ids].mean(axis=0).tolist()
-        else:
-            tag_ctx = [0.0] * n_tags
-
         # Labels
         lrow = label_by_user.get(uid)
         if lrow is not None:
@@ -256,7 +237,6 @@ def build_user_features(base: dict, movie_df: pd.DataFrame, vocab: dict) -> pd.D
             'genre_context':         ctx,
             'watch_history':         hist_ids,
             'watch_history_ratings': hist_ratings,
-            'tag_context':           tag_ctx,
             'label_movieIds':        lbl_movies,
             'label_ratings':         lbl_rats,
             'label_timestamps':      lbl_times,
@@ -295,7 +275,7 @@ def run(data_dir: str = 'data', version: str = FEATURES_VERSION) -> None:
     movie_df = build_movie_features(base, vocab)
 
     print("\n── Building user features ──")
-    user_df = build_user_features(base, movie_df, vocab)
+    user_df = build_user_features(base, vocab)
 
     movie_out = os.path.join(data_dir, f'features_movies_{version}.parquet')
     user_out  = os.path.join(data_dir, f'features_users_{version}.parquet')

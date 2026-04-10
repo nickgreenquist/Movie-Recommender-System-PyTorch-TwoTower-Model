@@ -53,7 +53,6 @@ class FeatureStore:
     user_to_context:                   dict
     user_to_watch_history:             dict
     user_to_watch_history_ratings:     dict
-    user_to_tag_context:               dict
     user_to_movie_to_rating_LABEL:     dict
     user_to_movie_to_timestamp_LABEL:  dict
 
@@ -128,7 +127,6 @@ def load_features(data_dir: str = 'data', version: str = 'v1') -> FeatureStore:
     user_to_context                  = {}
     user_to_watch_history            = {}
     user_to_watch_history_ratings    = {}
-    user_to_tag_context              = {}
     user_to_movie_to_rating_LABEL    = {}
     user_to_movie_to_timestamp_LABEL = {}
 
@@ -139,7 +137,6 @@ def load_features(data_dir: str = 'data', version: str = 'v1') -> FeatureStore:
         user_to_context[uid]               = list(row['genre_context'])
         user_to_watch_history[uid]         = list(row['watch_history'])
         user_to_watch_history_ratings[uid] = list(row['watch_history_ratings'])
-        user_to_tag_context[uid]           = list(row['tag_context'])
 
         lbl_movies = list(row['label_movieIds'])
         lbl_rats   = list(row['label_ratings'])
@@ -185,7 +182,6 @@ def load_features(data_dir: str = 'data', version: str = 'v1') -> FeatureStore:
         user_to_context=user_to_context,
         user_to_watch_history=user_to_watch_history,
         user_to_watch_history_ratings=user_to_watch_history_ratings,
-        user_to_tag_context=user_to_tag_context,
         user_to_movie_to_rating_LABEL=user_to_movie_to_rating_LABEL,
         user_to_movie_to_timestamp_LABEL=user_to_movie_to_timestamp_LABEL,
         user_context_size=user_context_size,
@@ -221,8 +217,8 @@ def pad_history_ratings_batch(history_ratings: list) -> torch.Tensor:
 def build_dataset(users: list, fs: FeatureStore) -> tuple:
     """
     Build training/validation tensors for a list of user IDs.
-    Returns a tuple of 11 elements:
-      X, X_history (list), X_history_ratings (list), X_tag,
+    Returns a tuple of 10 elements:
+      X, X_history (list), X_history_ratings (list),
       timestamp, Y, target_movieId,
       target_movieId_genre_context, target_movieId_tag_context,
       target_movieId_genome_tag_context, target_movieId_year
@@ -230,7 +226,6 @@ def build_dataset(users: list, fs: FeatureStore) -> tuple:
     X                              = []
     X_history                      = []
     X_history_ratings              = []
-    X_tag                          = []
     timestamp                      = []
     target_movieId                 = []
     target_movieId_genre_context   = []
@@ -246,7 +241,6 @@ def build_dataset(users: list, fs: FeatureStore) -> tuple:
             X.append(fs.user_to_context[user])
             X_history.append(fs.user_to_watch_history[user])
             X_history_ratings.append(fs.user_to_watch_history_ratings[user])
-            X_tag.append(fs.user_to_tag_context[user])
             timestamp.append(fs.user_to_movie_to_timestamp_LABEL[user][movieId])
             target_movieId.append(fs.item_emb_movieId_to_i[movieId])
             target_movieId_genre_context.append(fs.movieId_to_genre_context[movieId])
@@ -257,9 +251,8 @@ def build_dataset(users: list, fs: FeatureStore) -> tuple:
 
     n = len(Y)
     print(f"  {n:,} samples — building tensors ...")
-    print("  X, X_tag, Y ...")
+    print("  X, Y ...")
     X               = torch.from_numpy(np.array(X,     dtype=np.float32))
-    X_tag           = torch.from_numpy(np.array(X_tag, dtype=np.float32))
     Y               = torch.from_numpy(np.array(Y,     dtype=np.float32))
     print("  target_movieId, year, timestamp ...")
     target_movieId_t = torch.from_numpy(np.array(target_movieId,      dtype=np.int64))
@@ -274,7 +267,7 @@ def build_dataset(users: list, fs: FeatureStore) -> tuple:
     print("  genome tag context ...")
     target_movieId_genome_t = torch.from_numpy(np.array(target_movieId_genome_context, dtype=np.float32))
 
-    return (X, X_history, X_history_ratings, X_tag, timestamp_t, Y,
+    return (X, X_history, X_history_ratings, timestamp_t, Y,
             target_movieId_t, target_movieId_genre_t, target_movieId_tag_t,
             target_movieId_genome_t, target_movieId_year_t)
 
