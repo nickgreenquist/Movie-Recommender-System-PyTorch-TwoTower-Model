@@ -118,6 +118,7 @@ user: 20+50+10=80 / item: 10+15+25+20+10=80
 - **genome_context_buffer:** Registered as a non-trainable buffer (saved in state_dict, device-portable). Row `i` = genome context for movie at embedding index `i`; last row = zeros (pad index). Built in `build_model()` from `fs.movieId_to_genome_tag_context`.
 - **Rating-weighted avg pool:** Each watched movie embedding is weighted by the user's debiased rating. Abs-value normalization prevents negative ratings from cancelling positive ones in the denominator.
 - **Removing `item_embedding_tower` causes severe genre clustering** — do not remove it.
+- **Item ID embedding does not learn meaningful CF signal.** `probe_similar` on `MOVIEID_EMBEDDING` alone returns near-random neighbors (e.g. LotR → Hero, Thin Blue Line, Earth vs. Flying Saucers). Content towers (genre, genome) dominate the gradient and ID embeddings don't develop independent co-watch structure under MSE loss. Consequence: the user history pool (which pools over item ID embeddings) is also not capturing genuine CF signal — user taste representation comes mostly from the genome pool and genre tower. Fix requires sampled softmax with implicit feedback.
 - **Tanh saturation:** Small sub-embedding spaces (genre=20, tag=15) saturate after training, causing sub-embedding cosine probes to return 1.0 for many movies. This is a known limitation. ReLU + larger dims would fix it but requires retraining.
 
 ## Training Details

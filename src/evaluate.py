@@ -515,19 +515,21 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
     print("\nBuilding movie embeddings ...")
     movie_embeddings = build_movie_embeddings(model, fs)
 
-    print("Precomputing embedding matrix ...")
-    all_ids  = list(movie_embeddings.keys())
-    all_embs = torch.cat([movie_embeddings[m]['MOVIE_EMBEDDING_COMBINED'] for m in all_ids], dim=0)
-    all_norm = F.normalize(all_embs, dim=1)
+    print("Precomputing embedding matrices ...")
+    all_ids    = list(movie_embeddings.keys())
+    all_embs   = torch.cat([movie_embeddings[m]['MOVIE_EMBEDDING_COMBINED'] for m in all_ids], dim=0)
+    all_norm   = F.normalize(all_embs, dim=1)
+    all_id_embs = torch.cat([movie_embeddings[m]['MOVIEID_EMBEDDING'] for m in all_ids], dim=0)
+    all_id_norm = F.normalize(all_id_embs, dim=1)
 
-    return model, fs, movie_embeddings, all_ids, all_embs, all_norm
+    return model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm
 
 
 # ── Orchestrators ─────────────────────────────────────────────────────────────
 
 def run_canary(data_dir: str = 'data', checkpoint_path: str = None,
                version: str = 'v1') -> None:
-    model, fs, movie_embeddings, all_ids, all_embs, all_norm = _setup(data_dir, checkpoint_path, version)
+    model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm = _setup(data_dir, checkpoint_path, version)
     if model is None:
         return
     print("\n── Canary user evaluation ──")
@@ -547,58 +549,63 @@ PROBE_SIMILAR_TITLES = [
 
 
 def probe_similar(movie_embeddings: dict, fs: FeatureStore,
-                  all_ids: list, all_norm: torch.Tensor,
+                  all_ids: list, all_norm: torch.Tensor, all_id_norm: torch.Tensor,
                   titles: list, top_n: int = 5) -> None:
     """
-    For each query title, find the top-N most similar movies by cosine similarity
-    on MOVIE_EMBEDDING_COMBINED. Uses pre-normalized all_norm matrix from _setup.
+    For each query title, find the top-N most similar movies by cosine similarity,
+    using two embedding spaces:
+      1. MOVIE_EMBEDDING_COMBINED — full model embedding (content + CF signal)
+      2. MOVIEID_EMBEDDING        — item ID embedding only (pure CF signal)
     """
     TRUNC = 28  # max chars per cell
 
     def trunc(s: str) -> str:
         return s if len(s) <= TRUNC else s[:TRUNC - 1] + '…'
 
-    # Collect all rows first
-    rows = []
-    for title in titles:
-        if title not in fs.title_to_movieId:
-            rows.append((title, []))
-            continue
-        mid     = fs.title_to_movieId[title]
-        query   = F.normalize(movie_embeddings[mid]['MOVIE_EMBEDDING_COMBINED'], dim=1)
-        sims    = (all_norm @ query.T).squeeze(-1)
-        top_idx = sims.argsort(descending=True)
-        results = []
-        for idx in top_idx:
-            candidate = all_ids[idx.item()]
-            if candidate == mid:
+    def top_n_for(norm_matrix, emb_key):
+        rows = []
+        for title in titles:
+            if title not in fs.title_to_movieId:
+                rows.append((title, []))
                 continue
-            results.append(fs.movieId_to_title[candidate])
-            if len(results) >= top_n:
-                break
-        rows.append((title, results))
+            mid     = fs.title_to_movieId[title]
+            query   = F.normalize(movie_embeddings[mid][emb_key], dim=1)
+            sims    = (norm_matrix @ query.T).squeeze(-1)
+            top_idx = sims.argsort(descending=True)
+            results = []
+            for idx in top_idx:
+                candidate = all_ids[idx.item()]
+                if candidate == mid:
+                    continue
+                results.append(fs.movieId_to_title[candidate])
+                if len(results) >= top_n:
+                    break
+            rows.append((title, results))
+        return rows
 
-    seed_w = max(len(trunc(t)) for t, _ in rows)
-    col_w  = TRUNC
-    bar_w  = seed_w + (col_w + 3) * top_n + 2
+    def print_table(label, rows):
+        seed_w = max(len(trunc(t)) for t, _ in rows)
+        col_w  = TRUNC
+        header = f"{'Seed':<{seed_w}}" + "".join(f"  {'#'+str(i+1):<{col_w}}" for i in range(top_n))
+        print(f"\n── {label} ──")
+        print(header)
+        print('─' * len(header))
+        for title, results in rows:
+            if not results:
+                print(f"{trunc(title):<{seed_w}}  (not in corpus)")
+                continue
+            row = f"{trunc(title):<{seed_w}}"
+            for t in results:
+                row += f"  {trunc(t):<{col_w}}"
+            print(row)
 
-    header = f"{'Seed':<{seed_w}}" + "".join(f"  {'#'+str(i+1):<{col_w}}" for i in range(top_n))
-    print(f"\n── Most similar movies ──")
-    print(header)
-    print('─' * len(header))
-    for title, results in rows:
-        if not results:
-            print(f"{trunc(title):<{seed_w}}  (not in corpus)")
-            continue
-        row = f"{trunc(title):<{seed_w}}"
-        for t in results:
-            row += f"  {trunc(t):<{col_w}}"
-        print(row)
+    print_table("Most similar — combined embedding", top_n_for(all_norm,    'MOVIE_EMBEDDING_COMBINED'))
+    print_table("Most similar — item ID embedding",  top_n_for(all_id_norm, 'MOVIEID_EMBEDDING'))
 
 
 def run_probes(data_dir: str = 'data', checkpoint_path: str = None,
                version: str = 'v1') -> None:
-    model, fs, movie_embeddings, all_ids, all_embs, all_norm = _setup(data_dir, checkpoint_path, version)
+    model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm = _setup(data_dir, checkpoint_path, version)
     if model is None:
         return
     print("\n── Embedding probes ──")
@@ -607,6 +614,6 @@ def run_probes(data_dir: str = 'data', checkpoint_path: str = None,
     probe_tag(model, ['pixar', 'animation'], movie_embeddings, fs)
     probe_genome_tag(model, ['horror', 'gore', 'torture'], movie_embeddings, fs)
     probe_genome_tag(model, ['martial arts', 'kung fu'], movie_embeddings, fs)
-    probe_similar(movie_embeddings, fs, all_ids, all_norm, PROBE_SIMILAR_TITLES)
+    probe_similar(movie_embeddings, fs, all_ids, all_norm, all_id_norm, PROBE_SIMILAR_TITLES)
 
 
