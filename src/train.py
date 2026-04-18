@@ -124,8 +124,8 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
     """
     Run the training loop. Returns the path of the best checkpoint.
 
-    train_data / val_data: 11-tuple from dataset.build_dataset()
-      (X, X_history, X_history_ratings, X_tag, timestamp, Y,
+    train_data / val_data: 10-tuple from dataset.build_dataset()
+      (X, X_history, X_history_ratings, timestamp, Y,
        target_movieId, target_movieId_genre, target_movieId_tag,
        target_movieId_genome, target_movieId_year)
     """
