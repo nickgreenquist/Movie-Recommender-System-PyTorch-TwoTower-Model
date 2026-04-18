@@ -3,6 +3,8 @@
 ## Live Demo
 **Demo link:** [movie-recommender-system-two-tower-model.streamlit.app](https://movie-recommender-system-two-tower-model.streamlit.app/)
 
+<br>
+
 ![Main](assets/main.jpg)
 
 <a id="introduction"></a>

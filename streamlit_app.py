@@ -681,7 +681,10 @@ st.title("Movie Recommender")
 model, fs, me, all_ids, all_embs, all_norm, ts_inference = load_artifacts()
 
 st.markdown(
-    "<small>Two-Tower neural network · Built with <a href='https://grouplens.org/datasets/movielens/32m/' target='_blank'>MovieLens 32M</a> and <a href='https://pytorch.org' target='_blank'>PyTorch</a></small>",
+    "<small>Two-Tower neural network · Built with "
+    "<a href='https://grouplens.org/datasets/movielens/32m/' target='_blank'>MovieLens 32M</a>"
+    " and <a href='https://pytorch.org' target='_blank'>PyTorch</a><br>"
+    "Code: <a href='https://github.com/nickgreenquist/Movie-Recommender-System-PyTorch-TwoTower-Model' target='_blank'>GitHub</a></small>",
     unsafe_allow_html=True,
 )
 
