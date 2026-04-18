@@ -1,6 +1,7 @@
 # Movie Recommender System — PyTorch Two-Tower Model
 
-**Live demo:** [movie-recommender-system-two-tower-model.streamlit.app](https://movie-recommender-system-two-tower-model.streamlit.app/)
+## Live Demo
+**Demo link:** [movie-recommender-system-two-tower-model.streamlit.app](https://movie-recommender-system-two-tower-model.streamlit.app/)
 
 ![Main](assets/main.jpg)
 
