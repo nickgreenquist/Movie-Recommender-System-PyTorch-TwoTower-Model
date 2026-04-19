@@ -176,6 +176,34 @@ Use these synthetic users to quickly assess model quality after training:
 
 ## Future Training Objective Improvements
 
+### ⚡ Immediate next step: replicate softmax from the book repo
+
+The book repo has fully validated in-batch negatives softmax. Results on the books corpus
+(~11k items, random Hit Rate@10 baseline ≈ 0.09%):
+
+| Metric       | MSE    | BPR    | Softmax      |
+|--------------|--------|--------|--------------|
+| Hit Rate@10  | 4.3%   | 2.8%   | **11.7%**    |
+| Hit Rate@50  | 16.8%  | 14.4%  | **31.3%**    |
+| Recall@10    | 0.0061 | 0.0033 | **0.0194**   |
+| NDCG@10      | 0.0062 | 0.0036 | **0.0213**   |
+| MRR          | 0.021  | 0.015  | **0.057**    |
+
+Softmax is ~3× better than MSE. The implementation to port:
+- **Dataset**: rollback examples (for each watch, context = all prior watches). Cap per user (e.g. 10 examples). Avoids future leakage and balances user representation.
+- **Loss**: cross-entropy over in-batch negatives. B×B score matrix, diagonal = correct targets.
+- **Optimizer**: Adam, `lr=0.001`, `weight_decay=1e-5`; CosineAnnealingLR to 0 over training steps.
+- **Batch size**: 512 (511 in-batch negatives per example). Temperature: 0.05.
+- **Offline eval**: implement `python main.py eval` with Recall@K, NDCG@K, Hit Rate@K, MRR (leave-label-out per user, 5k sampled users, `random.Random(42)`).
+- See book repo `src/dataset.py::build_softmax_dataset`, `src/train.py::train_softmax`, `src/offline_eval.py`.
+
+Key book repo lessons:
+- Val loss has high variance with in-batch negatives (different negatives each eval batch) — ±0.2 oscillation is normal; don't chase it.
+- In-batch negative debiasing (log-frequency correction, Yi et al. 2019) did **not** converge — skip it. Book corpus frequency distribution is too compressed for the correction to add signal.
+- Random baseline loss at step 0 should be `log(batch_size)` = `log(512)` ≈ 6.238 — confirm this as a sanity check.
+
+---
+
 1. **Sampled softmax (implicit feedback)** — replace MSE regression on ratings with sampled softmax
    classification over the item corpus (YouTube DNN, 2016). Frame recommendation as "predict the
    next watched item" rather than "predict a rating". Use implicit feedback (every watch = positive
