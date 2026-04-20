@@ -51,6 +51,7 @@ def get_config() -> dict:
         'item_genome_tag_embedding_size':   item_genome_tag_embedding_size,
         'user_genre_embedding_size':        user_genre_embedding_size,
         'item_genre_embedding_size':        item_genre_embedding_size,
+        'use_user_genome_pool':             True,
         # Training
         'lr':               0.005,
         'momentum':         0.9,
@@ -90,6 +91,7 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
         item_year_embedding_size=config['item_year_embedding_size'],
         user_genre_embedding_size=config['user_genre_embedding_size'],
         timestamp_feature_embedding_size=config['timestamp_feature_embedding_size'],
+        use_user_genome_pool=config.get('use_user_genome_pool', True),
     )
     return model
 
@@ -98,7 +100,7 @@ def print_model_summary(model: MovieRecommender) -> None:
     """Print tower dimensions and parameter count for a built model."""
     m = model
     history_dim      = m.item_embedding_lookup.embedding_dim
-    genome_dim       = m.item_genome_tag_tower[0].out_features
+    genome_dim       = m.item_genome_tag_tower[0].out_features if m.use_user_genome_pool else 0
     genre_dim        = m.user_genre_tower[0].out_features
     ts_dim           = m.timestamp_embedding_lookup.embedding_dim
     user_total       = history_dim + genome_dim + genre_dim + ts_dim
@@ -110,8 +112,9 @@ def print_model_summary(model: MovieRecommender) -> None:
     item_total       = item_genre_dim + item_tag_dim + genome_tag_dim + item_movieId_dim + year_dim
     n_params         = sum(p.nelement() for p in model.parameters() if p.requires_grad)
 
+    genome_str = f" + genome({genome_dim})" if m.use_user_genome_pool else " [no genome pool]"
     print(f"\n── Model dimensions ──")
-    print(f"  User side:  history({history_dim}) + genome({genome_dim}) + genre({genre_dim}) + ts({ts_dim})  =  {user_total}")
+    print(f"  User side:  history({history_dim}){genome_str} + genre({genre_dim}) + ts({ts_dim})  =  {user_total}")
     print(f"  Item side:  movieId({item_movieId_dim}) + genome({genome_tag_dim}) + genre({item_genre_dim})"
           f" + tag({item_tag_dim}) + year({year_dim})  =  {item_total}")
     print(f"  Parameters: {n_params:,}")
@@ -214,7 +217,7 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
             print(f"[{i:06d}]  train_loss={avg_train:.4f}  val_loss={val_loss:.4f}  "
                   f"({elapsed:.0f}s)")
 
-            if val_loss < best_val_loss:
+            if i > 0 and val_loss < best_val_loss:
                 best_val_loss = val_loss
                 torch.save(model.state_dict(), best_path)
                 print(f"  → new best {best_val_loss:.4f} → {best_path}")
@@ -233,16 +236,24 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
 # ── Softmax training (in-batch negatives) ─────────────────────────────────────
 
 def get_softmax_config() -> dict:
-    """Hyperparameters for in-batch negatives softmax training. Same embedding dims as MSE."""
+    """
+    Hyperparameters for in-batch negatives softmax training.
+
+    use_user_genome_pool=False: removes genome pooling from the user tower (saves the expensive
+    (batch, hist_len, 1128) computation). The freed 35 dims are reallocated to user_genre so
+    the tower constraint still holds: user = history(40) + genre(65) + ts(5) = 110.
+    Item side is unchanged: genre(20) + tag(10) + genome(35) + movieId(40) + year(5) = 110.
+    """
     item_movieId_embedding_size      = 40
     item_year_embedding_size         = 5
     timestamp_feature_embedding_size = 5
     item_tag_embedding_size          = 10
     item_genome_tag_embedding_size   = 35
-    user_genre_embedding_size        = 30
+    user_genre_embedding_size        = 65   # 30 + 35 freed from genome pool
     item_genre_embedding_size        = 20
 
-    user_total = item_movieId_embedding_size + item_genome_tag_embedding_size + user_genre_embedding_size + timestamp_feature_embedding_size
+    # With use_user_genome_pool=False: user = history + genre + ts (no genome term)
+    user_total = item_movieId_embedding_size + user_genre_embedding_size + timestamp_feature_embedding_size
     item_total = item_genre_embedding_size + item_tag_embedding_size + item_genome_tag_embedding_size + item_movieId_embedding_size + item_year_embedding_size
     assert user_total == item_total, f"Tower size mismatch: user={user_total} item={item_total}"
 
@@ -254,6 +265,7 @@ def get_softmax_config() -> dict:
         'item_genome_tag_embedding_size':   item_genome_tag_embedding_size,
         'user_genre_embedding_size':        user_genre_embedding_size,
         'item_genre_embedding_size':        item_genre_embedding_size,
+        'use_user_genome_pool':             False,
         # Training
         'lr':               0.001,
         'weight_decay':     1e-5,
@@ -355,7 +367,7 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
             print(f"[{i:06d}]  train_loss={avg_train:.4f}  val_loss={val_loss:.4f}  "
                   f"lr={current_lr:.6f}  ({elapsed:.0f}s)")
 
-            if val_loss < best_val_loss:
+            if i > 0 and val_loss < best_val_loss:
                 best_val_loss = val_loss
                 torch.save(model.state_dict(), best_path)
                 print(f"  → new best {best_val_loss:.4f} → {best_path}")

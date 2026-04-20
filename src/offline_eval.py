@@ -15,9 +15,8 @@ import math
 import random
 
 import torch
-import torch.nn.functional as F
 
-from src.dataset import FeatureStore
+from src.dataset import FeatureStore, pad_history_batch, pad_history_ratings_batch
 from src.evaluate import build_movie_embeddings
 from src.model import MovieRecommender
 
@@ -72,26 +71,15 @@ def run_offline_eval(model: MovieRecommender, fs: FeatureStore,
             if not target_mids:
                 continue
 
-            # ── Build user embedding ──────────────────────────────────────────
-            genre_ctx = fs.user_to_context[user]
-            genre_emb = model.user_genre_tower(torch.tensor([genre_ctx]))
-            ts_emb    = model.timestamp_embedding_tower(
-                            model.timestamp_embedding_lookup(ts_max_bin))
-
-            hist_idx_t = torch.tensor(hist_indices, dtype=torch.long).unsqueeze(0)
-            hist_wts_t = torch.tensor([hist_ratings], dtype=torch.float)
-            pad_mask   = (hist_idx_t != model.pad_idx).float().unsqueeze(-1)
-            rat_wts    = hist_wts_t.unsqueeze(-1) * pad_mask
-            wt_sum     = rat_wts.abs().sum(dim=1).clamp(min=1e-6)
-
-            hist_embs   = model.item_embedding_lookup(hist_idx_t)
-            history_emb = (hist_embs * rat_wts).sum(dim=1) / wt_sum
-
-            watched_genome = model.genome_context_buffer[hist_idx_t]
-            genome_embs    = model.item_genome_tag_tower(watched_genome)
-            genome_emb     = (genome_embs * rat_wts).sum(dim=1) / wt_sum
-
-            user_emb = torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)  # (1, 110)
+            # ── Build user embedding via model.user_embedding() ───────────────
+            genre_ctx  = fs.user_to_context[user]
+            hist_idx_t = pad_history_batch([hist_indices], model.pad_idx)
+            hist_wts_t = pad_history_ratings_batch([hist_ratings])
+            user_emb   = model.user_embedding(
+                torch.tensor([genre_ctx]),
+                hist_idx_t, hist_wts_t,
+                ts_max_bin,
+            )  # (1, embedding_dim) — respects use_user_genome_pool flag
 
             # ── Score all movies ───────────────────────────────────────────────
             scores = (all_embs @ user_emb.T).squeeze(-1)  # (n_movies,)

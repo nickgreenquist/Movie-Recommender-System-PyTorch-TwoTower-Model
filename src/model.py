@@ -22,6 +22,7 @@ class MovieRecommender(nn.Module):
                  item_year_embedding_size=10,
                  user_genre_embedding_size=35,
                  timestamp_feature_embedding_size=10,
+                 use_user_genome_pool=True,
                 ):
         """
         Fixed architecture — item tag and genome tag towers are always active,
@@ -47,6 +48,7 @@ class MovieRecommender(nn.Module):
         super().__init__()
 
         self.pad_idx = top_movies_len
+        self.use_user_genome_pool = use_user_genome_pool
 
         # genome_context_buffer: non-trainable, device-portable, saved in state_dict
         self.register_buffer('genome_context_buffer', genome_context_buffer)
@@ -92,7 +94,8 @@ class MovieRecommender(nn.Module):
         )
 
         # ── Dimension check ───────────────────────────────────────────────────
-        user_side = (item_movieId_embedding_size + item_genome_tag_embedding_size
+        genome_contrib = item_genome_tag_embedding_size if use_user_genome_pool else 0
+        user_side = (item_movieId_embedding_size + genome_contrib
                      + user_genre_embedding_size + timestamp_feature_embedding_size)
         item_side = (item_genre_embedding_size + item_tag_embedding_size
                      + item_genome_tag_embedding_size
@@ -100,7 +103,7 @@ class MovieRecommender(nn.Module):
         if user_side != item_side:
             raise ValueError(
                 f"User embedding size ({user_side} = history {item_movieId_embedding_size} + "
-                f"genome {item_genome_tag_embedding_size} + "
+                f"genome {genome_contrib} + "
                 f"genre {user_genre_embedding_size} + timestamp {timestamp_feature_embedding_size}) "
                 f"must match item embedding size ({item_side} = genre {item_genre_embedding_size} + "
                 f"tag {item_tag_embedding_size} + genome_tag {item_genome_tag_embedding_size} + "
@@ -127,14 +130,17 @@ class MovieRecommender(nn.Module):
         weight_sum     = rating_weights.abs().sum(dim=1).clamp(min=1e-6)
         history_emb    = (history_embs * rating_weights).sum(dim=1) / weight_sum
 
-        # nn.Linear + Tanh broadcast: (batch, hist_len, 1128) → (batch, hist_len, 35)
-        watched_genome = self.genome_context_buffer[user_watch_history]
-        genome_embs    = self.item_genome_tag_tower(watched_genome)
-        genome_emb     = (genome_embs * rating_weights).sum(dim=1) / weight_sum
-
         genre_emb = self.user_genre_tower(user_genre_contexts)
         ts_emb    = self.timestamp_embedding_tower(self.timestamp_embedding_lookup(timestamps))
-        return torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
+
+        if self.use_user_genome_pool:
+            # nn.Linear + Tanh broadcast: (batch, hist_len, 1128) → (batch, hist_len, 35)
+            watched_genome = self.genome_context_buffer[user_watch_history]
+            genome_embs    = self.item_genome_tag_tower(watched_genome)
+            genome_emb     = (genome_embs * rating_weights).sum(dim=1) / weight_sum
+            return torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
+        else:
+            return torch.cat([history_emb, genre_emb, ts_emb], dim=1)
 
     def item_embedding(self, movie_genres, movie_tags, movie_genome_tags, years, target_movieId):
         """Item tower: returns (batch, embedding_dim)."""

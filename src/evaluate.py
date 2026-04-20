@@ -13,7 +13,7 @@ import torch
 import torch.nn.functional as F
 from src.dataset import FeatureStore
 from src.model import MovieRecommender
-from src.train import build_model, get_config, print_model_summary
+from src.train import build_model, get_config, get_softmax_config, print_model_summary
 
 
 # ── Canary user definitions ───────────────────────────────────────────────────
@@ -40,14 +40,14 @@ USER_TYPE_TO_FAVORITE_GENRES = {
 }
 
 USER_TYPE_TO_WORST_GENRES = {
-    'Fantasy Lover':           ['Horror', 'Children'],
-    "Children's Movie Lover":  ['Horror', 'Romance', 'Drama', 'Action'],
-    'Horror Lover':            ['Children'],
-    'Sci-Fi Lover':            ['Romance', 'Children'],
-    'Comedy Lover':            ['Children'],
-    'Romance Lover':           ['Children', 'Horror'],
-    'War Movie Lover':         ['Children'],
-    'Crime Lover':             ['Children', 'Horror'],
+    'Fantasy Lover':           [],
+    "Children's Movie Lover":  [],
+    'Horror Lover':            [],
+    'Sci-Fi Lover':            [],
+    'Comedy Lover':            [],
+    'Romance Lover':           [],
+    'War Movie Lover':         [],
+    'Crime Lover':             [],
     'Heist Lover':             [],
     'Action Junkie':           [],
     'Arthouse Lover':          [],
@@ -57,7 +57,7 @@ USER_TYPE_TO_WORST_GENRES = {
     'Western Lover':           [],
     'Anime Lover':             [],
     'Martial Arts Lover':      [],
-    'Myself':                  ['Romance'],
+    'Myself':                  [],
 }
 
 USER_TYPE_TO_FAVORITE_MOVIES = {
@@ -130,7 +130,7 @@ USER_TYPE_TO_DISLIKED_MOVIES = {
     'Sports Lover':           [],
     'Western Lover':          [],
     'Anime Lover':            [],
-    'Martial Arts Lover':     ['Captain America: The First Avenger (2011)'],
+    'Martial Arts Lover':     [],
     'Myself':                 [],
 }
 
@@ -289,29 +289,31 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
     else:
         history_emb = torch.zeros(1, model.item_embedding_lookup.embedding_dim)
 
-    # Genome pooling — mirrors history pooling but in content space (shared tower)
-    genome_contexts = []
-    genome_weights  = []
-    for t, w in liked_with_weights + [(t, VALUE_DISLIKED_MOVIE_RATING) for t in dis_movies]:
-        mid = fs.title_to_movieId.get(t)
-        if mid and mid in fs.movieId_to_genome_tag_context:
-            genome_contexts.append(fs.movieId_to_genome_tag_context[mid])
-            genome_weights.append(w)
+    X_inf     = torch.tensor([ctx])
+    genre_emb = model.user_genre_tower(X_inf)
+    ts_emb    = model.timestamp_embedding_tower(model.timestamp_embedding_lookup(ts_inference))
 
-    if genome_contexts:
-        gc_tensor  = torch.tensor(np.array(genome_contexts, dtype=np.float32))
-        ge_embs    = model.item_genome_tag_tower(gc_tensor)
-        wts        = torch.tensor(genome_weights)
-        wt_sum_g   = wts.abs().sum().clamp(min=1e-6)
-        genome_emb = (ge_embs * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_g
+    if model.use_user_genome_pool:
+        genome_contexts = []
+        genome_weights  = []
+        for t, w in liked_with_weights + [(t, VALUE_DISLIKED_MOVIE_RATING) for t in dis_movies]:
+            mid = fs.title_to_movieId.get(t)
+            if mid and mid in fs.movieId_to_genome_tag_context:
+                genome_contexts.append(fs.movieId_to_genome_tag_context[mid])
+                genome_weights.append(w)
+
+        if genome_contexts:
+            gc_tensor  = torch.tensor(np.array(genome_contexts, dtype=np.float32))
+            ge_embs    = model.item_genome_tag_tower(gc_tensor)
+            wts        = torch.tensor(genome_weights)
+            wt_sum_g   = wts.abs().sum().clamp(min=1e-6)
+            genome_emb = (ge_embs * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_g
+        else:
+            genome_emb = torch.zeros(1, model.item_genome_tag_tower[0].out_features)
+
+        return torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
     else:
-        genome_emb = torch.zeros(1, model.item_genome_tag_tower[0].out_features)
-
-    X_inf      = torch.tensor([ctx])
-    genre_emb  = model.user_genre_tower(X_inf)
-    ts_emb     = model.timestamp_embedding_tower(model.timestamp_embedding_lookup(ts_inference))
-
-    return torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
+        return torch.cat([history_emb, genre_emb, ts_emb], dim=1)
 
 
 def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
@@ -473,9 +475,17 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
     from src.dataset import load_features
 
     # Resolve and load checkpoint first — fast, and fails before the slow features load
-    config = get_config()
+    # Detect checkpoint type from filename to pick the right config
+    def _resolve_config(path):
+        name = os.path.basename(path)
+        if 'softmax' in name:
+            return get_softmax_config()
+        return get_config()
+
+    # Auto-detect most recent checkpoint if none specified
+    _tmp_config = get_config()
     if checkpoint_path is None:
-        checkpoint_dir = config['checkpoint_dir']
+        checkpoint_dir = _tmp_config['checkpoint_dir']
         candidates = sorted(
             glob.glob(os.path.join(checkpoint_dir, 'best_checkpoint_*.pth')) +
             glob.glob(os.path.join(checkpoint_dir, 'best_softmax_*.pth')),
@@ -485,6 +495,8 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
             print("No checkpoint found in saved_models/. Train a model first.")
             return None, None, None
         checkpoint_path = candidates[0]
+
+    config = _resolve_config(checkpoint_path)
 
     print(f"Loading checkpoint: {checkpoint_path}")
     state_dict = torch.load(checkpoint_path, weights_only=True)
