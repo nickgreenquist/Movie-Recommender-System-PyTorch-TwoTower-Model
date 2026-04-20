@@ -13,15 +13,21 @@ A PyTorch Two-Tower neural network recommender system trained on the MovieLens 3
 The project is a Python CLI (`main.py`). Notebooks in `jupyter/` are archived references only — the canonical code is in `src/`.
 
 ```bash
-python main.py preprocess      # Stage 1: raw CSVs → data/base_*.parquet
-python main.py features        # Stage 2: base parquets → data/features_*.parquet
-python main.py dataset         # Stage 3: features → data/dataset_*_v1.pt (cached tensor splits)
-python main.py train           # Stage 4: load cached splits, train, save checkpoints
-python main.py canary          # Canary user recommendations (most recent checkpoint)
-python main.py canary <path>   # Canary user recommendations (specific checkpoint)
-python main.py probe           # Embedding probes (most recent checkpoint)
-python main.py probe <path>    # Embedding probes (specific checkpoint)
-python main.py                 # Run all stages in order
+python main.py preprocess          # Stage 1: raw CSVs → data/base_*.parquet
+python main.py features            # Stage 2: base parquets → data/features_*.parquet
+python main.py dataset             # Stage 3: features → data/dataset_*_v1.pt  (MSE)
+python main.py dataset softmax     # Stage 3: features → data/dataset_softmax_*_v1.pt
+python main.py train               # Stage 4: MSE training (SGD, rating regression)
+python main.py train softmax       # Stage 4: in-batch negatives softmax training
+python main.py canary              # Canary user recommendations (most recent checkpoint)
+python main.py canary <path>       # Canary user recommendations (specific checkpoint)
+python main.py probe               # Embedding probes (most recent checkpoint)
+python main.py probe <path>        # Embedding probes (specific checkpoint)
+python main.py eval                # Offline eval: Recall@K, NDCG@K, Hit Rate@K, MRR
+python main.py eval <path>         # Same, specific checkpoint
+python main.py export              # Stage 5: export serving artifacts for Streamlit
+python main.py export <path>       # Export using specific checkpoint
+python main.py                     # Run all stages in order (MSE)
 ```
 
 Stages 1–3 are slow and cache results to disk. Re-run only what changed:
@@ -29,6 +35,7 @@ Stages 1–3 are slow and cache results to disk. Re-run only what changed:
 - Changed feature engineering → rerun from `features`
 - Changed train/val split logic → rerun from `dataset`
 - Changed model/hyperparams only → rerun from `train` (skip 1–3)
+- Softmax dataset and MSE dataset are cached separately — changing training mode does not require rebuilding the other
 
 ## Dataset
 
@@ -118,30 +125,61 @@ user: 20+50+10=80 / item: 10+15+25+20+10=80
 - **genome_context_buffer:** Registered as a non-trainable buffer (saved in state_dict, device-portable). Row `i` = genome context for movie at embedding index `i`; last row = zeros (pad index). Built in `build_model()` from `fs.movieId_to_genome_tag_context`.
 - **Rating-weighted avg pool:** Each watched movie embedding is weighted by the user's debiased rating. Abs-value normalization prevents negative ratings from cancelling positive ones in the denominator.
 - **Removing `item_embedding_tower` causes severe genre clustering** — do not remove it.
-- **Item ID embedding does not learn meaningful CF signal.** `probe_similar` on `MOVIEID_EMBEDDING` alone returns near-random neighbors (e.g. LotR → Hero, Thin Blue Line, Earth vs. Flying Saucers). Content towers (genre, genome) dominate the gradient and ID embeddings don't develop independent co-watch structure under MSE loss. Consequence: the user history pool (which pools over item ID embeddings) is also not capturing genuine CF signal — user taste representation comes mostly from the genome pool and genre tower. Fix requires sampled softmax with implicit feedback.
+- **Item ID embedding does not learn meaningful CF signal under MSE.** `probe_similar` on `MOVIEID_EMBEDDING` alone returns near-random neighbors (e.g. LotR → Hero, Thin Blue Line, Earth vs. Flying Saucers). Content towers (genre, genome) dominate the gradient and ID embeddings don't develop independent co-watch structure. Consequence: the user history pool (which pools over item ID embeddings) also doesn't capture genuine CF signal under MSE — user taste representation comes mostly from the genome pool and genre tower. Softmax training (`python main.py train softmax`) is expected to fix this by providing direct gradient signal from co-watch patterns.
 - **Tanh saturation:** Small sub-embedding spaces (genre=20, tag=15) saturate after training, causing sub-embedding cosine probes to return 1.0 for many movies. This is a known limitation. ReLU + larger dims would fix it but requires retraining.
 
 ## Training Details
+
+### MSE (`python main.py train`)
 
 - **Loss**: MSE on de-biased ratings (raw rating − user mean)
 - **Optimizer**: SGD, `lr=0.005`, `momentum=0.9`
 - **Batch size**: 64
 - **Steps**: 150,000
 - **Val logging**: every 10,000 steps (full val pass)
-- **Checkpointing**: best val checkpoint saved on improvement; periodic checkpoint every 30,000 steps
+- **Checkpointing**: best val checkpoint → `saved_models/best_checkpoint_<timestamp>.pth`
 - **LR=0.01**: Too aggressive; collapses genre boundaries — avoid
 - **Train/val split**: 90/10 user-based; 90% of each user's history as context, 10% as labels
+
+### Softmax (`python main.py train softmax`)
+
+- **Loss**: cross-entropy over in-batch negatives (B×B score matrix, diagonal = correct targets)
+- **Dataset**: rollback examples — for each watch event, context = all prior watches. Capped at 10 examples per user (`MAX_SOFTMAX_EXAMPLES_PER_USER`). Built from watch + label parquets combined. Avoids future leakage; balances active vs. casual users.
+- **Optimizer**: Adam, `lr=0.001`, `weight_decay=1e-5`
+- **LR schedule**: CosineAnnealingLR from 0.001 → 0 over training steps
+- **Batch size**: 512 (511 in-batch negatives per example)
+- **Temperature**: 0.05
+- **Steps**: 150,000
+- **Val logging**: every 10,000 steps (sampled batch of 512 — ±0.2 oscillation is normal, different negatives each eval batch)
+- **Checkpointing**: best val checkpoint → `saved_models/best_softmax_<timestamp>.pth`
+- **Step 0 sanity check**: random baseline loss = `log(512)` ≈ 6.238 — confirm at step 0
+- **Why rollback for both train and val**: keeps context-length distribution consistent; using last-read-only for val would create a train/val distribution mismatch on context length
 
 ## Saving / Loading Models
 
 Checkpoints are weights-only (`~1MB`). The `saved_models/` directory is gitignored.
 
 ```bash
-python main.py canary saved_models/best_checkpoint_<timestamp>.pth
-python main.py probe  saved_models/best_checkpoint_<timestamp>.pth
+python main.py canary saved_models/best_checkpoint_<timestamp>.pth   # MSE
+python main.py canary saved_models/best_softmax_<timestamp>.pth      # softmax
+python main.py eval   saved_models/best_softmax_<timestamp>.pth
 ```
 
+Auto-detection (no path given) picks the most recently modified checkpoint from both `best_checkpoint_*.pth` and `best_softmax_*.pth`.
+
 The evaluate setup loads the checkpoint first (fast, ~1MB), then features (slow). If the checkpoint is invalid it fails immediately before the slow features load.
+
+## Offline Evaluation (`python main.py eval`)
+
+`src/offline_eval.py` — Recall@K, NDCG@K, Hit Rate@K, MRR at K = 1, 5, 10, 20, 50.
+
+**Protocol:** Leave-label-out per user. Reuses the existing 90/10 per-user split from `preprocess.py`:
+- **Context** = `user_to_watch_history` (90% of ratings, pre-mapped movie embedding indices + debiased ratings)
+- **Targets** = `user_to_movie_to_rating_LABEL` (remaining 10% of ratings)
+
+5,000 users sampled with `random.Random(42)` for reproducibility. No new splits or dataset regeneration required.
+
+Works with any checkpoint (MSE or softmax) — auto-detects most recent if no path given.
 
 ## Embedding Probes (`python main.py probe`)
 
@@ -153,7 +191,7 @@ Three sub-embedding probes + one combined-space probe:
 
 **`probe_genome_tag(genome_tags)`** — finds top-k_anchors most representative movies by raw genome score, averages their `MOVIE_GENOME_TAG_EMBEDDING` as query, cosine vs all `MOVIE_GENOME_TAG_EMBEDDING`. Seeds are marked `[seed]` in output. Avoids synthetic OOD inputs. Default queries: `['horror', 'gore', 'torture']` and `['martial arts', 'kung fu']`.
 
-**`probe_similar(titles)`** — computes pairwise cosine similarity on `MOVIE_EMBEDDING_COMBINED` (full 120-dim space). Most reliable probe — uses the space the model actually optimizes. Output is a table: seed title | top-1 | top-2 | ... | top-5.
+**`probe_similar(titles)`** — computes pairwise cosine similarity on `MOVIE_EMBEDDING_COMBINED` (full 110-dim space). Most reliable probe — uses the space the model actually optimizes. Output is two tables: combined embedding and item ID embedding only.
 
 > **Note on genome tag probing:** Genome scores are dense (0–1, nearly every movie has non-zero scores for most tags). Synthetic 0-filled vectors are OOD for the genome tower. The anchor approach avoids this by using real movie embeddings as the query.
 
@@ -174,48 +212,32 @@ Use these synthetic users to quickly assess model quality after training:
 - **War Movie Lover** drifts to epic/action (LotR, Matrix, Doctor Strange) — "acclaimed serious film" cluster
 - Removing `item_embedding_tower` causes severe genre clustering — do not remove it
 
-## Future Training Objective Improvements
+## Training Objective
 
-### ⚡ Immediate next step: replicate softmax from the book repo
+### ✅ Softmax (in-batch negatives) — implemented
 
-The book repo has fully validated in-batch negatives softmax. Results on the books corpus
-(~11k items, random Hit Rate@10 baseline ≈ 0.09%):
+`python main.py train softmax` — in-batch negatives cross-entropy. See Training Details above.
 
-| Metric       | MSE    | BPR    | Softmax      |
-|--------------|--------|--------|--------------|
-| Hit Rate@10  | 4.3%   | 2.8%   | **11.7%**    |
-| Hit Rate@50  | 16.8%  | 14.4%  | **31.3%**    |
-| Recall@10    | 0.0061 | 0.0033 | **0.0194**   |
-| NDCG@10      | 0.0062 | 0.0036 | **0.0213**   |
-| MRR          | 0.021  | 0.015  | **0.057**    |
+Validated in the book repo (~11k items, random Hit Rate@10 baseline ≈ 0.09%):
 
-Softmax is ~3× better than MSE. The implementation to port:
-- **Dataset**: rollback examples (for each watch, context = all prior watches). Cap per user (e.g. 10 examples). Avoids future leakage and balances user representation.
-- **Loss**: cross-entropy over in-batch negatives. B×B score matrix, diagonal = correct targets.
-- **Optimizer**: Adam, `lr=0.001`, `weight_decay=1e-5`; CosineAnnealingLR to 0 over training steps.
-- **Batch size**: 512 (511 in-batch negatives per example). Temperature: 0.05.
-- **Offline eval**: implement `python main.py eval` with Recall@K, NDCG@K, Hit Rate@K, MRR (leave-label-out per user, 5k sampled users, `random.Random(42)`).
-- See book repo `src/dataset.py::build_softmax_dataset`, `src/train.py::train_softmax`, `src/offline_eval.py`.
+| Metric       | MSE    | Softmax      |
+|--------------|--------|--------------|
+| Hit Rate@10  | 4.3%   | **11.7%**    |
+| Hit Rate@50  | 16.8%  | **31.3%**    |
+| Recall@10    | 0.0061 | **0.0194**   |
+| NDCG@10      | 0.0062 | **0.0213**   |
+| MRR          | 0.021  | **0.057**    |
 
-Key book repo lessons:
-- Val loss has high variance with in-batch negatives (different negatives each eval batch) — ±0.2 oscillation is normal; don't chase it.
-- In-batch negative debiasing (log-frequency correction, Yi et al. 2019) did **not** converge — skip it. Book corpus frequency distribution is too compressed for the correction to add signal.
-- Random baseline loss at step 0 should be `log(batch_size)` = `log(512)` ≈ 6.238 — confirm this as a sanity check.
+Softmax ~3× better than MSE. Movie results pending.
 
----
+Lessons from books (apply here too):
+- Val loss ±0.2 oscillation is normal — different in-batch negatives each eval batch; don't chase it
+- In-batch negative debiasing (log-freq correction, Yi et al. 2019) did **not** converge — skip it. Corpus frequency distribution too compressed for the correction to add signal.
+- Confirm step-0 loss ≈ `log(512)` ≈ 6.238
 
-1. **Sampled softmax (implicit feedback)** — replace MSE regression on ratings with sampled softmax
-   classification over the item corpus (YouTube DNN, 2016). Frame recommendation as "predict the
-   next watched item" rather than "predict a rating". Use implicit feedback (every watch = positive
-   example) with sampled negatives and cross-entropy loss. Yields orders of magnitude more training
-   signal since ratings are sparse but watches are plentiful. At serving time reduces to the same
-   nearest neighbor search in dot product space. Requires: new label construction (item IDs, not
-   ratings), dropping debiasing, adding negative sampling to the training loop.
+### Future: implicit vs explicit feedback tradeoff
 
-2. **Implicit vs explicit feedback tradeoff** — explicit ratings (current) give clean preference
-   signal but are sparse. Implicit feedback (watches) is abundant but noisy — a user may finish
-   a movie they disliked. Consider a hybrid: use implicit feedback for candidate generation
-   (softmax) and explicit ratings for a separate ranking stage.
+Explicit ratings (current) give clean preference signal but are sparse. Implicit feedback (watches) is abundant but noisy — a user may finish a movie they disliked. Consider a hybrid: softmax for candidate generation, explicit ratings for a separate ranking stage.
 
 ---
 

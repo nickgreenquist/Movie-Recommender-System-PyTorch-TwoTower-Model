@@ -475,8 +475,12 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
     # Resolve and load checkpoint first — fast, and fails before the slow features load
     config = get_config()
     if checkpoint_path is None:
-        pattern    = os.path.join(config['checkpoint_dir'], 'best_checkpoint_*.pth')
-        candidates = sorted(glob.glob(pattern), key=os.path.getmtime, reverse=True)
+        checkpoint_dir = config['checkpoint_dir']
+        candidates = sorted(
+            glob.glob(os.path.join(checkpoint_dir, 'best_checkpoint_*.pth')) +
+            glob.glob(os.path.join(checkpoint_dir, 'best_softmax_*.pth')),
+            key=os.path.getmtime, reverse=True,
+        )
         if not candidates:
             print("No checkpoint found in saved_models/. Train a model first.")
             return None, None, None

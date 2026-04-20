@@ -118,6 +118,33 @@ class MovieRecommender(nn.Module):
         elif isinstance(module, nn.Embedding):
             torch.nn.init.xavier_uniform_(module.weight, gain=0.01)
 
+    def user_embedding(self, user_genre_contexts, user_watch_history,
+                       user_watch_history_ratings, timestamps):
+        """User tower: returns (batch, embedding_dim)."""
+        history_embs   = self.item_embedding_lookup(user_watch_history)
+        pad_mask       = (user_watch_history != self.pad_idx).float().unsqueeze(-1)
+        rating_weights = user_watch_history_ratings.unsqueeze(-1) * pad_mask
+        weight_sum     = rating_weights.abs().sum(dim=1).clamp(min=1e-6)
+        history_emb    = (history_embs * rating_weights).sum(dim=1) / weight_sum
+
+        # nn.Linear + Tanh broadcast: (batch, hist_len, 1128) → (batch, hist_len, 35)
+        watched_genome = self.genome_context_buffer[user_watch_history]
+        genome_embs    = self.item_genome_tag_tower(watched_genome)
+        genome_emb     = (genome_embs * rating_weights).sum(dim=1) / weight_sum
+
+        genre_emb = self.user_genre_tower(user_genre_contexts)
+        ts_emb    = self.timestamp_embedding_tower(self.timestamp_embedding_lookup(timestamps))
+        return torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
+
+    def item_embedding(self, movie_genres, movie_tags, movie_genome_tags, years, target_movieId):
+        """Item tower: returns (batch, embedding_dim)."""
+        item_genre_emb  = self.item_genre_tower(movie_genres)
+        item_tag_emb    = self.item_tag_tower(movie_tags)
+        item_genome_emb = self.item_genome_tag_tower(movie_genome_tags)
+        item_emb        = self.item_embedding_tower(self.item_embedding_lookup(target_movieId))
+        year_emb        = self.year_embedding_tower(self.year_embedding_lookup(years))
+        return torch.cat([item_genre_emb, item_tag_emb, item_genome_emb, item_emb, year_emb], dim=1)
+
     def forward(self, user_genre_contexts, user_watch_history,
                 user_watch_history_ratings, timestamps,
                 movie_genres, movie_tags, movie_genome_tags, years, target_movieId):
@@ -133,34 +160,8 @@ class MovieRecommender(nn.Module):
             years                      (Tensor): (batch,)
             target_movieId             (Tensor): (batch,)
         """
-        # ── Rating-weighted avg pool over watch history ───────────────────────
-        history_embs   = self.item_embedding_lookup(user_watch_history)
-        pad_mask       = (user_watch_history != self.pad_idx).float().unsqueeze(-1)
-        rating_weights = user_watch_history_ratings.unsqueeze(-1) * pad_mask
-        weight_sum     = rating_weights.abs().sum(dim=1).clamp(min=1e-6)
-        history_emb    = (history_embs * rating_weights).sum(dim=1) / weight_sum
-
-        # ── User genome pooling (shares item_genome_tag_tower with item side) ─
-        # Look up each watched movie's genome context, pass through the shared tower,
-        # then apply the same rating-weighted avg pool as watch history.
-        # nn.Linear + nn.Tanh broadcast over leading dims: (batch, hist_len, 1128) → (batch, hist_len, 35)
-        watched_genome = self.genome_context_buffer[user_watch_history]        # (batch, hist_len, 1128)
-        genome_embs    = self.item_genome_tag_tower(watched_genome)            # (batch, hist_len, 35)
-        genome_emb     = (genome_embs * rating_weights).sum(dim=1) / weight_sum  # (batch, 35)
-
-        # ── User towers ───────────────────────────────────────────────────────
-        genre_emb     = self.user_genre_tower(user_genre_contexts)
-        ts_emb        = self.timestamp_embedding_tower(self.timestamp_embedding_lookup(timestamps))
-        user_combined = torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
-
-        # ── Item towers ───────────────────────────────────────────────────────
-        item_genre_emb  = self.item_genre_tower(movie_genres)
-        item_tag_emb    = self.item_tag_tower(movie_tags)
-        item_genome_emb = self.item_genome_tag_tower(movie_genome_tags)
-        item_emb        = self.item_embedding_tower(self.item_embedding_lookup(target_movieId))
-        year_emb        = self.year_embedding_tower(self.year_embedding_lookup(years))
-        item_combined   = torch.cat([item_genre_emb, item_tag_emb, item_genome_emb,
-                                     item_emb, year_emb], dim=1)
-
-        # ── Dot product prediction ────────────────────────────────────────────
+        user_combined = self.user_embedding(user_genre_contexts, user_watch_history,
+                                            user_watch_history_ratings, timestamps)
+        item_combined = self.item_embedding(movie_genres, movie_tags, movie_genome_tags,
+                                            years, target_movieId)
         return torch.einsum('ij, ij -> i', user_combined, item_combined)

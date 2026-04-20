@@ -291,6 +291,204 @@ def load_splits(data_dir: str = 'data', version: str = 'v1') -> tuple:
     return train_data, val_data
 
 
+# ── Softmax dataset (rollback, implicit feedback) ─────────────────────────────
+#
+# Each user contributes multiple training examples via "rollback":
+# for a user who watched movies [A, B, C, D, E] in order, we generate examples like:
+#   context=[A],       target=B
+#   context=[A,B,C],   target=D
+#   context=[A,B,C,D], target=E
+# Each example uses only movies watched *before* the target — no future leakage.
+# MAX_SOFTMAX_EXAMPLES_PER_USER caps how many rollback examples we randomly sample per user.
+#
+# Why rollback for BOTH train and val:
+# Rollback produces examples with varying context lengths (short to long).
+# If val used only the last rating per user (full history as context), val would always
+# have long contexts while train has short+long — a distribution mismatch that makes
+# val loss unreliable. Using rollback for both keeps context length distribution consistent.
+
+MAX_SOFTMAX_EXAMPLES_PER_USER = 10
+
+
+def build_softmax_dataset(users: list, fs: FeatureStore, raw_df,
+                           max_per_user: int = MAX_SOFTMAX_EXAMPLES_PER_USER,
+                           seed: int = 42) -> tuple:
+    """
+    Build rollback training examples for in-batch negatives softmax training.
+
+    raw_df must have columns: userId, movieId, rating, timestamp.
+    All rows are assumed to be already filtered to corpus movies and valid users.
+
+    Returns 9-tuple:
+        [0] X_genre            — (N, user_context_size) float  rollback genre context
+        [1] X_history          — list[list[int]]  (padded at training time)
+        [2] X_history_ratings  — list[list[float]]
+        [3] timestamp          — (N,) long  (binned)
+        [4] target_movieId     — (N,) long  (embedding index)
+        [5] target_genre       — (N, genres_len) float
+        [6] target_tag         — (N, tags_len) float
+        [7] target_genome      — (N, genome_tags_len) float
+        [8] target_year        — (N,) long
+    """
+    from src.features import MAX_HISTORY_LEN
+    rng       = random.Random(seed)
+    users_set = set(users)
+    max_hist  = MAX_HISTORY_LEN
+    n_genres  = len(fs.genres_ordered)
+
+    # Precompute movie → genre index list (avoids repeated dict lookups in inner loop)
+    movie_genre_idxs = {
+        mid: [fs.genre_to_i[g] for g in fs.movieId_to_genres.get(mid, []) if g in fs.genre_to_i]
+        for mid in fs.top_movies
+    }
+
+    df = raw_df[raw_df['userId'].isin(users_set)].copy()
+    print(f"  Sorting {len(df):,} interactions by user + timestamp ...")
+    df = df.sort_values(['userId', 'timestamp'])
+    print(f"  {df['userId'].nunique():,} users")
+
+    X_genre               = []
+    X_history             = []
+    X_history_ratings     = []
+    timestamps_raw        = []
+    target_movieId        = []
+    target_genre_context  = []
+    target_tag_context    = []
+    target_genome_context = []
+    target_year           = []
+
+    from tqdm import tqdm
+    n_users = df['userId'].nunique()
+    for uid, group in tqdm(df.groupby('userId'), total=n_users, desc="Building softmax examples"):
+        avg_rat = fs.user_to_avg_rating.get(uid, 3.0)
+
+        movies  = group['movieId'].tolist()
+        ratings = group['rating'].tolist()
+        ts_vals = group['timestamp'].tolist()
+        n       = len(movies)
+
+        if n < 2:
+            continue
+
+        # Sample target positions upfront — avoids generating all rollbacks then discarding.
+        # Valid targets: positions 1..n-1 (position 0 has no prior context).
+        # Sorting ensures a single left-to-right scan maintains genre accumulators correctly.
+        k               = min(max_per_user, n - 1)
+        sampled_targets = sorted(rng.sample(range(1, n), k))
+        sampled_set     = set(sampled_targets)
+
+        running_count = np.zeros(n_genres, dtype=np.float32)
+        running_sum   = np.zeros(n_genres, dtype=np.float32)
+        ctx_ids_buf   = []
+        ctx_rats_buf  = []
+
+        for pos, (mid, rat, ts) in enumerate(zip(movies, ratings, ts_vals)):
+            mid   = int(mid)
+            d_rat = float(rat) - avg_rat
+            t_idx = fs.item_emb_movieId_to_i[mid]   # safe: raw_df filtered to corpus movies
+
+            if pos in sampled_set:
+                total_assign = running_count.sum()
+                genre_ctx    = np.zeros(2 * n_genres, dtype=np.float32)
+                if total_assign > 0:
+                    mask = running_count > 0
+                    genre_ctx[:n_genres][mask] = running_sum[mask] / running_count[mask]
+                    genre_ctx[n_genres:]       = running_count / total_assign
+
+                X_genre.append(genre_ctx.tolist())
+                X_history.append(list(ctx_ids_buf[-max_hist:]))
+                X_history_ratings.append(list(ctx_rats_buf[-max_hist:]))
+                timestamps_raw.append(ts)
+                target_movieId.append(t_idx)
+                target_genre_context.append(fs.movieId_to_genre_context[mid])
+                target_tag_context.append(fs.movieId_to_tag_context[mid])
+                target_genome_context.append(fs.movieId_to_genome_tag_context[mid])
+                target_year.append(fs.year_to_i.get(fs.movieId_to_year[mid], 0))
+
+            # Update accumulators and context buffer with current movie
+            ctx_ids_buf.append(t_idx)
+            ctx_rats_buf.append(d_rat)
+            for g_idx in movie_genre_idxs.get(mid, []):
+                running_count[g_idx] += 1
+                running_sum[g_idx]   += d_rat
+
+    n = len(target_movieId)
+    print(f"  {n:,} softmax examples — building tensors ...")
+
+    X_genre_t         = torch.from_numpy(np.array(X_genre,               dtype=np.float32))
+    target_movieId_t  = torch.from_numpy(np.array(target_movieId,        dtype=np.int64))
+    target_year_t     = torch.from_numpy(np.array(target_year,           dtype=np.int64))
+    target_genre_t    = torch.from_numpy(np.array(target_genre_context,  dtype=np.float32))
+    target_tag_t      = torch.from_numpy(np.array(target_tag_context,    dtype=np.float32))
+    target_genome_t   = torch.from_numpy(np.array(target_genome_context, dtype=np.float32))
+    timestamp_t       = torch.bucketize(
+        torch.from_numpy(np.array(timestamps_raw, dtype=np.float64)).float(),
+        fs.timestamp_bins.float(), right=False)
+
+    return (X_genre_t, X_history, X_history_ratings, timestamp_t,
+            target_movieId_t, target_genre_t, target_tag_t, target_genome_t, target_year_t)
+
+
+def make_softmax_splits(fs: FeatureStore, data_dir: str = 'data',
+                        max_per_user: int = MAX_SOFTMAX_EXAMPLES_PER_USER,
+                        pct_train: float = 0.9, seed: int = 42,
+                        max_users: int = None) -> tuple:
+    """
+    Load raw interactions (watch + labels), split users 90/10, build softmax datasets.
+    Returns (train_data, val_data) each a 9-tuple from build_softmax_dataset().
+
+    max_users: if set, subsample to this many total users (for fast debug runs).
+    """
+    import pandas as pd
+    watch_path  = os.path.join(data_dir, 'base_ratings_watch.parquet')
+    labels_path = os.path.join(data_dir, 'base_ratings_labels.parquet')
+    print(f"Loading {watch_path} + {labels_path} ...")
+    raw_df = pd.concat([
+        pd.read_parquet(watch_path),
+        pd.read_parquet(labels_path),
+    ], ignore_index=True)
+    print(f"  {len(raw_df):,} raw interactions, {raw_df['userId'].nunique():,} users")
+
+    valid_users = fs.user_ids[:]
+    rng = random.Random(seed)
+    rng.shuffle(valid_users)
+
+    if max_users is not None:
+        valid_users = valid_users[:max_users]
+        print(f"  [debug] subsampled to {len(valid_users):,} users")
+
+    split       = int(len(valid_users) * pct_train)
+    train_users = valid_users[:split]
+    val_users   = valid_users[split:]
+
+    print(f"\nBuilding softmax train dataset ({len(train_users):,} users) ...")
+    train_data = build_softmax_dataset(train_users, fs, raw_df, max_per_user, seed)
+    print(f"  X_genre_train shape: {train_data[0].shape}")
+
+    print(f"\nBuilding softmax val dataset ({len(val_users):,} users) ...")
+    val_data = build_softmax_dataset(val_users, fs, raw_df, max_per_user, seed)
+    print(f"  X_genre_val shape:   {val_data[0].shape}")
+
+    return train_data, val_data
+
+
+def save_softmax_splits(train_data: tuple, val_data: tuple,
+                        data_dir: str = 'data', version: str = 'v1') -> None:
+    torch.save(train_data, os.path.join(data_dir, f'dataset_softmax_train_{version}.pt'))
+    torch.save(val_data,   os.path.join(data_dir, f'dataset_softmax_val_{version}.pt'))
+    print(f"Saved dataset_softmax_train_{version}.pt and dataset_softmax_val_{version}.pt → {data_dir}/")
+
+
+def load_softmax_splits(data_dir: str = 'data', version: str = 'v1') -> tuple:
+    train_path = os.path.join(data_dir, f'dataset_softmax_train_{version}.pt')
+    val_path   = os.path.join(data_dir, f'dataset_softmax_val_{version}.pt')
+    print(f"Loading {train_path} ...")
+    train_data = torch.load(train_path, weights_only=False)
+    print(f"Loading {val_path} ...")
+    val_data   = torch.load(val_path, weights_only=False)
+    return train_data, val_data
+
+
 # ── Train / val split ─────────────────────────────────────────────────────────
 
 def make_splits(fs: FeatureStore, pct_train: float = 0.9, seed: int = 42) -> tuple:
