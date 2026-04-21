@@ -2,11 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Current State
+
+The model is complete and deployed. Best checkpoint: `best_checkpoint_20260406_210158.pth` (MSE, genome pool ON, single-layer towers, 110-dim, 429k params). This is the prod model running in Streamlit — do not replace it without a clearly better eval result.
+
+To re-export serving artifacts from prod checkpoint:
+
+```bash
+python main.py export saved_models/best_checkpoint_20260406_210158.pth
+```
+
 ## Project Overview
 
 A PyTorch Two-Tower neural network recommender system trained on the MovieLens 32M dataset. The model predicts ratings via dot product of user and item embeddings.
 
-**Critical design choice: no user ID embedding.** Most recommender tutorials embed unique user IDs, which means inference is only possible for users seen during training. A new user has no embedding — the only options are full retraining, partial fine-tuning, or proxying to a similar existing user. This model deliberately avoids that trap. Users are represented entirely by their taste signals: watch history (rating-weighted avg pooling of movie embeddings), genre affinity, genome content pooling, and timestamp. Any user can be represented at inference time as long as you have even a few movies they liked — no retraining required. This makes the model production-friendly and eliminates user-level cold start.
+**Critical design choice: no user ID embedding.** Users are represented entirely by their taste signals: watch history (rating-weighted avg pooling of movie embeddings), genre affinity, genome content pooling, and timestamp. Any user can be represented at inference time as long as you have even a few movies they liked — no retraining required.
 
 ## Running the Code
 
@@ -35,7 +45,7 @@ Stages 1–3 are slow and cache results to disk. Re-run only what changed:
 - Changed feature engineering → rerun from `features`
 - Changed train/val split logic → rerun from `dataset`
 - Changed model/hyperparams only → rerun from `train` (skip 1–3)
-- Softmax dataset and MSE dataset are cached separately — changing training mode does not require rebuilding the other
+- Softmax dataset and MSE dataset are cached separately
 
 ## Dataset
 
@@ -50,238 +60,174 @@ Only movies with **200+ ratings** are kept (~9,375 movies). Only users with 20�
 
 ### Tag data
 
-**User-applied tags (`tags.csv`):** Each movie's tag vector is built by counting how many users applied each tag, then normalizing to sum to 1. Only tags applied 1,000+ times across all movies are kept (306 tags survive). Controlled by `USE_ITEM_TAG_TOWER` / `USE_USER_TAG_TOWER`.
+**User-applied tags (`tags.csv`):** Each movie's tag vector is built by counting how many users applied each tag, then normalizing to sum to 1. Only tags applied 1,000+ times across all movies are kept (306 tags survive).
 
-**Genome tags (`genome-scores.csv`):** ML-derived relevance scores (0.0–1.0) per (movie, tag) pair. 1,128 tags. Much denser and more semantically meaningful than user-applied tags — movies get non-zero scores for relevant tags even when users didn't explicitly apply them. Controlled by `USE_ITEM_GENOME_TAG_TOWER`.
+**Genome tags (`genome-scores.csv`):** ML-derived relevance scores (0.0–1.0) per (movie, tag) pair. 1,128 tags. Much denser and more semantically meaningful than user-applied tags — movies get non-zero scores for relevant tags even when users didn't explicitly apply them.
 
-## Model Architecture (v3 — canonical)
+## Model Architecture (canonical)
 
 **Two-Tower design** with dot product prediction:
 
 ```
 User Tower:
-  rating_weighted_avg_pool(item_embeddings[watch_history])              →  history_emb  (size: item_movieId_embedding_size)
-  rating_weighted_avg_pool(item_genome_tag_tower(genome_ctx[history]))  →  genome_emb   (size: item_genome_tag_embedding_size)  [shared tower]
-  user_genre_tower([avg_rating_per_genre | watch_frac])                 →  genre_emb    (size: user_genre_embedding_size)
-  timestamp_embedding_tower(watch_month)                                →  ts_emb       (size: timestamp_feature_embedding_size)
-  concat → user_combined
+  rating_weighted_avg_pool(item_embeddings[watch_history])              →  history_emb  (40)
+  rating_weighted_avg_pool(item_genome_tag_tower(genome_ctx[history]))  →  genome_emb   (35)  [shared tower]
+  user_genre_tower([avg_rating_per_genre | watch_frac])                 →  genre_emb    (30)
+  timestamp_embedding_tower(watch_month)                                →  ts_emb       (5)
+  concat → user_combined  (110)
 
 Item Tower:
-  item_genre_tower(genre_onehot)        →  item_genre_emb       (size: item_genre_embedding_size)
-  item_tag_tower(tag_vector)            →  item_tag_emb         (size: item_tag_embedding_size)
-  item_genome_tag_tower(genome_scores)  →  item_genome_tag_emb  (size: item_genome_tag_embedding_size)  [shared with user genome pool]
-  item_embedding_tower(movie_id)        →  item_emb             (size: item_movieId_embedding_size)
-  year_embedding_tower(release_year)    →  year_emb             (size: item_year_embedding_size)
-  concat → item_combined
+  item_genre_tower(genre_onehot)        →  item_genre_emb   (20)
+  item_tag_tower(tag_vector)            →  item_tag_emb     (10)
+  item_genome_tag_tower(genome_scores)  →  item_genome_emb  (35)  [shared with user genome pool]
+  item_embedding_tower(movie_id)        →  item_emb         (40)
+  year_embedding_tower(release_year)    →  year_emb         (5)
+  concat → item_combined  (110)
 
 Prediction: dot_product(user_combined, item_combined)
 ```
 
 All towers use `nn.Linear → Tanh`. Weights initialized with Xavier uniform (gain=0.01).
 
-**Shared tower:** `item_genome_tag_tower` is used for both the item side (target movie genome scores) and the user genome pooling (each watched movie's genome context → pool). This ensures both live in the same embedding space so the dot product is directly meaningful. The genome contexts are stored in a `genome_context_buffer` registered as a non-trainable buffer in the model, indexed by the same embedding indices already in `user_watch_history` — no dataset changes required.
+**Shared genome tower:** `item_genome_tag_tower` is shared between item side and user genome pooling, ensuring both live in the same embedding space. Genome contexts are stored in `genome_context_buffer` (non-trainable buffer, saved in state_dict).
+
+**Shared item embedding:** `item_embedding_lookup` is shared between item tower and user history pool. They cannot be decoupled without a projection layer.
 
 ### Critical dimension constraint
 
-`len(user_combined) == len(item_combined)` must hold for the dot product. The model raises `ValueError` at construction if violated.
-
-### Current embedding sizes (110-dim)
-
-```python
-item_movieId_embedding_size      = 40   # shared: user history pool + item tower
-item_year_embedding_size         = 5
-timestamp_feature_embedding_size = 5
-item_tag_embedding_size          = 10
-item_genome_tag_embedding_size   = 35   # shared: item tower + user genome pool (cannot be set independently)
-user_genre_embedding_size        = 30
-item_genre_embedding_size        = 20
-
-# user:  40 + 35 + 30 + 5       = 110
-# item:  20 + 10 + 35 + 40 + 5  = 110  ✓
-```
-
-**Previous model (120-dim, with user genome pooling):**
-```
-item_year=10, ts=10, item_tag=15, user_genre=35
-user: 40+35+35+10=120 / item: 20+15+35+40+10=120
-```
-
-**Previous model (120-dim, no user genome pooling):**
-```
-user_genre=70, no user genome pool
-user: 40+70+10=120 / item: 20+15+35+40+10=120
-```
-
-**Previous model (80-dim, checkpoint `best_checkpoint_20260403_210601.pth`):**
-```
-item_movieId=20, genre_budget=50, item_tag=15, genome=25
-user: 20+50+10=80 / item: 10+15+25+20+10=80
-```
+`len(user_combined) == len(item_combined)` must hold. The model raises `ValueError` at construction if violated.
 
 ### Key implementation notes
 
-- **Shared item embedding:** `item_embedding_lookup` is shared between the item tower (target movie) and the user history avg pool. The lookup has `padding_idx = top_movies_len`. History pooling output size = `item_movieId_embedding_size` — they cannot be decoupled without adding a projection layer.
-- **Shared genome tower:** `item_genome_tag_tower` is shared between item side and user genome pooling. `nn.Linear` + `nn.Tanh` broadcast over leading dims, so `(batch, hist_len, 1128)` → `(batch, hist_len, 35)` works without reshaping.
-- **genome_context_buffer:** Registered as a non-trainable buffer (saved in state_dict, device-portable). Row `i` = genome context for movie at embedding index `i`; last row = zeros (pad index). Built in `build_model()` from `fs.movieId_to_genome_tag_context`.
 - **Rating-weighted avg pool:** Each watched movie embedding is weighted by the user's debiased rating. Abs-value normalization prevents negative ratings from cancelling positive ones in the denominator.
 - **Removing `item_embedding_tower` causes severe genre clustering** — do not remove it.
-- **Item ID embedding does not learn meaningful CF signal under MSE.** `probe_similar` on `MOVIEID_EMBEDDING` alone returns near-random neighbors (e.g. LotR → Hero, Thin Blue Line, Earth vs. Flying Saucers). Content towers (genre, genome) dominate the gradient and ID embeddings don't develop independent co-watch structure. Consequence: the user history pool (which pools over item ID embeddings) also doesn't capture genuine CF signal under MSE — user taste representation comes mostly from the genome pool and genre tower. Softmax training (`python main.py train softmax`) is expected to fix this by providing direct gradient signal from co-watch patterns.
-- **Tanh saturation:** Small sub-embedding spaces (genre=20, tag=15) saturate after training, causing sub-embedding cosine probes to return 1.0 for many movies. This is a known limitation. ReLU + larger dims would fix it but requires retraining.
+- **Item ID embedding does not learn meaningful CF signal under MSE.** Content towers (genre, genome) dominate the gradient; ID embeddings don't develop independent co-watch structure. User taste representation comes mostly from the genome pool and genre tower.
+- **Tanh saturation:** Small sub-embedding spaces (genre=20, tag=10) saturate after training, causing sub-embedding cosine probes to return 1.0 for many movies. Known limitation.
 
 ## Training Details
 
-### MSE (`python main.py train`)
+### MSE (`python main.py train`) — canonical objective
 
 - **Loss**: MSE on de-biased ratings (raw rating − user mean)
 - **Optimizer**: SGD, `lr=0.005`, `momentum=0.9`
 - **Batch size**: 64
 - **Steps**: 150,000
 - **Val logging**: every 10,000 steps (full val pass)
-- **Checkpointing**: best val checkpoint → `saved_models/best_checkpoint_<timestamp>.pth`
+- **Checkpointing**: `saved_models/best_mse_<pool>_<timestamp>.pth`
 - **LR=0.01**: Too aggressive; collapses genre boundaries — avoid
-- **Train/val split**: 90/10 user-based; 90% of each user's history as context, 10% as labels
+- **Train/val split**: 90/10 user-based; 90% of each user's history as fixed context, 10% as labels
+- **Dataset structure**: flat label expansion — each user has one fixed context; each label movie becomes one training example. No rollbacks.
 
-### Softmax (`python main.py train softmax`)
+### Softmax (`python main.py train softmax`) — implemented but not better on MovieLens
 
 - **Loss**: cross-entropy over in-batch negatives (B×B score matrix, diagonal = correct targets)
-- **Dataset**: rollback examples — for each watch event, context = all prior watches. Capped at 10 examples per user (`MAX_SOFTMAX_EXAMPLES_PER_USER`). Built from watch + label parquets combined. Avoids future leakage; balances active vs. casual users.
+- **Dataset**: rollback examples — for each watch event, context = all prior watches. Capped at `MAX_SOFTMAX_EXAMPLES_PER_USER`.
 - **Optimizer**: Adam, `lr=0.001`, `weight_decay=1e-5`
-- **LR schedule**: CosineAnnealingLR from 0.001 → 0 over training steps
-- **Batch size**: 512 (511 in-batch negatives per example)
-- **Temperature**: 0.05
-- **Steps**: 150,000
-- **Val logging**: every 10,000 steps (sampled batch of 512 — ±0.2 oscillation is normal, different negatives each eval batch)
-- **Checkpointing**: best val checkpoint → `saved_models/best_softmax_<timestamp>.pth`
-- **Step 0 sanity check**: random baseline loss = `log(512)` ≈ 6.238 — confirm at step 0
-- **Why rollback for both train and val**: keeps context-length distribution consistent; using last-read-only for val would create a train/val distribution mismatch on context length
+- **Batch size**: 512, **Temperature**: 0.05, **Steps**: 150,000
+- **Checkpointing**: `saved_models/best_softmax_<pool>_<timestamp>.pth`
+- **`F.normalize` must NOT be used in `train_softmax`.** Applying it makes training optimize cosine similarity while inference uses raw dot products — train/inference mismatch. Always use raw dot products in both.
+- **Similarity metric rule — do not revisit:** Raw dot product for user-to-item scoring (training, eval, canary). Cosine similarity for item-to-item (probe_similar, tab_similar). Raw dot for item-item causes high-norm items to dominate every neighborhood. Tested and confirmed worse — do not switch again.
 
 ## Saving / Loading Models
 
-Checkpoints are weights-only (`~1MB`). The `saved_models/` directory is gitignored.
+Checkpoints are weights-only (~1MB). The `saved_models/` directory is gitignored.
 
-```bash
-python main.py canary saved_models/best_checkpoint_<timestamp>.pth   # MSE
-python main.py canary saved_models/best_softmax_<timestamp>.pth      # softmax
-python main.py eval   saved_models/best_softmax_<timestamp>.pth
-```
+Naming convention: `best_<loss>_<pool>_<timestamp>.pth`
+- `<loss>`: `mse` or `softmax`
+- `<pool>`: `gpool` (genome pool ON) or `nopool` (genome pool OFF)
 
-Auto-detection (no path given) picks the most recently modified checkpoint from both `best_checkpoint_*.pth` and `best_softmax_*.pth`.
+Auto-detection (no path given) picks the most recently modified checkpoint from `best_mse_*.pth`, `best_softmax_*.pth`, and legacy `best_checkpoint_*.pth`.
 
-The evaluate setup loads the checkpoint first (fast, ~1MB), then features (slow). If the checkpoint is invalid it fails immediately before the slow features load.
+The evaluate setup loads the checkpoint first (fast), then features (slow). Invalid checkpoint fails immediately before the slow features load.
 
 ## Offline Evaluation (`python main.py eval`)
 
 `src/offline_eval.py` — Recall@K, NDCG@K, Hit Rate@K, MRR at K = 1, 5, 10, 20, 50.
 
-**Protocol:** Leave-label-out per user. Reuses the existing 90/10 per-user split from `preprocess.py`:
-- **Context** = `user_to_watch_history` (90% of ratings, pre-mapped movie embedding indices + debiased ratings)
-- **Targets** = `user_to_movie_to_rating_LABEL` (remaining 10% of ratings)
-
-5,000 users sampled with `random.Random(42)` for reproducibility. No new splits or dataset regeneration required.
-
-Works with any checkpoint (MSE or softmax) — auto-detects most recent if no path given.
+**Protocol:** Leave-label-out per user. 5,000 users sampled with `random.Random(42)`.
+- **Context** = `user_to_watch_history` (90% of ratings)
+- **Targets** = `user_to_movie_to_rating_LABEL` (remaining 10%)
 
 ## Embedding Probes (`python main.py probe`)
 
-Three sub-embedding probes + one combined-space probe:
+**`probe_genre(genre)`** — one-hot → `item_genre_tower` → cosine vs all genre embeddings.
 
-**`probe_genre(genre)`** — one-hot genre vector → `item_genre_tower` → cosine vs all `MOVIE_GENRE_EMBEDDING`. Shows what the item genre embedding space learned. Scores near 1.0 indicate Tanh saturation (embedding space too small).
+**`probe_tag(tags)`** — tag vector → `item_tag_tower` → cosine vs all tag embeddings.
 
-**`probe_tag(tags)`** — tag vector → `item_tag_tower` → cosine vs all `MOVIE_TAG_EMBEDDING`. Default query: `['pixar', 'animation']`.
+**`probe_genome_tag(genome_tags)`** — averages top-k representative movie genome embeddings as query, cosine vs all genome embeddings. Uses real movie embeddings to avoid OOD synthetic inputs.
 
-**`probe_genome_tag(genome_tags)`** — finds top-k_anchors most representative movies by raw genome score, averages their `MOVIE_GENOME_TAG_EMBEDDING` as query, cosine vs all `MOVIE_GENOME_TAG_EMBEDDING`. Seeds are marked `[seed]` in output. Avoids synthetic OOD inputs. Default queries: `['horror', 'gore', 'torture']` and `['martial arts', 'kung fu']`.
-
-**`probe_similar(titles)`** — computes pairwise cosine similarity on `MOVIE_EMBEDDING_COMBINED` (full 110-dim space). Most reliable probe — uses the space the model actually optimizes. Output is two tables: combined embedding and item ID embedding only.
-
-> **Note on genome tag probing:** Genome scores are dense (0–1, nearly every movie has non-zero scores for most tags). Synthetic 0-filled vectors are OOD for the genome tower. The anchor approach avoids this by using real movie embeddings as the query.
+**`probe_similar(titles)`** — pairwise cosine similarity on `MOVIE_EMBEDDING_COMBINED` (110-dim). Most reliable probe.
 
 ## Canary Users for Eval
 
-Use these synthetic users to quickly assess model quality after training:
+> **Timestamp:** All canary users receive `ts_max_bin` (most recent timestamp bin).
 
-> **Timestamp:** canary users are synthetic and have no real watch timestamps. All canary users receive `ts_max_bin` (the most recent timestamp bin in the training data), meaning the timestamp tower sees them as current users. This is set once in `run_canary_eval` and passed to every `_build_user_embedding` call.
+- **Horror Lover** and **Sci-Fi Lover** — most sensitive to genre drift; if wrong, model is failing
+- **Comedy Lover** and **Romance Lover** — good sanity checks, tend to work well
+- **Crime Lover** — stress test; expect imperfect results due to genre overlap
 
-- **Horror Lover** and **Sci-Fi Lover** — most sensitive to genre drift; if these are wrong, the model is failing
-- **Comedy Lover** and **Romance Lover** — tend to work well across all runs; good sanity checks
-- **Crime Lover** — stress test for edge cases; expect imperfect results due to genre overlap
+### Known persistent issues
 
-### Known persistent issues (as of 120-dim model)
+- **Fantasy Lover** drifts to arthouse/surreal (Brazil, Dark City)
+- **Sci-Fi Lover** drifts to arthouse/cult (Videodrome, Naked Lunch) — prestige sci-fi shares genome signals with surreal cinema
+- **War Movie Lover** drifts to epic/action (LotR, Matrix) — "acclaimed serious film" cluster
 
-- **Fantasy Lover** drifts to arthouse/surreal (Howl's Moving Castle is correct; Brazil, Dark City, After Hours are not)
-- **Sci-Fi Lover** drifts to arthouse/cult (Videodrome, Naked Lunch, Blue Velvet) — prestige sci-fi shares genome signals with surreal cinema
-- **War Movie Lover** drifts to epic/action (LotR, Matrix, Doctor Strange) — "acclaimed serious film" cluster
-- Removing `item_embedding_tower` causes severe genre clustering — do not remove it
+## MSE vs Softmax: Findings
 
-## Training Objective
+MSE with genome pooling is the right objective for MovieLens. Softmax (validated on Goodreads at 3× improvement) failed here.
 
-### ✅ Softmax (in-batch negatives) — implemented
+### Offline eval results (2026-04-21)
 
-`python main.py train softmax` — in-batch negatives cross-entropy. See Training Details above.
+| Metric | **Prod: MSE gpool 1-layer** | MSE gpool 2-layer | MSE nopool 2-layer | Softmax nopool 2-layer + ≥4★ |
+|---|---|---|---|---|
+| Hit Rate@1 | **1.12%** | 0.92% | 1.14% | 0.44% |
+| Hit Rate@5 | **4.86%** | 4.18% | 3.68% | 1.82% |
+| **Hit Rate@10** | **8.36%** | 7.72% | 6.38% | 3.54% |
+| Hit Rate@20 | **13.60%** | 13.10% | 11.70% | 6.32% |
+| Hit Rate@50 | **24.54%** | 24.60% | 23.04% | 12.64% |
+| Recall@10 | **0.0140** | 0.0122 | 0.0096 | 0.0057 |
+| NDCG@10 | **0.0133** | 0.0117 | 0.0104 | 0.0056 |
+| **MRR** | **0.0381** | 0.0348 | 0.0334 | 0.0183 |
 
-Validated in the book repo (~11k items, random Hit Rate@10 baseline ≈ 0.09%):
+**The prod model was never beaten.** Despite trying deeper towers (2-layer), different objectives (softmax), genome pool ON/OFF, and rating filters — the original MSE gpool single-layer model remains the best on every metric. Do not redeploy without a clearly better eval result.
 
-| Metric       | MSE    | Softmax      |
-|--------------|--------|--------------|
-| Hit Rate@10  | 4.3%   | **11.7%**    |
-| Hit Rate@50  | 16.8%  | **31.3%**    |
-| Recall@10    | 0.0061 | **0.0194**   |
-| NDCG@10      | 0.0062 | **0.0213**   |
-| MRR          | 0.021  | **0.057**    |
+### Key architecture findings
 
-Softmax ~3× better than MSE. Movie results pending.
+- **Genome pooling is essential** — nopool 2-layer loses to gpool 1-layer on every metric. Always use `gpool`.
+- **Deeper towers did not help** — gpool 2-layer underperforms gpool 1-layer despite 113k more parameters. The single-layer towers are expressive enough for the input sizes.
+- **MSE + gpool + single-layer is the optimal configuration for this dataset.**
 
-Lessons from books (apply here too):
-- Val loss ±0.2 oscillation is normal — different in-batch negatives each eval batch; don't chase it
-- In-batch negative debiasing (log-freq correction, Yi et al. 2019) did **not** converge — skip it. Corpus frequency distribution too compressed for the correction to add signal.
-- Confirm step-0 loss ≈ `log(512)` ≈ 6.238
+### Why softmax fails on MovieLens
 
-### Future: implicit vs explicit feedback tradeoff
+MovieLens interactions are shaped by the platform's own recommender — users rate movies they were *shown*, not movies they independently sought out. Softmax with in-batch negatives systematically suppresses popular items (frequent negatives), but on MovieLens popular = genuinely watched. Goodreads is user-driven; MovieLens is not.
 
-Explicit ratings (current) give clean preference signal but are sparse. Implicit feedback (watches) is abundant but noisy — a user may finish a movie they disliked. Consider a hybrid: softmax for candidate generation, explicit ratings for a separate ranking stage.
+Softmax also excels at niche taste clusters (Western, Martial Arts, Anime) but fails badly on high-traffic genres (Horror, Children, Comedy). The tradeoff is not worth it.
 
----
+**Norm diagnostic:** Mean item embedding norm = 7.133, std = 0.110 — extremely tight. High-norm items are niche classics, not popular trash. Rules out runaway norm hypothesis.
 
-## Future User Tower Improvements
+**Conclusion:** Do not invest further in softmax for MovieLens. The objective mismatch is structural.
 
-Roughly ordered by implementation cost:
+### Goodreads comparison (same architecture, different dataset)
 
-1. **User genome tag affinity context** — analogous to the genre context vector, compute rating-weighted avg genome tag relevance scores over a user's watch history. Mirrors the item-side genome tag tower. Likely high impact since item side already uses genome scores.
-2. **Recency-weighted pooling** — exponential decay so recent watches matter more than old ones
-3. **Rating variance per genre** — consistency signal (always loves horror vs. sometimes likes it)
-4. **Explicit dislikes** — low-rated movies (1–2 stars) pooled separately as a negative taste embedding
-5. **Short-term vs. long-term history** — two pooled embeddings (e.g., last 10 vs. all history) concatenated
-6. **Transformer over history** — replace avg pooling with a small Transformer encoder; `[CLS]` token becomes the history embedding
+| Metric | MSE | Softmax |
+|---|---|---|
+| Hit Rate@10 | 4.3% | **11.7%** |
+| Hit Rate@50 | 16.8% | **31.3%** |
+| MRR | 0.021 | **0.057** |
 
-## Richer Cross-Signal Features to Explore
+The cross-dataset result is the key finding: softmax wins on user-driven data, MSE wins on platform-driven data. The architecture is the same; the objective choice is dataset-dependent.
 
-The key insight: when two signals are concatenated into the **same tower**, the linear layer can learn cross-term interactions between them. This is more powerful than separate towers, which can only learn each signal independently.
+## Potential Next Improvements
 
-### User side — additions to the genre context tower
+ROI on further MovieLens tuning is low. If continuing:
 
-Currently the genre context tower takes `[avg_debiased_rating_per_genre | watch_frac_per_genre]` (2 × n_genres). Good candidates to add alongside:
+1. **MSE with rollbacks** — currently MSE uses one fixed context per user (90% of history). Rollback training would expose the model to users at every history length, improving cold-start generalization for the Streamlit use case (users inputting 5–10 favorite movies). Modest expected gain.
+2. **Rating variance per genre** in the user context vector — distinguishes genuine fans from casual watchers.
+3. **Genre + year in the same item tower** — directly attacks era confusion in recommendations.
 
-- **Rating variance per genre** — `high watch + high avg + low variance` = genuine fan; `high watch + low avg + high variance` = casual/completionist watcher.
-- **Recency weight per genre** — fraction of the user's *last N* watches that were genre X, alongside the all-time fraction.
+## Known Code Inconsistency
 
-### Item side — cross-signal tower opportunities
-
-- **Genre + year in the same tower** — genre conventions change drastically by decade. Currently year and genre are completely separate towers with no interaction — directly attacks era confusion in recommendations.
-- **Genre + genome tags in the same tower** — genre labels are coarse (20 categories); genome tags are 1128 fine-grained signals. Cross-learning discovers sub-genres.
-- **Global avg rating + genre** (new feature, not currently used) — highly-rated Drama is fundamentally different from low-rated Drama. Directly attacks the War/Drama clustering problem.
-
-### Priority
-
-1. **Genre + year (item side)** — directly attacks era confusion, low implementation cost
-2. **Rating variance (user side)** — sharpens genre signals by distinguishing fans from casual watchers
-3. **Genre + genome tags (item side)** — highest potential impact but requires merging two large input spaces
-
-## Known Code Inconsistencies (to fix)
-
-- **Label movieIds stored as raw IDs, watch history as embedding indices** — in `features.py`,
-  `watch_history` is mapped to embedding indices via `item_emb_movieId_to_i` at feature
-  engineering time, but `label_movieIds` are stored as raw movie IDs and only mapped to embedding
-  indices later in `dataset.py`. Both work correctly but the inconsistency is confusing.
-  Fix: map label movieIds to embedding indices in `features.py` the same way watch history is.
+**Label movieIds stored as raw IDs, watch history as embedding indices** — `watch_history` is mapped to embedding indices in `features.py`, but `label_movieIds` are stored as raw IDs and mapped later in `dataset.py`. Both work correctly but the inconsistency is confusing. Fix: map label movieIds in `features.py`.
 
 ---
 

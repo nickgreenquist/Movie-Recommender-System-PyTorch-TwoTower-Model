@@ -35,13 +35,14 @@ def cmd_features():
     run(data_dir=DATA_DIR, version=VERSION)
 
 
-def cmd_dataset(mode='mse'):
+def cmd_dataset(mode='mse', min_target_rating='0'):
     if mode == 'softmax':
         from src.dataset import load_features, make_softmax_splits, save_softmax_splits
         print("Loading features ...")
         fs = load_features(DATA_DIR, VERSION)
         print("\nBuilding softmax datasets (rollback examples) ...")
-        train_data, val_data = make_softmax_splits(fs, DATA_DIR)
+        train_data, val_data = make_softmax_splits(fs, DATA_DIR,
+                                                   min_target_rating=float(min_target_rating))
         save_softmax_splits(train_data, val_data, DATA_DIR, VERSION)
     else:
         from src.dataset import load_features, make_splits, save_splits
@@ -52,7 +53,7 @@ def cmd_dataset(mode='mse'):
         save_splits(train_data, val_data, DATA_DIR, VERSION)
 
 
-def cmd_train(mode='mse'):
+def cmd_train(mode='mse', **kwargs):
     if mode == 'softmax':
         from src.dataset import load_features, load_softmax_splits
         from src.train import get_softmax_config, build_model, train_softmax
@@ -122,7 +123,9 @@ if __name__ == '__main__':
         cmd_canary()
     elif args[0] in COMMANDS:
         cmd = args[0]
-        if cmd in ('dataset', 'train') and len(args) > 1:
+        if cmd in ('dataset', 'train') and len(args) > 2:
+            COMMANDS[cmd](mode=args[1], min_target_rating=args[2])
+        elif cmd in ('dataset', 'train') and len(args) > 1:
             COMMANDS[cmd](mode=args[1])
         elif cmd in ('canary', 'probe', 'eval', 'export') and len(args) > 1:
             COMMANDS[cmd](checkpoint_path=args[1])

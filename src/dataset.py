@@ -307,17 +307,22 @@ def load_splits(data_dir: str = 'data', version: str = 'v1') -> tuple:
 # have long contexts while train has short+long — a distribution mismatch that makes
 # val loss unreliable. Using rollback for both keeps context length distribution consistent.
 
-MAX_SOFTMAX_EXAMPLES_PER_USER = 10
+MAX_SOFTMAX_EXAMPLES_PER_USER = 20
 
 
 def build_softmax_dataset(users: list, fs: FeatureStore, raw_df,
                            max_per_user: int = MAX_SOFTMAX_EXAMPLES_PER_USER,
-                           seed: int = 42) -> tuple:
+                           seed: int = 42,
+                           min_target_rating: float = 0.0) -> tuple:
     """
     Build rollback training examples for in-batch negatives softmax training.
 
     raw_df must have columns: userId, movieId, rating, timestamp.
     All rows are assumed to be already filtered to corpus movies and valid users.
+
+    min_target_rating: if > 0, only use watch events with raw rating >= this value as
+        targets. Context (history) remains unfiltered — low-rated watches still inform
+        the user embedding. Set to 4.0 to restrict targets to movies the user enjoyed.
 
     Returns 9-tuple:
         [0] X_genre            — (N, user_context_size) float  rollback genre context
@@ -372,9 +377,14 @@ def build_softmax_dataset(users: list, fs: FeatureStore, raw_df,
 
         # Sample target positions upfront — avoids generating all rollbacks then discarding.
         # Valid targets: positions 1..n-1 (position 0 has no prior context).
+        # If min_target_rating set, only positions with raw rating >= threshold are eligible.
         # Sorting ensures a single left-to-right scan maintains genre accumulators correctly.
-        k               = min(max_per_user, n - 1)
-        sampled_targets = sorted(rng.sample(range(1, n), k))
+        eligible = [i for i in range(1, n)
+                    if min_target_rating == 0.0 or ratings[i] >= min_target_rating]
+        if not eligible:
+            continue
+        k               = min(max_per_user, len(eligible))
+        sampled_targets = sorted(rng.sample(eligible, k))
         sampled_set     = set(sampled_targets)
 
         running_count = np.zeros(n_genres, dtype=np.float32)
@@ -432,12 +442,14 @@ def build_softmax_dataset(users: list, fs: FeatureStore, raw_df,
 def make_softmax_splits(fs: FeatureStore, data_dir: str = 'data',
                         max_per_user: int = MAX_SOFTMAX_EXAMPLES_PER_USER,
                         pct_train: float = 0.9, seed: int = 42,
-                        max_users: int = None) -> tuple:
+                        max_users: int = None,
+                        min_target_rating: float = 0.0) -> tuple:
     """
     Load raw interactions (watch + labels), split users 90/10, build softmax datasets.
     Returns (train_data, val_data) each a 9-tuple from build_softmax_dataset().
 
     max_users: if set, subsample to this many total users (for fast debug runs).
+    min_target_rating: if > 0, only use highly-rated watches as targets (e.g. 4.0).
     """
     import pandas as pd
     watch_path  = os.path.join(data_dir, 'base_ratings_watch.parquet')
@@ -461,12 +473,15 @@ def make_softmax_splits(fs: FeatureStore, data_dir: str = 'data',
     train_users = valid_users[:split]
     val_users   = valid_users[split:]
 
+    if min_target_rating > 0:
+        print(f"  min_target_rating={min_target_rating} — targets filtered to highly-rated watches only")
+
     print(f"\nBuilding softmax train dataset ({len(train_users):,} users) ...")
-    train_data = build_softmax_dataset(train_users, fs, raw_df, max_per_user, seed)
+    train_data = build_softmax_dataset(train_users, fs, raw_df, max_per_user, seed, min_target_rating)
     print(f"  X_genre_train shape: {train_data[0].shape}")
 
     print(f"\nBuilding softmax val dataset ({len(val_users):,} users) ...")
-    val_data = build_softmax_dataset(val_users, fs, raw_df, max_per_user, seed)
+    val_data = build_softmax_dataset(val_users, fs, raw_df, max_per_user, seed, min_target_rating)
     print(f"  X_genre_val shape:   {val_data[0].shape}")
 
     return train_data, val_data

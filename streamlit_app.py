@@ -74,6 +74,7 @@ def load_artifacts():
         item_year_embedding_size=cfg['item_year_embedding_size'],
         user_genre_embedding_size=cfg['user_genre_embedding_size'],
         timestamp_feature_embedding_size=cfg['timestamp_feature_embedding_size'],
+        use_user_genome_pool=cfg.get('use_user_genome_pool', True),
     )
     model.load_state_dict(torch.load('serving/model.pth', weights_only=True))
     model.eval()
@@ -163,27 +164,31 @@ def _build_user_embedding(model, fs, liked_titles_with_weights, disliked_titles,
     else:
         history_emb = torch.zeros(1, model.item_embedding_lookup.embedding_dim)
 
-    # Genome pooling — mirrors history pooling in content space (shared tower)
-    genome_contexts = []
-    genome_weights  = []
-    for t, w in list(liked_titles_with_weights) + [(t, _DISLIKED_MOVIE) for t in disliked_titles]:
-        mid = fs['title_to_movieId'].get(t)
-        if mid and mid in fs['movieId_to_genome_tag_context']:
-            genome_contexts.append(fs['movieId_to_genome_tag_context'][mid])
-            genome_weights.append(w)
-
-    if genome_contexts:
-        gc_tensor  = torch.tensor(np.array(genome_contexts, dtype=np.float32))
-        ge_embs    = model.item_genome_tag_tower(gc_tensor)
-        wts        = torch.tensor(genome_weights)
-        wt_sum_g   = wts.abs().sum().clamp(min=1e-6)
-        genome_emb = (ge_embs * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_g
-    else:
-        genome_emb = torch.zeros(1, model.item_genome_tag_tower[0].out_features)
-
     genre_emb = model.user_genre_tower(torch.tensor([ctx]))
     ts_emb    = model.timestamp_embedding_tower(model.timestamp_embedding_lookup(ts_inference))
-    return torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
+
+    if model.use_user_genome_pool:
+        # Genome pooling — mirrors history pooling in content space (shared tower)
+        genome_contexts = []
+        genome_weights  = []
+        for t, w in list(liked_titles_with_weights) + [(t, _DISLIKED_MOVIE) for t in disliked_titles]:
+            mid = fs['title_to_movieId'].get(t)
+            if mid and mid in fs['movieId_to_genome_tag_context']:
+                genome_contexts.append(fs['movieId_to_genome_tag_context'][mid])
+                genome_weights.append(w)
+
+        if genome_contexts:
+            gc_tensor  = torch.tensor(np.array(genome_contexts, dtype=np.float32))
+            ge_embs    = model.item_genome_tag_tower(gc_tensor)
+            wts        = torch.tensor(genome_weights)
+            wt_sum_g   = wts.abs().sum().clamp(min=1e-6)
+            genome_emb = (ge_embs * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_g
+        else:
+            genome_emb = torch.zeros(1, model.item_genome_tag_tower[0].out_features)
+
+        return torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
+    else:
+        return torch.cat([history_emb, genre_emb, ts_emb], dim=1)
 
 
 def _build_genome_i_to_name(fs):
@@ -221,35 +226,24 @@ def _score_movies(user_emb, all_ids, all_embs, fs, exclude_titles, top_n=20):
 
 def tab_recommend(model, fs, all_ids, all_embs, ts_inference):
     st.caption(
-        "Your movie and genre selections are combined into a user tower embedding that is scored "
-        "against every movie in the corpus. The more signal you provide, the sharper the recommendations. "
+        "Select movies you love and optionally refine with genome tags. "
+        "The model builds your taste embedding from the movies' content and scores every movie in the corpus. "
         "To learn how the model works, see the About tab."
     )
     all_titles = fs['popularity_ordered_titles']
-    genres     = fs['genres_ordered']
 
     # Flag handling must happen before widgets are instantiated
     if st.session_state.pop('_clear_rec', False):
-        for key in ('rec_liked', 'rec_disliked', 'rec_liked_genres', 'rec_disliked_genres', 'rec_genome_tags'):
+        for key in ('rec_liked', 'rec_genome_tags'):
             st.session_state[key] = []
 
     profile = st.session_state.pop('_load_profile', None)
     if profile:
-        st.session_state['rec_liked']           = USER_TYPE_TO_FAVORITE_MOVIES[profile]
-        st.session_state['rec_disliked']        = USER_TYPE_TO_DISLIKED_MOVIES[profile]
-        st.session_state['rec_liked_genres']    = USER_TYPE_TO_FAVORITE_GENRES[profile]
-        st.session_state['rec_disliked_genres'] = USER_TYPE_TO_WORST_GENRES[profile]
+        st.session_state['rec_liked'] = USER_TYPE_TO_FAVORITE_MOVIES[profile]
 
-    liked_titles = st.multiselect("Favorite Movies 😊", all_titles, key='rec_liked')
-    liked_genres = st.multiselect("Favorite Genres 😊", genres, key='rec_liked_genres')
-
-    with st.expander("Exclude what you don't like (optional)"):
-        col1, col2 = st.columns(2)
-        disliked_titles = col1.multiselect("Least Favorite Movies 🤮", all_titles, key='rec_disliked')
-        disliked_genres = col2.multiselect("Least Favorite Genres 🤮", genres, key='rec_disliked_genres')
+    liked_titles = st.multiselect("Favorite Movies", all_titles, key='rec_liked')
 
     with st.expander("Refine by Genome Tags (optional)"):
-
         st.caption(
             "Select content descriptors — tones, themes, settings, cultural touchstones "
             "(e.g. 'atmospheric', 'cyberpunk', 'world war ii'). "
@@ -274,8 +268,8 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference):
         st.session_state['_clear_rec'] = True
         st.rerun()
     if btn_col.button("Get Recommendations", use_container_width=True):
-        if not liked_titles and not liked_genres and not selected_genome_tags:
-            st.warning("Select at least one liked movie, genre, or genome tag.")
+        if not liked_titles and not selected_genome_tags:
+            st.warning("Select at least one movie or genome tag.")
             return
         anchor_tag_title_pairs = []
         if selected_genome_tags:
@@ -308,15 +302,15 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference):
         )
         with torch.no_grad():
             user_emb = _build_user_embedding(
-                model, fs, liked_with_weights, disliked_titles,
-                liked_genres, disliked_genres, ts_inference,
+                model, fs, liked_with_weights, [],
+                [], [], ts_inference,
             )
         if anchor_tag_title_pairs:
             st.caption("Genome anchors — " + " · ".join(
                 f"{tag}: {title}" for tag, title in anchor_tag_title_pairs
             ))
         df = _score_movies(user_emb, all_ids, all_embs, fs,
-                           exclude_titles=liked_titles + disliked_titles)
+                           exclude_titles=liked_titles)
         st.dataframe(df, use_container_width=True, hide_index=True)
 
 

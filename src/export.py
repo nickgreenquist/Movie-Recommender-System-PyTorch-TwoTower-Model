@@ -20,23 +20,37 @@ import torch.nn.functional as F
 
 from src.dataset import load_features
 from src.evaluate import build_movie_embeddings
-from src.train import build_model, get_config
+from src.train import build_model, get_config, get_softmax_config
 
 SERVING_DIR = 'serving'
 
 
 def run_export(data_dir: str = 'data', checkpoint_path: str = None,
                version: str = 'v1') -> None:
-    config = get_config()
-
     # Resolve checkpoint
     if checkpoint_path is None:
-        pattern    = os.path.join(config['checkpoint_dir'], 'best_checkpoint_*.pth')
-        candidates = sorted(glob.glob(pattern), key=os.path.getmtime, reverse=True)
+        cfg = get_config()
+        checkpoint_dir = cfg['checkpoint_dir']
+        candidates = sorted(
+            glob.glob(os.path.join(checkpoint_dir, 'best_mse_*.pth')) +
+            glob.glob(os.path.join(checkpoint_dir, 'best_softmax_*.pth')) +
+            glob.glob(os.path.join(checkpoint_dir, 'best_checkpoint_*.pth')),  # legacy
+            key=os.path.getmtime, reverse=True,
+        )
         if not candidates:
             print("No checkpoint found in saved_models/. Train a model first.")
             return
         checkpoint_path = candidates[0]
+
+    name = os.path.basename(checkpoint_path)
+    is_softmax = 'softmax' in name
+    config = get_softmax_config() if is_softmax else get_config()
+    if 'nopool' in name:
+        config['use_user_genome_pool'] = False
+        config['user_genre_embedding_size'] = 65
+    elif 'gpool' in name:
+        config['use_user_genome_pool'] = True
+        config['user_genre_embedding_size'] = 30
 
     print(f"Checkpoint: {checkpoint_path}")
     state_dict = torch.load(checkpoint_path, weights_only=True)

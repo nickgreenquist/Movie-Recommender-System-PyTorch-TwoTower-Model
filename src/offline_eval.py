@@ -37,8 +37,18 @@ def run_offline_eval(model: MovieRecommender, fs: FeatureStore,
     )  # (n_movies, 110)
     mid_to_pos = {mid: i for i, mid in enumerate(all_ids)}
 
-    # ── Sample eval users ────────────────────────────────────────────────────
-    eligible = [u for u in fs.user_ids
+    # ── Reconstruct MSE val users (held-out 10% — never in MSE training set) ───
+    # MSE trains on (90%-context, label-movie) pairs; using those users would inflate
+    # MSE metrics since the eval is testing the exact pairs it trained on.
+    # Replicate make_splits() logic (same filter + seed) to get true held-out users.
+    all_eligible = [u for u in fs.user_ids
+                    if 2 <= len(fs.user_to_movie_to_rating_LABEL.get(u, {})) < 500]
+    split_rng = random.Random(42)
+    split_rng.shuffle(all_eligible)
+    split = int(len(all_eligible) * 0.9)
+    val_users_set = set(all_eligible[split:])
+
+    eligible = [u for u in val_users_set
                 if fs.user_to_watch_history.get(u)
                 and fs.user_to_movie_to_rating_LABEL.get(u)]
     rng = random.Random(seed)

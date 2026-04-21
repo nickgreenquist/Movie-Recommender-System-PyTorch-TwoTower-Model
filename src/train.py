@@ -30,14 +30,16 @@ def get_config() -> dict:
     # genome pooling uses the shared item_genome_tag_tower, so its output dim
     # equals this value. They cannot be set independently.
     item_genome_tag_embedding_size   = 35
-    user_genre_embedding_size        = 30
+    use_user_genome_pool             = True
+    user_genre_embedding_size        = 65 if not use_user_genome_pool else 30
     item_genre_embedding_size        = 20
 
-    user_total = item_movieId_embedding_size + item_genome_tag_embedding_size + user_genre_embedding_size + timestamp_feature_embedding_size
+    genome_contrib = item_genome_tag_embedding_size if use_user_genome_pool else 0
+    user_total = item_movieId_embedding_size + genome_contrib + user_genre_embedding_size + timestamp_feature_embedding_size
     item_total = item_genre_embedding_size + item_tag_embedding_size + item_genome_tag_embedding_size + item_movieId_embedding_size + item_year_embedding_size
     assert user_total == item_total, (
         f"Tower size mismatch — user={user_total} "
-        f"(history={item_movieId_embedding_size} + genome={item_genome_tag_embedding_size} + genre={user_genre_embedding_size} + ts={timestamp_feature_embedding_size}), "
+        f"(history={item_movieId_embedding_size} + genome={genome_contrib} + genre={user_genre_embedding_size} + ts={timestamp_feature_embedding_size}), "
         f"item={item_total} "
         f"(genre={item_genre_embedding_size} + tag={item_tag_embedding_size} + genome={item_genome_tag_embedding_size} + movieId={item_movieId_embedding_size} + year={item_year_embedding_size})"
     )
@@ -51,7 +53,7 @@ def get_config() -> dict:
         'item_genome_tag_embedding_size':   item_genome_tag_embedding_size,
         'user_genre_embedding_size':        user_genre_embedding_size,
         'item_genre_embedding_size':        item_genre_embedding_size,
-        'use_user_genome_pool':             True,
+        'use_user_genome_pool':             use_user_genome_pool,
         # Training
         'lr':               0.005,
         'momentum':         0.9,
@@ -99,16 +101,22 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
 def print_model_summary(model: MovieRecommender) -> None:
     """Print tower dimensions and parameter count for a built model."""
     m = model
+    def _out_dim(tower):
+        """Return the output dim of the last Linear layer in a Sequential tower."""
+        for layer in reversed(tower):
+            if isinstance(layer, torch.nn.Linear):
+                return layer.out_features
+
     history_dim      = m.item_embedding_lookup.embedding_dim
-    genome_dim       = m.item_genome_tag_tower[0].out_features if m.use_user_genome_pool else 0
-    genre_dim        = m.user_genre_tower[0].out_features
+    genome_dim       = _out_dim(m.item_genome_tag_tower) if m.use_user_genome_pool else 0
+    genre_dim        = _out_dim(m.user_genre_tower)
     ts_dim           = m.timestamp_embedding_lookup.embedding_dim
     user_total       = history_dim + genome_dim + genre_dim + ts_dim
-    item_genre_dim   = m.item_genre_tower[0].out_features
-    item_tag_dim     = m.item_tag_tower[0].out_features
-    genome_tag_dim   = m.item_genome_tag_tower[0].out_features
-    item_movieId_dim = m.item_embedding_tower[0].out_features
-    year_dim         = m.year_embedding_tower[0].out_features
+    item_genre_dim   = _out_dim(m.item_genre_tower)
+    item_tag_dim     = _out_dim(m.item_tag_tower)
+    genome_tag_dim   = _out_dim(m.item_genome_tag_tower)
+    item_movieId_dim = _out_dim(m.item_embedding_tower)
+    year_dim         = _out_dim(m.year_embedding_tower)
     item_total       = item_genre_dim + item_tag_dim + genome_tag_dim + item_movieId_dim + year_dim
     n_params         = sum(p.nelement() for p in model.parameters() if p.requires_grad)
 
@@ -154,8 +162,9 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
 
     os.makedirs(checkpoint_dir, exist_ok=True)
     run_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    pool_tag      = 'gpool' if config.get('use_user_genome_pool', True) else 'nopool'
     best_val_loss = float('inf')
-    best_path     = os.path.join(checkpoint_dir, f'best_checkpoint_{run_timestamp}.pth')
+    best_path     = os.path.join(checkpoint_dir, f'best_mse_{pool_tag}_{run_timestamp}.pth')
 
     loss_train = []
     loss_val   = []
@@ -224,7 +233,7 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
 
             if i > 0 and i % checkpoint_every == 0:
                 periodic = os.path.join(checkpoint_dir,
-                                        f'checkpoint_{run_timestamp}_step_{i:06d}.pth')
+                                        f'mse_{pool_tag}_{run_timestamp}_step_{i:06d}.pth')
                 torch.save(model.state_dict(), periodic)
                 print(f"  → periodic checkpoint → {periodic}")
 
@@ -239,21 +248,21 @@ def get_softmax_config() -> dict:
     """
     Hyperparameters for in-batch negatives softmax training.
 
-    use_user_genome_pool=False: removes genome pooling from the user tower (saves the expensive
-    (batch, hist_len, 1128) computation). The freed 35 dims are reallocated to user_genre so
-    the tower constraint still holds: user = history(40) + genre(65) + ts(5) = 110.
-    Item side is unchanged: genre(20) + tag(10) + genome(35) + movieId(40) + year(5) = 110.
+    use_user_genome_pool=False: genome pooling OFF.
+    user = history(40) + genre(65) + ts(5) = 110.
+    Item side: genre(20) + tag(10) + genome(35) + movieId(40) + year(5) = 110.
     """
     item_movieId_embedding_size      = 40
     item_year_embedding_size         = 5
     timestamp_feature_embedding_size = 5
     item_tag_embedding_size          = 10
     item_genome_tag_embedding_size   = 35
-    user_genre_embedding_size        = 65   # 30 + 35 freed from genome pool
+    use_user_genome_pool             = False
+    user_genre_embedding_size        = 65 if not use_user_genome_pool else 30
     item_genre_embedding_size        = 20
 
-    # With use_user_genome_pool=False: user = history + genre + ts (no genome term)
-    user_total = item_movieId_embedding_size + user_genre_embedding_size + timestamp_feature_embedding_size
+    genome_contrib = item_genome_tag_embedding_size if use_user_genome_pool else 0
+    user_total = item_movieId_embedding_size + genome_contrib + user_genre_embedding_size + timestamp_feature_embedding_size
     item_total = item_genre_embedding_size + item_tag_embedding_size + item_genome_tag_embedding_size + item_movieId_embedding_size + item_year_embedding_size
     assert user_total == item_total, f"Tower size mismatch: user={user_total} item={item_total}"
 
@@ -265,7 +274,7 @@ def get_softmax_config() -> dict:
         'item_genome_tag_embedding_size':   item_genome_tag_embedding_size,
         'user_genre_embedding_size':        user_genre_embedding_size,
         'item_genre_embedding_size':        item_genre_embedding_size,
-        'use_user_genome_pool':             False,
+        'use_user_genome_pool':             use_user_genome_pool,
         # Training
         'lr':               0.001,
         'weight_decay':     1e-5,
@@ -321,8 +330,9 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
 
     os.makedirs(checkpoint_dir, exist_ok=True)
     run_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    pool_tag      = 'gpool' if config.get('use_user_genome_pool', True) else 'nopool'
     best_val_loss = float('inf')
-    best_path     = os.path.join(checkpoint_dir, f'best_softmax_{run_timestamp}.pth')
+    best_path     = os.path.join(checkpoint_dir, f'best_softmax_{pool_tag}_{run_timestamp}.pth')
 
     loss_train = []
 
@@ -342,21 +352,19 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
                 vidx = torch.randint(0, n_val, (minibatch_size,)).tolist()
                 vhp  = pad_history_batch([X_history_val[j] for j in vidx], pad_idx)
                 vrp  = pad_history_ratings_batch([X_history_ratings_val[j] for j in vidx])
-                U = F.normalize(model.user_embedding(
-                        X_genre_val[vidx], vhp, vrp, timestamp_val[vidx]), dim=1)
-                V = F.normalize(model.item_embedding(
+                U = model.user_embedding(X_genre_val[vidx], vhp, vrp, timestamp_val[vidx])
+                V = model.item_embedding(
                         target_genre_val[vidx], target_tag_val[vidx],
                         target_genome_val[vidx], target_year_val[vidx],
-                        target_movieId_val[vidx]), dim=1)
+                        target_movieId_val[vidx])
                 scores   = (U @ V.T) / temperature
                 labels   = torch.arange(len(vidx))
                 val_loss = F.cross_entropy(scores, labels).item()
 
                 if i == 0:
-                    raw = U @ V.T
                     print(f"  [step 0 diagnostics] dot products — "
-                          f"mean={raw.mean().item():.4f}  std={raw.std().item():.4f}  "
-                          f"min={raw.min().item():.4f}  max={raw.max().item():.4f}")
+                          f"mean={scores.mean().item():.4f}  std={scores.std().item():.4f}  "
+                          f"min={scores.min().item():.4f}  max={scores.max().item():.4f}")
                     print(f"  [step 0 diagnostics] random baseline loss = log({minibatch_size}) = {np.log(minibatch_size):.4f}")
 
             avg_train  = np.mean(loss_train[i - log_every:i]) if i >= log_every else (loss_train[-1] if loss_train else 0.0)
@@ -374,7 +382,7 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
 
             if i > 0 and i % checkpoint_every == 0:
                 periodic = os.path.join(checkpoint_dir,
-                                        f'softmax_{run_timestamp}_step_{i:06d}.pth')
+                                        f'softmax_{pool_tag}_{run_timestamp}_step_{i:06d}.pth')
                 torch.save(model.state_dict(), periodic)
                 print(f"  → periodic checkpoint → {periodic}")
         else:
@@ -382,12 +390,11 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
             ix  = torch.randint(0, n_train, (minibatch_size,)).tolist()
             hp  = pad_history_batch([X_history_train[j] for j in ix], pad_idx)
             rp  = pad_history_ratings_batch([X_history_ratings_train[j] for j in ix])
-            U   = F.normalize(model.user_embedding(
-                      X_genre_train[ix], hp, rp, timestamp_train[ix]), dim=1)
-            V   = F.normalize(model.item_embedding(
+            U   = model.user_embedding(X_genre_train[ix], hp, rp, timestamp_train[ix])
+            V   = model.item_embedding(
                       target_genre_train[ix], target_tag_train[ix],
                       target_genome_train[ix], target_year_train[ix],
-                      target_movieId_train[ix]), dim=1)
+                      target_movieId_train[ix])
             scores = (U @ V.T) / temperature
             labels = torch.arange(len(ix))
             loss   = F.cross_entropy(scores, labels)

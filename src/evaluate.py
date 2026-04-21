@@ -64,12 +64,13 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
     'Fantasy Lover': [
         'Lord of the Rings: The Fellowship of the Ring, The (2001)',
         'Hobbit: An Unexpected Journey, The (2012)',
+        'Princess Bride, The (1987)'
     ],
     "Children's Movie Lover": [
-        'Toy Story 2 (1999)', 'Finding Nemo (2003)',
+        'Toy Story 2 (1999)', 'Finding Nemo (2003)', ' Bug\'s Life, A (1998)', 'Finding Dory (2016)'
     ],
     'Horror Lover': [
-        'Blair Witch Project, The (1999)', 'Texas Chainsaw Massacre, The (2003)'
+        'Blair Witch Project, The (1999)', 'Texas Chainsaw Massacre, The (2003)', 'Exorcism of Emily Rose, The (2005)'
     ],
     'Sci-Fi Lover': [
         '2001: A Space Odyssey (1968)',
@@ -99,7 +100,7 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
     'Heist Lover':         ['Heist (2001)', 'Ocean\'s Eleven (2001)'],
     'Action Junkie':       ['Die Hard 2 (1990)', 'Rambo III (1988)'],
     'Arthouse Lover':      ['The Lobster (2015)', 'Antichrist (2009)'],
-    'Superhero Lover':     ['Guardians of the Galaxy (2014)', 'Iron Man 3 (2013)', 'Avengers: Age of Ultron (2015)'],
+    'Superhero Lover':     ['Guardians of the Galaxy (2014)', 'Iron Man 3 (2013)', 'Avengers: Age of Ultron (2015)', 'Ant-Man and the Wasp: Quantumania (2023)'],
     'WW2 Lover':           ['Stalingrad (1993)', 'Run Silent Run Deep (1958)', 'Great Escape, The (1963)'],
     'Sports Lover':        ['Miracle (2004)', 'Coach Carter (2005)', 'Invincible (2006)'],
     'Western Lover':       ['True Grit (1969)', 'High Plains Drifter (1973)', 'Unforgiven (1992)', 'Cool Hand Luke (1967)', 'Wild Bill (1995)', 'Wyatt Earp (1994)'],
@@ -478,17 +479,32 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
     # Detect checkpoint type from filename to pick the right config
     def _resolve_config(path):
         name = os.path.basename(path)
-        if 'softmax' in name:
-            return get_softmax_config()
-        return get_config()
+        is_softmax = 'softmax' in name
+        sd = torch.load(path, weights_only=True)
+        cfg = get_softmax_config() if is_softmax else get_config()
+
+        # Detect pool flag: prefer filename, fall back to state dict shape
+        if 'nopool' in name:
+            cfg['use_user_genome_pool'] = False
+            cfg['user_genre_embedding_size'] = 65
+        elif 'gpool' in name:
+            cfg['use_user_genome_pool'] = True
+            cfg['user_genre_embedding_size'] = 30
+        else:
+            # Legacy checkpoint — infer from genre tower output dim
+            genre_out = sd['user_genre_tower.0.weight'].shape[0]
+            cfg['use_user_genome_pool'] = (genre_out == 30)
+            cfg['user_genre_embedding_size'] = genre_out
+        return cfg
 
     # Auto-detect most recent checkpoint if none specified
     _tmp_config = get_config()
     if checkpoint_path is None:
         checkpoint_dir = _tmp_config['checkpoint_dir']
         candidates = sorted(
-            glob.glob(os.path.join(checkpoint_dir, 'best_checkpoint_*.pth')) +
-            glob.glob(os.path.join(checkpoint_dir, 'best_softmax_*.pth')),
+            glob.glob(os.path.join(checkpoint_dir, 'best_mse_*.pth')) +
+            glob.glob(os.path.join(checkpoint_dir, 'best_softmax_*.pth')) +
+            glob.glob(os.path.join(checkpoint_dir, 'best_checkpoint_*.pth')),  # legacy
             key=os.path.getmtime, reverse=True,
         )
         if not candidates:
@@ -617,6 +633,32 @@ def probe_similar(movie_embeddings: dict, fs: FeatureStore,
 
     print_table("Most similar — combined embedding", top_n_for(all_norm,    'MOVIE_EMBEDDING_COMBINED'))
     print_table("Most similar — item ID embedding",  top_n_for(all_id_norm, 'MOVIEID_EMBEDDING'))
+
+
+def probe_norms(all_ids: list, all_embs: torch.Tensor, fs: FeatureStore,
+                top_n: int = 20) -> None:
+    """Print highest and lowest norm items in the combined embedding space."""
+    norms = torch.norm(all_embs, dim=1)  # (n_movies,)
+    sorted_idx = norms.argsort(descending=True)
+
+    col_w = 50
+    print(f"\n── Embedding norm diagnostic  (top/bottom {top_n}) ──")
+    print(f"  mean={norms.mean():.3f}  std={norms.std():.3f}  "
+          f"min={norms.min():.3f}  max={norms.max():.3f}")
+
+    print(f"\n  {'Rank':<6}  {'Norm':>6}  {'Title'}")
+    print("  " + "─" * (col_w + 16))
+    for rank, idx in enumerate(sorted_idx[:top_n].tolist(), 1):
+        mid   = all_ids[idx]
+        title = fs.movieId_to_title.get(mid, str(mid))[:col_w]
+        print(f"  {rank:<6}  {norms[idx].item():>6.3f}  {title}")
+
+    print(f"\n  {'Rank':<6}  {'Norm':>6}  {'Title'}")
+    print("  " + "─" * (col_w + 16))
+    for rank, idx in enumerate(sorted_idx[-top_n:].flip(0).tolist(), 1):
+        mid   = all_ids[idx]
+        title = fs.movieId_to_title.get(mid, str(mid))[:col_w]
+        print(f"  {len(all_ids)-top_n+rank:<6}  {norms[idx].item():>6.3f}  {title}")
 
 
 def run_probes(data_dir: str = 'data', checkpoint_path: str = None,
