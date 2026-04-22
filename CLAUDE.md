@@ -37,8 +37,25 @@ python main.py eval                # Offline eval: Recall@K, NDCG@K, Hit Rate@K,
 python main.py eval <path>         # Same, specific checkpoint
 python main.py export              # Stage 5: export serving artifacts for Streamlit
 python main.py export <path>       # Export using specific checkpoint
+python main.py posters             # Fetch movie poster URLs from TMDB → serving/posters.json
 python main.py                     # Run all stages in order (MSE)
 ```
+
+### Serving artifacts (`serving/`)
+
+After `export`, the `serving/` directory contains:
+- `model.pth` — model state_dict
+- `movie_embeddings.pt` — precomputed item embeddings for all corpus movies
+- `feature_store.pt` — inference-only dict (vocabularies, index maps, model config)
+- `posters.json` — TMDB poster URLs: `{"<movieId>": "<url>", ...}` (empty string = no poster)
+
+To regenerate posters (run once; safe to interrupt and resume — skips already-fetched):
+```bash
+TMDB_API_KEY=your_key python main.py posters
+```
+Get a free key at https://www.themoviedb.org/settings/api. Fetches ~9,375 corpus movies at 0.25s/request (~40 min). Current coverage: 9,293/9,375 (99.3%); 64 failures are invalid TMDB IDs in links.csv (not transient — won't resolve on retry).
+
+The Streamlit app (`streamlit_app.py`) loads `posters.json` at startup and shows a poster grid (5 columns) for all recommendation results. Falls back to a placeholder tile if a poster is missing.
 
 Stages 1–3 are slow and cache results to disk. Re-run only what changed:
 - Changed raw data → rerun from `preprocess`
