@@ -32,8 +32,7 @@ USER_TYPE_TO_FAVORITE_GENRES = {
     'Arthouse Lover':          [],
     'Superhero Lover':         [],
     'WW2 Lover':               [],
-    'Sports Lover':            [],
-    'Western Lover':           [],
+    'Western Lover':           ['Western'],
     'Anime Lover':             [],
     'Martial Arts Lover':      [],
     'Myself': ['Fantasy', 'War', 'Horror', 'Drama', 'Action'],
@@ -53,7 +52,6 @@ USER_TYPE_TO_WORST_GENRES = {
     'Arthouse Lover':          [],
     'Superhero Lover':         [],
     'WW2 Lover':               [],
-    'Sports Lover':            [],
     'Western Lover':           [],
     'Anime Lover':             [],
     'Martial Arts Lover':      [],
@@ -67,7 +65,7 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'Princess Bride, The (1987)'
     ],
     "Children's Movie Lover": [
-        'Toy Story 2 (1999)', 'Finding Nemo (2003)', ' Bug\'s Life, A (1998)', 'Finding Dory (2016)'
+        'Toy Story 2 (1999)', 'Finding Nemo (2003)', 'Finding Dory (2016)', 'Madagascar (2005)'
     ],
     'Horror Lover': [
         'Blair Witch Project, The (1999)', 'Texas Chainsaw Massacre, The (2003)', 'Exorcism of Emily Rose, The (2005)'
@@ -84,7 +82,7 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
     'Romance Lover': [
         'Shakespeare in Love (1998)', 'Sense and Sensibility (1995)',
         'When Harry Met Sally... (1989)', 'Sleepless in Seattle (1993)',
-        'Notting Hill (1999)'
+        'Notting Hill (1999)', 'Pride and Prejudice (1995)', 'North & South (2004)'
     ],
     'War Movie Lover': [
         'Saving Private Ryan (1998)', 'Apocalypse Now (1979)',
@@ -98,11 +96,10 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'Goodfellas (1990)', 'Reservoir Dogs (1992)', 'Donnie Brasco (1997)', 'The Irishman (2019)', 'Casino (1995)'
     ],
     'Heist Lover':         ['Heist (2001)', 'Ocean\'s Eleven (2001)'],
-    'Action Junkie':       ['Die Hard 2 (1990)', 'Rambo III (1988)'],
+    'Action Junkie':       ['Die Hard 2 (1990)', 'Rambo III (1988)', 'Under Siege (1992)'],
     'Arthouse Lover':      ['The Lobster (2015)', 'Antichrist (2009)'],
-    'Superhero Lover':     ['Guardians of the Galaxy (2014)', 'Iron Man 3 (2013)', 'Avengers: Age of Ultron (2015)', 'Ant-Man and the Wasp: Quantumania (2023)'],
-    'WW2 Lover':           ['Stalingrad (1993)', 'Run Silent Run Deep (1958)', 'Great Escape, The (1963)'],
-    'Sports Lover':        ['Miracle (2004)', 'Coach Carter (2005)', 'Invincible (2006)'],
+    'Superhero Lover':     ['Guardians of the Galaxy (2014)', 'Iron Man 3 (2013)', 'Avengers: Age of Ultron (2015)', 'Ant-Man and the Wasp: Quantumania (2023)', 'Aquaman (2018)'],
+    'WW2 Lover':           ['Stalingrad (1993)', 'Run Silent Run Deep (1958)', 'Great Escape, The (1963)', 'Band of Brothers (2001)'],
     'Western Lover':       ['True Grit (1969)', 'High Plains Drifter (1973)', 'Unforgiven (1992)', 'Cool Hand Luke (1967)', 'Wild Bill (1995)', 'Wyatt Earp (1994)'],
     'Anime Lover':         ['Princess Mononoke (Mononoke-hime) (1997)', 'Howl\'s Moving Castle (Hauru no ugoku shiro) (2004)', 'Spirited Away (Sen to Chihiro no kamikakushi) (2001)'],
     'Martial Arts Lover':  ['Ong-Bak: The Thai Warrior (Ong Bak) (2003)', 'Ip Man (2008)', 'Ip Man 2 (2010)', 'Jet Li\'s Fearless (Huo Yuan Jia) (2006)', 'Protector, The (a.k.a. Warrior King) (Tom yum goong) (2005)', 'Unleashed (Danny the Dog) (2005)'],
@@ -128,7 +125,6 @@ USER_TYPE_TO_DISLIKED_MOVIES = {
     'Arthouse Lover':         [],
     'Superhero Lover':        [],
     'WW2 Lover':              [],
-    'Sports Lover':           [],
     'Western Lover':          [],
     'Anime Lover':            [],
     'Martial Arts Lover':     [],
@@ -142,7 +138,6 @@ USER_TYPE_TO_GENOME_TAGS = {
     'Arthouse Lover':        ['art house', 'slow burn'],
     'Superhero Lover':       ['superhero', 'superheroes'],
     'WW2 Lover':             ['world war ii', 'wwii'],
-    'Sports Lover':          ['sports', 'football', 'baseball'],
     'Western Lover':         ['spaghetti western', 'gunfight'],
     'Anime Lover':           ['japanese animation', 'studio ghibli'],
     'Martial Arts Lover':    ['kung fu', 'fight scenes'],

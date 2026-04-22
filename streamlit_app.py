@@ -5,10 +5,13 @@ Run locally:  streamlit run app.py
 Requires:     serving/model.pth
               serving/movie_embeddings.pt
               serving/feature_store.pt
+              serving/posters.json   (optional — fetch with: TMDB_API_KEY=... python main.py posters)
 
 Generate serving/ with: python main.py export
 """
 import importlib
+import json
+import os
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -89,7 +92,14 @@ def load_artifacts():
         fs['timestamp_bins'], right=False,
     )
 
-    return model, fs, me, all_ids, all_embs, all_norm, ts_inference
+    poster_path = 'serving/posters.json'
+    if os.path.exists(poster_path):
+        with open(poster_path) as f:
+            posters = json.load(f)
+    else:
+        posters = {}
+
+    return model, fs, me, all_ids, all_embs, all_norm, ts_inference, posters
 
 
 
@@ -222,9 +232,37 @@ def _score_movies(user_emb, all_ids, all_embs, fs, exclude_titles, top_n=20):
     return pd.DataFrame(rows)
 
 
+_POSTER_COLS = 5
+
+def _show_results(df, posters, fs):
+    """Display recommendation results as a poster grid, falling back to a table if no posters."""
+    if not posters:
+        st.dataframe(df, use_container_width=True, hide_index=True)
+        return
+
+    titles = df['Title'].tolist()
+    for row_start in range(0, len(titles), _POSTER_COLS):
+        row_titles = titles[row_start:row_start + _POSTER_COLS]
+        cols = st.columns(_POSTER_COLS)
+        for col, title in zip(cols, row_titles):
+            mid = fs['title_to_movieId'].get(title)
+            url = posters.get(str(mid), '') if mid else ''
+            with col:
+                if url:
+                    st.image(url, use_container_width=True)
+                else:
+                    st.markdown(
+                        "<div style='background:#1e1e1e;border-radius:6px;aspect-ratio:2/3;"
+                        "display:flex;align-items:center;justify-content:center;"
+                        "font-size:2rem;'>🎬</div>",
+                        unsafe_allow_html=True,
+                    )
+                st.caption(title)
+
+
 # ── Tab: Recommend ────────────────────────────────────────────────────────────
 
-def tab_recommend(model, fs, all_ids, all_embs, ts_inference):
+def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters):
     st.caption(
         "Select movies you love and optionally refine with genome tags. "
         "The model builds your taste embedding from the movies' content and scores every movie in the corpus. "
@@ -311,12 +349,12 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference):
             ))
         df = _score_movies(user_emb, all_ids, all_embs, fs,
                            exclude_titles=liked_titles)
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        _show_results(df, posters, fs)
 
 
 # ── Tab: Recommend (Examples) ─────────────────────────────────────────────────
 
-def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference):
+def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters):
     st.caption("Select a pre-built user profile to see what the model recommends for that taste.")
     selected_profile = st.selectbox(
         "Profile",
@@ -384,12 +422,12 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference):
             st.caption("Because you like these genres: " + ", ".join(fav_genres))
         if genome_tags:
             st.caption("Because you like these genome tags: " + ", ".join(genome_tags))
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        _show_results(df, posters, fs)
 
 
 # ── Tab: Similar ──────────────────────────────────────────────────────────────
 
-def tab_similar(me, fs, all_ids, all_norm):
+def tab_similar(me, fs, all_ids, all_norm, posters):
     st.caption(
         "Each movie is represented by a single combined embedding — the concatenation of "
         "its genre tower, tag tower, genome tag tower, movieId embedding, and year embedding. "
@@ -428,12 +466,12 @@ def tab_similar(me, fs, all_ids, all_norm):
                 if len(rows) >= 20:
                     break
             st.subheader(f"Similar to: {title}")
-            st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+            _show_results(pd.DataFrame(rows), posters, fs)
 
 
 # ── Tab: Explore Genres ───────────────────────────────────────────────────────
 
-def tab_explore_genres(model, me, fs):
+def tab_explore_genres(model, me, fs, posters):
     st.subheader("Explore Genre Item Tower Embeddings")
     st.caption(
         "Queries the item genre embedding space directly — finds movies whose "
@@ -467,12 +505,12 @@ def tab_explore_genres(model, me, fs):
             }
             for mid, s in sorted(sims.items(), key=lambda x: x[1], reverse=True)[:20]
         ]
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        _show_results(pd.DataFrame(rows), posters, fs)
 
 
 # ── Tab: Explore Genome Tags ──────────────────────────────────────────────────
 
-def tab_explore_genome(model, me, fs):
+def tab_explore_genome(model, me, fs, posters):
     st.subheader("Explore Genome Tag Item Tower Embeddings")
     st.caption(
         "Select genome tags to describe what you're looking for — genres, tones, themes, "
@@ -540,7 +578,7 @@ def tab_explore_genome(model, me, fs):
             "Genome anchors — "
             + " · ".join(f"{tag}: {title}" for tag, _, title in anchor_tag_title_pairs)
         )
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        _show_results(pd.DataFrame(rows), posters, fs)
 
 
 # ── Tab: About ───────────────────────────────────────────────────────────────
@@ -566,7 +604,7 @@ def tab_about():
         st.markdown("This model takes a different approach. **There is no user ID embedding.**")
         st.markdown("Instead, every user is represented as a function of their taste signals — watch history, genre affinity, content texture, and timestamp.")
         st.markdown("The model learns to embed *features of the user*, not the user themselves.")
-        st.markdown("This means the model can generate recommendations for **any user** as long as you can provide even a small amount of signal: a few movies they liked, some genres they prefer.")
+        st.markdown("This means the model can generate recommendations for **any user** as long as you can provide even a small amount of signal: a few movies they liked.")
         st.markdown("No retraining required. No cold-start problem at the user level. The same trained model works in production for users who never existed when the model was trained.")
 
     st.image('diagram.png')
@@ -632,6 +670,35 @@ comparable via dot product.
 - **Labels:** The latest 10% are the prediction labels — the model never uses future watches as context when predicting earlier ones
 """)
 
+        st.header("Why MSE and not Softmax?")
+        st.markdown(
+            "In-batch negatives softmax (the YouTube DNN approach) works well on user-driven datasets like Goodreads, "
+            "where interactions reflect genuine independent preference."
+        )
+        st.markdown(
+            "MovieLens is different — users rate movies they were *shown* by the platform's own recommender, "
+            "so the interaction data has a strong popularity-driven structure baked in."
+        )
+        st.markdown(
+            "Softmax suppresses popular items (they appear as frequent in-batch negatives), "
+            "but on MovieLens popular movies are genuinely what most users are watching. "
+            "MSE on explicit ratings avoids this — it learns directly from how much each user liked each film."
+        )
+        st.markdown("""
+| Metric | **MSE (this model)** | Softmax |
+|---|---|---|
+| Hit Rate@1 | **1.12%** | 0.44% |
+| Hit Rate@5 | **4.86%** | 1.82% |
+| Hit Rate@10 | **8.36%** | 3.54% |
+| Hit Rate@20 | **13.60%** | 6.32% |
+| Hit Rate@50 | **24.54%** | 12.64% |
+| Recall@10 | **0.0140** | 0.0057 |
+| NDCG@10 | **0.0133** | 0.0056 |
+| MRR | **0.0381** | 0.0183 |
+
+*Evaluated on 5,000 held-out users, leave-one-out protocol. Random Hit Rate@50 baseline: 0.53%.*
+""")
+
         st.header("Limitations")
         st.markdown("""
 - No user ID — personalization is limited to the signals you provide in the app
@@ -672,7 +739,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 st.title("Movie Recommender")
-model, fs, me, all_ids, all_embs, all_norm, ts_inference = load_artifacts()
+model, fs, me, all_ids, all_embs, all_norm, ts_inference, posters = load_artifacts()
 
 st.markdown(
     "<small>Two-Tower neural network · Built with "
@@ -687,19 +754,19 @@ recommend_tab, examples_tab, similar_tab, genres_tab, genome_tab, about_tab = st
 )
 
 with recommend_tab:
-    tab_recommend(model, fs, all_ids, all_embs, ts_inference)
+    tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters)
 
 with examples_tab:
-    tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference)
+    tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters)
 
 with similar_tab:
-    tab_similar(me, fs, all_ids, all_norm)
+    tab_similar(me, fs, all_ids, all_norm, posters)
 
 with genres_tab:
-    tab_explore_genres(model, me, fs)
+    tab_explore_genres(model, me, fs, posters)
 
 with genome_tab:
-    tab_explore_genome(model, me, fs)
+    tab_explore_genome(model, me, fs, posters)
 
 with about_tab:
     tab_about()

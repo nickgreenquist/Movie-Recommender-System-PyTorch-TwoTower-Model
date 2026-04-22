@@ -16,6 +16,7 @@ Usage:
     python main.py eval <path>         # Same, specific checkpoint
     python main.py export              # Stage 5: export serving/ artifacts for Streamlit app
     python main.py export <path>       # Export using specific checkpoint
+    python main.py posters             # Fetch movie poster URLs from TMDB → serving/posters.json
     python main.py                     # Run all stages in order (MSE)
 """
 import sys
@@ -100,6 +101,11 @@ def cmd_export(checkpoint_path=None):
     run_export(data_dir=DATA_DIR, checkpoint_path=checkpoint_path, version=VERSION)
 
 
+def cmd_posters():
+    from src.fetch_posters import run_fetch_posters
+    run_fetch_posters(data_dir=DATA_DIR)
+
+
 COMMANDS = {
     'preprocess': cmd_preprocess,
     'features':   cmd_features,
@@ -109,6 +115,7 @@ COMMANDS = {
     'probe':      cmd_probe,
     'eval':       cmd_eval,
     'export':     cmd_export,
+    'posters':    cmd_posters,
 }
 
 if __name__ == '__main__':
