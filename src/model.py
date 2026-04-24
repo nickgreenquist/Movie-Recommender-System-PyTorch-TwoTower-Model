@@ -11,14 +11,14 @@ Sub-embedding sizes (inputs to the projection MLPs):
   item_movieId_embedding_size      = 32  shared: user history pool + item tower
   user_genre_embedding_size        = 32  user only
   timestamp_feature_embedding_size =  4  user only
-  item_genome_tag_embedding_size   = 16  shared: user genome pool + item tower
+  item_genome_tag_embedding_size   = 32  shared: user genome pool + item tower
   item_genre_embedding_size        =  8  item only
   item_tag_embedding_size          = 16  item only
   item_year_embedding_size         =  8  item only
 
-  user concat (gpool ON):  32 + 16 + 32 + 4 =  84  → proj MLP → output_dim
+  user concat (gpool ON):  32 + 32 + 32 + 4 = 100  → proj MLP → output_dim
   user concat (gpool OFF): 32 + 32 + 4       =  68  → proj MLP → output_dim
-  item concat:              8 + 16 + 16 + 32 + 8 = 80  → proj MLP → output_dim
+  item concat:              8 + 16 + 32 + 32 + 8 = 96  → proj MLP → output_dim
 
 proj_hidden=None → no projection (legacy flat model, backward-compatible).
 """

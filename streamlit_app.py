@@ -78,6 +78,8 @@ def load_artifacts():
         user_genre_embedding_size=cfg['user_genre_embedding_size'],
         timestamp_feature_embedding_size=cfg['timestamp_feature_embedding_size'],
         use_user_genome_pool=cfg.get('use_user_genome_pool', True),
+        proj_hidden=cfg.get('proj_hidden', None),
+        output_dim=cfg.get('output_dim', 128),
     )
     model.load_state_dict(torch.load('serving/model.pth', weights_only=True))
     model.eval()
