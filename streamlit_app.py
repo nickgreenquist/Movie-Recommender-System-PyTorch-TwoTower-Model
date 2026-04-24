@@ -620,29 +620,34 @@ def tab_about():
         st.header("User Tower")
         st.markdown(
             "Each component encodes a different aspect of taste into a fixed-size vector. "
-            "All four are concatenated into a single 110-dim user embedding."
+            "All four outputs are concatenated into a 100-dim vector, then passed through a "
+            "projection MLP (Linear 256 → ReLU → Linear 128) to produce the final 128-dim user embedding."
         )
         st.markdown("""
-| Component | Input | What it learns |
-|---|---|---|
-| Rating-Weighted Avg Pool | Watch history — movie IDs weighted by your ratings | Collaborative taste — liked movies pull the user<br>toward similar items in embedding space |
-| Rating-Weighted Genome Pool | Genome scores for each watched movie,<br>passed through the shared genome tower | Content texture — the kinds of films you like<br>(atmospheric, cerebral, gritty, etc.) weighted by how much you liked them |
-| user_genre_tower | Avg rating per genre + watch fraction per genre | Genre affinity — how strongly you lean toward<br>or away from each of the 20 broad genre categories |
-| timestamp_embedding_tower | Month bin of most recent watch activity | Temporal context —<br>captures era-based taste shifts |
+| Component | Output | Input | What it learns |
+|---|---|---|---|
+| Rating-Weighted Avg Pool | 32-dim | Watch history — movie IDs weighted by your ratings | Collaborative taste — liked movies pull the user<br>toward similar items in embedding space |
+| Rating-Weighted Genome Pool | 32-dim | Genome scores for each watched movie,<br>passed through the shared genome tower | Content texture — the kinds of films you like<br>(atmospheric, cerebral, gritty, etc.) weighted by how much you liked them |
+| user_genre_tower | 32-dim | Avg rating per genre + watch fraction per genre | Genre affinity — how strongly you lean toward<br>or away from each of the 20 broad genre categories |
+| timestamp_embedding_tower | 4-dim | Month bin of most recent watch activity | Temporal context —<br>captures era-based taste shifts |
+| **Projection MLP** | **128-dim** | concat(100) → Linear(256) → ReLU → Linear(128) | Cross-feature interactions — learns how history,<br>content, genre, and timing combine |
 """, unsafe_allow_html=True)
 
         st.header("Item Tower")
         st.markdown(
-            "Each movie is encoded from five independent signals into a single 110-dim item embedding."
+            "Each movie is encoded from five independent signals. "
+            "All five outputs are concatenated into a 96-dim vector, then passed through a "
+            "projection MLP (Linear 256 → ReLU → Linear 128) to produce the final 128-dim item embedding."
         )
         st.markdown("""
-| Component | Input | What it learns |
-|---|---|---|
-| item_embedding_tower | Movie ID (shared lookup with user history pool) | Collaborative identity — a learned fingerprint<br>for each movie based on who watches it together |
-| item_genome_tag_tower | 1,128 ML-derived relevance scores<br>(shared tower with user genome pool) | Content texture — the film's vibe, themes,<br>and tone in a dense semantic space |
-| item_genre_tower | 20-dim genre one-hot vector | Broad genre positioning |
-| item_tag_tower | 306 user-applied tag counts (normalized) | Crowd-sourced descriptors —<br>how the community collectively labels the film |
-| year_embedding_tower | Release year | Era — captures stylistic and<br>cultural shifts across decades |
+| Component | Output | Input | What it learns |
+|---|---|---|---|
+| item_embedding_tower | 32-dim | Movie ID (shared lookup with user history pool) | Collaborative identity — a learned fingerprint<br>for each movie based on who watches it together |
+| item_genome_tag_tower | 32-dim | 1,128 ML-derived relevance scores<br>(shared tower with user genome pool) | Content texture — the film's vibe, themes,<br>and tone in a dense semantic space |
+| item_genre_tower | 8-dim | 20-dim genre one-hot vector | Broad genre positioning |
+| item_tag_tower | 16-dim | 306 user-applied tag counts (normalized) | Crowd-sourced descriptors —<br>how the community collectively labels the film |
+| year_embedding_tower | 8-dim | Release year | Era — captures stylistic and<br>cultural shifts across decades |
+| **Projection MLP** | **128-dim** | concat(96) → Linear(256) → ReLU → Linear(128) | Cross-feature interactions — learns how identity,<br>content, genre, tags, and era combine |
 """, unsafe_allow_html=True)
 
         st.header("Shared Embeddings")
@@ -670,10 +675,8 @@ comparable via dot product.
 - **Loss:** MSE on de-biased ratings (raw rating minus user mean)
 - **Optimizer:** SGD, lr=0.005, momentum=0.9, batch size 64
 - **Steps:** 150,000
-- **Split:** user-based 90/10 — 90% of users are exclusively in train, 10% exclusively
-  in val; no user appears in both
-- **History context:** Within each user, ratings are sorted by timestamp. The earliest 90% form the watch history context.
-- **Labels:** The latest 10% are the prediction labels — the model never uses future watches as context when predicting earlier ones
+- **Split:** user-based 90/10 — 90% of users are exclusively in train, 10% exclusively in val; no user appears in both
+- **Training protocol:** Rollback — for each watch event, context = all prior watches (chronological), target = that event's rating. Up to 20 examples per user. The model learns to predict what a user will like *next*, at every stage of their watch history.
 """)
 
         st.header("Why MSE and not Softmax?")
@@ -693,23 +696,21 @@ comparable via dot product.
         st.markdown("""
 | Metric | **MSE (this model)** | Softmax |
 |---|---|---|
-| Hit Rate@1 | **1.12%** | 0.44% |
-| Hit Rate@5 | **4.86%** | 1.82% |
-| Hit Rate@10 | **8.36%** | 3.54% |
-| Hit Rate@20 | **13.60%** | 6.32% |
-| Hit Rate@50 | **24.54%** | 12.64% |
-| Recall@10 | **0.0140** | 0.0057 |
-| NDCG@10 | **0.0133** | 0.0056 |
-| MRR | **0.0381** | 0.0183 |
+| Hit Rate@1 | **0.43%** | 0.14% |
+| Hit Rate@5 | **1.66%** | 0.57% |
+| Hit Rate@10 | **2.70%** | 1.00% |
+| Hit Rate@20 | **4.28%** | 1.66% |
+| Hit Rate@50 | **7.59%** | 3.45% |
+| MRR | **0.0135** | 0.0058 |
 
-*Evaluated on 5,000 held-out users, leave-one-out protocol. Random Hit Rate@50 baseline: 0.53%.*
+*Rollback eval protocol: for each held-out user, context = all prior watches, target = next watch. Harder than leave-one-out; numbers are not comparable to other benchmarks using different protocols.*
 """)
 
         st.header("Limitations")
         st.markdown("""
 - No user ID — personalization is limited to the signals you provide in the app
 - 9,375-movie corpus — films with fewer than 200 ratings are not included
-- War and Sci-Fi genres can bleed into prestige/arthouse due to overlapping genome signals
+- War and Western genres can drift toward prestige drama due to overlapping genome signals (acclaimed/serious film cluster)
 - The timestamp tower is a weak signal in the app — all users receive the most recent timestamp bin
 """)
 
