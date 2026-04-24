@@ -45,15 +45,34 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
     name = os.path.basename(checkpoint_path)
     is_softmax = 'softmax' in name
     config = get_softmax_config() if is_softmax else get_config()
-    if 'nopool' in name:
-        config['use_user_genome_pool'] = False
-        config['user_genre_embedding_size'] = 65
-    elif 'gpool' in name:
-        config['use_user_genome_pool'] = True
-        config['user_genre_embedding_size'] = 30
 
     print(f"Checkpoint: {checkpoint_path}")
     state_dict = torch.load(checkpoint_path, weights_only=True)
+
+    sd = state_dict
+    item_id_dim = sd['item_embedding_lookup.weight'].shape[1]
+    ts_dim      = sd['timestamp_embedding_lookup.weight'].shape[1]
+    genre_dim   = sd['user_genre_tower.0.weight'].shape[0]
+    genome_dim  = sd['item_genome_tag_tower.0.weight'].shape[0]
+    config['item_movieId_embedding_size']      = item_id_dim
+    config['user_genre_embedding_size']        = genre_dim
+    config['timestamp_feature_embedding_size'] = ts_dim
+    config['item_genre_embedding_size']        = sd['item_genre_tower.0.weight'].shape[0]
+    config['item_tag_embedding_size']          = sd['item_tag_tower.0.weight'].shape[0]
+    config['item_genome_tag_embedding_size']   = genome_dim
+    config['item_year_embedding_size']         = sd['year_embedding_lookup.weight'].shape[1]
+
+    if 'user_projection.0.weight' in sd:
+        user_proj_in = sd['user_projection.0.weight'].shape[1]
+        config['use_user_genome_pool'] = (user_proj_in != item_id_dim + genre_dim + ts_dim)
+        config['proj_hidden']          = sd['user_projection.0.weight'].shape[0]
+        config['output_dim']           = sd['user_projection.2.weight'].shape[0]
+    else:
+        config['proj_hidden'] = None
+        if 'nopool' in name:
+            config['use_user_genome_pool'] = False
+        elif 'gpool' in name:
+            config['use_user_genome_pool'] = True
 
     print("Loading features ...")
     fs = load_features(data_dir, version)

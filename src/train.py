@@ -18,42 +18,19 @@ from src.model import MovieRecommender
 
 def get_config() -> dict:
     """All training hyperparameters in one place."""
-    # ── Embedding sizes ───────────────────────────────────────────────────────
-    # item_movieId_embedding_size also controls the user history embedding size:
-    # history pooling uses the shared item_embedding_lookup, so its output dim
-    # equals this value. They cannot be set independently.
-    item_movieId_embedding_size      = 40
-    item_year_embedding_size         = 5
-    timestamp_feature_embedding_size = 5
-    item_tag_embedding_size          = 10
-    # item_genome_tag_embedding_size also controls the user genome pool embedding size:
-    # genome pooling uses the shared item_genome_tag_tower, so its output dim
-    # equals this value. They cannot be set independently.
-    item_genome_tag_embedding_size   = 35
-    use_user_genome_pool             = True
-    user_genre_embedding_size        = 65 if not use_user_genome_pool else 30
-    item_genre_embedding_size        = 20
-
-    genome_contrib = item_genome_tag_embedding_size if use_user_genome_pool else 0
-    user_total = item_movieId_embedding_size + genome_contrib + user_genre_embedding_size + timestamp_feature_embedding_size
-    item_total = item_genre_embedding_size + item_tag_embedding_size + item_genome_tag_embedding_size + item_movieId_embedding_size + item_year_embedding_size
-    assert user_total == item_total, (
-        f"Tower size mismatch — user={user_total} "
-        f"(history={item_movieId_embedding_size} + genome={genome_contrib} + genre={user_genre_embedding_size} + ts={timestamp_feature_embedding_size}), "
-        f"item={item_total} "
-        f"(genre={item_genre_embedding_size} + tag={item_tag_embedding_size} + genome={item_genome_tag_embedding_size} + movieId={item_movieId_embedding_size} + year={item_year_embedding_size})"
-    )
-
     return {
-        # Embedding sizes
-        'item_movieId_embedding_size':      item_movieId_embedding_size,
-        'item_year_embedding_size':         item_year_embedding_size,
-        'timestamp_feature_embedding_size': timestamp_feature_embedding_size,
-        'item_tag_embedding_size':          item_tag_embedding_size,
-        'item_genome_tag_embedding_size':   item_genome_tag_embedding_size,
-        'user_genre_embedding_size':        user_genre_embedding_size,
-        'item_genre_embedding_size':        item_genre_embedding_size,
-        'use_user_genome_pool':             use_user_genome_pool,
+        # Sub-embedding sizes (inputs to the projection MLPs)
+        'item_movieId_embedding_size':      32,
+        'item_year_embedding_size':         8,
+        'timestamp_feature_embedding_size': 4,
+        'item_tag_embedding_size':          16,
+        'item_genome_tag_embedding_size':   32,
+        'user_genre_embedding_size':        32,
+        'item_genre_embedding_size':        8,
+        'use_user_genome_pool':             True,
+        # Projection MLP (learn cross-feature interactions after concat)
+        'proj_hidden':  256,
+        'output_dim':   128,
         # Training
         'lr':               0.005,
         'momentum':         0.9,
@@ -94,6 +71,8 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
         user_genre_embedding_size=config['user_genre_embedding_size'],
         timestamp_feature_embedding_size=config['timestamp_feature_embedding_size'],
         use_user_genome_pool=config.get('use_user_genome_pool', True),
+        proj_hidden=config.get('proj_hidden', None),
+        output_dim=config.get('output_dim', 128),
     )
     return model
 
@@ -102,7 +81,6 @@ def print_model_summary(model: MovieRecommender) -> None:
     """Print tower dimensions and parameter count for a built model."""
     m = model
     def _out_dim(tower):
-        """Return the output dim of the last Linear layer in a Sequential tower."""
         for layer in reversed(tower):
             if isinstance(layer, torch.nn.Linear):
                 return layer.out_features
@@ -123,8 +101,12 @@ def print_model_summary(model: MovieRecommender) -> None:
     genome_str = f" + genome({genome_dim})" if m.use_user_genome_pool else " [no genome pool]"
     print(f"\n── Model dimensions ──")
     print(f"  User side:  history({history_dim}){genome_str} + genre({genre_dim}) + ts({ts_dim})  =  {user_total}")
-    print(f"  Item side:  movieId({item_movieId_dim}) + genome({genome_tag_dim}) + genre({item_genre_dim})"
-          f" + tag({item_tag_dim}) + year({year_dim})  =  {item_total}")
+    print(f"  Item side:  genre({item_genre_dim}) + tag({item_tag_dim}) + genome({genome_tag_dim})"
+          f" + movieId({item_movieId_dim}) + year({year_dim})  =  {item_total}")
+    if m.user_projection is not None:
+        proj_h   = m.user_projection[0].out_features
+        out_dim  = m.user_projection[2].out_features
+        print(f"  Projection: Linear({proj_h}) → ReLU → Linear({out_dim})  [both towers]")
     print(f"  Parameters: {n_params:,}")
 
 
@@ -163,8 +145,9 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
     os.makedirs(checkpoint_dir, exist_ok=True)
     run_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     pool_tag      = 'gpool' if config.get('use_user_genome_pool', True) else 'nopool'
+    arch_tag      = f'{pool_tag}_proj' if config.get('proj_hidden') else pool_tag
     best_val_loss = float('inf')
-    best_path     = os.path.join(checkpoint_dir, f'best_mse_{pool_tag}_{run_timestamp}.pth')
+    best_path     = os.path.join(checkpoint_dir, f'best_mse_{arch_tag}_{run_timestamp}.pth')
 
     loss_train = []
     loss_val   = []
@@ -233,7 +216,7 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
 
             if i > 0 and i % checkpoint_every == 0:
                 periodic = os.path.join(checkpoint_dir,
-                                        f'mse_{pool_tag}_{run_timestamp}_step_{i:06d}.pth')
+                                        f'mse_{arch_tag}_{run_timestamp}_step_{i:06d}.pth')
                 torch.save(model.state_dict(), periodic)
                 print(f"  → periodic checkpoint → {periodic}")
 
@@ -245,36 +228,20 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
 # ── Softmax training (in-batch negatives) ─────────────────────────────────────
 
 def get_softmax_config() -> dict:
-    """
-    Hyperparameters for in-batch negatives softmax training.
-
-    use_user_genome_pool=False: genome pooling OFF.
-    user = history(40) + genre(65) + ts(5) = 110.
-    Item side: genre(20) + tag(10) + genome(35) + movieId(40) + year(5) = 110.
-    """
-    item_movieId_embedding_size      = 40
-    item_year_embedding_size         = 5
-    timestamp_feature_embedding_size = 5
-    item_tag_embedding_size          = 10
-    item_genome_tag_embedding_size   = 35
-    use_user_genome_pool             = False
-    user_genre_embedding_size        = 65 if not use_user_genome_pool else 30
-    item_genre_embedding_size        = 20
-
-    genome_contrib = item_genome_tag_embedding_size if use_user_genome_pool else 0
-    user_total = item_movieId_embedding_size + genome_contrib + user_genre_embedding_size + timestamp_feature_embedding_size
-    item_total = item_genre_embedding_size + item_tag_embedding_size + item_genome_tag_embedding_size + item_movieId_embedding_size + item_year_embedding_size
-    assert user_total == item_total, f"Tower size mismatch: user={user_total} item={item_total}"
-
+    """Hyperparameters for in-batch negatives softmax training."""
     return {
-        'item_movieId_embedding_size':      item_movieId_embedding_size,
-        'item_year_embedding_size':         item_year_embedding_size,
-        'timestamp_feature_embedding_size': timestamp_feature_embedding_size,
-        'item_tag_embedding_size':          item_tag_embedding_size,
-        'item_genome_tag_embedding_size':   item_genome_tag_embedding_size,
-        'user_genre_embedding_size':        user_genre_embedding_size,
-        'item_genre_embedding_size':        item_genre_embedding_size,
-        'use_user_genome_pool':             use_user_genome_pool,
+        # Sub-embedding sizes (same architecture as MSE; projection handles concat mismatch)
+        'item_movieId_embedding_size':      32,
+        'item_year_embedding_size':         8,
+        'timestamp_feature_embedding_size': 4,
+        'item_tag_embedding_size':          16,
+        'item_genome_tag_embedding_size':   32,
+        'user_genre_embedding_size':        32,
+        'item_genre_embedding_size':        8,
+        'use_user_genome_pool':             True,
+        # Projection MLP
+        'proj_hidden':  256,
+        'output_dim':   128,
         # Training
         'lr':               0.001,
         'weight_decay':     1e-5,
@@ -331,8 +298,9 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
     os.makedirs(checkpoint_dir, exist_ok=True)
     run_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     pool_tag      = 'gpool' if config.get('use_user_genome_pool', True) else 'nopool'
+    arch_tag      = f'{pool_tag}_proj' if config.get('proj_hidden') else pool_tag
     best_val_loss = float('inf')
-    best_path     = os.path.join(checkpoint_dir, f'best_softmax_{pool_tag}_{run_timestamp}.pth')
+    best_path     = os.path.join(checkpoint_dir, f'best_softmax_{arch_tag}_{run_timestamp}.pth')
 
     loss_train = []
 
@@ -382,7 +350,7 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
 
             if i > 0 and i % checkpoint_every == 0:
                 periodic = os.path.join(checkpoint_dir,
-                                        f'softmax_{pool_tag}_{run_timestamp}_step_{i:06d}.pth')
+                                        f'softmax_{arch_tag}_{run_timestamp}_step_{i:06d}.pth')
                 torch.save(model.state_dict(), periodic)
                 print(f"  → periodic checkpoint → {periodic}")
         else:

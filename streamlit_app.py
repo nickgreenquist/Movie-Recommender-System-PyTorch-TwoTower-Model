@@ -196,9 +196,13 @@ def _build_user_embedding(model, fs, liked_titles_with_weights, disliked_titles,
         else:
             genome_emb = torch.zeros(1, model.item_genome_tag_tower[0].out_features)
 
-        return torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
+        concat = torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
     else:
-        return torch.cat([history_emb, genre_emb, ts_emb], dim=1)
+        concat = torch.cat([history_emb, genre_emb, ts_emb], dim=1)
+
+    if model.user_projection is not None:
+        return model.user_projection(concat)
+    return concat
 
 
 def _build_genome_i_to_name(fs):

@@ -504,6 +504,200 @@ def load_softmax_splits(data_dir: str = 'data', version: str = 'v1') -> tuple:
     return train_data, val_data
 
 
+# ── MSE rollback dataset ──────────────────────────────────────────────────────
+#
+# Same rollback logic as the softmax dataset, but produces the MSE 10-tuple
+# (includes Y = debiased target rating) so the existing train() loop works
+# unchanged.  No 90/10 within-user history/label split — every chronological
+# position in each user's full history is a valid (context, target) pair.
+# Train vs val is a user-level split only (same 90/10 user split as softmax).
+
+MAX_MSE_ROLLBACK_EXAMPLES_PER_USER = 20
+
+
+def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
+                                max_per_user: int = MAX_MSE_ROLLBACK_EXAMPLES_PER_USER,
+                                seed: int = 42) -> tuple:
+    """
+    Build rollback training examples for MSE training.
+
+    Mirrors build_softmax_dataset() but adds Y (debiased rating) and returns
+    the same 10-tuple as build_dataset() so train() works unchanged.
+
+    raw_df must have columns: userId, movieId, rating, timestamp,
+    already filtered to corpus movies and valid users.
+
+    Returns 10-tuple:
+        [0] X_genre            — (N, user_context_size) float  rollback genre context
+        [1] X_history          — list[list[int]]  (padded at training time)
+        [2] X_history_ratings  — list[list[float]]
+        [3] timestamp          — (N,) long  (binned)
+        [4] Y                  — (N,) float  debiased target rating
+        [5] target_movieId     — (N,) long  (embedding index)
+        [6] target_genre       — (N, genres_len) float
+        [7] target_tag         — (N, tags_len) float
+        [8] target_genome      — (N, genome_tags_len) float
+        [9] target_year        — (N,) long
+    """
+    from src.features import MAX_HISTORY_LEN
+    rng       = random.Random(seed)
+    users_set = set(users)
+    max_hist  = MAX_HISTORY_LEN
+    n_genres  = len(fs.genres_ordered)
+
+    movie_genre_idxs = {
+        mid: [fs.genre_to_i[g] for g in fs.movieId_to_genres.get(mid, []) if g in fs.genre_to_i]
+        for mid in fs.top_movies
+    }
+
+    df = raw_df[raw_df['userId'].isin(users_set)].copy()
+    print(f"  Sorting {len(df):,} interactions by user + timestamp ...")
+    df = df.sort_values(['userId', 'timestamp'])
+    print(f"  {df['userId'].nunique():,} users")
+
+    X_genre               = []
+    X_history             = []
+    X_history_ratings     = []
+    timestamps_raw        = []
+    Y                     = []
+    target_movieId        = []
+    target_genre_context  = []
+    target_tag_context    = []
+    target_genome_context = []
+    target_year           = []
+
+    from tqdm import tqdm
+    n_users = df['userId'].nunique()
+    for uid, group in tqdm(df.groupby('userId'), total=n_users, desc="Building MSE rollback examples"):
+        avg_rat = fs.user_to_avg_rating.get(uid, 3.0)
+
+        movies  = group['movieId'].tolist()
+        ratings = group['rating'].tolist()
+        ts_vals = group['timestamp'].tolist()
+        n       = len(movies)
+
+        if n < 2:
+            continue
+
+        eligible = list(range(1, n))
+        k               = min(max_per_user, len(eligible))
+        sampled_targets = sorted(rng.sample(eligible, k))
+        sampled_set     = set(sampled_targets)
+
+        running_count = np.zeros(n_genres, dtype=np.float32)
+        running_sum   = np.zeros(n_genres, dtype=np.float32)
+        ctx_ids_buf   = []
+        ctx_rats_buf  = []
+
+        for pos, (mid, rat, ts) in enumerate(zip(movies, ratings, ts_vals)):
+            mid   = int(mid)
+            d_rat = float(rat) - avg_rat
+            t_idx = fs.item_emb_movieId_to_i[mid]
+
+            if pos in sampled_set:
+                total_assign = running_count.sum()
+                genre_ctx    = np.zeros(2 * n_genres, dtype=np.float32)
+                if total_assign > 0:
+                    mask = running_count > 0
+                    genre_ctx[:n_genres][mask] = running_sum[mask] / running_count[mask]
+                    genre_ctx[n_genres:]       = running_count / total_assign
+
+                X_genre.append(genre_ctx.tolist())
+                X_history.append(list(ctx_ids_buf[-max_hist:]))
+                X_history_ratings.append(list(ctx_rats_buf[-max_hist:]))
+                timestamps_raw.append(ts)
+                Y.append(d_rat)
+                target_movieId.append(t_idx)
+                target_genre_context.append(fs.movieId_to_genre_context[mid])
+                target_tag_context.append(fs.movieId_to_tag_context[mid])
+                target_genome_context.append(fs.movieId_to_genome_tag_context[mid])
+                target_year.append(fs.year_to_i.get(fs.movieId_to_year[mid], 0))
+
+            ctx_ids_buf.append(t_idx)
+            ctx_rats_buf.append(d_rat)
+            for g_idx in movie_genre_idxs.get(mid, []):
+                running_count[g_idx] += 1
+                running_sum[g_idx]   += d_rat
+
+    n = len(target_movieId)
+    print(f"  {n:,} MSE rollback examples — building tensors ...")
+
+    X_genre_t         = torch.from_numpy(np.array(X_genre,               dtype=np.float32))
+    Y_t               = torch.from_numpy(np.array(Y,                     dtype=np.float32))
+    target_movieId_t  = torch.from_numpy(np.array(target_movieId,        dtype=np.int64))
+    target_year_t     = torch.from_numpy(np.array(target_year,           dtype=np.int64))
+    target_genre_t    = torch.from_numpy(np.array(target_genre_context,  dtype=np.float32))
+    target_tag_t      = torch.from_numpy(np.array(target_tag_context,    dtype=np.float32))
+    target_genome_t   = torch.from_numpy(np.array(target_genome_context, dtype=np.float32))
+    timestamp_t       = torch.bucketize(
+        torch.from_numpy(np.array(timestamps_raw, dtype=np.float64)).float(),
+        fs.timestamp_bins.float(), right=False)
+
+    return (X_genre_t, X_history, X_history_ratings, timestamp_t, Y_t,
+            target_movieId_t, target_genre_t, target_tag_t, target_genome_t, target_year_t)
+
+
+def make_mse_rollback_splits(fs: FeatureStore, data_dir: str = 'data',
+                              max_per_user: int = MAX_MSE_ROLLBACK_EXAMPLES_PER_USER,
+                              pct_train: float = 0.9, seed: int = 42,
+                              max_users: int = None) -> tuple:
+    """
+    Load raw interactions (watch + labels), split users 90/10 at the user level,
+    build MSE rollback datasets. No within-user history/label split.
+    Returns (train_data, val_data) each a 10-tuple from build_mse_rollback_dataset().
+    """
+    watch_path  = os.path.join(data_dir, 'base_ratings_watch.parquet')
+    labels_path = os.path.join(data_dir, 'base_ratings_labels.parquet')
+    print(f"Loading {watch_path} + {labels_path} ...")
+    raw_df = pd.concat([
+        pd.read_parquet(watch_path),
+        pd.read_parquet(labels_path),
+    ], ignore_index=True)
+    # Filter to corpus movies only
+    corpus_set = set(fs.item_emb_movieId_to_i.keys())
+    raw_df = raw_df[raw_df['movieId'].isin(corpus_set)]
+    print(f"  {len(raw_df):,} raw interactions, {raw_df['userId'].nunique():,} users")
+
+    valid_users = fs.user_ids[:]
+    rng = random.Random(seed)
+    rng.shuffle(valid_users)
+
+    if max_users is not None:
+        valid_users = valid_users[:max_users]
+        print(f"  [debug] subsampled to {len(valid_users):,} users")
+
+    split       = int(len(valid_users) * pct_train)
+    train_users = valid_users[:split]
+    val_users   = valid_users[split:]
+
+    print(f"\nBuilding MSE rollback train dataset ({len(train_users):,} users) ...")
+    train_data = build_mse_rollback_dataset(train_users, fs, raw_df, max_per_user, seed)
+    print(f"  X_genre_train shape: {train_data[0].shape}")
+
+    print(f"\nBuilding MSE rollback val dataset ({len(val_users):,} users) ...")
+    val_data = build_mse_rollback_dataset(val_users, fs, raw_df, max_per_user, seed)
+    print(f"  X_genre_val shape:   {val_data[0].shape}")
+
+    return train_data, val_data
+
+
+def save_mse_rollback_splits(train_data: tuple, val_data: tuple,
+                              data_dir: str = 'data', version: str = 'v1') -> None:
+    torch.save(train_data, os.path.join(data_dir, f'dataset_mse_rollback_train_{version}.pt'))
+    torch.save(val_data,   os.path.join(data_dir, f'dataset_mse_rollback_val_{version}.pt'))
+    print(f"Saved dataset_mse_rollback_train_{version}.pt and dataset_mse_rollback_val_{version}.pt → {data_dir}/")
+
+
+def load_mse_rollback_splits(data_dir: str = 'data', version: str = 'v1') -> tuple:
+    train_path = os.path.join(data_dir, f'dataset_mse_rollback_train_{version}.pt')
+    val_path   = os.path.join(data_dir, f'dataset_mse_rollback_val_{version}.pt')
+    print(f"Loading {train_path} ...")
+    train_data = torch.load(train_path, weights_only=False)
+    print(f"Loading {val_path} ...")
+    val_data   = torch.load(val_path, weights_only=False)
+    return train_data, val_data
+
+
 # ── Train / val split ─────────────────────────────────────────────────────────
 
 def make_splits(fs: FeatureStore, pct_train: float = 0.9, seed: int = 42) -> tuple:

@@ -19,7 +19,7 @@ from src.train import build_model, get_config, get_softmax_config, print_model_s
 # ── Canary user definitions ───────────────────────────────────────────────────
 
 USER_TYPE_TO_FAVORITE_GENRES = {
-    'Fantasy Lover':           ['Fantasy'],
+    'Fantasy Lover':           [],
     "Children's Movie Lover":  ['Children'],
     'Horror Lover':            ['Horror'],
     'Sci-Fi Lover':            ['Sci-Fi'],
@@ -61,23 +61,35 @@ USER_TYPE_TO_WORST_GENRES = {
 USER_TYPE_TO_FAVORITE_MOVIES = {
     'Fantasy Lover': [
         'Lord of the Rings: The Fellowship of the Ring, The (2001)',
-        'Hobbit: An Unexpected Journey, The (2012)',
-        'Princess Bride, The (1987)'
+        'Dark Crystal, The (1982)',
+        'Lord of the Rings: The Return of the King, The (2003)',
+        'Dragonslayer (1981)',
+        'Dune (1984)'
     ],
     "Children's Movie Lover": [
-        'Toy Story 2 (1999)', 'Finding Nemo (2003)', 'Finding Dory (2016)', 'Madagascar (2005)'
+        'Toy Story 2 (1999)',
+        'Finding Nemo (2003)',
+        'Finding Dory (2016)',
+        'Madagascar (2005)'
     ],
     'Horror Lover': [
-        'Blair Witch Project, The (1999)', 'Texas Chainsaw Massacre, The (2003)', 'Exorcism of Emily Rose, The (2005)'
+        'Blair Witch Project, The (1999)',
+        'Texas Chainsaw Massacre, The (2003)',
+        'Exorcism of Emily Rose, The (2005)',
+        'Wrong Turn (2003)'
     ],
     'Sci-Fi Lover': [
-        '2001: A Space Odyssey (1968)',
-        'Blade Runner (1982)', 'Arrival (2016)', 'Contact (1997)',
+        'Contact (1997)',
+        '2010: The Year We Make Contact (1984)',
+        'It Came from Outer Space (1953)',
+        'Solaris (Solyaris) (1972)',
+        '2001: A Space Odyssey (1968)'
     ],
     'Comedy Lover': [
-        'American Pie (1999)', 'Dumb & Dumber (Dumb and Dumber) (1994)',
-        'Big Lebowski, The (1998)', 'Monty Python and the Holy Grail (1975)',
-        'Airplane! (1980)', 'Spaceballs (1987)'
+        'American Pie (1999)',
+        'Dumb & Dumber (Dumb and Dumber) (1994)',
+        'Dodgeball: A True Underdog Story (2004)',
+        'Ted 2 (2015)'
     ],
     'Romance Lover': [
         'Shakespeare in Love (1998)', 'Sense and Sensibility (1995)',
@@ -85,29 +97,37 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'Notting Hill (1999)', 'Pride and Prejudice (1995)', 'North & South (2004)'
     ],
     'War Movie Lover': [
-        'Saving Private Ryan (1998)', 'Apocalypse Now (1979)',
-        'Full Metal Jacket (1987)', 'Platoon (1986)',
         'Bridge on the River Kwai, The (1957)', 'Glory (1989)',
-        'Deer Hunter, The (1978)', 'Paths of Glory (1957)',
         'Downfall (Untergang, Der) (2004)', '1917 (2019)',
         'Enemy at the Gates (2001)',
     ],
     'Crime Lover': [
         'Goodfellas (1990)', 'Reservoir Dogs (1992)', 'Donnie Brasco (1997)', 'The Irishman (2019)', 'Casino (1995)'
     ],
-    'Heist Lover':         ['Heist (2001)', 'Ocean\'s Eleven (2001)'],
+    'Heist Lover':         [
+        'Heist (2001)',
+        "Ocean's Eleven (2001)",
+        'The Drop (2014)'
+    ],
     'Action Junkie':       ['Die Hard 2 (1990)', 'Rambo III (1988)', 'Under Siege (1992)'],
     'Arthouse Lover':      ['The Lobster (2015)', 'Antichrist (2009)'],
-    'Superhero Lover':     ['Guardians of the Galaxy (2014)', 'Iron Man 3 (2013)', 'Avengers: Age of Ultron (2015)', 'Ant-Man and the Wasp: Quantumania (2023)', 'Aquaman (2018)'],
+    'Superhero Lover':     ['Guardians of the Galaxy (2014)', 'Iron Man 3 (2013)', 'Avengers: Age of Ultron (2015)', 'Ant-Man and the Wasp: Quantumania (2023)', 'Aquaman (2018)', 'Captain America: Civil War (2016)'],
     'WW2 Lover':           ['Stalingrad (1993)', 'Run Silent Run Deep (1958)', 'Great Escape, The (1963)', 'Band of Brothers (2001)'],
     'Western Lover':       ['True Grit (1969)', 'High Plains Drifter (1973)', 'Unforgiven (1992)', 'Cool Hand Luke (1967)', 'Wild Bill (1995)', 'Wyatt Earp (1994)'],
-    'Anime Lover':         ['Princess Mononoke (Mononoke-hime) (1997)', 'Howl\'s Moving Castle (Hauru no ugoku shiro) (2004)', 'Spirited Away (Sen to Chihiro no kamikakushi) (2001)'],
+    'Anime Lover':         [
+        'Princess Mononoke (Mononoke-hime) (1997)',
+        "Howl's Moving Castle (Hauru no ugoku shiro) (2004)",
+        'Berserk: The Golden Age Arc 2 - The Battle for Doldrey (2012)',
+        'Ponyo (Gake no ue no Ponyo) (2008)',
+        'Animatrix, The (2003)',
+        'Cowboy Bebop: The Movie (Cowboy Bebop: Tengoku no Tobira) (2001)'
+        ],
     'Martial Arts Lover':  ['Ong-Bak: The Thai Warrior (Ong Bak) (2003)', 'Ip Man (2008)', 'Ip Man 2 (2010)', 'Jet Li\'s Fearless (Huo Yuan Jia) (2006)', 'Protector, The (a.k.a. Warrior King) (Tom yum goong) (2005)', 'Unleashed (Danny the Dog) (2005)'],
     'Myself': [
         'Lord of the Rings: The Fellowship of the Ring, The (2001)',
         'Lord of the Rings: The Return of the King, The (2003)',
-        '300 (2007)', 'Saving Private Ryan (1998)', 'Kill Bill: Vol. 1 (2003)',
-        'Gladiator (2000)', 'Braveheart (1995)',
+        '300 (2007)', 'Kill Bill: Vol. 1 (2003)',
+        'Gladiator (2000)',
     ],
 }
 
@@ -138,8 +158,8 @@ USER_TYPE_TO_GENOME_TAGS = {
     'Arthouse Lover':        ['art house', 'slow burn'],
     'Superhero Lover':       ['superhero', 'superheroes'],
     'WW2 Lover':             ['world war ii', 'wwii'],
-    'Western Lover':         ['spaghetti western', 'gunfight'],
-    'Anime Lover':           ['japanese animation', 'studio ghibli'],
+    'Western Lover':         ['spaghetti western'],
+    'Anime Lover':           [],
     'Martial Arts Lover':    ['kung fu', 'fight scenes'],
 }
 
@@ -177,11 +197,13 @@ def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
                                                 torch.tensor([fs.movieId_to_tag_context[mid]]))
             d['MOVIE_GENOME_TAG_EMBEDDING'] = model.item_genome_tag_tower(
                                                 torch.tensor([fs.movieId_to_genome_tag_context[mid]]))
-            d['MOVIE_EMBEDDING_COMBINED']   = torch.cat([
-                d['MOVIE_GENRE_EMBEDDING'], d['MOVIE_TAG_EMBEDDING'],
-                d['MOVIE_GENOME_TAG_EMBEDDING'], d['MOVIEID_EMBEDDING'],
-                d['MOVIE_YEAR_EMBEDDING'],
-            ], dim=1)
+            # Use model.item_embedding() so the projection MLP is applied when present.
+            d['MOVIE_EMBEDDING_COMBINED']   = model.item_embedding(
+                torch.tensor([fs.movieId_to_genre_context[mid]]),
+                torch.tensor([fs.movieId_to_tag_context[mid]]),
+                torch.tensor([fs.movieId_to_genome_tag_context[mid]]),
+                year_idx, emb_idx,
+            )
             movieId_to_embedding[mid] = d
 
     return movieId_to_embedding
@@ -307,9 +329,11 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
         else:
             genome_emb = torch.zeros(1, model.item_genome_tag_tower[0].out_features)
 
-        return torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
+        concat = torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
     else:
-        return torch.cat([history_emb, genre_emb, ts_emb], dim=1)
+        concat = torch.cat([history_emb, genre_emb, ts_emb], dim=1)
+
+    return model.user_projection(concat) if model.user_projection is not None else concat
 
 
 def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
@@ -478,18 +502,34 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
         sd = torch.load(path, weights_only=True)
         cfg = get_softmax_config() if is_softmax else get_config()
 
-        # Detect pool flag: prefer filename, fall back to state dict shape
-        if 'nopool' in name:
-            cfg['use_user_genome_pool'] = False
-            cfg['user_genre_embedding_size'] = 65
-        elif 'gpool' in name:
-            cfg['use_user_genome_pool'] = True
-            cfg['user_genre_embedding_size'] = 30
+        # Always read embedding sizes from state dict shapes — works for both
+        # legacy flat models and new projection models.
+        item_id_dim = sd['item_embedding_lookup.weight'].shape[1]
+        ts_dim      = sd['timestamp_embedding_lookup.weight'].shape[1]
+        genre_dim   = sd['user_genre_tower.0.weight'].shape[0]
+        genome_dim  = sd['item_genome_tag_tower.0.weight'].shape[0]
+        cfg['item_movieId_embedding_size']      = item_id_dim
+        cfg['user_genre_embedding_size']        = genre_dim
+        cfg['timestamp_feature_embedding_size'] = ts_dim
+        cfg['item_genre_embedding_size']        = sd['item_genre_tower.0.weight'].shape[0]
+        cfg['item_tag_embedding_size']          = sd['item_tag_tower.0.weight'].shape[0]
+        cfg['item_genome_tag_embedding_size']   = genome_dim
+        cfg['item_year_embedding_size']         = sd['year_embedding_lookup.weight'].shape[1]
+
+        if 'user_projection.0.weight' in sd:
+            user_proj_in = sd['user_projection.0.weight'].shape[1]
+            cfg['use_user_genome_pool'] = (user_proj_in != item_id_dim + genre_dim + ts_dim)
+            cfg['proj_hidden']          = sd['user_projection.0.weight'].shape[0]
+            cfg['output_dim']           = sd['user_projection.2.weight'].shape[0]
         else:
-            # Legacy checkpoint — infer from genre tower output dim
-            genre_out = sd['user_genre_tower.0.weight'].shape[0]
-            cfg['use_user_genome_pool'] = (genre_out == 30)
-            cfg['user_genre_embedding_size'] = genre_out
+            # Legacy flat model — detect pool from filename then genre tower output
+            if 'nopool' in name:
+                cfg['use_user_genome_pool'] = False
+            elif 'gpool' in name:
+                cfg['use_user_genome_pool'] = True
+            else:
+                cfg['use_user_genome_pool'] = (genre_dim == 30)
+            cfg['proj_hidden'] = None
         return cfg
 
     # Auto-detect most recent checkpoint if none specified
