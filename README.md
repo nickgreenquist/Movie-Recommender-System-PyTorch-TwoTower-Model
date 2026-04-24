@@ -3,6 +3,8 @@
 ## Live Demo
 **Demo link:** [movie-recommender-system-two-tower-model.streamlit.app](https://movie-recommender-system-two-tower-model.streamlit.app/)
 
+This is a sibling project to the [Book Recommender System](https://book-recommender-system-two-tower-model.streamlit.app/) and [Game Recommender System](https://game-recommender-system-two-tower-model.streamlit.app/).
+
 <br>
 
 ![Main](assets/main.jpg)
