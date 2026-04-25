@@ -122,7 +122,18 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'Animatrix, The (2003)',
         'Cowboy Bebop: The Movie (Cowboy Bebop: Tengoku no Tobira) (2001)'
         ],
-    'Martial Arts Lover':  ['Ong-Bak: The Thai Warrior (Ong Bak) (2003)', 'Ip Man (2008)', 'Ip Man 2 (2010)', 'Jet Li\'s Fearless (Huo Yuan Jia) (2006)', 'Protector, The (a.k.a. Warrior King) (Tom yum goong) (2005)', 'Unleashed (Danny the Dog) (2005)'],
+    'Martial Arts Lover':  [
+        'Ong-Bak: The Thai Warrior (Ong Bak) (2003)',
+        'Ip Man (2008)',
+        'Ip Man 2 (2010)',
+        'Jet Li\'s Fearless (Huo Yuan Jia) (2006)',
+        'Protector, The (a.k.a. Warrior King) (Tom yum goong) (2005)',
+        'Unleashed (Danny the Dog) (2005)',
+        'Big Boss, The (Fists of Fury) (Tang shan da xiong) (1971)',
+        'Way of the Dragon, The (a.k.a. Return of the Dragon) (Meng long guo jiang) (1972)',
+        'The Raid 2: Berandal (2014)',
+        "Project A ('A' gai waak) (1983)"
+    ],
     'Myself': [
         'Lord of the Rings: The Fellowship of the Ring, The (2001)',
         'Lord of the Rings: The Return of the King, The (2003)',
@@ -299,41 +310,14 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
     ratings = [h[1] for h in liked_hist] + [VALUE_DISLIKED_MOVIE_RATING] * len(dis_hist)
 
     if history:
-        hist_ids  = torch.tensor([h[0] for h in history], dtype=torch.long).unsqueeze(0)
-        hist_wts  = torch.tensor([ratings], dtype=torch.float)
-        hist_embs = model.item_embedding_lookup(hist_ids)
-        wt_sum    = hist_wts.unsqueeze(-1).abs().sum(dim=1).clamp(min=1e-6)
-        history_emb = (hist_embs * hist_wts.unsqueeze(-1)).sum(dim=1) / wt_sum
+        hist_ids = torch.tensor([[h[0] for h in history]], dtype=torch.long)
+        hist_wts = torch.tensor([ratings], dtype=torch.float)
     else:
-        history_emb = torch.zeros(1, model.item_embedding_lookup.embedding_dim)
+        hist_ids = torch.tensor([[model.pad_idx]], dtype=torch.long)
+        hist_wts = torch.tensor([[0.0]], dtype=torch.float)
 
-    X_inf     = torch.tensor([ctx])
-    genre_emb = model.user_genre_tower(X_inf)
-    ts_emb    = model.timestamp_embedding_tower(model.timestamp_embedding_lookup(ts_inference))
-
-    if model.use_user_genome_pool:
-        genome_contexts = []
-        genome_weights  = []
-        for t, w in liked_with_weights + [(t, VALUE_DISLIKED_MOVIE_RATING) for t in dis_movies]:
-            mid = fs.title_to_movieId.get(t)
-            if mid and mid in fs.movieId_to_genome_tag_context:
-                genome_contexts.append(fs.movieId_to_genome_tag_context[mid])
-                genome_weights.append(w)
-
-        if genome_contexts:
-            gc_tensor  = torch.tensor(np.array(genome_contexts, dtype=np.float32))
-            ge_embs    = model.item_genome_tag_tower(gc_tensor)
-            wts        = torch.tensor(genome_weights)
-            wt_sum_g   = wts.abs().sum().clamp(min=1e-6)
-            genome_emb = (ge_embs * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_g
-        else:
-            genome_emb = torch.zeros(1, model.item_genome_tag_tower[0].out_features)
-
-        concat = torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
-    else:
-        concat = torch.cat([history_emb, genre_emb, ts_emb], dim=1)
-
-    return model.user_projection(concat) if model.user_projection is not None else concat
+    X_inf = torch.tensor([ctx])
+    return model.user_embedding(X_inf, hist_ids, hist_wts, ts_inference)
 
 
 def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
@@ -517,10 +501,31 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
         cfg['item_year_embedding_size']         = sd['year_embedding_lookup.weight'].shape[1]
 
         if 'user_projection.0.weight' in sd:
-            user_proj_in = sd['user_projection.0.weight'].shape[1]
-            cfg['use_user_genome_pool'] = (user_proj_in != item_id_dim + genre_dim + ts_dim)
-            cfg['proj_hidden']          = sd['user_projection.0.weight'].shape[0]
-            cfg['output_dim']           = sd['user_projection.2.weight'].shape[0]
+            user_proj_in  = sd['user_projection.0.weight'].shape[1]
+            output_dim    = sd['user_projection.2.weight'].shape[0]
+            nopool_in        = item_id_dim + genre_dim + ts_dim
+            old_gpool_in     = item_id_dim + genome_dim + genre_dim + ts_dim
+            ipool_gpool_in   = output_dim  + genome_dim + genre_dim + ts_dim
+            # ipool_only_in  = output_dim  + genre_dim  + ts_dim  (prior experiment)
+            if user_proj_in == nopool_in:
+                cfg['use_user_genome_pool']      = False
+                cfg['use_item_pool_for_history'] = False
+                cfg['use_item_pool_for_genome']  = False
+            elif user_proj_in == old_gpool_in:
+                cfg['use_user_genome_pool']      = True
+                cfg['use_item_pool_for_history'] = False
+                cfg['use_item_pool_for_genome']  = False
+            elif user_proj_in == ipool_gpool_in:
+                cfg['use_user_genome_pool']      = True
+                cfg['use_item_pool_for_history'] = True
+                cfg['use_item_pool_for_genome']  = False
+            else:
+                # Prior experiment: item pool only, no separate genome pool
+                cfg['use_user_genome_pool']      = True
+                cfg['use_item_pool_for_history'] = False
+                cfg['use_item_pool_for_genome']  = True
+            cfg['proj_hidden'] = sd['user_projection.0.weight'].shape[0]
+            cfg['output_dim']  = output_dim
         else:
             # Legacy flat model — detect pool from filename then genre tower output
             if 'nopool' in name:
