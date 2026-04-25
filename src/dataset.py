@@ -324,16 +324,14 @@ def build_softmax_dataset(users: list, fs: FeatureStore, raw_df,
         targets. Context (history) remains unfiltered — low-rated watches still inform
         the user embedding. Set to 4.0 to restrict targets to movies the user enjoyed.
 
-    Returns 9-tuple:
+    Returns 5-tuple:
         [0] X_genre            — (N, user_context_size) float  rollback genre context
         [1] X_history          — list[list[int]]  (padded at training time)
         [2] X_history_ratings  — list[list[float]]
         [3] timestamp          — (N,) long  (binned)
         [4] target_movieId     — (N,) long  (embedding index)
-        [5] target_genre       — (N, genres_len) float
-        [6] target_tag         — (N, tags_len) float
-        [7] target_genome      — (N, genome_tags_len) float
-        [8] target_year        — (N,) long
+    target_genre/tag/genome/year are NOT stored — look them up from model buffers
+    at training time using target_movieId as the corpus index.
     """
     from src.features import MAX_HISTORY_LEN
     rng       = random.Random(seed)
@@ -357,10 +355,6 @@ def build_softmax_dataset(users: list, fs: FeatureStore, raw_df,
     X_history_ratings     = []
     timestamps_raw        = []
     target_movieId        = []
-    target_genre_context  = []
-    target_tag_context    = []
-    target_genome_context = []
-    target_year           = []
 
     from tqdm import tqdm
     n_users = df['userId'].nunique()
@@ -410,10 +404,6 @@ def build_softmax_dataset(users: list, fs: FeatureStore, raw_df,
                 X_history_ratings.append(list(ctx_rats_buf[-max_hist:]))
                 timestamps_raw.append(ts)
                 target_movieId.append(t_idx)
-                target_genre_context.append(fs.movieId_to_genre_context[mid])
-                target_tag_context.append(fs.movieId_to_tag_context[mid])
-                target_genome_context.append(fs.movieId_to_genome_tag_context[mid])
-                target_year.append(fs.year_to_i.get(fs.movieId_to_year[mid], 0))
 
             # Update accumulators and context buffer with current movie
             ctx_ids_buf.append(t_idx)
@@ -425,18 +415,13 @@ def build_softmax_dataset(users: list, fs: FeatureStore, raw_df,
     n = len(target_movieId)
     print(f"  {n:,} softmax examples — building tensors ...")
 
-    X_genre_t         = torch.from_numpy(np.array(X_genre,               dtype=np.float32))
-    target_movieId_t  = torch.from_numpy(np.array(target_movieId,        dtype=np.int64))
-    target_year_t     = torch.from_numpy(np.array(target_year,           dtype=np.int64))
-    target_genre_t    = torch.from_numpy(np.array(target_genre_context,  dtype=np.float32))
-    target_tag_t      = torch.from_numpy(np.array(target_tag_context,    dtype=np.float32))
-    target_genome_t   = torch.from_numpy(np.array(target_genome_context, dtype=np.float32))
+    X_genre_t         = torch.from_numpy(np.array(X_genre,        dtype=np.float32))
+    target_movieId_t  = torch.from_numpy(np.array(target_movieId, dtype=np.int64))
     timestamp_t       = torch.bucketize(
         torch.from_numpy(np.array(timestamps_raw, dtype=np.float64)).float(),
         fs.timestamp_bins.float(), right=False)
 
-    return (X_genre_t, X_history, X_history_ratings, timestamp_t,
-            target_movieId_t, target_genre_t, target_tag_t, target_genome_t, target_year_t)
+    return (X_genre_t, X_history, X_history_ratings, timestamp_t, target_movieId_t)
 
 
 def make_softmax_splits(fs: FeatureStore, data_dir: str = 'data',
@@ -501,7 +486,8 @@ def load_softmax_splits(data_dir: str = 'data', version: str = 'v1') -> tuple:
     train_data = torch.load(train_path, weights_only=False)
     print(f"Loading {val_path} ...")
     val_data   = torch.load(val_path, weights_only=False)
-    return train_data, val_data
+    # Old files were 9-tuples; new files are 5-tuples. Slice for compatibility.
+    return train_data[:5], val_data[:5]
 
 
 # ── MSE rollback dataset ──────────────────────────────────────────────────────
@@ -527,17 +513,15 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
     raw_df must have columns: userId, movieId, rating, timestamp,
     already filtered to corpus movies and valid users.
 
-    Returns 10-tuple:
+    Returns 6-tuple:
         [0] X_genre            — (N, user_context_size) float  rollback genre context
         [1] X_history          — list[list[int]]  (padded at training time)
         [2] X_history_ratings  — list[list[float]]
         [3] timestamp          — (N,) long  (binned)
         [4] Y                  — (N,) float  debiased target rating
         [5] target_movieId     — (N,) long  (embedding index)
-        [6] target_genre       — (N, genres_len) float
-        [7] target_tag         — (N, tags_len) float
-        [8] target_genome      — (N, genome_tags_len) float
-        [9] target_year        — (N,) long
+    target_genre/tag/genome/year are NOT stored — look them up from model buffers
+    at training time using target_movieId as the corpus index.
     """
     from src.features import MAX_HISTORY_LEN
     rng       = random.Random(seed)
@@ -561,10 +545,6 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
     timestamps_raw        = []
     Y                     = []
     target_movieId        = []
-    target_genre_context  = []
-    target_tag_context    = []
-    target_genome_context = []
-    target_year           = []
 
     from tqdm import tqdm
     n_users = df['userId'].nunique()
@@ -608,10 +588,6 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
                 timestamps_raw.append(ts)
                 Y.append(d_rat)
                 target_movieId.append(t_idx)
-                target_genre_context.append(fs.movieId_to_genre_context[mid])
-                target_tag_context.append(fs.movieId_to_tag_context[mid])
-                target_genome_context.append(fs.movieId_to_genome_tag_context[mid])
-                target_year.append(fs.year_to_i.get(fs.movieId_to_year[mid], 0))
 
             ctx_ids_buf.append(t_idx)
             ctx_rats_buf.append(d_rat)
@@ -622,19 +598,14 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
     n = len(target_movieId)
     print(f"  {n:,} MSE rollback examples — building tensors ...")
 
-    X_genre_t         = torch.from_numpy(np.array(X_genre,               dtype=np.float32))
-    Y_t               = torch.from_numpy(np.array(Y,                     dtype=np.float32))
-    target_movieId_t  = torch.from_numpy(np.array(target_movieId,        dtype=np.int64))
-    target_year_t     = torch.from_numpy(np.array(target_year,           dtype=np.int64))
-    target_genre_t    = torch.from_numpy(np.array(target_genre_context,  dtype=np.float32))
-    target_tag_t      = torch.from_numpy(np.array(target_tag_context,    dtype=np.float32))
-    target_genome_t   = torch.from_numpy(np.array(target_genome_context, dtype=np.float32))
+    X_genre_t         = torch.from_numpy(np.array(X_genre,        dtype=np.float32))
+    Y_t               = torch.from_numpy(np.array(Y,              dtype=np.float32))
+    target_movieId_t  = torch.from_numpy(np.array(target_movieId, dtype=np.int64))
     timestamp_t       = torch.bucketize(
         torch.from_numpy(np.array(timestamps_raw, dtype=np.float64)).float(),
         fs.timestamp_bins.float(), right=False)
 
-    return (X_genre_t, X_history, X_history_ratings, timestamp_t, Y_t,
-            target_movieId_t, target_genre_t, target_tag_t, target_genome_t, target_year_t)
+    return (X_genre_t, X_history, X_history_ratings, timestamp_t, Y_t, target_movieId_t)
 
 
 def make_mse_rollback_splits(fs: FeatureStore, data_dir: str = 'data',
@@ -695,7 +666,9 @@ def load_mse_rollback_splits(data_dir: str = 'data', version: str = 'v1') -> tup
     train_data = torch.load(train_path, weights_only=False)
     print(f"Loading {val_path} ...")
     val_data   = torch.load(val_path, weights_only=False)
-    return train_data, val_data
+    # Old files were 10-tuples; new files are 6-tuples. Slice for compatibility.
+    # To free the extra ~17 GB, rebuild: python main.py dataset rollback
+    return train_data[:6], val_data[:6]
 
 
 # ── Train / val split ─────────────────────────────────────────────────────────

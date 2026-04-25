@@ -706,6 +706,36 @@ comparable via dot product.
 *Rollback eval protocol: for each held-out user, context = all prior watches, target = next watch. Harder than leave-one-out; numbers are not comparable to other benchmarks using different protocols.*
 """)
 
+        st.header("What We Tried")
+        st.markdown(
+            "The user history pool uses a 32-dim item ID lookup — a relatively low-capacity signal. "
+            "The item tower already produces a full 128-dim projected embedding that combines genre, tag, genome, ID, and year. "
+            "The natural question: would pooling over this richer representation produce a better user embedding than the shallow ID pool?"
+        )
+        st.markdown(
+            "We trained two variants. First, replacing both the ID pool and the genome pool with a single 128-dim item pool. "
+            "Second, keeping the genome pool separately and replacing only the ID pool with the 128-dim item pool. "
+            "Both were tested against the prod model on offline eval and qualitative canary users."
+        )
+        st.markdown("""
+| Metric | **Prod (id_pool + genome_pool)** | Full item pool + genome pool |
+|---|---|---|
+| Hit Rate@1 | **1.92%** | 1.74% |
+| Hit Rate@5 | **6.42%** | 6.46% |
+| Hit Rate@10 | **10.88%** | 10.72% |
+| Hit Rate@20 | **17.64%** | 17.38% |
+| Hit Rate@50 | **30.40%** | 30.40% |
+| MRR | **0.0521** | 0.0510 |
+
+*Leave-label-out eval protocol.*
+""")
+        st.markdown(
+            "The richer pooling signal did not help. The prod architecture — separate 32-dim ID pool and 32-dim genome pool — "
+            "proved more effective than pooling over the full 128-dim projected output. "
+            "The projection is trained to match item-side targets, which makes it a noisier history-pooling signal "
+            "than a dedicated low-dimensional lookup."
+        )
+
         st.header("Limitations")
         st.markdown("""
 - No user ID — personalization is limited to the signals you provide in the app

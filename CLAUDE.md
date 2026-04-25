@@ -220,6 +220,7 @@ New prod beats old prod by **+57% MRR** and +59% Hit Rate@10. Softmax is the wor
 - **Rollback training > fixed-split** — model sees users at every history length, better cold-start.
 - **Genome sub-embedding size matters** — 32 is the minimum; 16 noticeably hurts.
 - **MSE + gpool + projection MLP + rollback training is the optimal configuration.**
+- **Pooling over the full 128-dim projected item embedding does not help** — see experiment log below.
 
 ### Softmax proj gpool findings (2026-04-24)
 
@@ -265,12 +266,68 @@ Item Tower: genre(20) + tag(10) + genome(35) + movieId(40) + year(5) = 110 → d
 
 Kept for reference; superseded by the projection MLP architecture.
 
+## Architecture Experiment Log (branch: full-item-pool, 2026-04-25)
+
+**Motivation:** The user history pool uses only the 32-dim item ID lookup — a low-capacity signal. The item tower produces a full 128-dim projected embedding combining genre, tag, genome, ID, and year. Pooling over this richer representation is the "proper" way to represent watch history. We tested two variants.
+
+### Experiment 1 — Full item pool replacing both id and genome pools (`use_item_pool_for_genome=True`)
+
+User concat: `item_pool(128) + genre(32) + ts(4) = 164 → user_proj(164→256→128)`
+
+**Result: null / worse than prod.** Canary showed arthouse attractor — Horror, Sci-Fi, Martial Arts, War all drifted toward Ghibli/European art cinema. The genome pool, which previously provided a discrete content-texture signal, was now baked silently into item_pool and the model couldn't weight it separately. Dropped this variant.
+
+### Experiment 2 — Full item pool replacing id pool, genome pool kept separately (`use_item_pool_for_history=True`)
+
+User concat: `item_pool(128) + genome_pool(32) + genre(32) + ts(4) = 196 → user_proj(196→256→128)`
+
+Checkpoint: `best_mse_ipool_gpool_proj_20260425_143734.pth`
+
+**Result: null / marginally worse than prod.** Canary was mixed — Sci-Fi improved, Martial Arts/Crime regressed. Offline eval (leave-label-out protocol):
+
+| Metric | **ipool_gpool (new)** | **Prod (gpool_proj)** |
+|---|---|---|
+| Hit Rate@1 | 1.74% | **1.92%** |
+| Hit Rate@5 | **6.46%** | 6.42% |
+| Hit Rate@10 | 10.72% | **10.88%** |
+| Hit Rate@20 | 17.38% | **17.64%** |
+| Hit Rate@50 | 30.40% | 30.40% |
+| **MRR** | 0.0510 | **0.0521** |
+
+*Leave-label-out protocol; not comparable to rollback numbers in the MSE vs Softmax table above.*
+
+Prod wins on MRR (−2.1%) and most Hit Rate@K. The 32-dim id pool carries signal the full projected embedding doesn't — likely because the projection is trained to match item-side targets, making it noisier as a history-pooling signal than a purpose-built id lookup.
+
+**Conclusion: the separate 32-dim id pool + 32-dim genome pool architecture is optimal. Do not revisit full-item-pool variants.**
+
+### What we know does NOT work
+
+- Removing the item ID embedding from the item tower entirely — canary genre discrimination collapsed. Do not try again.
+- Removing `item_embedding_tower` (the Linear+Tanh on top of the ID lookup) — causes severe genre clustering.
+- Pooling over the full projected item embedding (128-dim) in the user tower — confirmed null result across two variants.
+
+## Dataset Memory Fix (2026-04-25)
+
+The dataset `.pt` files previously stored redundant per-item feature tensors (genre, tag, genome, year for the target movie) that were also available via the feature store. This bloated RAM to 33 GB on a 24 GB machine.
+
+**Fix:** Strip those tensors from the dataset builders in `src/dataset.py`. Dataset is now a 6-tuple (MSE) and 5-tuple (softmax):
+- MSE: `(X_genre, X_history, X_history_ratings, timestamp, Y, target_movieId)`
+- Softmax: `(X_genre, X_history, X_history_ratings, timestamp, target_movieId)`
+
+Item features are looked up from model buffers during training (no dataset rebuild needed for model-only changes). RAM dropped from 33 GB → ~12 GB.
+
+If loading old 10-tuple `.pt` files: `load_mse_rollback_splits()` slices to `[:6]` for backward compat.
+
 ## Potential Next Improvements
 
 ROI on further MovieLens tuning is low. If continuing:
 
 1. **Rating variance per genre** in the user context vector — distinguishes genuine fans from casual watchers.
 2. **Genre + year in the same item tower** — directly attacks era confusion in recommendations (War/WW2/Western drift).
+3. **User genome context vector:** Build a dense (1,128-dim) genome context for the user from their watch history, analogous to how genre context is built. For each genome tag, compute a rating-weighted average of the movie's genome score across all watched movies — positive ratings above user mean push the score up, negative ratings pull it down. Pass this through `user_genre_tower`-style linear → user concat. This gives the model an explicit genome-space taste signal without relying solely on pooled item embeddings.
+4. **Better optimizer for MSE:** Adam with a LR scheduler (cosine or step decay) instead of SGD — may converge faster or to a better minimum.
+5. **Embedding size tuning:** Experiment with larger genome/genre/ID embedding dims — may improve representation capacity.
+6. **Remove timestamp from user tower:** It adds only 4 dims; removing it simplifies the user concat and may not hurt quality.
+7. **Freeze item embeddings during user pooling:** Prevent gradients from flowing back through the item tower when computing the user pool — decouples item representation learning from user pooling.
 
 ## Known Code Inconsistency
 
@@ -281,3 +338,9 @@ ROI on further MovieLens tuning is low. If continuing:
 ## Git Workflow
 
 Never commit and push in the same command. Always commit first, then ask before pushing.
+
+## Experiment Discipline
+
+**Change one thing at a time.** Every training run should isolate exactly one variable. If asked to make multiple architectural changes in the same run, stop and warn before proceeding — the canary comparison becomes uninterpretable when multiple things change simultaneously.
+
+**Do not touch `streamlit_app.py` or `src/export.py` until a model change is verified good.** The workflow is: train → canary → eval → if better, then update export/streamlit. Updating serving code before verification wastes time and risks shipping a broken model. This applies even if the code changes are "obviously needed" — wait for a confirmed win first.
