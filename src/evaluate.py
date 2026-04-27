@@ -19,13 +19,13 @@ from src.train import build_model, get_config, get_softmax_config, print_model_s
 # ── Canary user definitions ───────────────────────────────────────────────────
 
 USER_TYPE_TO_FAVORITE_GENRES = {
-    'Fantasy Lover':           [],
     "Children's Movie Lover":  ['Children'],
     'Horror Lover':            ['Horror'],
     'Sci-Fi Lover':            ['Sci-Fi'],
     'Comedy Lover':            ['Comedy'],
     'Romance Lover':           ['Romance'],
     'War Movie Lover':         ['War'],
+    'Fantasy Lover':           [],
     'Crime Lover':             ['Crime'],
     'Heist Lover':             [],
     'Action Junkie':           [],
@@ -39,13 +39,13 @@ USER_TYPE_TO_FAVORITE_GENRES = {
 }
 
 USER_TYPE_TO_WORST_GENRES = {
-    'Fantasy Lover':           [],
     "Children's Movie Lover":  [],
     'Horror Lover':            [],
     'Sci-Fi Lover':            [],
     'Comedy Lover':            [],
     'Romance Lover':           [],
     'War Movie Lover':         [],
+    'Fantasy Lover':           [],
     'Crime Lover':             [],
     'Heist Lover':             [],
     'Action Junkie':           [],
@@ -59,13 +59,6 @@ USER_TYPE_TO_WORST_GENRES = {
 }
 
 USER_TYPE_TO_FAVORITE_MOVIES = {
-    'Fantasy Lover': [
-        'Lord of the Rings: The Fellowship of the Ring, The (2001)',
-        'Dark Crystal, The (1982)',
-        'Lord of the Rings: The Return of the King, The (2003)',
-        'Dragonslayer (1981)',
-        'Dune (1984)'
-    ],
     "Children's Movie Lover": [
         'Toy Story 2 (1999)',
         'Finding Nemo (2003)',
@@ -101,6 +94,13 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'Downfall (Untergang, Der) (2004)', '1917 (2019)',
         'Enemy at the Gates (2001)',
     ],
+    'Fantasy Lover': [
+        'Lord of the Rings: The Fellowship of the Ring, The (2001)',
+        'Dark Crystal, The (1982)',
+        'Lord of the Rings: The Return of the King, The (2003)',
+        'Dragonslayer (1981)',
+        'Dune (1984)'
+    ],
     'Crime Lover': [
         'Goodfellas (1990)',
         'Reservoir Dogs (1992)',
@@ -122,26 +122,33 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
     'Arthouse Lover':      ['The Lobster (2015)', 'Antichrist (2009)'],
     'Superhero Lover':     ['Guardians of the Galaxy (2014)', 'Iron Man 3 (2013)', 'Avengers: Age of Ultron (2015)', 'Ant-Man and the Wasp: Quantumania (2023)', 'Aquaman (2018)', 'Captain America: Civil War (2016)'],
     'WW2 Lover':           ['Stalingrad (1993)', 'Run Silent Run Deep (1958)', 'Great Escape, The (1963)', 'Band of Brothers (2001)'],
-    'Western Lover':       ['True Grit (1969)', 'High Plains Drifter (1973)', 'Unforgiven (1992)', 'Cool Hand Luke (1967)', 'Wild Bill (1995)', 'Wyatt Earp (1994)'],
+    'Western Lover':       [
+        'True Grit (1969)',
+        'High Plains Drifter (1973)',
+        'Cool Hand Luke (1967)',
+        'Wild Bill (1995)',
+        'Wyatt Earp (1994)',
+        'Fistful of Dollars, A (Per un pugno di dollari) (1964)',
+        'Wild Bunch, The (1969)',
+        'For a Few Dollars More (Per qualche dollaro in più) (1965)',
+        "Once Upon a Time in the West (C'era una volta il West) (1968)",
+
+    ],
     'Anime Lover':         [
         'Princess Mononoke (Mononoke-hime) (1997)',
-        "Howl's Moving Castle (Hauru no ugoku shiro) (2004)",
         'Berserk: The Golden Age Arc 2 - The Battle for Doldrey (2012)',
         'Ponyo (Gake no ue no Ponyo) (2008)',
         'Animatrix, The (2003)',
         'Cowboy Bebop: The Movie (Cowboy Bebop: Tengoku no Tobira) (2001)'
-        ],
+    ],
     'Martial Arts Lover':  [
         'Ong-Bak: The Thai Warrior (Ong Bak) (2003)',
-        'Ip Man (2008)',
-        'Ip Man 2 (2010)',
-        'Jet Li\'s Fearless (Huo Yuan Jia) (2006)',
+        "Jet Li\'s Fearless (Huo Yuan Jia) (2006)",
         'Protector, The (a.k.a. Warrior King) (Tom yum goong) (2005)',
         'Unleashed (Danny the Dog) (2005)',
-        'Big Boss, The (Fists of Fury) (Tang shan da xiong) (1971)',
-        'Way of the Dragon, The (a.k.a. Return of the Dragon) (Meng long guo jiang) (1972)',
         'The Raid 2: Berandal (2014)',
-        "Project A ('A' gai waak) (1983)"
+        "Project A ('A' gai waak) (1983)",
+        'Shaolin Soccer (Siu lam juk kau) (2001)'
     ],
     "Nick's Recommendations": [
         'Lord of the Rings: The Fellowship of the Ring, The (2001)',
@@ -162,13 +169,13 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
 }
 
 USER_TYPE_TO_DISLIKED_MOVIES = {
-    'Fantasy Lover':          [],
     "Children's Movie Lover": [],
     'Horror Lover':           [],
     'Sci-Fi Lover':           [],
     'Comedy Lover':           [],
     'Romance Lover':          [],
     'War Movie Lover':        [],
+    'Fantasy Lover':          [],
     'Crime Lover':            [],
     'Heist Lover':            [
         '13 Hours (2016)'
@@ -178,7 +185,9 @@ USER_TYPE_TO_DISLIKED_MOVIES = {
     'Superhero Lover':        [],
     'WW2 Lover':              [],
     'Western Lover':          [],
-    'Anime Lover':            [],
+    'Anime Lover':            [
+        'MirrorMask (2005)'
+    ],
     'Martial Arts Lover':     [],
     "Nick's Recommendations": [
         'Planet Terror (2007)',
@@ -194,9 +203,8 @@ USER_TYPE_TO_GENOME_TAGS = {
     'Superhero Lover':       ['superhero', 'superheroes'],
     'WW2 Lover':             ['world war ii', 'wwii'],
     'Western Lover':         ['spaghetti western'],
-    'Anime Lover':           [],
-    'Martial Arts Lover':    ['kung fu', 'fight scenes'],
-    'Musical Lover':         ['musical'],
+    'Anime Lover':           ['studio ghibli'],
+    'Martial Arts Lover':    ['kung fu'],
     "Nick's Recommendations": []
 }
 

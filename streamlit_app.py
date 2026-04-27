@@ -29,8 +29,7 @@ from src.evaluate import (
 )
 from src.model import MovieRecommender
 
-EXAMPLE_PROFILES = [k for k in USER_TYPE_TO_FAVORITE_GENRES
-                    if k not in ()]
+EXAMPLE_PROFILES = [k for k in USER_TYPE_TO_FAVORITE_GENRES if k not in ()]
 
 # Rating values — mirror evaluate.py canary constants
 _LIKED_MOVIE    =  2.0
