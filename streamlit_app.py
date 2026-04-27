@@ -30,7 +30,7 @@ from src.evaluate import (
 from src.model import MovieRecommender
 
 EXAMPLE_PROFILES = [k for k in USER_TYPE_TO_FAVORITE_GENRES
-                    if k not in ('Myself', 'Fantasy Lover', 'War Movie Lover', 'Sci-Fi Lover')]
+                    if k not in ()]
 
 # Rating values — mirror evaluate.py canary constants
 _LIKED_MOVIE    =  2.0
@@ -78,6 +78,8 @@ def load_artifacts():
         user_genre_embedding_size=cfg['user_genre_embedding_size'],
         timestamp_feature_embedding_size=cfg['timestamp_feature_embedding_size'],
         use_user_genome_pool=cfg.get('use_user_genome_pool', True),
+        use_user_genome_context=cfg.get('use_user_genome_context', False),
+        user_genome_context_embedding_size=cfg.get('user_genome_context_embedding_size', 32),
         proj_hidden=cfg.get('proj_hidden', None),
         output_dim=cfg.get('output_dim', 128),
     )
@@ -201,6 +203,25 @@ def _build_user_embedding(model, fs, liked_titles_with_weights, disliked_titles,
         concat = torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
     else:
         concat = torch.cat([history_emb, genre_emb, ts_emb], dim=1)
+
+    if model.use_user_genome_context:
+        # Rating-weighted avg of raw genome scores → user_genome_context_tower
+        gctx_contexts = []
+        gctx_weights  = []
+        for t, w in list(liked_titles_with_weights) + [(t, _DISLIKED_MOVIE) for t in disliked_titles]:
+            mid = fs['title_to_movieId'].get(t)
+            if mid and mid in fs['movieId_to_genome_tag_context']:
+                gctx_contexts.append(fs['movieId_to_genome_tag_context'][mid])
+                gctx_weights.append(w)
+        if gctx_contexts:
+            gctx_tensor = torch.tensor(np.array(gctx_contexts, dtype=np.float32))
+            wts         = torch.tensor(gctx_weights)
+            wt_sum_gc   = wts.abs().sum().clamp(min=1e-6)
+            genome_ctx_raw = (gctx_tensor * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_gc
+        else:
+            genome_ctx_raw = torch.zeros(1, model.user_genome_context_tower[0].in_features)
+        gctx_emb = model.user_genome_context_tower(genome_ctx_raw)
+        concat = torch.cat([concat, gctx_emb], dim=1)
 
     if model.user_projection is not None:
         return model.user_projection(concat)
@@ -620,7 +641,7 @@ def tab_about():
         st.header("User Tower")
         st.markdown(
             "Each component encodes a different aspect of taste into a fixed-size vector. "
-            "All four outputs are concatenated into a 100-dim vector, then passed through a "
+            "All five outputs are concatenated into a 132-dim vector, then passed through a "
             "projection MLP (Linear 256 → ReLU → Linear 128) to produce the final 128-dim user embedding."
         )
         st.markdown("""
@@ -630,7 +651,8 @@ def tab_about():
 | Rating-Weighted Genome Pool | 32-dim | Genome scores for each watched movie,<br>passed through the shared genome tower | Content texture — the kinds of films you like<br>(atmospheric, cerebral, gritty, etc.) weighted by how much you liked them |
 | user_genre_tower | 32-dim | Avg rating per genre + watch fraction per genre | Genre affinity — how strongly you lean toward<br>or away from each of the 20 broad genre categories |
 | timestamp_embedding_tower | 4-dim | Month bin of most recent watch activity | Temporal context —<br>captures era-based taste shifts |
-| **Projection MLP** | **128-dim** | concat(100) → Linear(256) → ReLU → Linear(128) | Cross-feature interactions — learns how history,<br>content, genre, and timing combine |
+| Genome Context Tower | 32-dim | Rating-weighted avg of raw 1,128-dim genome scores<br>across all watched movies | Overall content taste fingerprint — a dense summary<br>of which genome tags define your taste profile |
+| **Projection MLP** | **128-dim** | concat(132) → Linear(256) → ReLU → Linear(128) | Cross-feature interactions — learns how history,<br>content, genre, timing, and genome taste combine |
 """, unsafe_allow_html=True)
 
         st.header("Item Tower")

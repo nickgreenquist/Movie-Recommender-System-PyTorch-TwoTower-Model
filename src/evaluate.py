@@ -35,7 +35,7 @@ USER_TYPE_TO_FAVORITE_GENRES = {
     'Western Lover':           ['Western'],
     'Anime Lover':             [],
     'Martial Arts Lover':      [],
-    'Myself': ['Fantasy', 'War', 'Horror', 'Drama', 'Action'],
+    "Nick's Recommendations":  [],
 }
 
 USER_TYPE_TO_WORST_GENRES = {
@@ -55,7 +55,7 @@ USER_TYPE_TO_WORST_GENRES = {
     'Western Lover':           [],
     'Anime Lover':             [],
     'Martial Arts Lover':      [],
-    'Myself':                  [],
+    "Nick's Recommendations":  [],
 }
 
 USER_TYPE_TO_FAVORITE_MOVIES = {
@@ -102,12 +102,21 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'Enemy at the Gates (2001)',
     ],
     'Crime Lover': [
-        'Goodfellas (1990)', 'Reservoir Dogs (1992)', 'Donnie Brasco (1997)', 'The Irishman (2019)', 'Casino (1995)'
+        'Goodfellas (1990)',
+        'Reservoir Dogs (1992)',
+        'Donnie Brasco (1997)',
+        'The Irishman (2019)',
+        'Casino (1995)',
+        'Narc (2002)'
     ],
     'Heist Lover':         [
         'Heist (2001)',
         "Ocean's Eleven (2001)",
-        'The Drop (2014)'
+        "Ocean's Eleven (a.k.a. Ocean's 11) (1960)",
+        'The Drop (2014)',
+        'Bank Job, The (2008)',
+        'Italian Job, The (1969)',
+        'Town, The (2010)'
     ],
     'Action Junkie':       ['Die Hard 2 (1990)', 'Rambo III (1988)', 'Under Siege (1992)'],
     'Arthouse Lover':      ['The Lobster (2015)', 'Antichrist (2009)'],
@@ -134,11 +143,21 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'The Raid 2: Berandal (2014)',
         "Project A ('A' gai waak) (1983)"
     ],
-    'Myself': [
+    "Nick's Recommendations": [
         'Lord of the Rings: The Fellowship of the Ring, The (2001)',
         'Lord of the Rings: The Return of the King, The (2003)',
-        '300 (2007)', 'Kill Bill: Vol. 1 (2003)',
-        'Gladiator (2000)',
+        '300 (2007)',
+        'Kill Bill: Vol. 1 (2003)',
+        'Lost in Translation (2003)',
+        'Enter the Dragon (1973)',
+        'Casino Royale (2006)',
+        'Before Sunrise (1995)',
+        'Old Boy (2003)',
+        'Idiocracy (2006)',
+        'Parasite (2019)',
+        '28 Days Later (2002)',
+        'Saving Private Ryan (1998)',
+        'Ip Man (2008)'
     ],
 }
 
@@ -151,7 +170,9 @@ USER_TYPE_TO_DISLIKED_MOVIES = {
     'Romance Lover':          [],
     'War Movie Lover':        [],
     'Crime Lover':            [],
-    'Heist Lover':            [],
+    'Heist Lover':            [
+        '13 Hours (2016)'
+    ],
     'Action Junkie':          [],
     'Arthouse Lover':         [],
     'Superhero Lover':        [],
@@ -159,12 +180,15 @@ USER_TYPE_TO_DISLIKED_MOVIES = {
     'Western Lover':          [],
     'Anime Lover':            [],
     'Martial Arts Lover':     [],
-    'Myself':                 [],
+    "Nick's Recommendations": [
+        'Planet Terror (2007)',
+        'Twilight (2008)'
+    ],
 }
 
 USER_TYPE_TO_GENOME_TAGS = {
     'Crime Lover':           ['crime', 'gangs'],
-    'Heist Lover':           ['heist', 'con artist'],
+    'Heist Lover':           ['heist'],
     'Action Junkie':         ['explosions', 'adrenaline'],
     'Arthouse Lover':        ['art house', 'slow burn'],
     'Superhero Lover':       ['superhero', 'superheroes'],
@@ -172,6 +196,8 @@ USER_TYPE_TO_GENOME_TAGS = {
     'Western Lover':         ['spaghetti western'],
     'Anime Lover':           [],
     'Martial Arts Lover':    ['kung fu', 'fight scenes'],
+    'Musical Lover':         ['musical'],
+    "Nick's Recommendations": []
 }
 
 VALUE_FAVORITE_GENRE_RATING = 4.0
@@ -372,6 +398,72 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
                 print(f"{a:<{col_w}}  {b:<{col_w}}  {c}")
 
 
+# ── Genome context probe ─────────────────────────────────────────────────────
+
+def build_user_genome_context(user_type: str, fs: FeatureStore) -> 'np.ndarray':
+    """
+    Build a rating-weighted genome context vector for a canary user.
+    Mirrors the proposed user genome feature: for each watched movie, weight
+    its 1128-dim genome score vector by the user's rating, sum, normalise by
+    total absolute weight.  Returns a (genome_tags_len,) float32 array.
+    """
+    fav_movies    = USER_TYPE_TO_FAVORITE_MOVIES[user_type]
+    dis_movies    = USER_TYPE_TO_DISLIKED_MOVIES[user_type]
+    genome_tags   = USER_TYPE_TO_GENOME_TAGS.get(user_type, [])
+    anchor_titles = _get_anchor_titles(fs, genome_tags, exclude=set(fav_movies))
+
+    all_movies_with_weights = (
+        [(t, VALUE_FAVORITE_MOVIE_RATING) for t in fav_movies] +
+        [(t, VALUE_ANCHOR_MOVIE_RATING)   for t in anchor_titles] +
+        [(t, VALUE_DISLIKED_MOVIE_RATING) for t in dis_movies]
+    )
+
+    genome_len   = len(next(iter(fs.movieId_to_genome_tag_context.values())))
+    weighted_sum = np.zeros(genome_len, dtype=np.float32)
+    weight_total = 0.0
+
+    for title, weight in all_movies_with_weights:
+        mid = fs.title_to_movieId.get(title)
+        if mid is None or mid not in fs.movieId_to_genome_tag_context:
+            continue
+        weighted_sum += weight * np.array(fs.movieId_to_genome_tag_context[mid], dtype=np.float32)
+        weight_total += abs(weight)
+
+    if weight_total > 0:
+        weighted_sum /= weight_total
+    return weighted_sum
+
+
+def probe_genome_context(fs: FeatureStore, top_n: int = 15) -> None:
+    """Print the top genome tags for each canary user to validate the feature."""
+    # index → tag name
+    idx_to_name = {i: fs.genome_tag_names[tid] for tid, i in fs.genome_tag_to_i.items()}
+
+    print('\n' + '═' * 70)
+    print('GENOME CONTEXT PROBE — top genome tags per canary user')
+    print('═' * 70)
+
+    for user_type in USER_TYPE_TO_FAVORITE_MOVIES:
+        ctx = build_user_genome_context(user_type, fs)
+        top_indices = np.argsort(ctx)[::-1][:top_n]
+
+        fav_movies  = USER_TYPE_TO_FAVORITE_MOVIES[user_type]
+        dis_movies  = USER_TYPE_TO_DISLIKED_MOVIES[user_type]
+        genre_tags  = USER_TYPE_TO_GENOME_TAGS.get(user_type, [])
+        anchor_titles = _get_anchor_titles(fs, genre_tags, exclude=set(fav_movies))
+
+        print(f'\n── {user_type} ' + '─' * max(0, 50 - len(user_type)))
+        print(f'  Liked:   {", ".join(fav_movies[:4])}{"..." if len(fav_movies) > 4 else ""}')
+        if dis_movies:
+            print(f'  Disliked: {", ".join(dis_movies[:3])}')
+        if anchor_titles:
+            print(f'  Anchors: {", ".join(anchor_titles[:4])}{"..." if len(anchor_titles) > 4 else ""}')
+        print(f'  {"Rank":<4}  {"Genome Tag":<30}  Score')
+        print(f'  {"────":<4}  {"──────────":<30}  ─────')
+        for rank, idx in enumerate(top_indices, 1):
+            print(f'  {rank:<4}  {idx_to_name[idx]:<30}  {ctx[idx]:.4f}')
+
+
 # ── Embedding probes ──────────────────────────────────────────────────────────
 
 def probe_genre(model: MovieRecommender, genre: str, movie_embeddings: dict,
@@ -500,22 +592,31 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
         cfg['item_genome_tag_embedding_size']   = genome_dim
         cfg['item_year_embedding_size']         = sd['year_embedding_lookup.weight'].shape[1]
 
+        # Detect genome context tower regardless of proj/flat — covers all checkpoint types
+        use_gctx = 'user_genome_context_tower.0.weight' in sd
+        gctx_dim = sd['user_genome_context_tower.0.weight'].shape[0] if use_gctx else 0
+        cfg['use_user_genome_context']            = use_gctx
+        cfg['user_genome_context_embedding_size'] = gctx_dim
+
         if 'user_projection.0.weight' in sd:
             user_proj_in  = sd['user_projection.0.weight'].shape[1]
             output_dim    = sd['user_projection.2.weight'].shape[0]
-            nopool_in        = item_id_dim + genre_dim + ts_dim
-            old_gpool_in     = item_id_dim + genome_dim + genre_dim + ts_dim
-            ipool_gpool_in   = output_dim  + genome_dim + genre_dim + ts_dim
-            # ipool_only_in  = output_dim  + genre_dim  + ts_dim  (prior experiment)
-            if user_proj_in == nopool_in:
+
+            # Remaining input dim (pool arch independent of gctx)
+            base_proj_in   = user_proj_in - gctx_dim
+            nopool_in      = item_id_dim + genre_dim + ts_dim
+            old_gpool_in   = item_id_dim + genome_dim + genre_dim + ts_dim
+            ipool_gpool_in = output_dim  + genome_dim + genre_dim + ts_dim
+            # ipool_only_in = output_dim  + genre_dim  + ts_dim  (prior experiment)
+            if base_proj_in == nopool_in:
                 cfg['use_user_genome_pool']      = False
                 cfg['use_item_pool_for_history'] = False
                 cfg['use_item_pool_for_genome']  = False
-            elif user_proj_in == old_gpool_in:
+            elif base_proj_in == old_gpool_in:
                 cfg['use_user_genome_pool']      = True
                 cfg['use_item_pool_for_history'] = False
                 cfg['use_item_pool_for_genome']  = False
-            elif user_proj_in == ipool_gpool_in:
+            elif base_proj_in == ipool_gpool_in:
                 cfg['use_user_genome_pool']      = True
                 cfg['use_item_pool_for_history'] = True
                 cfg['use_item_pool_for_genome']  = False

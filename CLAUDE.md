@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Current State
 
-The model is complete and deployed. Best checkpoint: `best_mse_gpool_proj_20260424_105309.pth` (MSE rollback, genome pool ON, projection MLP, 128-dim output, 467k params). This is the prod model running in Streamlit — do not replace it without a clearly better eval result.
+The model is complete and deployed. Best checkpoint: `best_mse_gpool_gctx_proj_20260426_202808.pth` (MSE rollback, genome pool ON, genome context tower ON, projection MLP, 128-dim output, 512k params). This is the prod model running in Streamlit — do not replace it without a clearly better eval result.
 
 To re-export serving artifacts from prod checkpoint:
 
 ```bash
-python main.py export saved_models/best_mse_gpool_proj_20260424_105309.pth
+python main.py export saved_models/best_mse_gpool_gctx_proj_20260426_202808.pth
 ```
 
 ## Project Overview
@@ -83,7 +83,7 @@ Only movies with **200+ ratings** are kept (~9,375 movies). Only users with 20�
 
 ## Model Architecture (canonical — prod checkpoint, projection MLP)
 
-The prod checkpoint (`best_mse_gpool_proj_20260424_105309.pth`) uses the projection MLP architecture:
+The prod checkpoint (`best_mse_gpool_gctx_proj_20260426_202808.pth`) uses the projection MLP architecture with genome context:
 
 ```
 User Tower:
@@ -91,7 +91,8 @@ User Tower:
   rating_weighted_avg_pool(item_genome_tag_tower(genome_ctx[history]))  →  genome_emb   (32)  [shared tower]
   user_genre_tower([avg_rating_per_genre | watch_frac])                 →  genre_emb    (32)
   timestamp_embedding_tower(watch_month)                                →  ts_emb       (4)
-  concat (100) → Linear(256) → ReLU → Linear(128) → user_emb (128)
+  user_genome_context_tower(rating_weighted_avg(raw_genome[history]))   →  genome_ctx   (32)
+  concat (132) → Linear(256) → ReLU → Linear(128) → user_emb (128)
 
 Item Tower:
   item_genre_tower(genre_onehot)        →  item_genre_emb   (8)
@@ -130,6 +131,7 @@ Sub-tower linears: Xavier uniform `gain=0.1`. Projection linears re-initialized 
 - **Val logging**: every 10,000 steps (full val pass)
 - **Checkpointing**: `saved_models/best_mse_<pool>_<timestamp>.pth`
 - **LR=0.01**: Too aggressive; collapses genre boundaries — avoid
+- **Adam is a failure for MSE training — do not use.** Causes user tower collapse (same recs for every user regardless of taste). Root causes: adaptive per-parameter lr blows up sparse embeddings early then freezes them; β2=0.999 accumulates stale gradients from unrelated users; dot-product scoring is norm-sensitive so a few high-norm items dominate every user. SGD with momentum generalizes better here because noisier uniform updates force distributed representations. Tested at lr=0.005 — complete failure. Do not retry.
 - **Dataset structure**: rollback examples — for each watch event, context = all prior watches (chronological). User-level 90/10 train/val split; no within-user history split. Cap per user: `MAX_MSE_ROLLBACK_EXAMPLES_PER_USER=20`. Better cold-start generalization than fixed-split.
 - **Dataset build**: `python main.py dataset rollback` → `data/dataset_mse_rollback_*_v1.pt`
 

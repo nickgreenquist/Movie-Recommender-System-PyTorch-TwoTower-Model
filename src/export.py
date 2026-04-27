@@ -62,9 +62,15 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
     config['item_genome_tag_embedding_size']   = genome_dim
     config['item_year_embedding_size']         = sd['year_embedding_lookup.weight'].shape[1]
 
+    use_gctx = 'user_genome_context_tower.0.weight' in sd
+    gctx_dim = sd['user_genome_context_tower.0.weight'].shape[0] if use_gctx else 0
+    config['use_user_genome_context']            = use_gctx
+    config['user_genome_context_embedding_size'] = gctx_dim
+
     if 'user_projection.0.weight' in sd:
         user_proj_in = sd['user_projection.0.weight'].shape[1]
-        config['use_user_genome_pool'] = (user_proj_in != item_id_dim + genre_dim + ts_dim)
+        base_proj_in = user_proj_in - gctx_dim
+        config['use_user_genome_pool'] = (base_proj_in != item_id_dim + genre_dim + ts_dim)
         config['proj_hidden']          = sd['user_projection.0.weight'].shape[0]
         config['output_dim']           = sd['user_projection.2.weight'].shape[0]
     else:

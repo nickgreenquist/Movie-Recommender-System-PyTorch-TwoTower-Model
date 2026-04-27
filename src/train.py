@@ -30,15 +30,17 @@ def get_config() -> dict:
         'use_user_genome_pool':             True,
         'use_item_pool_for_history':        False,  # True → pool full item embedding instead of id pool
         'use_item_pool_for_genome':         False,  # True → replace both id+genome pools with single item pool
+        'use_user_genome_context':          True,   # True → add rating-weighted raw genome taste vector
+        'user_genome_context_embedding_size': 32,
         # Projection MLP (learn cross-feature interactions after concat)
         'proj_hidden':  256,
         'output_dim':   128,
         # Training
-        'lr':               0.005,
+        'lr':               0.01, # current best used 0.005, but let's double it
         'momentum':         0.9,
         'minibatch_size':   64,
         'training_steps':   150_000,
-        'log_every':        10_000,
+        'log_every':        5_000,
         'checkpoint_every': 30_000,
         'checkpoint_dir':   'saved_models',
     }
@@ -58,26 +60,21 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
 
     use_item_pool_for_history = config.get('use_item_pool_for_history', False)
     use_item_pool_for_genome  = config.get('use_item_pool_for_genome',  False)
-    needs_item_buffers = use_item_pool_for_history or use_item_pool_for_genome
-    if needs_item_buffers:
-        # Non-persistent buffers for item feature lookup during user pooling.
-        # Not saved in state_dict — rebuilt from features on every load.
-        genre_matrix = np.array(
-            [fs.movieId_to_genre_context[mid] for mid in fs.top_movies], dtype=np.float32)
-        tag_matrix = np.array(
-            [fs.movieId_to_tag_context[mid] for mid in fs.top_movies], dtype=np.float32)
-        year_array = np.array(
-            [fs.year_to_i[fs.movieId_to_year[mid]] for mid in fs.top_movies], dtype=np.int64)
-        genre_context_buffer = torch.from_numpy(
-            np.vstack([genre_matrix, np.zeros((1, genre_matrix.shape[1]), dtype=np.float32)]))
-        tag_context_buffer = torch.from_numpy(
-            np.vstack([tag_matrix, np.zeros((1, tag_matrix.shape[1]), dtype=np.float32)]))
-        year_context_buffer = torch.from_numpy(
-            np.concatenate([year_array, np.zeros((1,), dtype=np.int64)]))
-    else:
-        genre_context_buffer = None
-        tag_context_buffer   = None
-        year_context_buffer  = None
+
+    # Always build genre/tag/year buffers — forward() uses them for target-movie lookup
+    # regardless of pool mode. Non-persistent: not saved in state_dict.
+    genre_matrix = np.array(
+        [fs.movieId_to_genre_context[mid] for mid in fs.top_movies], dtype=np.float32)
+    tag_matrix = np.array(
+        [fs.movieId_to_tag_context[mid] for mid in fs.top_movies], dtype=np.float32)
+    year_array = np.array(
+        [fs.year_to_i[fs.movieId_to_year[mid]] for mid in fs.top_movies], dtype=np.int64)
+    genre_context_buffer = torch.from_numpy(
+        np.vstack([genre_matrix, np.zeros((1, genre_matrix.shape[1]), dtype=np.float32)]))
+    tag_context_buffer = torch.from_numpy(
+        np.vstack([tag_matrix, np.zeros((1, tag_matrix.shape[1]), dtype=np.float32)]))
+    year_context_buffer = torch.from_numpy(
+        np.concatenate([year_array, np.zeros((1,), dtype=np.int64)]))
 
     model = MovieRecommender(
         genres_len=len(fs.genres_ordered),
@@ -98,6 +95,8 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
         use_user_genome_pool=config.get('use_user_genome_pool', True),
         use_item_pool_for_history=use_item_pool_for_history,
         use_item_pool_for_genome=use_item_pool_for_genome,
+        use_user_genome_context=config.get('use_user_genome_context', False),
+        user_genome_context_embedding_size=config.get('user_genome_context_embedding_size', 32),
         genre_context_buffer=genre_context_buffer,
         tag_context_buffer=tag_context_buffer,
         year_context_buffer=year_context_buffer,
@@ -126,22 +125,25 @@ def print_model_summary(model: MovieRecommender) -> None:
     item_total       = item_genre_dim + item_tag_dim + genome_tag_dim + item_movieId_dim + year_dim
     n_params         = sum(p.nelement() for p in model.parameters() if p.requires_grad)
 
+    gctx_dim  = _out_dim(m.user_genome_context_tower) if m.use_user_genome_context else 0
+    gctx_part = f" + genome_ctx({gctx_dim})" if gctx_dim else ""
+
     if m.use_user_genome_pool and m.use_item_pool_for_genome:
         out_dim    = m.user_projection[2].out_features if m.user_projection is not None else history_dim
-        user_desc  = f"item_pool({out_dim}) + genre({genre_dim}) + ts({ts_dim})"
-        user_total = out_dim + genre_dim + ts_dim
+        user_desc  = f"item_emb_pool({out_dim}) + genre_tower({genre_dim}) + ts_emb({ts_dim}){gctx_part}"
+        user_total = out_dim + genre_dim + ts_dim + gctx_dim
     elif m.use_user_genome_pool and m.use_item_pool_for_history:
         out_dim    = m.user_projection[2].out_features if m.user_projection is not None else history_dim
         genome_dim = _out_dim(m.item_genome_tag_tower)
-        user_desc  = f"item_pool({out_dim}) + genome_pool({genome_dim}) + genre({genre_dim}) + ts({ts_dim})"
-        user_total = out_dim + genome_dim + genre_dim + ts_dim
+        user_desc  = f"item_emb_pool({out_dim}) + genome_pool({genome_dim}) + genre_tower({genre_dim}) + ts_emb({ts_dim}){gctx_part}"
+        user_total = out_dim + genome_dim + genre_dim + ts_dim + gctx_dim
     elif m.use_user_genome_pool:
         genome_dim = _out_dim(m.item_genome_tag_tower)
-        user_desc  = f"history({history_dim}) + genome({genome_dim}) + genre({genre_dim}) + ts({ts_dim})"
-        user_total = history_dim + genome_dim + genre_dim + ts_dim
+        user_desc  = f"item_id_pool({history_dim}) + genome_pool({genome_dim}) + genre_tower({genre_dim}) + ts_emb({ts_dim}){gctx_part}"
+        user_total = history_dim + genome_dim + genre_dim + ts_dim + gctx_dim
     else:
-        user_desc  = f"history({history_dim}) + genre({genre_dim}) + ts({ts_dim})"
-        user_total = history_dim + genre_dim + ts_dim
+        user_desc  = f"item_id_pool({history_dim}) + genre_tower({genre_dim}) + ts_emb({ts_dim}){gctx_part}"
+        user_total = history_dim + genre_dim + ts_dim + gctx_dim
 
     print(f"\n── Model dimensions ──")
     print(f"  User side:  {user_desc}  =  {user_total}")
@@ -175,10 +177,11 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
 
     pad_idx          = len(fs.top_movies)
     loss_fn          = torch.nn.MSELoss()
-    optimizer        = torch.optim.SGD(model.parameters(),
-                                        lr=config['lr'], momentum=config['momentum'])
+    optimizer        = torch.optim.SGD(model.parameters(), lr=config['lr'], momentum=config['momentum'])
     minibatch_size   = config['minibatch_size']
     training_steps   = config['training_steps']
+    scheduler        = torch.optim.lr_scheduler.CosineAnnealingLR(
+                           optimizer, T_max=training_steps, eta_min=0)
     log_every        = config['log_every']
     checkpoint_every = config['checkpoint_every']
     checkpoint_dir   = config['checkpoint_dir']
@@ -193,7 +196,9 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
         pool_tag = 'gpool'
     else:
         pool_tag = 'nopool'
-    arch_tag      = f'{pool_tag}_proj' if config.get('proj_hidden') else pool_tag
+    gctx_tag      = '_gctx' if config.get('use_user_genome_context') else ''
+    opt_tag       = '_adam' if isinstance(optimizer, torch.optim.Adam) else ''
+    arch_tag      = f'{pool_tag}{gctx_tag}{opt_tag}_proj' if config.get('proj_hidden') else f'{pool_tag}{gctx_tag}{opt_tag}'
     best_val_loss = float('inf')
     best_path     = os.path.join(checkpoint_dir, f'best_mse_{arch_tag}_{run_timestamp}.pth')
 
@@ -239,6 +244,7 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
             optimizer.zero_grad()
             output.backward()
             optimizer.step()
+            scheduler.step()
             loss_train.append(output.item())
 
         if is_val:
@@ -247,8 +253,9 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
             avg_train = np.mean(loss_train[i-log_every:i]) if i >= log_every else loss_train[-1] if loss_train else 0.0
             val_loss  = output_val
             pbar.set_postfix(train=f"{avg_train:.4f}", val=f"{val_loss:.4f}")
+            current_lr = scheduler.get_last_lr()[0] if i > 0 else config['lr']
             print(f"[{i:06d}]  train_loss={avg_train:.4f}  val_loss={val_loss:.4f}  "
-                  f"({elapsed:.0f}s)")
+                  f"lr={current_lr:.6f}  ({elapsed:.0f}s)")
 
             if i > 0 and val_loss < best_val_loss:
                 best_val_loss = val_loss
@@ -260,6 +267,28 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
                                         f'mse_{arch_tag}_{run_timestamp}_step_{i:06d}.pth')
                 torch.save(model.state_dict(), periodic)
                 print(f"  → periodic checkpoint → {periodic}")
+
+    # Final val pass at step training_steps (last step is training_steps-1, not evaluated)
+    val_batch_size = 1024
+    n_val = X_val.shape[0]
+    sq_sum, n_preds = 0.0, 0
+    model.eval()
+    with torch.no_grad():
+        for v0 in range(0, n_val, val_batch_size):
+            v1      = min(v0 + val_batch_size, n_val)
+            vix     = list(range(v0, v1))
+            hb      = pad_history_batch([X_history_val[j] for j in vix], pad_idx)
+            rb      = pad_history_ratings_batch([X_history_ratings_val[j] for j in vix])
+            vp      = model(X_val[v0:v1], hb, rb, timestamp_val[v0:v1],
+                            target_movieId_val[v0:v1])
+            sq_sum += ((vp - Y_val[v0:v1]) ** 2).sum().item()
+            n_preds += (v1 - v0)
+    final_val_loss = sq_sum / n_preds
+    print(f"[{training_steps:06d}]  val_loss={final_val_loss:.4f}  (final)")
+    if final_val_loss < best_val_loss:
+        best_val_loss = final_val_loss
+        torch.save(model.state_dict(), best_path)
+        print(f"  → new best {best_val_loss:.4f} → {best_path}")
 
     print(f"\nTraining complete. Best val loss: {best_val_loss:.4f}")
     print(f"Best checkpoint: {best_path}")
@@ -346,7 +375,8 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
         pool_tag = 'gpool'
     else:
         pool_tag = 'nopool'
-    arch_tag      = f'{pool_tag}_proj' if config.get('proj_hidden') else pool_tag
+    gctx_tag      = '_gctx' if config.get('use_user_genome_context') else ''
+    arch_tag      = f'{pool_tag}{gctx_tag}_proj' if config.get('proj_hidden') else f'{pool_tag}{gctx_tag}'
     best_val_loss = float('inf')
     best_path     = os.path.join(checkpoint_dir, f'best_softmax_{arch_tag}_{run_timestamp}.pth')
 
