@@ -1,5 +1,5 @@
 """
-Two-Tower MovieRecommender model.
+Two-Tower MovieRecommender model (genome pool + genome context always on).
 
 User tower:
   id_pool(32) + genome_pool(32) + genre(32) + ts(4) [+ genome_ctx(32)] → proj MLP → 128
