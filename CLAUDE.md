@@ -200,20 +200,20 @@ Note: rollback eval produces lower absolute numbers than leave-label-out (harder
 
 MSE with genome pooling is the right objective for MovieLens. Softmax (validated on Goodreads at 3× improvement) failed here.
 
-### Offline eval results — rollback protocol (2026-04-24)
+### Offline eval results — rollback protocol (updated 2026-04-28)
 
 All numbers below use the rollback eval protocol (harder than leave-label-out; compare only within this table).
 
-| Metric | Old prod: MSE flat | Softmax proj (genome=16) | **New prod: MSE rollback proj** |
-|---|---|---|---|
-| Hit Rate@1 | 0.19% | 0.14% | **0.43%** |
-| Hit Rate@5 | 0.94% | 0.57% | **1.66%** |
-| Hit Rate@10 | 1.70% | 1.00% | **2.70%** |
-| Hit Rate@20 | 2.93% | 1.66% | **4.28%** |
-| Hit Rate@50 | 5.62% | 3.45% | **7.59%** |
-| **MRR** | 0.0084 | 0.0058 | **0.0135** |
+| Metric | Old prod: MSE flat | Softmax proj (genome=16) | MSE rollback proj | **Current prod: + genome context** |
+|---|---|---|---|---|
+| Hit Rate@1 | 0.19% | 0.14% | 0.43% | **0.44%** |
+| Hit Rate@5 | 0.94% | 0.57% | 1.66% | **1.85%** |
+| Hit Rate@10 | 1.70% | 1.00% | 2.70% | **3.01%** |
+| Hit Rate@20 | 2.93% | 1.66% | 4.28% | **4.78%** |
+| Hit Rate@50 | 5.62% | 3.45% | 7.59% | **8.41%** |
+| **MRR** | 0.0084 | 0.0058 | 0.0135 | **0.0146** |
 
-New prod beats old prod by **+57% MRR** and +59% Hit Rate@10. Softmax is the worst of the three — confirms MSE is correct for MovieLens.
+Current prod beats old prod by **+74% MRR** and +77% Hit Rate@10. Adding the genome context tower over the base MSE rollback proj gave an additional **+8% MRR** and fixed Sci-Fi genre drift in canary. Softmax is the worst — confirms MSE is correct for MovieLens.
 
 ### Key architecture findings
 
@@ -221,7 +221,8 @@ New prod beats old prod by **+57% MRR** and +59% Hit Rate@10. Softmax is the wor
 - **Projection MLP is a clear win** — +57% MRR over flat architecture with rollback training.
 - **Rollback training > fixed-split** — model sees users at every history length, better cold-start.
 - **Genome sub-embedding size matters** — 32 is the minimum; 16 noticeably hurts.
-- **MSE + gpool + projection MLP + rollback training is the optimal configuration.**
+- **User genome context tower is a real win** — rating-weighted avg of raw genome scores (1,128-dim) → `user_genome_context_tower` (32-dim) added to user concat gave **+8% MRR** over the base projection MLP model and fixed Sci-Fi genre drift in canary. See `user_genome_context_tower` in `src/model.py`. Always on; not a flag.
+- **MSE + gpool + genome context + projection MLP + rollback training is the optimal configuration.**
 - **Pooling over the full 128-dim projected item embedding does not help** — see experiment log below.
 
 ### Softmax proj gpool findings (2026-04-24)
@@ -307,6 +308,28 @@ Prod wins on MRR (−2.1%) and most Hit Rate@K. The 32-dim id pool carries signa
 - Removing `item_embedding_tower` (the Linear+Tanh on top of the ID lookup) — causes severe genre clustering.
 - Pooling over the full projected item embedding (128-dim) in the user tower — confirmed null result across two variants.
 
+## Training Experiment Log (2026-04-27)
+
+### Experiment: 300k training steps
+
+**Motivation:** Check whether the model fully converges at 150k–200k steps.
+
+Checkpoint: `best_mse_gpool_proj_20260427_211802.pth` (trained on 20-example/user dataset)
+
+**Result: null.** MRR 0.0145 vs prod 0.0146 — tied within noise. Canary identical to prod. The model converges well before 300k steps; extra training provides no benefit.
+
+### Experiment: 30 examples per user (dataset rebuild, 2026-04-28)
+
+**Motivation:** More rollback examples per user (30 vs 20) exposes the model to more chronological positions in long watch histories, potentially improving generalization.
+
+Dataset stats: 4,942,281 train examples (+43% vs 20-example dataset), ~2.6GB on disk, ~16GB RAM (vs ~12GB at 20 examples).
+
+Checkpoint: `best_mse_gpool_proj_20260428_070226.pth`
+
+**Result: null.** MRR 0.0145 vs prod 0.0146 — tied. Marginally better at Hit Rate@10 (3.07% vs 3.01%) and Hit Rate@20 (4.81% vs 4.78%) but no MRR improvement. Canary identical.
+
+**Conclusion: canonical dataset cap is 20 examples/user. Do not increase — extra signal does not help given current architecture and the additional 4GB RAM is not worth it.**
+
 ## Dataset Memory Fix (2026-04-25)
 
 The dataset `.pt` files previously stored redundant per-item feature tensors (genre, tag, genome, year for the target movie) that were also available via the feature store. This bloated RAM to 33 GB on a 24 GB machine.
@@ -325,11 +348,9 @@ ROI on further MovieLens tuning is low. If continuing:
 
 1. **Rating variance per genre** in the user context vector — distinguishes genuine fans from casual watchers.
 2. **Genre + year in the same item tower** — directly attacks era confusion in recommendations (War/WW2/Western drift).
-3. **User genome context vector:** Build a dense (1,128-dim) genome context for the user from their watch history, analogous to how genre context is built. For each genome tag, compute a rating-weighted average of the movie's genome score across all watched movies — positive ratings above user mean push the score up, negative ratings pull it down. Pass this through `user_genre_tower`-style linear → user concat. This gives the model an explicit genome-space taste signal without relying solely on pooled item embeddings.
-4. **Better optimizer for MSE:** Adam with a LR scheduler (cosine or step decay) instead of SGD — may converge faster or to a better minimum.
-5. **Embedding size tuning:** Experiment with larger genome/genre/ID embedding dims — may improve representation capacity.
-6. **Remove timestamp from user tower:** It adds only 4 dims; removing it simplifies the user concat and may not hurt quality.
-7. **Freeze item embeddings during user pooling:** Prevent gradients from flowing back through the item tower when computing the user pool — decouples item representation learning from user pooling.
+3. **Embedding size tuning:** Experiment with larger genome/genre/ID embedding dims — may improve representation capacity.
+4. **Remove timestamp from user tower:** It adds only 4 dims; removing it simplifies the user concat and may not hurt quality.
+5. **Freeze item embeddings during user pooling:** Prevent gradients from flowing back through the item tower when computing the user pool — decouples item representation learning from user pooling.
 
 ## Known Code Inconsistency
 
