@@ -4,22 +4,17 @@ Movie Recommender System — CLI entry point.
 Usage:
     python main.py preprocess          # Stage 1: raw CSVs → data/base_*.parquet
     python main.py features            # Stage 2: base parquets → data/features_*.parquet
-    python main.py dataset             # Stage 3: features → data/dataset_*_v1.pt  (MSE, fixed split)
     python main.py dataset rollback    # Stage 3: features → data/dataset_mse_rollback_*_v1.pt
-    python main.py dataset softmax     # Stage 3: features → data/dataset_softmax_*_v1.pt
-    python main.py train               # Stage 4: MSE training (fixed split dataset)
     python main.py train rollback      # Stage 4: MSE training (rollback dataset)
-    python main.py train softmax       # Stage 4: in-batch negatives softmax training
     python main.py canary              # Canary user recommendations (most recent checkpoint)
     python main.py canary <path>       # Canary user recommendations (specific checkpoint)
     python main.py probe               # Embedding probes (most recent checkpoint)
     python main.py probe <path>        # Embedding probes (specific checkpoint)
-    python main.py eval                # Offline eval: Recall@K, NDCG@K, Hit Rate@K, MRR
+    python main.py eval                # Offline eval: Recall@K, NDCG@K, Hit Rate@K, MRR (rollback)
     python main.py eval <path>         # Same, specific checkpoint
     python main.py export              # Stage 5: export serving/ artifacts for Streamlit app
     python main.py export <path>       # Export using specific checkpoint
     python main.py posters             # Fetch movie poster URLs from TMDB → serving/posters.json
-    python main.py                     # Run all stages in order (MSE)
 """
 import sys
 
@@ -38,62 +33,25 @@ def cmd_features():
     run(data_dir=DATA_DIR, version=VERSION)
 
 
-def cmd_dataset(mode='mse', min_target_rating='0'):
-    if mode == 'softmax':
-        from src.dataset import load_features, make_softmax_splits, save_softmax_splits
-        print("Loading features ...")
-        fs = load_features(DATA_DIR, VERSION)
-        print("\nBuilding softmax datasets (rollback examples) ...")
-        train_data, val_data = make_softmax_splits(fs, DATA_DIR,
-                                                   min_target_rating=float(min_target_rating))
-        save_softmax_splits(train_data, val_data, DATA_DIR, VERSION)
-    elif mode == 'rollback':
-        from src.dataset import load_features, make_mse_rollback_splits, save_mse_rollback_splits
-        print("Loading features ...")
-        fs = load_features(DATA_DIR, VERSION)
-        print("\nBuilding MSE rollback datasets ...")
-        train_data, val_data = make_mse_rollback_splits(fs, DATA_DIR)
-        save_mse_rollback_splits(train_data, val_data, DATA_DIR, VERSION)
-    else:
-        from src.dataset import load_features, make_splits, save_splits
-        print("Loading features ...")
-        fs = load_features(DATA_DIR, VERSION)
-        print("\nBuilding datasets ...")
-        train_data, val_data = make_splits(fs)
-        save_splits(train_data, val_data, DATA_DIR, VERSION)
+def cmd_dataset(mode='rollback', **kwargs):
+    from src.dataset import load_features, make_mse_rollback_splits, save_mse_rollback_splits
+    print("Loading features ...")
+    fs = load_features(DATA_DIR, VERSION)
+    print("\nBuilding MSE rollback datasets ...")
+    train_data, val_data = make_mse_rollback_splits(fs, DATA_DIR)
+    save_mse_rollback_splits(train_data, val_data, DATA_DIR, VERSION)
 
 
-def cmd_train(mode='mse', **kwargs):
-    if mode == 'softmax':
-        from src.dataset import load_features, load_softmax_splits
-        from src.train import get_softmax_config, build_model, train_softmax
-        print("Loading features ...")
-        fs = load_features(DATA_DIR, VERSION)
-        print("\nLoading softmax datasets ...")
-        train_data, val_data = load_softmax_splits(DATA_DIR, VERSION)
-        config = get_softmax_config()
-        model  = build_model(config, fs)
-        train_softmax(model, train_data, val_data, config, fs)
-    elif mode == 'rollback':
-        from src.dataset import load_features, load_mse_rollback_splits
-        from src.train import get_config, build_model, train
-        print("Loading features ...")
-        fs = load_features(DATA_DIR, VERSION)
-        print("\nLoading MSE rollback datasets ...")
-        train_data, val_data = load_mse_rollback_splits(DATA_DIR, VERSION)
-        config = get_config()
-        model  = build_model(config, fs)
-        train(model, train_data, val_data, config, fs)
-    else:
-        from src.dataset import load_features, load_splits
-        from src.train import get_config, build_model, train
-        print("Loading features ...")
-        fs = load_features(DATA_DIR, VERSION)
-        print("\nLoading datasets ...")
-        train_data, val_data = load_splits(DATA_DIR, VERSION)
-        config = get_config()
-        model  = build_model(config, fs)
-        train(model, train_data, val_data, config, fs)
+def cmd_train(**kwargs):
+    from src.dataset import load_features, load_mse_rollback_splits
+    from src.train import get_config, build_model, train
+    print("Loading features ...")
+    fs = load_features(DATA_DIR, VERSION)
+    print("\nLoading MSE rollback datasets ...")
+    train_data, val_data = load_mse_rollback_splits(DATA_DIR, VERSION)
+    config = get_config()
+    model  = build_model(config, fs)
+    train(model, train_data, val_data, config, fs)
 
 
 def cmd_canary(checkpoint_path=None):
@@ -106,14 +64,13 @@ def cmd_probe(checkpoint_path=None):
     run_probes(data_dir=DATA_DIR, checkpoint_path=checkpoint_path, version=VERSION)
 
 
-def cmd_eval(checkpoint_path=None, protocol=None):
+def cmd_eval(checkpoint_path=None):
     from src.evaluate import _setup
     from src.offline_eval import run_offline_eval
 
     model, fs, _, _, _, _, _ = _setup(data_dir=DATA_DIR, checkpoint_path=checkpoint_path,
                                        version=VERSION)
-    run_offline_eval(model, fs, checkpoint_path=checkpoint_path or '', data_dir=DATA_DIR,
-                     force_rollback=(protocol == 'rollback'))
+    run_offline_eval(model, fs, checkpoint_path=checkpoint_path or '', data_dir=DATA_DIR)
 
 
 def cmd_export(checkpoint_path=None):
@@ -150,13 +107,7 @@ if __name__ == '__main__':
         cmd_canary()
     elif args[0] in COMMANDS:
         cmd = args[0]
-        if cmd in ('dataset', 'train') and len(args) > 2:
-            COMMANDS[cmd](mode=args[1], min_target_rating=args[2])
-        elif cmd in ('dataset', 'train') and len(args) > 1:
-            COMMANDS[cmd](mode=args[1])
-        elif cmd == 'eval' and len(args) > 2:
-            COMMANDS[cmd](checkpoint_path=args[1], protocol=args[2])
-        elif cmd in ('canary', 'probe', 'eval', 'export') and len(args) > 1:
+        if cmd in ('canary', 'probe', 'eval', 'export') and len(args) > 1:
             COMMANDS[cmd](checkpoint_path=args[1])
         else:
             COMMANDS[cmd]()

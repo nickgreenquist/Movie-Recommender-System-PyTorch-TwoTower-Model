@@ -1,23 +1,11 @@
 """
 Two-Tower MovieRecommender model.
 
-User tower modes (gpool = use_user_genome_pool):
-  use_user_genome_context=True adds genome_ctx(32) to the concat in any arch below:
-    genome_ctx = rating-weighted avg of raw genome scores (1128-dim) across history → linear tower
+User tower:
+  id_pool(32) + genome_pool(32) + genre(32) + ts(4) [+ genome_ctx(32)] → proj MLP → 128
 
-  gpool ON, use_item_pool_for_history=True  (prior experiment):
-    concat: item_pool(128) + genome_pool(32) + genre(32) + ts(4) [+ genome_ctx(32)] → proj MLP
-  gpool ON, use_item_pool_for_genome=True  (prior experiment — item pool only, no separate genome):
-    concat: item_pool(128) + genre(32) + ts(4) [+ genome_ctx(32)] → proj MLP
-  gpool ON, prod arch:
-    concat: id_pool(32) + genome_pool(32) + genre(32) + ts(4) [+ genome_ctx(32)] → proj MLP
-  gpool OFF:
-    concat: id_pool(32) + genre(32) + ts(4) [+ genome_ctx(32)] → proj MLP
-
-Item tower: genre + tag + genome + movie_id + year → projection MLP
-  concat: genre(8) + tag(16) + genome(32) + id(32) + year(8) = 96 → proj MLP → output_dim
-
-proj_hidden=None → no projection (legacy flat model, backward-compatible).
+Item tower:
+  genre(8) + tag(16) + genome(32) + id(32) + year(8) = 96 → proj MLP → 128
 
 genre_context_buffer, tag_context_buffer, year_context_buffer are non-persistent buffers
 (not saved in state_dict) — rebuilt from the feature store on every load.
@@ -43,10 +31,6 @@ class MovieRecommender(nn.Module):
                  item_year_embedding_size=8,
                  user_genre_embedding_size=32,
                  timestamp_feature_embedding_size=4,
-                 use_user_genome_pool=True,
-                 use_item_pool_for_history=False,
-                 use_item_pool_for_genome=False,
-                 use_user_genome_context=False,
                  user_genome_context_embedding_size=32,
                  genre_context_buffer=None,
                  tag_context_buffer=None,
@@ -59,34 +43,15 @@ class MovieRecommender(nn.Module):
             Row i = genome tag context for movie at embedding index i.
             Last row (index top_movies_len) = zeros — used as padding.
 
-        use_item_pool_for_history=True → replace the item-ID pool in the user tower with a
-            rating-weighted avg pool of full item_embedding() outputs (output_dim).
-            Genome pool is kept separately when use_user_genome_pool=True.
-            Requires genre_context_buffer, tag_context_buffer, year_context_buffer.
-
-        use_item_pool_for_genome=True → replace BOTH the item-ID pool AND the genome pool
-            with a single pool over full item_embedding() outputs. Takes priority over
-            use_item_pool_for_history. Requires the same context buffers.
-
         genre_context_buffer: float32 (top_movies_len + 1, genres_len), non-persistent.
         tag_context_buffer:   float32 (top_movies_len + 1, tags_len), non-persistent.
         year_context_buffer:  int64   (top_movies_len + 1,), non-persistent.
-            Last row/element = padding (zeros).
-
-        proj_hidden=None → no projection MLP; towers output raw concat directly
-            to dot product (legacy flat model). Only output_dim needs to match
-            between towers in this mode.
         """
         super().__init__()
 
         self.pad_idx = top_movies_len
-        self.use_user_genome_pool         = use_user_genome_pool
-        self.use_item_pool_for_history    = use_item_pool_for_history
-        self.use_item_pool_for_genome     = use_item_pool_for_genome
-        self.use_user_genome_context      = use_user_genome_context
 
         self.register_buffer('genome_context_buffer', genome_context_buffer)
-        # genre/tag/year buffers are always needed — forward() uses them for target-movie lookup.
         # Non-persistent: not saved in state_dict, rebuilt from feature store on every load.
         self.register_buffer('genre_context_buffer', genre_context_buffer, persistent=False)
         self.register_buffer('tag_context_buffer',   tag_context_buffer,   persistent=False)
@@ -133,59 +98,42 @@ class MovieRecommender(nn.Module):
             nn.Linear(timestamp_feature_embedding_size, timestamp_feature_embedding_size),
             nn.Tanh()
         )
-        if use_user_genome_context:
-            # Separate tower for the pre-aggregated user genome taste vector (1128 → gctx_dim).
-            # Distinct from item_genome_tag_tower which processes per-movie genome scores.
-            self.user_genome_context_tower = nn.Sequential(
-                nn.Linear(genome_tags_len, user_genome_context_embedding_size),
-                nn.Tanh()
-            )
+        # Separate tower for the pre-aggregated user genome taste vector (1128 → gctx_dim).
+        # Distinct from item_genome_tag_tower which processes per-movie genome scores.
+        self.user_genome_context_tower = nn.Sequential(
+            nn.Linear(genome_tags_len, user_genome_context_embedding_size),
+            nn.Tanh()
+        )
 
-        # ── Projection MLPs (learn cross-feature interactions) ────────────────
-        if proj_hidden is not None:
-            gctx_dim = user_genome_context_embedding_size if use_user_genome_context else 0
-            if use_user_genome_pool and use_item_pool_for_genome:
-                base_user_concat = (output_dim
-                                    + user_genre_embedding_size + timestamp_feature_embedding_size)
-            elif use_user_genome_pool and use_item_pool_for_history:
-                base_user_concat = (output_dim + item_genome_tag_embedding_size
-                                    + user_genre_embedding_size + timestamp_feature_embedding_size)
-            elif use_user_genome_pool:
-                base_user_concat = (item_movieId_embedding_size + item_genome_tag_embedding_size
-                                    + user_genre_embedding_size + timestamp_feature_embedding_size)
-            else:
-                base_user_concat = (item_movieId_embedding_size
-                                    + user_genre_embedding_size + timestamp_feature_embedding_size)
-            user_concat_dim = base_user_concat + gctx_dim
-            item_concat_dim = (item_genre_embedding_size + item_tag_embedding_size
-                               + item_genome_tag_embedding_size
-                               + item_movieId_embedding_size + item_year_embedding_size)
-            # No activation on the final linear — feeds directly into dot product.
-            self.user_projection = nn.Sequential(
-                nn.Linear(user_concat_dim, proj_hidden),
-                nn.ReLU(),
-                nn.Linear(proj_hidden, output_dim),
-            )
-            self.item_projection = nn.Sequential(
-                nn.Linear(item_concat_dim, proj_hidden),
-                nn.ReLU(),
-                nn.Linear(proj_hidden, output_dim),
-            )
-        else:
-            self.user_projection = None
-            self.item_projection = None
+        # ── Projection MLPs ───────────────────────────────────────────────────
+        user_concat_dim = (item_movieId_embedding_size + item_genome_tag_embedding_size
+                           + user_genre_embedding_size + timestamp_feature_embedding_size
+                           + user_genome_context_embedding_size)
+        item_concat_dim = (item_genre_embedding_size + item_tag_embedding_size
+                           + item_genome_tag_embedding_size
+                           + item_movieId_embedding_size + item_year_embedding_size)
+        # No activation on the final linear — feeds directly into dot product.
+        self.user_projection = nn.Sequential(
+            nn.Linear(user_concat_dim, proj_hidden),
+            nn.ReLU(),
+            nn.Linear(proj_hidden, output_dim),
+        )
+        self.item_projection = nn.Sequential(
+            nn.Linear(item_concat_dim, proj_hidden),
+            nn.ReLU(),
+            nn.Linear(proj_hidden, output_dim),
+        )
 
         # Sub-tower linears: gain=0.1 (not 0.01 — projection adds extra layers)
         self.apply(self._init_weights)
-        # Projection layers re-initialized separately at gain=1.0 after the rest.
+        # Projection layers re-initialized at gain=1.0 after the rest.
         # Without this, gain=0.1^2 compounds across sub-tower + projection and
         # collapses dot products to zero before training starts.
-        if self.user_projection is not None:
-            for proj in [self.user_projection, self.item_projection]:
-                for m in proj.modules():
-                    if isinstance(m, nn.Linear):
-                        nn.init.xavier_uniform_(m.weight)
-                        nn.init.constant_(m.bias, 0)
+        for proj in [self.user_projection, self.item_projection]:
+            for m in proj.modules():
+                if isinstance(m, nn.Linear):
+                    nn.init.xavier_uniform_(m.weight)
+                    nn.init.constant_(m.bias, 0)
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
@@ -195,24 +143,11 @@ class MovieRecommender(nn.Module):
         elif isinstance(module, nn.Embedding):
             nn.init.xavier_uniform_(module.weight, gain=0.01)
 
-    def _item_pool(self, user_watch_history, rating_weights, weight_sum):
-        """Pool full projected item embeddings over watch history. Returns (B, output_dim)."""
-        B, H  = user_watch_history.shape
-        flat  = user_watch_history.view(-1)
-        embs  = self.item_embedding(
-            self.genre_context_buffer[flat],
-            self.tag_context_buffer[flat],
-            self.genome_context_buffer[flat],
-            self.year_context_buffer[flat],
-            flat,
-        ).view(B, H, -1)
-        return (embs * rating_weights).sum(dim=1) / weight_sum
-
     def _genome_ctx_emb(self, user_watch_history, rating_weights, weight_sum):
         """Rating-weighted avg of raw genome scores → user_genome_context_tower. Returns (B, gctx_dim)."""
-        watched_genome_raw = self.genome_context_buffer[user_watch_history]   # (B, H, 1128)
-        genome_ctx_raw     = (watched_genome_raw * rating_weights).sum(dim=1) / weight_sum  # (B, 1128)
-        return self.user_genome_context_tower(genome_ctx_raw)                  # (B, gctx_dim)
+        watched_genome_raw = self.genome_context_buffer[user_watch_history]
+        genome_ctx_raw     = (watched_genome_raw * rating_weights).sum(dim=1) / weight_sum
+        return self.user_genome_context_tower(genome_ctx_raw)
 
     def user_embedding(self, user_genre_contexts, user_watch_history,
                        user_watch_history_ratings, timestamps):
@@ -221,41 +156,18 @@ class MovieRecommender(nn.Module):
         rating_weights = user_watch_history_ratings.unsqueeze(-1) * pad_mask
         weight_sum     = rating_weights.abs().sum(dim=1).clamp(min=1e-6)
 
-        genre_emb = self.user_genre_tower(user_genre_contexts)
-        ts_emb    = self.timestamp_embedding_tower(self.timestamp_embedding_lookup(timestamps))
+        genre_emb    = self.user_genre_tower(user_genre_contexts)
+        ts_emb       = self.timestamp_embedding_tower(self.timestamp_embedding_lookup(timestamps))
+        history_embs = self.item_embedding_lookup(user_watch_history)
+        history_emb  = (history_embs * rating_weights).sum(dim=1) / weight_sum
 
-        if self.use_user_genome_context:
-            gctx_emb = self._genome_ctx_emb(user_watch_history, rating_weights, weight_sum)
+        watched_genome = self.genome_context_buffer[user_watch_history]
+        genome_embs    = self.item_genome_tag_tower(watched_genome)
+        genome_emb     = (genome_embs * rating_weights).sum(dim=1) / weight_sum
+        parts = [history_emb, genome_emb, genre_emb, ts_emb]
 
-        if self.use_user_genome_pool and self.use_item_pool_for_genome:
-            item_pool = self._item_pool(user_watch_history, rating_weights, weight_sum)
-            parts = [item_pool, genre_emb, ts_emb]
-
-        elif self.use_user_genome_pool and self.use_item_pool_for_history:
-            item_pool      = self._item_pool(user_watch_history, rating_weights, weight_sum)
-            watched_genome = self.genome_context_buffer[user_watch_history]
-            genome_embs    = self.item_genome_tag_tower(watched_genome)
-            genome_emb     = (genome_embs * rating_weights).sum(dim=1) / weight_sum
-            parts = [item_pool, genome_emb, genre_emb, ts_emb]
-
-        elif self.use_user_genome_pool:
-            history_embs   = self.item_embedding_lookup(user_watch_history)
-            history_emb    = (history_embs * rating_weights).sum(dim=1) / weight_sum
-            watched_genome = self.genome_context_buffer[user_watch_history]
-            genome_embs    = self.item_genome_tag_tower(watched_genome)
-            genome_emb     = (genome_embs * rating_weights).sum(dim=1) / weight_sum
-            parts = [history_emb, genome_emb, genre_emb, ts_emb]
-
-        else:
-            history_embs = self.item_embedding_lookup(user_watch_history)
-            history_emb  = (history_embs * rating_weights).sum(dim=1) / weight_sum
-            parts = [history_emb, genre_emb, ts_emb]
-
-        if self.use_user_genome_context:
-            parts.append(gctx_emb)
-
-        concat = torch.cat(parts, dim=1)
-        return self.user_projection(concat) if self.user_projection is not None else concat
+        parts.append(self._genome_ctx_emb(user_watch_history, rating_weights, weight_sum))
+        return self.user_projection(torch.cat(parts, dim=1))
 
     def item_embedding(self, movie_genres, movie_tags, movie_genome_tags, years, target_movieId):
         """Item tower: returns (batch, output_dim)."""
@@ -265,7 +177,7 @@ class MovieRecommender(nn.Module):
         item_emb        = self.item_embedding_tower(self.item_embedding_lookup(target_movieId))
         year_emb        = self.year_embedding_tower(self.year_embedding_lookup(years))
         concat = torch.cat([item_genre_emb, item_tag_emb, item_genome_emb, item_emb, year_emb], dim=1)
-        return self.item_projection(concat) if self.item_projection is not None else concat
+        return self.item_projection(concat)
 
     def forward(self, user_genre_contexts, user_watch_history,
                 user_watch_history_ratings, timestamps, target_movieId):

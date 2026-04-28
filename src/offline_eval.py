@@ -1,16 +1,10 @@
 """
 Offline retrieval evaluation — Recall@K, NDCG@K, Hit Rate@K, MRR.
 
-MSE protocol: leave-label-out per user.
-  Context = user_to_watch_history (90% of ratings, pre-mapped movie indices)
-  Targets = user_to_movie_to_rating_LABEL (remaining 10% of ratings)
-  Users   = 10% MSE val users (held out from make_splits)
-
-Softmax protocol: rollback eval on softmax val users.
-  Val users (10% of all users) were never seen during softmax training, so
-  every chronological position in their full history is a valid test target.
-  For each user, sample up to MAX_ROLLBACKS_PER_USER positions; at each
-  position j, context = history[0..j-1] and target = history[j].
+Rollback protocol: for each val user (held out at user level), sample up to
+MAX_ROLLBACKS_PER_USER chronological positions.  At each position j,
+context = history[0..j-1], target = history[j].  All positions are
+valid since val users were never seen in training.
 
 Usage:
     python main.py eval
@@ -71,96 +65,15 @@ def run_offline_eval(model: MovieRecommender, fs: FeatureStore,
                      n_users: int = 5_000,
                      ks: tuple = (1, 5, 10, 20, 50),
                      seed: int = 42,
-                     data_dir: str = 'data',
-                     force_rollback: bool = False) -> None:
-    if force_rollback or 'softmax' in checkpoint_path:
-        _run_softmax_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed)
-    else:
-        _run_mse_eval(model, fs, checkpoint_path, n_users, ks, seed)
+                     data_dir: str = 'data') -> None:
+    _run_rollback_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed)
 
 
-def _run_mse_eval(model, fs, checkpoint_path, n_users, ks, seed):
-    model.eval()
-
-    print("Building movie embeddings ...")
-    all_ids, all_embs, mid_to_pos = _build_emb_matrix(model, fs)
-    ts_bin = _ts_max_bin(fs)
-
-    # MSE val users — held-out 10% from make_splits (same filter + seed)
-    all_eligible = [u for u in fs.user_ids
-                    if 2 <= len(fs.user_to_movie_to_rating_LABEL.get(u, {})) < 500]
-    split_rng = random.Random(42)
-    split_rng.shuffle(all_eligible)
-    split = int(len(all_eligible) * 0.9)
-    val_users_set = set(all_eligible[split:])
-
-    eligible = [u for u in val_users_set
-                if fs.user_to_watch_history.get(u)
-                and fs.user_to_movie_to_rating_LABEL.get(u)]
-    rng = random.Random(seed)
-    eval_users = rng.sample(eligible, min(n_users, len(eligible)))
-
-    recall   = {k: 0.0 for k in ks}
-    hit_rate = {k: 0   for k in ks}
-    ndcg     = {k: 0.0 for k in ks}
-    mrr_sum  = 0.0
-    n_eval   = 0
-
-    with torch.no_grad():
-        for user in eval_users:
-            hist_indices = fs.user_to_watch_history[user]
-            hist_ratings = fs.user_to_watch_history_ratings[user]
-            if not hist_indices:
-                continue
-
-            target_mids = [int(mid) for mid in fs.user_to_movie_to_rating_LABEL[user]
-                           if int(mid) in mid_to_pos]
-            if not target_mids:
-                continue
-
-            genre_ctx  = fs.user_to_context[user]
-            hist_idx_t = pad_history_batch([hist_indices], model.pad_idx)
-            hist_wts_t = pad_history_ratings_batch([hist_ratings])
-            user_emb   = model.user_embedding(
-                torch.tensor([genre_ctx]),
-                hist_idx_t, hist_wts_t,
-                ts_bin,
-            )
-
-            scores = (all_embs @ user_emb.T).squeeze(-1)
-
-            n_targets        = len(target_mids)
-            target_positions = [mid_to_pos[mid] for mid in target_mids]
-            target_scores    = scores[target_positions]
-            ranks = (scores.unsqueeze(1) > target_scores.unsqueeze(0)).sum(dim=0) + 1
-
-            best_rank = ranks.min().item()
-            mrr_sum  += 1.0 / best_rank
-
-            for k in ks:
-                hits_k = (ranks <= k).sum().item()
-                recall[k]   += hits_k / n_targets
-                hit_rate[k] += int(hits_k > 0)
-                dcg   = sum(1.0 / math.log2(r + 1) for r in ranks.tolist() if r <= k)
-                ideal = sum(1.0 / math.log2(i + 2) for i in range(min(n_targets, k)))
-                ndcg[k] += dcg / ideal if ideal > 0 else 0.0
-
-            n_eval += 1
-
-    if n_eval == 0:
-        print("No users evaluated — check that feature parquets are loaded.")
-        return
-
-    _print_results(recall, hit_rate, ndcg, mrr_sum, n_eval, ks, all_ids, checkpoint_path, "MSE leave-label-out")
-
-
-def _run_softmax_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed):
+def _run_rollback_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed):
     """
-    Rollback eval for softmax models.
-
-    Softmax val users were never seen during training (user-level split),
-    so every chronological position in their full history is a valid target.
-    Uses up to MAX_ROLLBACKS_PER_USER randomly-sampled positions per user.
+    Rollback eval: val users (10% user-level split) were never seen in training,
+    so every chronological position in their full history is a valid test target.
+    Samples up to MAX_ROLLBACKS_PER_USER positions per user.
     """
     import pandas as pd
     from src.features import MAX_HISTORY_LEN
@@ -171,19 +84,19 @@ def _run_softmax_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed):
     all_ids, all_embs, mid_to_pos = _build_emb_matrix(model, fs)
     ts_bin = _ts_max_bin(fs)
 
-    # Softmax val users — 10% held out from make_softmax_splits (seed=42, all user_ids)
+    # Val users — 10% held out at user level (seed=42)
     valid_users = fs.user_ids[:]
     split_rng = random.Random(42)
     split_rng.shuffle(valid_users)
     split = int(len(valid_users) * 0.9)
-    softmax_val_users = valid_users[split:]
+    val_users = valid_users[split:]
 
     rng = random.Random(seed)
-    rng.shuffle(softmax_val_users)
-    eval_users = softmax_val_users[:n_users]
+    rng.shuffle(val_users)
+    eval_users = val_users[:n_users]
 
     # Load full chronological history (watch + labels) for eval users
-    print("Loading raw interactions for softmax val users ...")
+    print("Loading raw interactions for val users ...")
     watch_path  = os.path.join(data_dir, 'base_ratings_watch.parquet')
     labels_path = os.path.join(data_dir, 'base_ratings_labels.parquet')
     eval_set = set(eval_users)
@@ -261,4 +174,4 @@ def _run_softmax_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed):
         return
 
     _print_results(recall, hit_rate, ndcg, mrr_sum, n_eval, ks, all_ids, checkpoint_path,
-                   f"Softmax rollback (≤{MAX_ROLLBACKS_PER_USER}/user)")
+                   f"MSE rollback (≤{MAX_ROLLBACKS_PER_USER}/user)")

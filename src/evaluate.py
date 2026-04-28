@@ -13,7 +13,7 @@ import torch
 import torch.nn.functional as F
 from src.dataset import FeatureStore
 from src.model import MovieRecommender
-from src.train import build_model, get_config, get_softmax_config, print_model_summary
+from src.train import build_model, get_config, print_model_summary
 
 
 # ── Canary user definitions ───────────────────────────────────────────────────
@@ -581,13 +581,9 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
     # Resolve and load checkpoint first — fast, and fails before the slow features load
     # Detect checkpoint type from filename to pick the right config
     def _resolve_config(path):
-        name = os.path.basename(path)
-        is_softmax = 'softmax' in name
-        sd = torch.load(path, weights_only=True)
-        cfg = get_softmax_config() if is_softmax else get_config()
+        sd  = torch.load(path, weights_only=True)
+        cfg = get_config()
 
-        # Always read embedding sizes from state dict shapes — works for both
-        # legacy flat models and new projection models.
         item_id_dim = sd['item_embedding_lookup.weight'].shape[1]
         ts_dim      = sd['timestamp_embedding_lookup.weight'].shape[1]
         genre_dim   = sd['user_genre_tower.0.weight'].shape[0]
@@ -600,50 +596,10 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
         cfg['item_genome_tag_embedding_size']   = genome_dim
         cfg['item_year_embedding_size']         = sd['year_embedding_lookup.weight'].shape[1]
 
-        # Detect genome context tower regardless of proj/flat — covers all checkpoint types
-        use_gctx = 'user_genome_context_tower.0.weight' in sd
-        gctx_dim = sd['user_genome_context_tower.0.weight'].shape[0] if use_gctx else 0
-        cfg['use_user_genome_context']            = use_gctx
-        cfg['user_genome_context_embedding_size'] = gctx_dim
+        cfg['user_genome_context_embedding_size'] = sd['user_genome_context_tower.0.weight'].shape[0]
 
-        if 'user_projection.0.weight' in sd:
-            user_proj_in  = sd['user_projection.0.weight'].shape[1]
-            output_dim    = sd['user_projection.2.weight'].shape[0]
-
-            # Remaining input dim (pool arch independent of gctx)
-            base_proj_in   = user_proj_in - gctx_dim
-            nopool_in      = item_id_dim + genre_dim + ts_dim
-            old_gpool_in   = item_id_dim + genome_dim + genre_dim + ts_dim
-            ipool_gpool_in = output_dim  + genome_dim + genre_dim + ts_dim
-            # ipool_only_in = output_dim  + genre_dim  + ts_dim  (prior experiment)
-            if base_proj_in == nopool_in:
-                cfg['use_user_genome_pool']      = False
-                cfg['use_item_pool_for_history'] = False
-                cfg['use_item_pool_for_genome']  = False
-            elif base_proj_in == old_gpool_in:
-                cfg['use_user_genome_pool']      = True
-                cfg['use_item_pool_for_history'] = False
-                cfg['use_item_pool_for_genome']  = False
-            elif base_proj_in == ipool_gpool_in:
-                cfg['use_user_genome_pool']      = True
-                cfg['use_item_pool_for_history'] = True
-                cfg['use_item_pool_for_genome']  = False
-            else:
-                # Prior experiment: item pool only, no separate genome pool
-                cfg['use_user_genome_pool']      = True
-                cfg['use_item_pool_for_history'] = False
-                cfg['use_item_pool_for_genome']  = True
-            cfg['proj_hidden'] = sd['user_projection.0.weight'].shape[0]
-            cfg['output_dim']  = output_dim
-        else:
-            # Legacy flat model — detect pool from filename then genre tower output
-            if 'nopool' in name:
-                cfg['use_user_genome_pool'] = False
-            elif 'gpool' in name:
-                cfg['use_user_genome_pool'] = True
-            else:
-                cfg['use_user_genome_pool'] = (genre_dim == 30)
-            cfg['proj_hidden'] = None
+        cfg['proj_hidden'] = sd['user_projection.0.weight'].shape[0]
+        cfg['output_dim']  = sd['user_projection.2.weight'].shape[0]
         return cfg
 
     # Auto-detect most recent checkpoint if none specified
@@ -651,9 +607,7 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
     if checkpoint_path is None:
         checkpoint_dir = _tmp_config['checkpoint_dir']
         candidates = sorted(
-            glob.glob(os.path.join(checkpoint_dir, 'best_mse_*.pth')) +
-            glob.glob(os.path.join(checkpoint_dir, 'best_softmax_*.pth')) +
-            glob.glob(os.path.join(checkpoint_dir, 'best_checkpoint_*.pth')),  # legacy
+            glob.glob(os.path.join(checkpoint_dir, 'best_mse_*.pth')),
             key=os.path.getmtime, reverse=True,
         )
         if not candidates:
@@ -783,31 +737,6 @@ def probe_similar(movie_embeddings: dict, fs: FeatureStore,
     print_table("Most similar — combined embedding", top_n_for(all_norm,    'MOVIE_EMBEDDING_COMBINED'))
     print_table("Most similar — item ID embedding",  top_n_for(all_id_norm, 'MOVIEID_EMBEDDING'))
 
-
-def probe_norms(all_ids: list, all_embs: torch.Tensor, fs: FeatureStore,
-                top_n: int = 20) -> None:
-    """Print highest and lowest norm items in the combined embedding space."""
-    norms = torch.norm(all_embs, dim=1)  # (n_movies,)
-    sorted_idx = norms.argsort(descending=True)
-
-    col_w = 50
-    print(f"\n── Embedding norm diagnostic  (top/bottom {top_n}) ──")
-    print(f"  mean={norms.mean():.3f}  std={norms.std():.3f}  "
-          f"min={norms.min():.3f}  max={norms.max():.3f}")
-
-    print(f"\n  {'Rank':<6}  {'Norm':>6}  {'Title'}")
-    print("  " + "─" * (col_w + 16))
-    for rank, idx in enumerate(sorted_idx[:top_n].tolist(), 1):
-        mid   = all_ids[idx]
-        title = fs.movieId_to_title.get(mid, str(mid))[:col_w]
-        print(f"  {rank:<6}  {norms[idx].item():>6.3f}  {title}")
-
-    print(f"\n  {'Rank':<6}  {'Norm':>6}  {'Title'}")
-    print("  " + "─" * (col_w + 16))
-    for rank, idx in enumerate(sorted_idx[-top_n:].flip(0).tolist(), 1):
-        mid   = all_ids[idx]
-        title = fs.movieId_to_title.get(mid, str(mid))[:col_w]
-        print(f"  {len(all_ids)-top_n+rank:<6}  {norms[idx].item():>6.3f}  {title}")
 
 
 def run_probes(data_dir: str = 'data', checkpoint_path: str = None,

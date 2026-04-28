@@ -76,8 +76,6 @@ def load_artifacts():
         item_year_embedding_size=cfg['item_year_embedding_size'],
         user_genre_embedding_size=cfg['user_genre_embedding_size'],
         timestamp_feature_embedding_size=cfg['timestamp_feature_embedding_size'],
-        use_user_genome_pool=cfg.get('use_user_genome_pool', True),
-        use_user_genome_context=cfg.get('use_user_genome_context', False),
         user_genome_context_embedding_size=cfg.get('user_genome_context_embedding_size', 32),
         proj_hidden=cfg.get('proj_hidden', None),
         output_dim=cfg.get('output_dim', 128),
@@ -180,51 +178,45 @@ def _build_user_embedding(model, fs, liked_titles_with_weights, disliked_titles,
     genre_emb = model.user_genre_tower(torch.tensor([ctx]))
     ts_emb    = model.timestamp_embedding_tower(model.timestamp_embedding_lookup(ts_inference))
 
-    if model.use_user_genome_pool:
-        # Genome pooling — mirrors history pooling in content space (shared tower)
-        genome_contexts = []
-        genome_weights  = []
-        for t, w in list(liked_titles_with_weights) + [(t, _DISLIKED_MOVIE) for t in disliked_titles]:
-            mid = fs['title_to_movieId'].get(t)
-            if mid and mid in fs['movieId_to_genome_tag_context']:
-                genome_contexts.append(fs['movieId_to_genome_tag_context'][mid])
-                genome_weights.append(w)
+    # Genome pooling — mirrors history pooling in content space (shared tower)
+    genome_contexts = []
+    genome_weights  = []
+    for t, w in list(liked_titles_with_weights) + [(t, _DISLIKED_MOVIE) for t in disliked_titles]:
+        mid = fs['title_to_movieId'].get(t)
+        if mid and mid in fs['movieId_to_genome_tag_context']:
+            genome_contexts.append(fs['movieId_to_genome_tag_context'][mid])
+            genome_weights.append(w)
 
-        if genome_contexts:
-            gc_tensor  = torch.tensor(np.array(genome_contexts, dtype=np.float32))
-            ge_embs    = model.item_genome_tag_tower(gc_tensor)
-            wts        = torch.tensor(genome_weights)
-            wt_sum_g   = wts.abs().sum().clamp(min=1e-6)
-            genome_emb = (ge_embs * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_g
-        else:
-            genome_emb = torch.zeros(1, model.item_genome_tag_tower[0].out_features)
-
-        concat = torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
+    if genome_contexts:
+        gc_tensor  = torch.tensor(np.array(genome_contexts, dtype=np.float32))
+        ge_embs    = model.item_genome_tag_tower(gc_tensor)
+        wts        = torch.tensor(genome_weights)
+        wt_sum_g   = wts.abs().sum().clamp(min=1e-6)
+        genome_emb = (ge_embs * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_g
     else:
-        concat = torch.cat([history_emb, genre_emb, ts_emb], dim=1)
+        genome_emb = torch.zeros(1, model.item_genome_tag_tower[0].out_features)
 
-    if model.use_user_genome_context:
-        # Rating-weighted avg of raw genome scores → user_genome_context_tower
-        gctx_contexts = []
-        gctx_weights  = []
-        for t, w in list(liked_titles_with_weights) + [(t, _DISLIKED_MOVIE) for t in disliked_titles]:
-            mid = fs['title_to_movieId'].get(t)
-            if mid and mid in fs['movieId_to_genome_tag_context']:
-                gctx_contexts.append(fs['movieId_to_genome_tag_context'][mid])
-                gctx_weights.append(w)
-        if gctx_contexts:
-            gctx_tensor = torch.tensor(np.array(gctx_contexts, dtype=np.float32))
-            wts         = torch.tensor(gctx_weights)
-            wt_sum_gc   = wts.abs().sum().clamp(min=1e-6)
-            genome_ctx_raw = (gctx_tensor * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_gc
-        else:
-            genome_ctx_raw = torch.zeros(1, model.user_genome_context_tower[0].in_features)
-        gctx_emb = model.user_genome_context_tower(genome_ctx_raw)
-        concat = torch.cat([concat, gctx_emb], dim=1)
+    concat = torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
 
-    if model.user_projection is not None:
-        return model.user_projection(concat)
-    return concat
+    # Rating-weighted avg of raw genome scores → user_genome_context_tower
+    gctx_contexts = []
+    gctx_weights  = []
+    for t, w in list(liked_titles_with_weights) + [(t, _DISLIKED_MOVIE) for t in disliked_titles]:
+        mid = fs['title_to_movieId'].get(t)
+        if mid and mid in fs['movieId_to_genome_tag_context']:
+            gctx_contexts.append(fs['movieId_to_genome_tag_context'][mid])
+            gctx_weights.append(w)
+    if gctx_contexts:
+        gctx_tensor = torch.tensor(np.array(gctx_contexts, dtype=np.float32))
+        wts         = torch.tensor(gctx_weights)
+        wt_sum_gc   = wts.abs().sum().clamp(min=1e-6)
+        genome_ctx_raw = (gctx_tensor * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_gc
+    else:
+        genome_ctx_raw = torch.zeros(1, model.user_genome_context_tower[0].in_features)
+    gctx_emb = model.user_genome_context_tower(genome_ctx_raw)
+    concat = torch.cat([concat, gctx_emb], dim=1)
+
+    return model.user_projection(concat)
 
 
 def _build_genome_i_to_name(fs):

@@ -20,7 +20,7 @@ import torch.nn.functional as F
 
 from src.dataset import load_features
 from src.evaluate import build_movie_embeddings
-from src.train import build_model, get_config, get_softmax_config
+from src.train import build_model, get_config
 
 SERVING_DIR = 'serving'
 
@@ -32,9 +32,7 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
         cfg = get_config()
         checkpoint_dir = cfg['checkpoint_dir']
         candidates = sorted(
-            glob.glob(os.path.join(checkpoint_dir, 'best_mse_*.pth')) +
-            glob.glob(os.path.join(checkpoint_dir, 'best_softmax_*.pth')) +
-            glob.glob(os.path.join(checkpoint_dir, 'best_checkpoint_*.pth')),  # legacy
+            glob.glob(os.path.join(checkpoint_dir, 'best_mse_*.pth')),
             key=os.path.getmtime, reverse=True,
         )
         if not candidates:
@@ -42,9 +40,7 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
             return
         checkpoint_path = candidates[0]
 
-    name = os.path.basename(checkpoint_path)
-    is_softmax = 'softmax' in name
-    config = get_softmax_config() if is_softmax else get_config()
+    config = get_config()
 
     print(f"Checkpoint: {checkpoint_path}")
     state_dict = torch.load(checkpoint_path, weights_only=True)
@@ -62,23 +58,10 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
     config['item_genome_tag_embedding_size']   = genome_dim
     config['item_year_embedding_size']         = sd['year_embedding_lookup.weight'].shape[1]
 
-    use_gctx = 'user_genome_context_tower.0.weight' in sd
-    gctx_dim = sd['user_genome_context_tower.0.weight'].shape[0] if use_gctx else 0
-    config['use_user_genome_context']            = use_gctx
-    config['user_genome_context_embedding_size'] = gctx_dim
+    config['user_genome_context_embedding_size'] = sd['user_genome_context_tower.0.weight'].shape[0]
 
-    if 'user_projection.0.weight' in sd:
-        user_proj_in = sd['user_projection.0.weight'].shape[1]
-        base_proj_in = user_proj_in - gctx_dim
-        config['use_user_genome_pool'] = (base_proj_in != item_id_dim + genre_dim + ts_dim)
-        config['proj_hidden']          = sd['user_projection.0.weight'].shape[0]
-        config['output_dim']           = sd['user_projection.2.weight'].shape[0]
-    else:
-        config['proj_hidden'] = None
-        if 'nopool' in name:
-            config['use_user_genome_pool'] = False
-        elif 'gpool' in name:
-            config['use_user_genome_pool'] = True
+    config['proj_hidden'] = sd['user_projection.0.weight'].shape[0]
+    config['output_dim']  = sd['user_projection.2.weight'].shape[0]
 
     print("Loading features ...")
     fs = load_features(data_dir, version)
