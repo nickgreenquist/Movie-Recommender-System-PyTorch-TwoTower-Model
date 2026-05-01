@@ -18,45 +18,6 @@ from src.train import build_model, get_config, print_model_summary
 
 # ── Canary user definitions ───────────────────────────────────────────────────
 
-USER_TYPE_TO_FAVORITE_GENRES = {
-    "Children's Movie Lover":  ['Children'],
-    'Horror Lover':            ['Horror'],
-    'Sci-Fi Lover':            ['Sci-Fi'],
-    'Comedy Lover':            ['Comedy'],
-    'Romance Lover':           ['Romance'],
-    'War Movie Lover':         ['War'],
-    'Fantasy Lover':           [],
-    'Crime Lover':             ['Crime'],
-    'Heist Lover':             [],
-    'Action Junkie':           [],
-    'Arthouse Lover':          [],
-    'Superhero Lover':         [],
-    'WW2 Lover':               [],
-    'Western Lover':           ['Western'],
-    'Anime Lover':             [],
-    'Martial Arts Lover':      [],
-    "Nick's Recommendations":  [],
-}
-
-USER_TYPE_TO_WORST_GENRES = {
-    "Children's Movie Lover":  [],
-    'Horror Lover':            [],
-    'Sci-Fi Lover':            [],
-    'Comedy Lover':            [],
-    'Romance Lover':           [],
-    'War Movie Lover':         [],
-    'Fantasy Lover':           [],
-    'Crime Lover':             [],
-    'Heist Lover':             [],
-    'Action Junkie':           [],
-    'Arthouse Lover':          [],
-    'Superhero Lover':         [],
-    'WW2 Lover':               [],
-    'Western Lover':           [],
-    'Anime Lover':             [],
-    'Martial Arts Lover':      [],
-    "Nick's Recommendations":  [],
-}
 
 USER_TYPE_TO_FAVORITE_MOVIES = {
     "Children's Movie Lover": [
@@ -283,8 +244,6 @@ def _get_anchor_titles(fs: FeatureStore, genome_tags: list, exclude: set) -> lis
 def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: str,
                           ts_inference: torch.Tensor) -> torch.Tensor:
     """Build the combined user embedding for a canary user type. Mirrors website logic."""
-    fav_genres   = USER_TYPE_TO_FAVORITE_GENRES[user_type]
-    worst_genres = USER_TYPE_TO_WORST_GENRES[user_type]
     fav_movies   = USER_TYPE_TO_FAVORITE_MOVIES[user_type]
     dis_movies   = USER_TYPE_TO_DISLIKED_MOVIES[user_type]
     genome_tags  = USER_TYPE_TO_GENOME_TAGS.get(user_type, [])
@@ -355,7 +314,7 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
     )
 
     with torch.no_grad():
-        for user_type in USER_TYPE_TO_FAVORITE_GENRES:
+        for user_type in USER_TYPE_TO_FAVORITE_MOVIES:
             user_emb    = _build_user_embedding(model, fs, user_type, ts_max_bin)
             fav_movies  = USER_TYPE_TO_FAVORITE_MOVIES[user_type]
             dis_movies  = USER_TYPE_TO_DISLIKED_MOVIES[user_type]
@@ -374,12 +333,9 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
                 if title not in exclude_set:
                     recs.append(title)
 
-            liked_genres    = ', '.join(USER_TYPE_TO_FAVORITE_GENRES[user_type])
-            disliked_genres = ', '.join(USER_TYPE_TO_WORST_GENRES[user_type])
-
             col_w      = min(55, max((len(t) for t in fav_movies + dis_movies), default=20))
             rec_w      = min(55, max((len(r) for r in recs), default=20))
-            title_line = f"{user_type}  |  Likes: {liked_genres}  |  Dislikes: {disliked_genres}"
+            title_line = user_type
             if genome_tags:
                 title_line += f"  |  Genome: {', '.join(genome_tags)}"
             bar_w      = max(col_w * 2 + rec_w + 6, len(title_line))
