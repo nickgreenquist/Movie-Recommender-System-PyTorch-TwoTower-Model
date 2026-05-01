@@ -87,7 +87,7 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
 
     # ── Popularity ordering (for app dropdowns) ──────────────────────────────
     print("Computing popularity order ...")
-    watch_df    = pd.read_parquet(os.path.join(data_dir, 'base_ratings_watch.parquet'))
+    watch_df    = pd.read_parquet(os.path.join(data_dir, 'base_ratings.parquet'))
     mid_counts  = watch_df.groupby('movieId').size()
     sorted_mids = mid_counts.sort_values(ascending=False).index.tolist()
     # Keep only top_movies, preserve popularity rank
