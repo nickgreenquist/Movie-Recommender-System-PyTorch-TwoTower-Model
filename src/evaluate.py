@@ -333,12 +333,12 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
                 if title not in exclude_set:
                     recs.append(title)
 
-            col_w      = min(55, max((len(t) for t in fav_movies + dis_movies), default=20))
+            col_w      = min(55, max((len(t) for t in fav_movies), default=20))
             rec_w      = min(55, max((len(r) for r in recs), default=20))
             title_line = user_type
             if genome_tags:
                 title_line += f"  |  Genome: {', '.join(genome_tags)}"
-            bar_w      = max(col_w * 2 + rec_w + 6, len(title_line))
+            bar_w      = max(col_w + rec_w + 4, len(title_line))
 
             print(f"\n{'═' * bar_w}")
             print(title_line)
@@ -347,11 +347,11 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
                 print(f"Disliked: {', '.join(dis_movies)}")
             if anchor_titles:
                 print(f"Anchors:  {', '.join(anchor_titles[:5])}")
-            header = f"{'Liked Movies':<{col_w}}  {'Disliked Movies':<{col_w}}  Recommendations"
+            header = f"{'Liked Movies':<{col_w}}  Recommendations"
             print(header)
             print('─' * bar_w)
-            for a, b, c in zip_longest(fav_movies, dis_movies, recs, fillvalue=''):
-                print(f"{a:<{col_w}}  {b:<{col_w}}  {c}")
+            for a, b in zip_longest(fav_movies, recs, fillvalue=''):
+                print(f"{a:<{col_w}}  {b}")
 
 
 # ── Genome context probe ─────────────────────────────────────────────────────
@@ -605,7 +605,7 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
     all_id_embs = torch.cat([movie_embeddings[m]['MOVIEID_EMBEDDING'] for m in all_ids], dim=0)
     all_id_norm = F.normalize(all_id_embs, dim=1)
 
-    return model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm
+    return model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm, checkpoint_path
 
 
 # ── Orchestrators ─────────────────────────────────────────────────────────────
@@ -613,7 +613,7 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
 def run_canary(data_dir: str = 'data', checkpoint_path: str = None,
                version: str = 'v1') -> None:
     import contextlib, io, sys
-    model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm = _setup(data_dir, checkpoint_path, version)
+    model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm, checkpoint_path = _setup(data_dir, checkpoint_path, version)
     if model is None:
         return
     print("\n── Canary user evaluation ──")
@@ -629,7 +629,7 @@ def run_canary(data_dir: str = 'data', checkpoint_path: str = None,
         run_canary_eval(model, fs, movie_embeddings, all_ids, all_embs)
 
     os.makedirs('canary_results', exist_ok=True)
-    stem     = os.path.splitext(os.path.basename(checkpoint_path))[0] if checkpoint_path else 'latest'
+    stem     = os.path.splitext(os.path.basename(checkpoint_path))[0]
     out_path = os.path.join('canary_results', f'{stem}.txt')
     with open(out_path, 'w') as f:
         f.write(buf.getvalue())
@@ -706,7 +706,7 @@ def probe_similar(movie_embeddings: dict, fs: FeatureStore,
 
 def run_probes(data_dir: str = 'data', checkpoint_path: str = None,
                version: str = 'v1') -> None:
-    model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm = _setup(data_dir, checkpoint_path, version)
+    model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm, checkpoint_path = _setup(data_dir, checkpoint_path, version)
     if model is None:
         return
     print("\n── Embedding probes ──")

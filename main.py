@@ -68,7 +68,7 @@ def cmd_eval(checkpoint_path=None):
     from src.evaluate import _setup
     from src.offline_eval import run_offline_eval
 
-    model, fs, _, _, _, _, _ = _setup(data_dir=DATA_DIR, checkpoint_path=checkpoint_path,
+    model, fs, _, _, _, _, _, checkpoint_path = _setup(data_dir=DATA_DIR, checkpoint_path=checkpoint_path,
                                        version=VERSION)
     run_offline_eval(model, fs, checkpoint_path=checkpoint_path or '', data_dir=DATA_DIR)
 
