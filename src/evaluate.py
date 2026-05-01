@@ -343,6 +343,10 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
             print(f"\n{'═' * bar_w}")
             print(title_line)
             print(f"{'═' * bar_w}")
+            if dis_movies:
+                print(f"Disliked: {', '.join(dis_movies)}")
+            if anchor_titles:
+                print(f"Anchors:  {', '.join(anchor_titles[:5])}")
             header = f"{'Liked Movies':<{col_w}}  {'Disliked Movies':<{col_w}}  Recommendations"
             print(header)
             print('─' * bar_w)
