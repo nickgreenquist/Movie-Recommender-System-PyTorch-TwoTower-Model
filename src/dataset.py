@@ -194,7 +194,8 @@ MAX_MSE_ROLLBACK_EXAMPLES_PER_USER = 20
 
 def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
                                 max_per_user: int = MAX_MSE_ROLLBACK_EXAMPLES_PER_USER,
-                                seed: int = 42) -> tuple:
+                                seed: int = 42,
+                                sort_by_ts: bool = True) -> tuple:
     """
     Build rollback training examples for MSE training.
 
@@ -236,7 +237,10 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
     n_users = df['userId'].nunique()
     for uid, group in tqdm(df.groupby('userId'), total=n_users, desc="Building MSE rollback examples"):
         rows    = list(zip(group['movieId'].tolist(), group['rating'].tolist(), group['timestamp'].tolist()))
-        rows.sort(key=lambda x: x[2])
+        if sort_by_ts:
+            rows.sort(key=lambda x: x[2])
+        else:
+            rng.shuffle(rows)
         movies, ratings, ts_vals = zip(*rows) if rows else ([], [], [])
         avg_rat = float(np.mean(ratings))
         n       = len(movies)
