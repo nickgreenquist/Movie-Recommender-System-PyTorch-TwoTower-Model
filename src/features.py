@@ -24,8 +24,6 @@ def load_base(data_dir: str) -> dict:
     files = [
         ('movies',       'base_movies.parquet'),
         ('vocab',        'base_vocab.parquet'),
-        ('watch',        'base_ratings_watch.parquet'),
-        ('labels',       'base_ratings_labels.parquet'),
         ('timestamps',   'base_timestamps.parquet'),
         ('movie_tags',   'base_movie_tags.parquet'),
         ('movie_genome', 'base_movie_genome.parquet'),
@@ -127,126 +125,6 @@ def build_movie_features(base: dict, vocab: dict) -> pd.DataFrame:
     return df
 
 
-# ── Per-user features ─────────────────────────────────────────────────────────
-
-def build_user_features(base: dict, vocab: dict) -> pd.DataFrame:
-    """
-    Returns DataFrame with one row per user:
-      userId, avg_rating, genre_context, watch_history (emb indices),
-      watch_history_ratings, label_movieIds, label_ratings, label_timestamps
-    All list columns are list[float] or list[int].
-    """
-    watch_df   = base['watch']
-    labels_df  = base['labels']
-    movies_df  = base['movies']
-
-    genre_to_i = vocab['genre_to_i']
-    genres_ord = vocab['genres_ordered']
-    n_genres   = len(genre_to_i)
-
-    top_movies            = movies_df['movieId'].tolist()
-    item_emb_movieId_to_i = {int(mid): i for i, mid in enumerate(top_movies)}
-
-    movieId_to_genres = {int(r['movieId']): r['genres'] for _, r in movies_df.iterrows()}
-
-    # Per-user avg rating
-    avg_ratings = watch_df.groupby('userId')['rating'].mean().to_dict()
-
-    # Per-user genre stats (from watch history) — vectorized via explode + groupby
-    print("  Computing user genre stats ...")
-    _wg = watch_df[['userId', 'movieId', 'rating']].copy()
-    _wg['genre'] = _wg['movieId'].map(movieId_to_genres)
-    _wg = _wg.explode('genre').dropna(subset=['genre'])
-    _agg = _wg.groupby(['userId', 'genre']).agg(N=('rating', 'count'), S=('rating', 'sum')).reset_index()
-
-    # genre index helpers
-    avg_idx   = {g: i           for i, g in enumerate(genres_ord)}
-    watch_idx = {g: n_genres + i for i, g in enumerate(genres_ord)}
-
-    # Vectorized genre context matrix — numpy scatter from _agg
-    print("  Building genre context matrix ...")
-    total_N     = _agg.groupby('userId')['N'].sum()
-    all_uids    = list(total_N.index)
-    uid_to_row  = {int(uid): i for i, uid in enumerate(all_uids)}
-
-    _ctx = _agg.copy()
-    _ctx['total_N']   = _ctx['userId'].map(total_N)
-    _ctx['avg_rat']   = _ctx['userId'].map(avg_ratings)
-    _ctx['avg_g']     = _ctx['S'] / _ctx['N']
-    _ctx['val_avg']   = _ctx['avg_g'] - _ctx['avg_rat']
-    _ctx['val_watch'] = _ctx['N'] / _ctx['total_N']
-    _ctx['col_avg']   = _ctx['genre'].map(avg_idx)
-    _ctx['col_watch'] = _ctx['genre'].map(watch_idx)
-    _ctx = _ctx.dropna(subset=['col_avg'])
-    _ctx['col_avg']   = _ctx['col_avg'].astype(int)
-    _ctx['col_watch'] = _ctx['col_watch'].astype(int)
-    _ctx['row']       = _ctx['userId'].map(uid_to_row).astype(int)
-
-    genre_ctx_matrix = np.zeros((len(all_uids), 2 * n_genres), dtype=np.float32)
-    genre_ctx_matrix[_ctx['row'].values, _ctx['col_avg'].values]   = _ctx['val_avg'].values
-    genre_ctx_matrix[_ctx['row'].values, _ctx['col_watch'].values] = _ctx['val_watch'].values
-
-    # Aggregate watch/label history per user
-    watch_agg = (watch_df
-                 .groupby('userId')
-                 .agg(movieIds=('movieId', list), ratings=('rating', list))
-                 .reset_index())
-    label_agg = (labels_df
-                 .groupby('userId')
-                 .agg(movieIds=('movieId', list), ratings=('rating', list),
-                      timestamps=('timestamp', list))
-                 .reset_index())
-
-    watch_by_user = {int(r['userId']): r for _, r in watch_agg.iterrows()}
-    label_by_user = {int(r['userId']): r for _, r in label_agg.iterrows()}
-
-    from tqdm import tqdm
-    rows = []
-    for uid in tqdm(all_uids, desc="User features"):
-        uid     = int(uid)
-        avg_rat = float(avg_ratings.get(uid, 3.0))
-
-        # Genre context — O(1) lookup from precomputed matrix
-        ctx = genre_ctx_matrix[uid_to_row[uid]].tolist()
-
-        # Watch history → emb indices + debiased ratings, cap to MAX_HISTORY_LEN
-        wrow = watch_by_user.get(uid)
-        if wrow is not None:
-            pairs = [
-                (item_emb_movieId_to_i[int(mid)], float(rat) - avg_rat)
-                for mid, rat in zip(wrow['movieIds'], wrow['ratings'])
-                if int(mid) in item_emb_movieId_to_i
-            ][-MAX_HISTORY_LEN:]
-        else:
-            pairs = []
-        hist_ids     = [p[0] for p in pairs]
-        hist_ratings = [p[1] for p in pairs]
-
-        # Labels
-        lrow = label_by_user.get(uid)
-        if lrow is not None:
-            lbl_movies = [int(m) for m in lrow['movieIds']]
-            lbl_rats   = [float(r) for r in lrow['ratings']]
-            lbl_times  = [int(t) for t in lrow['timestamps']]
-        else:
-            lbl_movies = lbl_rats = lbl_times = []
-
-        rows.append({
-            'userId':                uid,
-            'avg_rating':            avg_rat,
-            'genre_context':         ctx,
-            'watch_history':         hist_ids,
-            'watch_history_ratings': hist_ratings,
-            'label_movieIds':        lbl_movies,
-            'label_ratings':         lbl_rats,
-            'label_timestamps':      lbl_times,
-        })
-
-    df = pd.DataFrame(rows)
-    print(f"  User features: {len(df)} users")
-    return df
-
-
 # ── Parquet writer (handles list columns) ─────────────────────────────────────
 
 def _write_list_parquet(df: pd.DataFrame, path: str) -> None:
@@ -274,15 +152,8 @@ def run(data_dir: str = 'data', version: str = FEATURES_VERSION) -> None:
     print("\n── Building movie features ──")
     movie_df = build_movie_features(base, vocab)
 
-    print("\n── Building user features ──")
-    user_df = build_user_features(base, vocab)
-
     movie_out = os.path.join(data_dir, f'features_movies_{version}.parquet')
-    user_out  = os.path.join(data_dir, f'features_users_{version}.parquet')
-
     print(f"\nWriting {movie_out} ...")
     _write_list_parquet(movie_df, movie_out)
-    print(f"Writing {user_out} ...")
-    _write_list_parquet(user_df, user_out)
 
-    print(f"\n✓ features_movies_{version}.parquet and features_users_{version}.parquet → {data_dir}/")
+    print(f"\n✓ features_movies_{version}.parquet → {data_dir}/")

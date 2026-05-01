@@ -1,10 +1,9 @@
 """
 Stage 3 — Dataset Loading
 Reads features_*.parquet into a FeatureStore, builds PyTorch tensors.
-No files are written here — pure in-memory.
 
 Usage (from train.py or main.py):
-    from src.dataset import load_features, make_splits
+    from src.dataset import load_features, make_mse_rollback_splits
 """
 import os
 import random
@@ -47,14 +46,6 @@ class FeatureStore:
     movieId_to_tag_context:   dict
     movieId_to_genome_tag_context: dict
 
-    # Per-user lookups
-    user_ids:                          list
-    user_to_avg_rating:                dict
-    user_to_context:                   dict
-    user_to_watch_history:             dict
-    user_to_watch_history_ratings:     dict
-    user_to_movie_to_rating_LABEL:     dict
-    user_to_movie_to_timestamp_LABEL:  dict
 
     # Derived constants
     user_context_size:                    int
@@ -73,11 +64,9 @@ def load_features(data_dir: str = 'data', version: str = 'v1') -> FeatureStore:
     ts_df      = pd.read_parquet(os.path.join(data_dir, 'base_timestamps.parquet'))
 
     movie_feat_path = os.path.join(data_dir, f'features_movies_{version}.parquet')
-    user_feat_path  = os.path.join(data_dir, f'features_users_{version}.parquet')
 
     # PyArrow reads list columns properly
     movie_feat_df = pq.read_table(movie_feat_path).to_pandas()
-    user_feat_df  = pq.read_table(user_feat_path).to_pandas()
 
     # ── Vocab ─────────────────────────────────────────────────────────────────
     g  = vocab_df[vocab_df['type'] == 'genre'].sort_values('index')
@@ -121,29 +110,6 @@ def load_features(data_dir: str = 'data', version: str = 'v1') -> FeatureStore:
         movieId_to_tag_context[mid]        = list(row['tag_context'])
         movieId_to_genome_tag_context[mid] = list(row['genome_tag_context'])
 
-    # ── Per-user feature vectors ──────────────────────────────────────────────
-    user_ids                         = []
-    user_to_avg_rating               = {}
-    user_to_context                  = {}
-    user_to_watch_history            = {}
-    user_to_watch_history_ratings    = {}
-    user_to_movie_to_rating_LABEL    = {}
-    user_to_movie_to_timestamp_LABEL = {}
-
-    for _, row in user_feat_df.iterrows():
-        uid = int(row['userId'])
-        user_ids.append(uid)
-        user_to_avg_rating[uid]            = float(row['avg_rating'])
-        user_to_context[uid]               = list(row['genre_context'])
-        user_to_watch_history[uid]         = list(row['watch_history'])
-        user_to_watch_history_ratings[uid] = list(row['watch_history_ratings'])
-
-        lbl_movies = list(row['label_movieIds'])
-        lbl_rats   = list(row['label_ratings'])
-        lbl_times  = list(row['label_timestamps'])
-        user_to_movie_to_rating_LABEL[uid]    = dict(zip(lbl_movies, lbl_rats))
-        user_to_movie_to_timestamp_LABEL[uid] = dict(zip(lbl_movies, lbl_times))
-
     # ── Derived constants ─────────────────────────────────────────────────────
     n_genres          = len(genres_ordered)
     # user genre context = [avg_debiased_rating_per_genre (n_genres) | watch_frac_per_genre (n_genres)]
@@ -177,13 +143,6 @@ def load_features(data_dir: str = 'data', version: str = 'v1') -> FeatureStore:
         movieId_to_genre_context=movieId_to_genre_context,
         movieId_to_tag_context=movieId_to_tag_context,
         movieId_to_genome_tag_context=movieId_to_genome_tag_context,
-        user_ids=user_ids,
-        user_to_avg_rating=user_to_avg_rating,
-        user_to_context=user_to_context,
-        user_to_watch_history=user_to_watch_history,
-        user_to_watch_history_ratings=user_to_watch_history_ratings,
-        user_to_movie_to_rating_LABEL=user_to_movie_to_rating_LABEL,
-        user_to_movie_to_timestamp_LABEL=user_to_movie_to_timestamp_LABEL,
         user_context_size=user_context_size,
         timestamp_num_bins=TIMESTAMP_NUM_BINS,
         timestamp_bins=timestamp_bins,
@@ -212,86 +171,7 @@ def pad_history_ratings_batch(history_ratings: list) -> torch.Tensor:
     return padded
 
 
-# ── Dataset builder ───────────────────────────────────────────────────────────
-
-def build_dataset(users: list, fs: FeatureStore) -> tuple:
-    """
-    Build training/validation tensors for a list of user IDs.
-    Returns a tuple of 10 elements:
-      X, X_history (list), X_history_ratings (list),
-      timestamp, Y, target_movieId,
-      target_movieId_genre_context, target_movieId_tag_context,
-      target_movieId_genome_tag_context, target_movieId_year
-    """
-    X                              = []
-    X_history                      = []
-    X_history_ratings              = []
-    timestamp                      = []
-    target_movieId                 = []
-    target_movieId_genre_context   = []
-    target_movieId_tag_context     = []
-    target_movieId_genome_context  = []
-    target_movieId_year            = []
-    Y                              = []
-
-    from tqdm import tqdm
-    for user in tqdm(users, desc="Collecting samples"):
-        for movieId, rating in fs.user_to_movie_to_rating_LABEL[user].items():
-            movieId = int(movieId)
-            X.append(fs.user_to_context[user])
-            X_history.append(fs.user_to_watch_history[user])
-            X_history_ratings.append(fs.user_to_watch_history_ratings[user])
-            timestamp.append(fs.user_to_movie_to_timestamp_LABEL[user][movieId])
-            target_movieId.append(fs.item_emb_movieId_to_i[movieId])
-            target_movieId_genre_context.append(fs.movieId_to_genre_context[movieId])
-            target_movieId_tag_context.append(fs.movieId_to_tag_context[movieId])
-            target_movieId_genome_context.append(fs.movieId_to_genome_tag_context[movieId])
-            target_movieId_year.append(fs.year_to_i[fs.movieId_to_year[movieId]])
-            Y.append(float(rating - fs.user_to_avg_rating[user]))
-
-    n = len(Y)
-    print(f"  {n:,} samples — building tensors ...")
-    print("  X, Y ...")
-    X               = torch.from_numpy(np.array(X,     dtype=np.float32))
-    Y               = torch.from_numpy(np.array(Y,     dtype=np.float32))
-    print("  target_movieId, year, timestamp ...")
-    target_movieId_t = torch.from_numpy(np.array(target_movieId,      dtype=np.int64))
-    target_movieId_year_t = torch.from_numpy(np.array(target_movieId_year, dtype=np.int64))
-    timestamp_t = torch.bucketize(
-        torch.from_numpy(np.array(timestamp, dtype=np.float32)),
-        fs.timestamp_bins, right=False)
-    print("  genre context ...")
-    target_movieId_genre_t = torch.from_numpy(np.array(target_movieId_genre_context, dtype=np.float32))
-    print("  tag context ...")
-    target_movieId_tag_t   = torch.from_numpy(np.array(target_movieId_tag_context,   dtype=np.float32))
-    print("  genome tag context ...")
-    target_movieId_genome_t = torch.from_numpy(np.array(target_movieId_genome_context, dtype=np.float32))
-
-    return (X, X_history, X_history_ratings, timestamp_t, Y,
-            target_movieId_t, target_movieId_genre_t, target_movieId_tag_t,
-            target_movieId_genome_t, target_movieId_year_t)
-
-
-# ── Disk cache helpers ────────────────────────────────────────────────────────
-
-def save_splits(train_data: tuple, val_data: tuple,
-                data_dir: str = 'data', version: str = 'v1') -> None:
-    torch.save(train_data, os.path.join(data_dir, f'dataset_train_{version}.pt'))
-    torch.save(val_data,   os.path.join(data_dir, f'dataset_val_{version}.pt'))
-    print(f"Saved dataset_train_{version}.pt and dataset_val_{version}.pt → {data_dir}/")
-
-
-def load_splits(data_dir: str = 'data', version: str = 'v1') -> tuple:
-    train_path = os.path.join(data_dir, f'dataset_train_{version}.pt')
-    val_path   = os.path.join(data_dir, f'dataset_val_{version}.pt')
-    print(f"Loading {train_path} ...")
-    train_data = torch.load(train_path, weights_only=False)
-    print(f"Loading {val_path} ...")
-    val_data   = torch.load(val_path, weights_only=False)
-    return train_data, val_data
-
-
-# ── Softmax dataset (rollback, implicit feedback) ─────────────────────────────
+# ── MSE rollback dataset ──────────────────────────────────────────────────────
 #
 # Each user contributes multiple training examples via "rollback":
 # for a user who watched movies [A, B, C, D, E] in order, we generate examples like:
@@ -299,7 +179,7 @@ def load_splits(data_dir: str = 'data', version: str = 'v1') -> tuple:
 #   context=[A,B,C],   target=D
 #   context=[A,B,C,D], target=E
 # Each example uses only movies watched *before* the target — no future leakage.
-# MAX_SOFTMAX_EXAMPLES_PER_USER caps how many rollback examples we randomly sample per user.
+# MAX_MSE_ROLLBACK_EXAMPLES_PER_USER caps how many rollback examples we randomly sample per user.
 #
 # Why rollback for BOTH train and val:
 # Rollback produces examples with varying context lengths (short to long).
@@ -357,11 +237,10 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
     from tqdm import tqdm
     n_users = df['userId'].nunique()
     for uid, group in tqdm(df.groupby('userId'), total=n_users, desc="Building MSE rollback examples"):
-        avg_rat = fs.user_to_avg_rating.get(uid, 3.0)
-
         movies  = group['movieId'].tolist()
         ratings = group['rating'].tolist()
         ts_vals = group['timestamp'].tolist()
+        avg_rat = float(np.mean(ratings))
         n       = len(movies)
 
         if n < 2:
@@ -421,23 +300,19 @@ def make_mse_rollback_splits(fs: FeatureStore, data_dir: str = 'data',
                               pct_train: float = 0.9, seed: int = 42,
                               max_users: int = None) -> tuple:
     """
-    Load raw interactions (watch + labels), split users 90/10 at the user level,
-    build MSE rollback datasets. No within-user history/label split.
-    Returns (train_data, val_data) each a 10-tuple from build_mse_rollback_dataset().
+    Load raw interactions, split users 90/10 at the user level,
+    build MSE rollback datasets.
+    Returns (train_data, val_data) each a 6-tuple from build_mse_rollback_dataset().
     """
-    watch_path  = os.path.join(data_dir, 'base_ratings_watch.parquet')
-    labels_path = os.path.join(data_dir, 'base_ratings_labels.parquet')
-    print(f"Loading {watch_path} + {labels_path} ...")
-    raw_df = pd.concat([
-        pd.read_parquet(watch_path),
-        pd.read_parquet(labels_path),
-    ], ignore_index=True)
+    ratings_path = os.path.join(data_dir, 'base_ratings.parquet')
+    print(f"Loading {ratings_path} ...")
+    raw_df = pd.read_parquet(ratings_path)
     # Filter to corpus movies only
     corpus_set = set(fs.item_emb_movieId_to_i.keys())
     raw_df = raw_df[raw_df['movieId'].isin(corpus_set)]
     print(f"  {len(raw_df):,} raw interactions, {raw_df['userId'].nunique():,} users")
 
-    valid_users = fs.user_ids[:]
+    valid_users = sorted(raw_df['userId'].astype(int).unique().tolist())
     rng = random.Random(seed)
     rng.shuffle(valid_users)
 
@@ -474,38 +349,4 @@ def load_mse_rollback_splits(data_dir: str = 'data', version: str = 'v1') -> tup
     train_data = torch.load(train_path, weights_only=False)
     print(f"Loading {val_path} ...")
     val_data   = torch.load(val_path, weights_only=False)
-    # Old files were 10-tuples; new files are 6-tuples. Slice for compatibility.
-    # To free the extra ~17 GB, rebuild: python main.py dataset rollback
     return train_data[:6], val_data[:6]
-
-
-# ── Train / val split ─────────────────────────────────────────────────────────
-
-def make_splits(fs: FeatureStore, pct_train: float = 0.9, seed: int = 42) -> tuple:
-    """
-    Split users into train/val, build tensors for each.
-    Returns (train_data, val_data) where each is the 11-tuple from build_dataset().
-    """
-    # Filter to users that have at least 2 label examples
-    final_users = [
-        u for u in fs.user_ids
-        if 2 <= len(fs.user_to_movie_to_rating_LABEL.get(u, {})) < 500
-    ]
-    print(f"Final users for training: {len(final_users):,}  "
-          f"(skipped {len(fs.user_ids) - len(final_users):,})")
-
-    rng = random.Random(seed)
-    rng.shuffle(final_users)
-    split = int(len(final_users) * pct_train)
-    train_users = final_users[:split]
-    val_users   = final_users[split:]
-
-    print(f"Building train dataset ({len(train_users):,} users) ...")
-    train_data = build_dataset(train_users, fs)
-    print(f"  X_train shape: {train_data[0].shape}")
-
-    print(f"Building val dataset ({len(val_users):,} users) ...")
-    val_data   = build_dataset(val_users, fs)
-    print(f"  X_val shape:   {val_data[0].shape}")
-
-    return train_data, val_data

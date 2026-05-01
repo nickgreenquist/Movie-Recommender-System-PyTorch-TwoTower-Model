@@ -17,7 +17,6 @@ MIN_RATINGS_PER_MOVIE = 200
 MIN_RATINGS_PER_USER  = 20
 MAX_RATINGS_PER_USER  = 500
 MIN_NUM_TAGS          = 1_000       # user-applied tags must appear this often across all movies
-PERCENT_WATCH_HISTORY = 0.9         # fraction of each user's ratings used as watch history
 
 
 # ── Loaders ──────────────────────────────────────────────────────────────────
@@ -145,60 +144,27 @@ def build_vocab(dfs: dict, top_movies: list) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-# ── User history splitting ────────────────────────────────────────────────────
+# ── User rating filtering ─────────────────────────────────────────────────────
 
-def split_user_history(dfs: dict, top_movies: list) -> tuple:
+def filter_user_ratings(dfs: dict, top_movies: list) -> pd.DataFrame:
     """
-    Filter ratings to top movies, filter users by rating count,
-    split each user's history 90% watch / 10% labels (chronological order).
-    Returns (watch_df, labels_df) each with columns: userId, movieId, rating, timestamp.
+    Filter ratings to top movies and users with MIN..MAX ratings.
+    Returns ratings_df with columns: userId, movieId, rating, timestamp.
     """
-    df_ratings    = dfs['ratings']
+    df_ratings     = dfs['ratings']
     top_movies_set = set(top_movies)
 
     df_filtered = df_ratings[df_ratings['movieId'].isin(top_movies_set)].copy()
     df_filtered = df_filtered.sort_values(['userId', 'timestamp'])
 
-    df_agg = df_filtered.groupby('userId').agg(
-        movieId   = ('movieId',   list),
-        rating    = ('rating',    list),
-        timestamp = ('timestamp', list),
-    ).reset_index()
+    counts    = df_filtered.groupby('userId')['movieId'].transform('count')
+    df_kept   = df_filtered[(counts >= MIN_RATINGS_PER_USER) & (counts <= MAX_RATINGS_PER_USER)]
 
-    watch_rows  = []
-    label_rows  = []
-    too_few = too_many = 0
-
-    from tqdm import tqdm
-    for _, row in tqdm(df_agg.iterrows(), total=len(df_agg), desc="Splitting user histories"):
-        n = len(row['movieId'])
-        if n < MIN_RATINGS_PER_USER:
-            too_few += 1
-            continue
-        if n > MAX_RATINGS_PER_USER:
-            too_many += 1
-            continue
-
-        uid     = int(row['userId'])
-        split   = int(n * PERCENT_WATCH_HISTORY)
-        movies  = row['movieId']
-        ratings = row['rating']
-        times   = row['timestamp']
-
-        for i in range(split):
-            watch_rows.append({'userId': uid, 'movieId': movies[i],
-                                'rating': ratings[i], 'timestamp': times[i]})
-        for i in range(split, n):
-            label_rows.append({'userId': uid, 'movieId': movies[i],
-                                'rating': ratings[i], 'timestamp': times[i]})
-
-    watch_df  = pd.DataFrame(watch_rows)
-    labels_df = pd.DataFrame(label_rows)
-
-    print(f"Users kept: {len(watch_df['userId'].unique())}  "
-          f"(skipped too_few={too_few}, too_many={too_many})")
-    print(f"Watch rows: {len(watch_df):,}   Label rows: {len(labels_df):,}")
-    return watch_df, labels_df
+    n_users = df_kept['userId'].nunique()
+    n_skipped = df_filtered['userId'].nunique() - n_users
+    print(f"Users kept: {n_users:,}  (skipped {n_skipped:,})")
+    print(f"Rating rows: {len(df_kept):,}")
+    return df_kept.reset_index(drop=True)
 
 
 # ── Per-movie tag / genome helpers ───────────────────────────────────────────
@@ -276,14 +242,13 @@ def run(raw_dir: str = 'data/ml-32m', out_dir: str = 'data') -> None:
     print("\n── Building vocabulary ──")
     vocab_df = build_vocab(dfs, top_movies)
 
-    print("\n── Splitting user histories ──")
-    watch_df, labels_df = split_user_history(dfs, top_movies)
+    print("\n── Filtering user ratings ──")
+    ratings_df = filter_user_ratings(dfs, top_movies)
 
     # Write parquets
     movies_df.to_parquet(os.path.join(out_dir, 'base_movies.parquet'), index=False)
     vocab_df.to_parquet(os.path.join(out_dir, 'base_vocab.parquet'), index=False)
-    watch_df.to_parquet(os.path.join(out_dir, 'base_ratings_watch.parquet'), index=False)
-    labels_df.to_parquet(os.path.join(out_dir, 'base_ratings_labels.parquet'), index=False)
+    ratings_df.to_parquet(os.path.join(out_dir, 'base_ratings.parquet'), index=False)
 
     # Per-movie tag counts (for features.py tag context vectors)
     movie_tags_df = _build_movie_tag_counts(dfs, top_movies, vocab_df)
@@ -298,5 +263,5 @@ def run(raw_dir: str = 'data/ml-32m', out_dir: str = 'data') -> None:
                           'ts_max': [int(dfs['ratings']['timestamp'].max())]})
     ts_df.to_parquet(os.path.join(out_dir, 'base_timestamps.parquet'), index=False)
 
-    print(f"\n✓ Wrote base_movies, base_vocab, base_ratings_watch, base_ratings_labels, "
+    print(f"\n✓ Wrote base_movies, base_vocab, base_ratings, "
           f"base_movie_tags, base_movie_genome, base_timestamps  →  {out_dir}/")
