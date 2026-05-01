@@ -438,8 +438,9 @@ def probe_genre(model: MovieRecommender, genre: str, movie_embeddings: dict,
     ctx = [0.0] * len(fs.genres_ordered)
     ctx[fs.genre_to_i[genre]] = 1.0
 
+    device = next(model.parameters()).device
     with torch.no_grad():
-        query_emb = model.item_genre_tower(torch.tensor([ctx])).view(-1)
+        query_emb = model.item_genre_tower(torch.tensor([ctx]).to(device)).view(-1)
 
     sims = {
         mid: F.cosine_similarity(
@@ -466,8 +467,9 @@ def probe_tag(model: MovieRecommender, tags: list, movie_embeddings: dict,
         if tag in fs.tag_to_i:
             ctx[fs.tag_to_i[tag]] = 1.0 / len(tags)
 
+    device = next(model.parameters()).device
     with torch.no_grad():
-        query_emb = model.item_tag_tower(torch.tensor([ctx], dtype=torch.float)).view(-1)
+        query_emb = model.item_tag_tower(torch.tensor([ctx], dtype=torch.float).to(device)).view(-1)
 
     sims = {
         mid: F.cosine_similarity(
