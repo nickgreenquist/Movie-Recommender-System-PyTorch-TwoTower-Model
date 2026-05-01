@@ -177,38 +177,37 @@ ANCHORS_PER_TAG             = 5
 
 def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
     """
-    Pre-compute all movie combined embeddings for fast recommendation scoring.
+    Pre-compute all movie embeddings in a single batched forward pass.
     Returns movieId → {'MOVIE_EMBEDDING_COMBINED': Tensor, ...}
     """
     model.eval()
-    device = next(model.parameters()).device
-    movieId_to_embedding = {}
+    device  = next(model.parameters()).device
+    all_mids = [int(m) for m in fs.top_movies]
+
     with torch.no_grad():
-        for movieId in fs.top_movies:
-            mid = int(movieId)
-            d   = {}
-            emb_idx  = torch.tensor([fs.item_emb_movieId_to_i[mid]]).to(device)
-            year_idx = torch.tensor([fs.year_to_i[fs.movieId_to_year[mid]]]).to(device)
+        emb_idx  = torch.tensor([fs.item_emb_movieId_to_i[m]          for m in all_mids], dtype=torch.long).to(device)
+        year_idx = torch.tensor([fs.year_to_i[fs.movieId_to_year[m]]  for m in all_mids], dtype=torch.long).to(device)
+        genre_t  = torch.tensor([fs.movieId_to_genre_context[m]       for m in all_mids], dtype=torch.float32).to(device)
+        tag_t    = torch.tensor([fs.movieId_to_tag_context[m]         for m in all_mids], dtype=torch.float32).to(device)
+        genome_t = torch.tensor([fs.movieId_to_genome_tag_context[m]  for m in all_mids], dtype=torch.float32).to(device)
 
-            d['MOVIEID_EMBEDDING']          = model.item_embedding_tower(
-                                                model.item_embedding_lookup(emb_idx))
-            d['MOVIE_YEAR_EMBEDDING']       = model.year_embedding_tower(
-                                                model.year_embedding_lookup(year_idx))
-            d['MOVIE_GENRE_EMBEDDING']      = model.item_genre_tower(
-                                                torch.tensor([fs.movieId_to_genre_context[mid]]).to(device))
-            d['MOVIE_TAG_EMBEDDING']        = model.item_tag_tower(
-                                                torch.tensor([fs.movieId_to_tag_context[mid]]).to(device))
-            d['MOVIE_GENOME_TAG_EMBEDDING'] = model.item_genome_tag_tower(
-                                                torch.tensor([fs.movieId_to_genome_tag_context[mid]]).to(device))
-            # Use model.item_embedding() so the projection MLP is applied when present.
-            d['MOVIE_EMBEDDING_COMBINED']   = model.item_embedding(
-                torch.tensor([fs.movieId_to_genre_context[mid]]).to(device),
-                torch.tensor([fs.movieId_to_tag_context[mid]]).to(device),
-                torch.tensor([fs.movieId_to_genome_tag_context[mid]]).to(device),
-                year_idx, emb_idx,
-            )
-            movieId_to_embedding[mid] = d
+        id_embs      = model.item_embedding_tower(model.item_embedding_lookup(emb_idx))
+        year_embs    = model.year_embedding_tower(model.year_embedding_lookup(year_idx))
+        genre_embs   = model.item_genre_tower(genre_t)
+        tag_embs     = model.item_tag_tower(tag_t)
+        genome_embs  = model.item_genome_tag_tower(genome_t)
+        combined     = model.item_embedding(genre_t, tag_t, genome_t, year_idx, emb_idx)
 
+    movieId_to_embedding = {}
+    for i, mid in enumerate(all_mids):
+        movieId_to_embedding[mid] = {
+            'MOVIEID_EMBEDDING':          id_embs[i:i+1],
+            'MOVIE_YEAR_EMBEDDING':       year_embs[i:i+1],
+            'MOVIE_GENRE_EMBEDDING':      genre_embs[i:i+1],
+            'MOVIE_TAG_EMBEDDING':        tag_embs[i:i+1],
+            'MOVIE_GENOME_TAG_EMBEDDING': genome_embs[i:i+1],
+            'MOVIE_EMBEDDING_COMBINED':   combined[i:i+1],
+        }
     return movieId_to_embedding
 
 
@@ -324,14 +323,14 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
             anchor_titles = _get_anchor_titles(fs, genome_tags, exclude=set(fav_movies))
             exclude_set = set(fav_movies) | set(dis_movies) | set(anchor_titles)
 
-            raw_scores = (all_embs @ user_emb.T).squeeze(-1)
-            scores     = {all_ids[i]: raw_scores[i].item() for i in range(len(all_ids))}
+            raw_scores  = (all_embs @ user_emb.T).squeeze(-1)
+            sorted_idxs = torch.argsort(raw_scores, descending=True).tolist()
 
             recs = []
-            for mid, _ in sorted(scores.items(), key=lambda x: x[1], reverse=True):
+            for idx in sorted_idxs:
                 if len(recs) >= top_n:
                     break
-                title = fs.movieId_to_title[mid]
+                title = fs.movieId_to_title[all_ids[idx]]
                 if title not in exclude_set:
                     recs.append(title)
 
