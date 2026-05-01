@@ -25,8 +25,7 @@ The project is a Python CLI (`main.py`). Notebooks in `jupyter/` are archived re
 ```bash
 python main.py preprocess          # Stage 1: raw CSVs → data/base_*.parquet
 python main.py features            # Stage 2: base parquets → data/features_*.parquet
-python main.py dataset             # Stage 3: features → data/dataset_*_v1.pt  (MSE)
-python main.py dataset softmax     # Stage 3: features → data/dataset_softmax_*_v1.pt
+python main.py dataset             # Stage 3: features → data/dataset_mse_rollback_*_v1.pt
 python main.py train               # Stage 4: MSE training (SGD, rating regression)
 python main.py train softmax       # Stage 4: in-batch negatives softmax training
 python main.py canary              # Canary user recommendations (most recent checkpoint)

@@ -4,8 +4,8 @@ Movie Recommender System — CLI entry point.
 Usage:
     python main.py preprocess          # Stage 1: raw CSVs → data/base_*.parquet
     python main.py features            # Stage 2: base parquets → data/features_*.parquet
-    python main.py dataset rollback    # Stage 3: features → data/dataset_mse_rollback_*_v1.pt
-    python main.py train rollback      # Stage 4: MSE training (rollback dataset)
+    python main.py dataset             # Stage 3: features → data/dataset_mse_rollback_*_v1.pt
+    python main.py train               # Stage 4: MSE training (rollback dataset)
     python main.py canary              # Canary user recommendations (most recent checkpoint)
     python main.py canary <path>       # Canary user recommendations (specific checkpoint)
     python main.py probe               # Embedding probes (most recent checkpoint)
@@ -33,7 +33,7 @@ def cmd_features():
     run(data_dir=DATA_DIR, version=VERSION)
 
 
-def cmd_dataset(mode='rollback', **kwargs):
+def cmd_dataset():
     from src.dataset import load_features, make_mse_rollback_splits, save_mse_rollback_splits
     print("Loading features ...")
     fs = load_features(DATA_DIR, VERSION)
@@ -42,7 +42,7 @@ def cmd_dataset(mode='rollback', **kwargs):
     save_mse_rollback_splits(train_data, val_data, DATA_DIR, VERSION)
 
 
-def cmd_train(**kwargs):
+def cmd_train():
     from src.dataset import load_features, load_mse_rollback_splits
     from src.train import get_config, build_model, train
     print("Loading features ...")
