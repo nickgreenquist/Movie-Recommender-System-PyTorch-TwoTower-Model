@@ -223,9 +223,7 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
     }
 
     df = raw_df[raw_df['userId'].isin(users_set)].copy()
-    print(f"  Sorting {len(df):,} interactions by user + timestamp ...")
-    df = df.sort_values(['userId', 'timestamp'])
-    print(f"  {df['userId'].nunique():,} users")
+    print(f"  {len(df):,} interactions, {df['userId'].nunique():,} users")
 
     X_genre               = []
     X_history             = []
@@ -237,9 +235,9 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
     from tqdm import tqdm
     n_users = df['userId'].nunique()
     for uid, group in tqdm(df.groupby('userId'), total=n_users, desc="Building MSE rollback examples"):
-        movies  = group['movieId'].tolist()
-        ratings = group['rating'].tolist()
-        ts_vals = group['timestamp'].tolist()
+        rows    = list(zip(group['movieId'].tolist(), group['rating'].tolist(), group['timestamp'].tolist()))
+        rng.shuffle(rows)
+        movies, ratings, ts_vals = zip(*rows) if rows else ([], [], [])
         avg_rat = float(np.mean(ratings))
         n       = len(movies)
 
@@ -293,6 +291,25 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
         fs.timestamp_bins.float(), right=False)
 
     return (X_genre_t, X_history, X_history_ratings, timestamp_t, Y_t, target_movieId_t)
+
+
+def get_val_users(fs: FeatureStore, data_dir: str = 'data',
+                  pct_train: float = 0.9, seed: int = 42) -> tuple:
+    """
+    Return (val_users, corpus-filtered raw_df) using the same split as make_mse_rollback_splits.
+    Used by offline_eval to avoid duplicating the split logic.
+    """
+    ratings_path = os.path.join(data_dir, 'base_ratings.parquet')
+    raw_df = pd.read_parquet(ratings_path)
+    corpus_set = set(fs.item_emb_movieId_to_i.keys())
+    raw_df = raw_df[raw_df['movieId'].isin(corpus_set)]
+
+    valid_users = sorted(raw_df['userId'].astype(int).unique().tolist())
+    rng = random.Random(seed)
+    rng.shuffle(valid_users)
+
+    split = int(len(valid_users) * pct_train)
+    return valid_users[split:], raw_df
 
 
 def make_mse_rollback_splits(fs: FeatureStore, data_dir: str = 'data',
