@@ -158,7 +158,7 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
 
     os.makedirs(checkpoint_dir, exist_ok=True)
     run_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    arch_tag = 'gpool_proj'
+    arch_tag = 'gpool_gctx_proj'
     best_val_loss = float('inf')
     best_path     = os.path.join(checkpoint_dir, f'best_mse_{arch_tag}_{run_timestamp}.pth')
 

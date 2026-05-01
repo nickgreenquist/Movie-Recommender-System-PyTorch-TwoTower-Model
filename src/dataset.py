@@ -236,7 +236,7 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
     n_users = df['userId'].nunique()
     for uid, group in tqdm(df.groupby('userId'), total=n_users, desc="Building MSE rollback examples"):
         rows    = list(zip(group['movieId'].tolist(), group['rating'].tolist(), group['timestamp'].tolist()))
-        rng.shuffle(rows)
+        rows.sort(key=lambda x: x[2])
         movies, ratings, ts_vals = zip(*rows) if rows else ([], [], [])
         avg_rat = float(np.mean(ratings))
         n       = len(movies)
