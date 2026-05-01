@@ -43,7 +43,7 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
     config = get_config()
 
     print(f"Checkpoint: {checkpoint_path}")
-    state_dict = torch.load(checkpoint_path, weights_only=True)
+    state_dict = torch.load(checkpoint_path, weights_only=True, map_location='cpu')
 
     sd = state_dict
     item_id_dim = sd['item_embedding_lookup.weight'].shape[1]
