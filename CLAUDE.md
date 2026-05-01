@@ -4,12 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Current State
 
-The model is complete and deployed. Best checkpoint: `best_mse_gpool_gctx_proj_20260426_202808.pth` (MSE rollback, genome pool ON, genome context tower ON, projection MLP, 128-dim output, 512k params). This is the prod model running in Streamlit — do not replace it without a clearly better eval result.
+The model is complete and deployed. Best checkpoint: `mse_gpool_gctx_proj_20260501_063808_step_180000.pth` (MSE rollback, genome pool ON, genome context tower ON, projection MLP, 128-dim output, 512k params). This is the prod model running in Streamlit — do not replace it without a clearly better eval result.
+
+The step_180000 periodic checkpoint was chosen over the fully-trained best checkpoint from the same run — late training caused arthouse drift back into Sci-Fi and Crime, and Transformers appeared in the Superhero cluster. Step 180k is the sweet spot.
 
 To re-export serving artifacts from prod checkpoint:
 
 ```bash
-python main.py export saved_models/best_mse_gpool_gctx_proj_20260426_202808.pth
+python main.py export saved_models/mse_gpool_gctx_proj_20260501_063808_step_180000.pth
 ```
 
 ## Project Overview
@@ -126,9 +128,9 @@ Sub-tower linears: Xavier uniform `gain=0.1`. Projection linears re-initialized 
 - **Loss**: MSE on de-biased ratings (raw rating − user mean)
 - **Optimizer**: SGD, `lr=0.005`, `momentum=0.9`
 - **Batch size**: 64
-- **Steps**: 150,000
-- **Val logging**: every 10,000 steps (full val pass)
-- **Checkpointing**: `saved_models/best_mse_<pool>_<timestamp>.pth`
+- **Steps**: 300,000
+- **Val logging**: every 20,000 steps (full val pass)
+- **Checkpointing**: `saved_models/best_mse_<pool>_<timestamp>.pth`; periodic checkpoints every 30,000 steps
 - **LR=0.01**: Too aggressive; collapses genre boundaries — avoid
 - **Adam is a failure for MSE training — do not use.** Causes user tower collapse (same recs for every user regardless of taste). Root causes: adaptive per-parameter lr blows up sparse embeddings early then freezes them; β2=0.999 accumulates stale gradients from unrelated users; dot-product scoring is norm-sensitive so a few high-norm items dominate every user. SGD with momentum generalizes better here because noisier uniform updates force distributed representations. Tested at lr=0.005 — complete failure. Do not retry.
 - **Dataset structure**: rollback examples — for each watch event, context = all prior watches (chronological). User-level 90/10 train/val split; no within-user history split. Cap per user: `MAX_MSE_ROLLBACK_EXAMPLES_PER_USER=20`. Better cold-start generalization than fixed-split.
@@ -188,12 +190,11 @@ Note: rollback eval produces lower absolute numbers than leave-label-out (harder
 
 ### Known persistent issues (prod proj model)
 
-- **War Movie Lover** drifts to prestige drama (Godfather, Shawshank) — "acclaimed serious film" cluster
-- **WW2 Lover** drifts to prestige drama — only Defiance, Allied, Imitation Game stay on-genre
-- **Western Lover** drifts to samurai/Japanese cinema (Kurosawa) — genome overlap with serious classic films
-- **Anime Lover** drifts to European arthouse — genome overlap between Ghibli and slow/contemplative world cinema
-- **Comedy Lover** has slight crime-comedy drift (Snatch, Lock Stock, Trainspotting) — acceptable
-- **Sci-Fi Lover** is now fixed in the proj model (Interstellar, Gattaca, Sunshine — clean)
+- **War Movie Lover** drifts to prestige world cinema (Lives of Others, Pianist, Incendies) — "acclaimed serious film" cluster
+- **WW2 Lover** partially drifts — Munich, The Pacific, Bridge of Spies stay on-genre but Tangerines/Stoning of Soraya M. drift in
+- **Western Lover** drifts to samurai/Japanese cinema (Seven Samurai, Yojimbo, Harakiri, Ran) — genome overlap with serious classic films
+- **Comedy Lover** has slight crime-comedy drift — acceptable
+- **Sci-Fi Lover** is fixed — clean hard sci-fi/philosophical cluster (Moon, Pi, Stalker, Brazil, Blade Runner, THX 1138)
 
 ## MSE vs Softmax: Findings
 
@@ -328,6 +329,39 @@ Checkpoint: `best_mse_gpool_proj_20260428_070226.pth`
 **Result: null.** MRR 0.0145 vs prod 0.0146 — tied. Marginally better at Hit Rate@10 (3.07% vs 3.01%) and Hit Rate@20 (4.81% vs 4.78%) but no MRR improvement. Canary identical.
 
 **Conclusion: canonical dataset cap is 20 examples/user. Do not increase — extra signal does not help given current architecture and the additional 4GB RAM is not worth it.**
+
+## Training Experiment Log (2026-05-01)
+
+### Experiment: Shuffle vs timestamp sort in rollback dataset
+
+**Motivation:** Investigate whether random shuffle of per-user watch events would add beneficial noise to rollback training vs chronological (timestamp) sort.
+
+**Result: shuffle causes regression.** Shuffle unlocks ~652 user-movie pairs that are locked out as labels under timestamp sort (movies watched first = position 0, never eligible as a target). These tend to be popular classics (Shawshank, Forrest Gump) that appear early in chronological histories. Shuffle shifted the label distribution: popular-movie frequency in top-20 labels increased by 7.7% relative (8.51% → 9.16%). This biases training toward recommending popular movies to users regardless of taste.
+
+**Conclusion: always use timestamp sort (`sort_by_ts=True`, the default in `build_mse_rollback_dataset`). Do not revisit shuffle.**
+
+### MPS GPU support (2026-05-01)
+
+Added Apple MPS device support. `get_device()` in `src/train.py` returns `mps > cuda > cpu`. Train/eval/inference all run on device. Export stays CPU-only — `src/export.py` never calls `get_device()` and uses `map_location='cpu'` when loading checkpoints, ensuring serving artifacts are device-agnostic for Streamlit Cloud.
+
+**Critical:** Checkpoints saved during MPS training contain MPS tensor locations. `export.py` must use `map_location='cpu'` when loading — without it, `model.pth` is saved with MPS storage and crashes on Linux (Streamlit Cloud has no MPS).
+
+MPS training speed: ~145 it/s. Two MPS-specific optimizations made to eval/canary code:
+- `build_movie_embeddings`: replaced per-movie loop (37,500 individual kernel dispatches) with single batched forward pass
+- `run_canary_eval`: replaced per-score `.item()` calls with `torch.argsort` on device + single `.tolist()`
+
+### Experiment: Early stop at step 180k vs fully trained (300k steps)
+
+**Checkpoint run:** `mse_gpool_gctx_proj_20260501_063808`
+
+**Result: step_180000 wins over best_mse (fully trained).** Three-way canary comparison (PROD vs step_180k vs fully_trained):
+- Sci-Fi: step_180k gave clean hard sci-fi (Moon, Pi, Blade Runner, Brazil). Fully trained showed arthouse drift back (Cosmos, Kurosawa's Dreams, Songs From Second Floor).
+- Superhero: fully trained added Transformers (Dark of the Moon, Revenge of the Fallen) — clear regression. Step_180k stayed clean MCU.
+- Crime: fully trained drifted (Easy Rider, Nymphomaniac, Deer Hunter). Step_180k on-genre.
+- Children's: fully trained gave weak picks (Pacifier, Cheaper by the Dozen 2, Herbie). Step_180k clean Disney/Pixar.
+- Niche genres (Arthouse, Martial Arts, Anime, WW2): fully trained slightly better — not worth the regressions above.
+
+**Conclusion: early stopping at ~180k is the sweet spot for this architecture/dataset. The model overfits toward arthouse/prestige genome signals in the final training phase. Always compare periodic checkpoints via canary before choosing the "best" checkpoint by val loss.**
 
 ## Dataset Memory Fix (2026-04-25)
 
