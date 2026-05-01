@@ -96,6 +96,10 @@ def _run_rollback_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed):
 
     n_examples = int(target_movieId.shape[0])
 
+    # Pre-pad histories once so the scoring loop just slices pre-allocated tensors
+    hist_idx_padded = pad_history_batch(X_history, model.pad_idx)
+    hist_wts_padded = pad_history_ratings_batch(X_history_ratings)
+
     recall   = {k: 0.0 for k in ks}
     hit_rate = {k: 0   for k in ks}
     ndcg     = {k: 0.0 for k in ks}
@@ -106,8 +110,8 @@ def _run_rollback_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed):
         for s in range(0, n_examples, EVAL_BATCH_SIZE):
             e = min(s + EVAL_BATCH_SIZE, n_examples)
 
-            hist_idx_t = pad_history_batch(X_history[s:e], model.pad_idx)
-            hist_wts_t = pad_history_ratings_batch(X_history_ratings[s:e])
+            hist_idx_t = hist_idx_padded[s:e]
+            hist_wts_t = hist_wts_padded[s:e]
             user_embs  = model.user_embedding(X_genre[s:e], hist_idx_t, hist_wts_t, timestamp[s:e])
             scores     = user_embs @ all_embs.T  # (B, n_items)
 
