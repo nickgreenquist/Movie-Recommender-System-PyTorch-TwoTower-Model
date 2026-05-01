@@ -21,15 +21,13 @@ import torch.nn.functional as F
 import src.evaluate
 importlib.reload(src.evaluate)
 from src.evaluate import (
-    USER_TYPE_TO_FAVORITE_GENRES,
-    USER_TYPE_TO_WORST_GENRES,
     USER_TYPE_TO_FAVORITE_MOVIES,
     USER_TYPE_TO_DISLIKED_MOVIES,
     USER_TYPE_TO_GENOME_TAGS,
 )
 from src.model import MovieRecommender
 
-EXAMPLE_PROFILES = [k for k in USER_TYPE_TO_FAVORITE_GENRES if k not in ()]
+EXAMPLE_PROFILES = list(USER_TYPE_TO_FAVORITE_MOVIES.keys())
 
 # Rating values — mirror evaluate.py canary constants
 _LIKED_MOVIE    =  2.0
@@ -382,11 +380,9 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters):
     )
 
     if selected_profile:
-        fav_movies   = USER_TYPE_TO_FAVORITE_MOVIES[selected_profile]
-        dis_movies   = USER_TYPE_TO_DISLIKED_MOVIES[selected_profile]
-        fav_genres   = USER_TYPE_TO_FAVORITE_GENRES[selected_profile]
-        worst_genres = USER_TYPE_TO_WORST_GENRES[selected_profile]
-        genome_tags  = USER_TYPE_TO_GENOME_TAGS.get(selected_profile, [])
+        fav_movies  = USER_TYPE_TO_FAVORITE_MOVIES[selected_profile]
+        dis_movies  = USER_TYPE_TO_DISLIKED_MOVIES[selected_profile]
+        genome_tags = USER_TYPE_TO_GENOME_TAGS.get(selected_profile, [])
 
         # For genome-driven profiles, compute anchor movies from tags
         anchor_tag_title_pairs = []
@@ -428,7 +424,7 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters):
         with torch.no_grad():
             user_emb = _build_user_embedding(
                 model, fs, liked_with_weights, dis_movies,
-                fav_genres, worst_genres, ts_inference,
+                [], [], ts_inference,
             )
         df = _score_movies(user_emb, all_ids, all_embs, fs,
                            exclude_titles=fav_movies + dis_movies +
@@ -436,8 +432,6 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters):
         st.subheader(f"Recommendations for: {selected_profile}")
         if fav_movies:
             st.caption("Because you like these movies: " + ", ".join(fav_movies))
-        if fav_genres:
-            st.caption("Because you like these genres: " + ", ".join(fav_genres))
         if genome_tags:
             st.caption("Because you like these genome tags: " + ", ".join(genome_tags))
         _show_results(df, posters, fs)
