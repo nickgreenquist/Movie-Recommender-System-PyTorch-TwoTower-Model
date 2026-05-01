@@ -29,10 +29,11 @@ EVAL_BATCH_SIZE = 512
 
 def _build_emb_matrix(model, fs):
     movie_embeddings = build_movie_embeddings(model, fs)
+    device   = next(model.parameters()).device
     all_ids  = list(movie_embeddings.keys())
     all_embs = torch.cat(
         [movie_embeddings[mid]['MOVIE_EMBEDDING_COMBINED'] for mid in all_ids], dim=0
-    )
+    ).to(device)
     return all_ids, all_embs
 
 
@@ -97,8 +98,11 @@ def _run_rollback_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed):
     n_examples = int(target_movieId.shape[0])
 
     # Pre-pad histories once so the scoring loop just slices pre-allocated tensors
-    hist_idx_padded = pad_history_batch(X_history, model.pad_idx)
-    hist_wts_padded = pad_history_ratings_batch(X_history_ratings)
+    device = next(model.parameters()).device
+    hist_idx_padded = pad_history_batch(X_history, model.pad_idx).to(device)
+    hist_wts_padded = pad_history_ratings_batch(X_history_ratings).to(device)
+    X_genre   = X_genre.to(device)
+    timestamp = timestamp.to(device)
 
     recall   = {k: 0.0 for k in ks}
     hit_rate = {k: 0   for k in ks}

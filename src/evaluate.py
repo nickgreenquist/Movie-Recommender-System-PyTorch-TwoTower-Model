@@ -13,7 +13,7 @@ import torch
 import torch.nn.functional as F
 from src.dataset import FeatureStore
 from src.model import MovieRecommender
-from src.train import build_model, get_config, print_model_summary
+from src.train import build_model, get_config, get_device, print_model_summary
 
 
 # ── Canary user definitions ───────────────────────────────────────────────────
@@ -138,9 +138,7 @@ USER_TYPE_TO_DISLIKED_MOVIES = {
     'War Movie Lover':        [],
     'Fantasy Lover':          [],
     'Crime Lover':            [],
-    'Heist Lover':            [
-        '13 Hours (2016)'
-    ],
+    'Heist Lover':            [],
     'Action Junkie':          [],
     'Arthouse Lover':         [],
     'Superhero Lover':        [],
@@ -183,29 +181,30 @@ def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
     Returns movieId → {'MOVIE_EMBEDDING_COMBINED': Tensor, ...}
     """
     model.eval()
+    device = next(model.parameters()).device
     movieId_to_embedding = {}
     with torch.no_grad():
         for movieId in fs.top_movies:
             mid = int(movieId)
             d   = {}
-            emb_idx  = torch.tensor([fs.item_emb_movieId_to_i[mid]])
-            year_idx = torch.tensor([fs.year_to_i[fs.movieId_to_year[mid]]])
+            emb_idx  = torch.tensor([fs.item_emb_movieId_to_i[mid]]).to(device)
+            year_idx = torch.tensor([fs.year_to_i[fs.movieId_to_year[mid]]]).to(device)
 
             d['MOVIEID_EMBEDDING']          = model.item_embedding_tower(
                                                 model.item_embedding_lookup(emb_idx))
             d['MOVIE_YEAR_EMBEDDING']       = model.year_embedding_tower(
                                                 model.year_embedding_lookup(year_idx))
             d['MOVIE_GENRE_EMBEDDING']      = model.item_genre_tower(
-                                                torch.tensor([fs.movieId_to_genre_context[mid]]))
+                                                torch.tensor([fs.movieId_to_genre_context[mid]]).to(device))
             d['MOVIE_TAG_EMBEDDING']        = model.item_tag_tower(
-                                                torch.tensor([fs.movieId_to_tag_context[mid]]))
+                                                torch.tensor([fs.movieId_to_tag_context[mid]]).to(device))
             d['MOVIE_GENOME_TAG_EMBEDDING'] = model.item_genome_tag_tower(
-                                                torch.tensor([fs.movieId_to_genome_tag_context[mid]]))
+                                                torch.tensor([fs.movieId_to_genome_tag_context[mid]]).to(device))
             # Use model.item_embedding() so the projection MLP is applied when present.
             d['MOVIE_EMBEDDING_COMBINED']   = model.item_embedding(
-                torch.tensor([fs.movieId_to_genre_context[mid]]),
-                torch.tensor([fs.movieId_to_tag_context[mid]]),
-                torch.tensor([fs.movieId_to_genome_tag_context[mid]]),
+                torch.tensor([fs.movieId_to_genre_context[mid]]).to(device),
+                torch.tensor([fs.movieId_to_tag_context[mid]]).to(device),
+                torch.tensor([fs.movieId_to_genome_tag_context[mid]]).to(device),
                 year_idx, emb_idx,
             )
             movieId_to_embedding[mid] = d
@@ -290,14 +289,15 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
     history = liked_hist + dis_hist
     ratings = [h[1] for h in liked_hist] + [VALUE_DISLIKED_MOVIE_RATING] * len(dis_hist)
 
+    device = next(model.parameters()).device
     if history:
-        hist_ids = torch.tensor([[h[0] for h in history]], dtype=torch.long)
-        hist_wts = torch.tensor([ratings], dtype=torch.float)
+        hist_ids = torch.tensor([[h[0] for h in history]], dtype=torch.long).to(device)
+        hist_wts = torch.tensor([ratings], dtype=torch.float).to(device)
     else:
-        hist_ids = torch.tensor([[model.pad_idx]], dtype=torch.long)
-        hist_wts = torch.tensor([[0.0]], dtype=torch.float)
+        hist_ids = torch.tensor([[model.pad_idx]], dtype=torch.long).to(device)
+        hist_wts = torch.tensor([[0.0]], dtype=torch.float).to(device)
 
-    X_inf = torch.tensor([ctx])
+    X_inf = torch.tensor([ctx]).to(device)
     return model.user_embedding(X_inf, hist_ids, hist_wts, ts_inference)
 
 
@@ -306,12 +306,14 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
                     top_n: int = 10) -> None:
     """Run all canary users and print recommendation tables."""
     model.eval()
+    device = next(model.parameters()).device
 
     # Use the most recent timestamp from the timestamp range
     ts_max_bin = torch.bucketize(
         torch.tensor([float(fs.timestamp_bins[-1].item())]),
         fs.timestamp_bins, right=False
-    )
+    ).to(device)
+    all_embs = all_embs.to(device)
 
     with torch.no_grad():
         for user_type in USER_TYPE_TO_FAVORITE_MOVIES:
@@ -347,6 +349,7 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
                 print(f"Disliked: {', '.join(dis_movies)}")
             if anchor_titles:
                 print(f"Anchors:  {', '.join(anchor_titles[:5])}")
+            print()
             header = f"{'Liked Movies':<{col_w}}  Recommendations"
             print(header)
             print('─' * bar_w)
@@ -573,6 +576,8 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
 
     model = build_model(config, fs)
     model.load_state_dict(state_dict)
+    device = get_device()
+    model = model.to(device)
     model.eval()
     print_model_summary(model)
 

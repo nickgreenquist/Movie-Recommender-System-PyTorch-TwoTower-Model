@@ -16,6 +16,14 @@ from src.model import MovieRecommender
 
 # ── Hyperparameters ───────────────────────────────────────────────────────────
 
+def get_device() -> torch.device:
+    if torch.backends.mps.is_available():
+        return torch.device('mps')
+    if torch.cuda.is_available():
+        return torch.device('cuda')
+    return torch.device('cpu')
+
+
 def get_config() -> dict:
     """All training hyperparameters in one place."""
     return {
@@ -143,6 +151,20 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
 
     print_model_summary(model)
 
+    device = get_device()
+    print(f"\nDevice: {device}")
+    model = model.to(device)
+
+    # Pre-move full dataset tensors; X_history* stay as lists (padded per batch)
+    X_train              = X_train.to(device)
+    Y_train              = Y_train.to(device)
+    timestamp_train      = timestamp_train.to(device)
+    target_movieId_train = target_movieId_train.to(device)
+    X_val                = X_val.to(device)
+    Y_val                = Y_val.to(device)
+    timestamp_val        = timestamp_val.to(device)
+    target_movieId_val   = target_movieId_val.to(device)
+
     pad_idx          = len(fs.top_movies)
     loss_fn          = torch.nn.MSELoss()
     optimizer        = torch.optim.SGD(model.parameters(), lr=config['lr'],
@@ -183,8 +205,8 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
                 for v0 in range(0, n_val, val_batch_size):
                     v1      = min(v0 + val_batch_size, n_val)
                     vix     = list(range(v0, v1))
-                    hb      = pad_history_batch([X_history_val[j] for j in vix], pad_idx)
-                    rb      = pad_history_ratings_batch([X_history_ratings_val[j] for j in vix])
+                    hb      = pad_history_batch([X_history_val[j] for j in vix], pad_idx).to(device)
+                    rb      = pad_history_ratings_batch([X_history_ratings_val[j] for j in vix]).to(device)
                     vp      = model(X_val[v0:v1], hb, rb, timestamp_val[v0:v1],
                                     target_movieId_val[v0:v1])
                     sq_sum  += ((vp - Y_val[v0:v1]) ** 2).sum().item()
@@ -193,8 +215,8 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
             loss_val.append(output_val)
         else:
             ix = torch.randint(0, X_train.shape[0], (minibatch_size,)).tolist()
-            hist_batch = pad_history_batch([X_history_train[j] for j in ix], pad_idx)
-            rat_batch  = pad_history_ratings_batch([X_history_ratings_train[j] for j in ix])
+            hist_batch = pad_history_batch([X_history_train[j] for j in ix], pad_idx).to(device)
+            rat_batch  = pad_history_ratings_batch([X_history_ratings_train[j] for j in ix]).to(device)
             model.train()
             preds = model(X_train[ix], hist_batch, rat_batch,
                           timestamp_train[ix], target_movieId_train[ix])
@@ -235,8 +257,8 @@ def train(model: MovieRecommender, train_data: tuple, val_data: tuple,
         for v0 in range(0, n_val, val_batch_size):
             v1      = min(v0 + val_batch_size, n_val)
             vix     = list(range(v0, v1))
-            hb      = pad_history_batch([X_history_val[j] for j in vix], pad_idx)
-            rb      = pad_history_ratings_batch([X_history_ratings_val[j] for j in vix])
+            hb      = pad_history_batch([X_history_val[j] for j in vix], pad_idx).to(device)
+            rb      = pad_history_ratings_batch([X_history_ratings_val[j] for j in vix]).to(device)
             vp      = model(X_val[v0:v1], hb, rb, timestamp_val[v0:v1],
                             target_movieId_val[v0:v1])
             sq_sum += ((vp - Y_val[v0:v1]) ** 2).sum().item()
