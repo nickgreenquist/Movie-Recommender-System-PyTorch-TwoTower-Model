@@ -608,11 +608,28 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
 
 def run_canary(data_dir: str = 'data', checkpoint_path: str = None,
                version: str = 'v1') -> None:
+    import contextlib, io, sys
     model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm = _setup(data_dir, checkpoint_path, version)
     if model is None:
         return
     print("\n── Canary user evaluation ──")
-    run_canary_eval(model, fs, movie_embeddings, all_ids, all_embs)
+
+    real_stdout = sys.stdout
+    buf = io.StringIO()
+
+    class _Tee:
+        def write(self, data): real_stdout.write(data); buf.write(data)
+        def flush(self):       real_stdout.flush();     buf.flush()
+
+    with contextlib.redirect_stdout(_Tee()):
+        run_canary_eval(model, fs, movie_embeddings, all_ids, all_embs)
+
+    os.makedirs('canary_results', exist_ok=True)
+    stem     = os.path.splitext(os.path.basename(checkpoint_path))[0] if checkpoint_path else 'latest'
+    out_path = os.path.join('canary_results', f'{stem}.txt')
+    with open(out_path, 'w') as f:
+        f.write(buf.getvalue())
+    print(f"\n  → canary saved to {out_path}")
 
 
 PROBE_SIMILAR_TITLES = [
