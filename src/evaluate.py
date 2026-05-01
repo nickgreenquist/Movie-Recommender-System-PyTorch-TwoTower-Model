@@ -208,8 +208,6 @@ USER_TYPE_TO_GENOME_TAGS = {
     "Nick's Recommendations": []
 }
 
-VALUE_FAVORITE_GENRE_RATING = 4.0
-VALUE_DISLIKED_GENRE_RATING = -2.0
 VALUE_FAVORITE_MOVIE_RATING = 2.0
 VALUE_DISLIKED_MOVIE_RATING = -2.0
 VALUE_ANCHOR_MOVIE_RATING   = 1.0
@@ -298,7 +296,7 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
         [(t, VALUE_FAVORITE_MOVIE_RATING) for t in fav_movies] +
         [(t, VALUE_ANCHOR_MOVIE_RATING)   for t in anchor_titles]
     )
-    # Genre context — derive from movies first, then override with explicit genres
+    # Genre context — derived from fav/disliked movies
     n_genres = len(fs.genres_ordered)
     ctx = [0.0] * (2 * n_genres)
     genre_rating_sum  = {}
@@ -319,16 +317,6 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
             ctx[fs.user_context_genre_avg_rating_to_i[g]]  = avg_r
         if g in fs.user_context_genre_watch_count_to_i:
             ctx[fs.user_context_genre_watch_count_to_i[g]] = frac
-    # Explicit genre selections override
-    for g in fav_genres:
-        if g in fs.user_context_genre_avg_rating_to_i:
-            ctx[fs.user_context_genre_avg_rating_to_i[g]]  = VALUE_FAVORITE_GENRE_RATING
-        if g in fs.user_context_genre_watch_count_to_i:
-            ctx[fs.user_context_genre_watch_count_to_i[g]] = 1.0 / max(len(fav_genres), 1)
-    for g in worst_genres:
-        if g in fs.user_context_genre_avg_rating_to_i:
-            ctx[fs.user_context_genre_avg_rating_to_i[g]]  = VALUE_DISLIKED_GENRE_RATING
-
     # Watch history
     liked_hist = [
         (fs.item_emb_movieId_to_i[fs.title_to_movieId[t]], w)
