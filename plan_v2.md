@@ -37,9 +37,37 @@ Shared `item_embedding_lookup` between item tower and history pool. Item ID embe
 Full softmax requires all 9k item embeddings every training step to build the `(batch_size × 9375)` score matrix. The item tower must be run over the full corpus each step as a **single batched forward pass** (same pattern as `build_movie_embeddings` in `evaluate.py` — do NOT loop per item). This is the dominant cost per step; on MPS it is fast but must be batched.
 
 ### Dataset Changes
-Dataset must be completely rebuilt — the label structure changes. Core concept unchanged: for every user, sort watches by timestamp and create rollback examples (same `MAX_MSE_ROLLBACK_EXAMPLES_PER_USER` cap). Changes are on the **label side** only:
-- **Positive targets** — movies rated **above** the user's avg rating only. Low-rated watches are NOT targets.
+Dataset must be completely rebuilt. Core concept unchanged: for every user, sort watches by timestamp and create rollback examples (same `MAX_MSE_ROLLBACK_EXAMPLES_PER_USER` cap). All watches are eligible targets (same as book and game recommenders — no rating filter on targets).
 - **Dataset order** — keep timestamp sort (`sort_by_ts=True`). Shuffle introduced massive popularity bias (+7.7% relative increase in top-20 label frequency). Do not change.
+
+### Popularity Bias: Theory and Correct Fix
+
+**Root cause:** Full softmax cross-entropy is structurally a multiclass classification problem where popular items are "dominant labels" — they appear as positives far more often than niche items. Naive softmax becomes biased toward these dominant classes.
+
+**Correct fix: Menon et al. (2021) logit adjustment.** Subtract `alpha * log P(item)` from each item's logit before softmax. This is the theoretically correct correction for label imbalance in full softmax — the paper is specifically about full softmax cross-entropy, not in-batch negatives. `alpha=1.0` is the full theoretical correction; smaller values apply it more conservatively.
+
+Implementation: `scores = (U @ V_all.T) / temperature - alpha * log1p(count_i)` where `count_i` is the number of training examples targeting item i.
+
+**Technique comparison:**
+
+| Approach | What It Corrects | Theoretical Basis |
+|---|---|---|
+| logQ correction (Yi et al.) | Sampling bias from in-batch negatives | Importance sampling |
+| Alpha logit adjustment (Menon et al.) | Label imbalance in full softmax | Long-tail classification theory |
+| IPS weighting | Exposure bias in positive examples | Causal inference |
+
+**TTEN (Test Time Embedding Normalization)** is not needed — L2 norm is already applied at tower output, making all embeddings unit norm before scoring.
+
+**Tuning alpha:** `alpha=1.0` is theoretically correct but may over-suppress popular items that are genuinely good recommendations. Current value: `0.4`. If canary still shows popular-movie attractor, raise to `0.6` then `0.8` before trying other approaches.
+
+**If alpha tuning fails:** Try **in-batch negatives** — popular movies appear as negatives more often within each batch, creating natural proportional suppression. Movie would be the only recommender using this (book and game both use full softmax successfully).
+
+---
+
+## If V2 Fails / Future Ideas to Try
+
+### Positive-target filtering
+Filter rollback targets to only movies rated above the user's avg rating (`rating > avg_rat`). Low-rated watches would remain in context (history) but not count as training targets. This is a hack — neither the book nor game recommenders do it, and the rating-weighted history pool should already handle the signal. Only try if v2 baseline is clearly failing.
 
 ---
 

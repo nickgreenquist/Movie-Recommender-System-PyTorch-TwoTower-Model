@@ -5,6 +5,7 @@ Usage:
     python main.py preprocess          # Stage 1: raw CSVs → data/base_*.parquet
     python main.py features            # Stage 2: base parquets → data/features_*.parquet
     python main.py dataset             # Stage 3: features → data/dataset_mse_rollback_*_v1.pt
+    python main.py dataset softmax     # Stage 3: features → data/dataset_softmax_*_v2.pt (v2 full softmax)
     python main.py train               # Stage 4: MSE training (rollback dataset)
     python main.py canary              # Canary user recommendations (most recent checkpoint)
     python main.py canary <path>       # Canary user recommendations (specific checkpoint)
@@ -33,25 +34,42 @@ def cmd_features():
     run(data_dir=DATA_DIR, version=VERSION)
 
 
-def cmd_dataset():
-    from src.dataset import load_features, make_mse_rollback_splits, save_mse_rollback_splits
+def cmd_dataset(variant=None):
     print("Loading features ...")
-    fs = load_features(DATA_DIR, VERSION)
-    print("\nBuilding MSE rollback datasets ...")
-    train_data, val_data = make_mse_rollback_splits(fs, DATA_DIR)
-    save_mse_rollback_splits(train_data, val_data, DATA_DIR, VERSION)
+    if variant == 'softmax':
+        from src.dataset import load_features, make_v2_softmax_splits, save_v2_softmax_splits
+        fs = load_features(DATA_DIR, VERSION)
+        print("\nBuilding v2 softmax datasets ...")
+        train_data, val_data = make_v2_softmax_splits(fs, DATA_DIR)
+        save_v2_softmax_splits(train_data, val_data, DATA_DIR)
+    else:
+        from src.dataset import load_features, make_mse_rollback_splits, save_mse_rollback_splits
+        fs = load_features(DATA_DIR, VERSION)
+        print("\nBuilding MSE rollback datasets ...")
+        train_data, val_data = make_mse_rollback_splits(fs, DATA_DIR)
+        save_mse_rollback_splits(train_data, val_data, DATA_DIR, VERSION)
 
 
-def cmd_train():
-    from src.dataset import load_features, load_mse_rollback_splits
-    from src.train import get_config, build_model, train
+def cmd_train(variant=None):
     print("Loading features ...")
-    fs = load_features(DATA_DIR, VERSION)
-    print("\nLoading MSE rollback datasets ...")
-    train_data, val_data = load_mse_rollback_splits(DATA_DIR, VERSION)
-    config = get_config()
-    model  = build_model(config, fs)
-    train(model, train_data, val_data, config, fs)
+    if variant == 'softmax':
+        from src.dataset import load_features, load_v2_softmax_splits
+        from src.train import get_v2_config, build_model, train_v2_softmax
+        fs = load_features(DATA_DIR, VERSION)
+        print("\nLoading v2 softmax datasets ...")
+        train_data, val_data = load_v2_softmax_splits(DATA_DIR)
+        config = get_v2_config()
+        model  = build_model(config, fs)
+        train_v2_softmax(model, train_data, val_data, config, fs)
+    else:
+        from src.dataset import load_features, load_mse_rollback_splits
+        from src.train import get_config, build_model, train
+        fs = load_features(DATA_DIR, VERSION)
+        print("\nLoading MSE rollback datasets ...")
+        train_data, val_data = load_mse_rollback_splits(DATA_DIR, VERSION)
+        config = get_config()
+        model  = build_model(config, fs)
+        train(model, train_data, val_data, config, fs)
 
 
 def cmd_canary(checkpoint_path=None):
@@ -68,8 +86,9 @@ def cmd_eval(checkpoint_path=None):
     from src.evaluate import _setup
     from src.offline_eval import run_offline_eval
 
-    model, fs, _, _, _, _, _, checkpoint_path = _setup(data_dir=DATA_DIR, checkpoint_path=checkpoint_path,
-                                       version=VERSION)
+    result = _setup(data_dir=DATA_DIR, checkpoint_path=checkpoint_path, version=VERSION)
+    model, fs = result[0], result[1]
+    checkpoint_path = result[-1]
     run_offline_eval(model, fs, checkpoint_path=checkpoint_path or '', data_dir=DATA_DIR)
 
 
@@ -109,6 +128,8 @@ if __name__ == '__main__':
         cmd = args[0]
         if cmd in ('canary', 'probe', 'eval', 'export') and len(args) > 1:
             COMMANDS[cmd](checkpoint_path=args[1])
+        elif cmd in ('dataset', 'train') and len(args) > 1:
+            COMMANDS[cmd](variant=args[1])
         else:
             COMMANDS[cmd]()
     else:

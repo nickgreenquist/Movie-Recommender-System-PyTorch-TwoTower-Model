@@ -16,6 +16,7 @@ import torch
 
 
 TIMESTAMP_NUM_BINS = 1_500
+MAX_HISTORY_LEN    = 50   # cap watch history to most recent N movies
 
 
 # ── FeatureStore ──────────────────────────────────────────────────────────────
@@ -53,6 +54,11 @@ class FeatureStore:
     timestamp_bins:                       torch.Tensor
     user_context_genre_avg_rating_to_i:   dict
     user_context_genre_watch_count_to_i:  dict
+
+    # Per-corpus-item interaction counts (float32 array, index = corpus idx).
+    # Populated by load_features() when movie_interaction_counts_v2.npy exists.
+    # None if the file is missing (popularity_alpha=0 is safe in that case).
+    movie_interaction_counts: object = field(default=None)  # np.ndarray | None
 
 
 # ── Loader ────────────────────────────────────────────────────────────────────
@@ -124,6 +130,9 @@ def load_features(data_dir: str = 'data', version: str = 'v1') -> FeatureStore:
         np.linspace(ts_min, ts_max, TIMESTAMP_NUM_BINS)
     )
 
+    counts_path = os.path.join(data_dir, 'movie_interaction_counts_v2.npy')
+    movie_interaction_counts = np.load(counts_path) if os.path.exists(counts_path) else None
+
     return FeatureStore(
         top_movies=top_movies,
         genres_ordered=genres_ordered,
@@ -148,6 +157,7 @@ def load_features(data_dir: str = 'data', version: str = 'v1') -> FeatureStore:
         timestamp_bins=timestamp_bins,
         user_context_genre_avg_rating_to_i=user_context_genre_avg_rating_to_i,
         user_context_genre_watch_count_to_i=user_context_genre_watch_count_to_i,
+        movie_interaction_counts=movie_interaction_counts,
     )
 
 
@@ -212,7 +222,6 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
     target_genre/tag/genome/year are NOT stored — look them up from model buffers
     at training time using target_movieId as the corpus index.
     """
-    from src.features import MAX_HISTORY_LEN
     rng       = random.Random(seed)
     users_set = set(users)
     max_hist  = MAX_HISTORY_LEN
@@ -235,7 +244,7 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
 
     from tqdm import tqdm
     n_users = df['userId'].nunique()
-    for uid, group in tqdm(df.groupby('userId'), total=n_users, desc="Building MSE rollback examples"):
+    for uid, group in tqdm(df.groupby('userId'), total=n_users, desc="Building rollback examples"):
         rows    = list(zip(group['movieId'].tolist(), group['rating'].tolist(), group['timestamp'].tolist()))
         if sort_by_ts:
             rows.sort(key=lambda x: x[2])
@@ -345,11 +354,11 @@ def make_mse_rollback_splits(fs: FeatureStore, data_dir: str = 'data',
     train_users = valid_users[:split]
     val_users   = valid_users[split:]
 
-    print(f"\nBuilding MSE rollback train dataset ({len(train_users):,} users) ...")
+    print(f"\nBuilding rollback train dataset ({len(train_users):,} users) ...")
     train_data = build_mse_rollback_dataset(train_users, fs, raw_df, max_per_user, seed)
     print(f"  X_genre_train shape: {train_data[0].shape}")
 
-    print(f"\nBuilding MSE rollback val dataset ({len(val_users):,} users) ...")
+    print(f"\nBuilding rollback val dataset ({len(val_users):,} users) ...")
     val_data = build_mse_rollback_dataset(val_users, fs, raw_df, max_per_user, seed)
     print(f"  X_genre_val shape:   {val_data[0].shape}")
 
@@ -371,3 +380,182 @@ def load_mse_rollback_splits(data_dir: str = 'data', version: str = 'v1') -> tup
     print(f"Loading {val_path} ...")
     val_data   = torch.load(val_path, weights_only=False)
     return train_data[:6], val_data[:6]
+
+
+# ── V2 softmax dataset (full softmax) ────────────────────────────────────────
+#
+# Same rollback structure as MSE: per user, sort by timestamp, sample up to
+# MAX_V2_SOFTMAX_EXAMPLES_PER_USER rollback positions. All watched movies are
+# eligible targets (no rating filter — same as book and game recommenders).
+#
+# Key difference from MSE dataset:
+#   - No Y label (cross-entropy target is the item index, not a rating)
+#   - X_history and X_hist_ratings are pre-padded fixed-size tensors
+#     (shape: N × MAX_HISTORY_LEN) so training can do data[ix] directly
+#     instead of calling pad_history_batch per batch.
+#
+# Returns 5-tuple:
+#   [0] X_genre        — (N, user_context_size) float32
+#   [1] X_history      — (N, MAX_HISTORY_LEN) int64, right-aligned, pad=len(top_movies)
+#   [2] X_hist_ratings — (N, MAX_HISTORY_LEN) float32, right-aligned, pad=0.0
+#   [3] timestamp      — (N,) int64
+#   [4] target_movieId — (N,) int64  (corpus embedding index)
+
+MAX_V2_SOFTMAX_EXAMPLES_PER_USER = 20
+
+
+def build_v2_softmax_dataset(users: list, fs: FeatureStore, raw_df,
+                              max_per_user: int = MAX_V2_SOFTMAX_EXAMPLES_PER_USER,
+                              seed: int = 42) -> tuple:
+    from tqdm import tqdm
+
+    rng       = random.Random(seed)
+    users_set = set(users)
+    max_hist  = MAX_HISTORY_LEN
+    n_genres  = len(fs.genres_ordered)
+    pad_idx   = len(fs.top_movies)  # one past end of embedding table
+
+    movie_genre_idxs = {
+        mid: [fs.genre_to_i[g] for g in fs.movieId_to_genres.get(mid, []) if g in fs.genre_to_i]
+        for mid in fs.top_movies
+    }
+
+    df = raw_df[raw_df['userId'].isin(users_set)].copy()
+    print(f"  {len(df):,} interactions, {df['userId'].nunique():,} users")
+
+    # ── 1. Counting pass: exact buffer size before allocating ─────────────────
+    print("  Counting pass ...")
+    n_examples   = 0
+    valid_groups = []
+    for uid, group in df.groupby('userId'):
+        rows = list(zip(group['movieId'].tolist(), group['rating'].tolist(),
+                        group['timestamp'].tolist()))
+        rows.sort(key=lambda x: x[2])
+        n = len(rows)
+        if n >= 2:
+            n_examples += min(max_per_user, n - 1)
+            valid_groups.append((uid, rows))
+
+    # ── 2. Pre-allocate NumPy buffers ─────────────────────────────────────────
+    print(f"  Pre-allocating buffers for {n_examples:,} examples ...")
+    X_genre        = np.zeros((n_examples, 2 * n_genres), dtype=np.float32)
+    X_history      = np.full((n_examples, max_hist), pad_idx, dtype=np.int32)
+    X_hist_ratings = np.zeros((n_examples, max_hist), dtype=np.float32)
+    timestamps_raw = np.zeros(n_examples, dtype=np.float64)
+    target_arr     = np.zeros(n_examples, dtype=np.int32)
+
+    # ── 3. Fill pass ──────────────────────────────────────────────────────────
+    curr = 0
+    for uid, rows in tqdm(valid_groups, desc="Building v2 softmax examples"):
+        movies, ratings, ts_vals = zip(*rows)
+        avg_rat = float(np.mean(ratings))
+        n       = len(movies)
+
+        eligible    = list(range(1, n))
+        k           = min(max_per_user, len(eligible))
+        sampled     = sorted(rng.sample(eligible, k))
+        sampled_set = set(sampled)
+
+        running_count = np.zeros(n_genres, dtype=np.float32)
+        running_sum   = np.zeros(n_genres, dtype=np.float32)
+        ctx_ids       = []
+        ctx_rats      = []
+
+        for pos, (mid, rat, ts) in enumerate(zip(movies, ratings, ts_vals)):
+            mid   = int(mid)
+            d_rat = float(rat) - avg_rat
+            t_idx = fs.item_emb_movieId_to_i[mid]
+
+            if pos in sampled_set:
+                total = running_count.sum()
+                if total > 0:
+                    mask = running_count > 0
+                    X_genre[curr, :n_genres][mask] = running_sum[mask] / running_count[mask]
+                    X_genre[curr, n_genres:]       = running_count / total
+
+                # Right-align: padding at left, most recent items at right
+                take = min(len(ctx_ids), max_hist)
+                if take > 0:
+                    X_history[curr, max_hist - take:]      = ctx_ids[-take:]
+                    X_hist_ratings[curr, max_hist - take:] = ctx_rats[-take:]
+
+                timestamps_raw[curr] = ts
+                target_arr[curr]     = t_idx
+                curr += 1
+
+            ctx_ids.append(t_idx)
+            ctx_rats.append(d_rat)
+            for g_idx in movie_genre_idxs.get(mid, []):
+                running_count[g_idx] += 1
+                running_sum[g_idx]   += d_rat
+
+    print(f"  {n_examples:,} v2 softmax examples — converting to tensors ...")
+
+    timestamp_t = torch.bucketize(
+        torch.from_numpy(timestamps_raw).float(),
+        fs.timestamp_bins.float(), right=False,
+    ).clamp(max=TIMESTAMP_NUM_BINS - 1)
+
+    return (
+        torch.from_numpy(X_genre),
+        torch.from_numpy(X_history).long(),
+        torch.from_numpy(X_hist_ratings),
+        timestamp_t,
+        torch.from_numpy(target_arr).long(),
+    )
+
+
+def make_v2_softmax_splits(fs: FeatureStore, data_dir: str = 'data',
+                            max_per_user: int = MAX_V2_SOFTMAX_EXAMPLES_PER_USER,
+                            pct_train: float = 0.9, seed: int = 42,
+                            max_users: int = None) -> tuple:
+    ratings_path = os.path.join(data_dir, 'base_ratings.parquet')
+    print(f"Loading {ratings_path} ...")
+    raw_df = pd.read_parquet(ratings_path)
+    corpus_set = set(fs.item_emb_movieId_to_i.keys())
+    raw_df = raw_df[raw_df['movieId'].isin(corpus_set)]
+    print(f"  {len(raw_df):,} raw interactions, {raw_df['userId'].nunique():,} users")
+
+    valid_users = sorted(raw_df['userId'].astype(int).unique().tolist())
+    rng = random.Random(seed)
+    rng.shuffle(valid_users)
+
+    if max_users is not None:
+        valid_users = valid_users[:max_users]
+        print(f"  [debug] subsampled to {len(valid_users):,} users")
+
+    split       = int(len(valid_users) * pct_train)
+    train_users = valid_users[:split]
+    val_users   = valid_users[split:]
+
+    print(f"\nBuilding v2 softmax train dataset ({len(train_users):,} users) ...")
+    train_data = build_v2_softmax_dataset(train_users, fs, raw_df, max_per_user, seed)
+    print(f"  X_genre_train shape: {train_data[0].shape}")
+
+    print(f"\nBuilding v2 softmax val dataset ({len(val_users):,} users) ...")
+    val_data = build_v2_softmax_dataset(val_users, fs, raw_df, max_per_user, seed)
+    print(f"  X_genre_val shape:   {val_data[0].shape}")
+
+    return train_data, val_data
+
+
+def save_v2_softmax_splits(train_data: tuple, val_data: tuple,
+                            data_dir: str = 'data', version: str = 'v2') -> None:
+    torch.save(train_data, os.path.join(data_dir, f'dataset_softmax_train_{version}.pt'))
+    torch.save(val_data,   os.path.join(data_dir, f'dataset_softmax_val_{version}.pt'))
+    # Save per-item interaction counts (corpus-index order) for popularity logit adjustment.
+    target_ids = train_data[4].numpy()
+    counts = np.bincount(target_ids).astype(np.float32)
+    np.save(os.path.join(data_dir, 'movie_interaction_counts_v2.npy'), counts)
+    print(f"Saved dataset_softmax_train_{version}.pt, dataset_softmax_val_{version}.pt, "
+          f"movie_interaction_counts_v2.npy → {data_dir}/")
+
+
+def load_v2_softmax_splits(data_dir: str = 'data', version: str = 'v2') -> tuple:
+    train_path = os.path.join(data_dir, f'dataset_softmax_train_{version}.pt')
+    val_path   = os.path.join(data_dir, f'dataset_softmax_val_{version}.pt')
+    print(f"Loading {train_path} ...")
+    train_data = torch.load(train_path, weights_only=False)
+    print(f"Loading {val_path} ...")
+    val_data   = torch.load(val_path, weights_only=False)
+    return train_data, val_data
