@@ -146,6 +146,27 @@ Sub-tower linears: Xavier uniform `gain=0.1`. Projection linears re-initialized 
 - **`F.normalize` must NOT be used in `train_softmax`.** Applying it makes training optimize cosine similarity while inference uses raw dot products — train/inference mismatch. Always use raw dot products in both.
 - **Similarity metric rule — do not revisit:** Raw dot product for user-to-item scoring (training, eval, canary). Cosine similarity for item-to-item (probe_similar, tab_similar). Raw dot for item-item causes high-norm items to dominate every neighborhood. Tested and confirmed worse — do not switch again.
 
+### V2 Softmax (`python main.py train softmax` on v2 branch) — full softmax + L2 norm + popularity correction
+
+**V2 baseline (checkpoint: `best_softmax_v2_20260502_142141.pth`)** — great genre discrimination on canary (Western, Sci-Fi, Horror, Martial Arts all clean). Use as comparison baseline for all future experiments.
+```
+Embedding sizes:
+  item_movieId:    32    item_tag:       16    item_genome_tag: 32
+  item_genre:       8    item_year:       8    user_genre:      32
+  user_genome_ctx: 32    ts_feature:      4
+  proj_hidden: 256  output_dim: 128
+Training: lr=0.001  temperature=0.1  alpha=0.0  steps=150k  batch=512
+```
+Do not change embedding sizes without a full canary comparison against this checkpoint.
+
+- **Loss**: full softmax over all ~9,375 corpus items (not in-batch negatives)
+- **Optimizer**: Adam, `lr=0.001`, `weight_decay=0.0`, `adam_eps=1e-6`
+- **L2 normalization** at end of both towers; dot product of unit vectors = cosine similarity
+- **Popularity bias correction (Menon et al. 2021):** Full softmax is structurally a multiclass classification problem where popular items are dominant labels. The correct fix is the logit-adjusted loss: **add** `alpha * log(count_i)` to item i's logit before softmax (Menon Eq. 4). Popular items get a large free boost → they're easy positives (lazy gradient, small embedding updates) but hard negatives (strong downward push) → their embeddings naturally shrink. Raw dot products at inference are then debiased without any post-hoc correction. `alpha=1.0` is the full theoretical correction. **Do NOT subtract** — that's the wrong sign and causes popular embeddings to grow, making bias worse at inference.
+- **Inference:** Use raw dot products — no post-hoc correction needed. `POPULARITY_ALPHA_INFERENCE_MULTIPLE = 0.0`.
+- **Config sidecar:** `alpha` and `temperature` saved as JSON alongside each checkpoint; loaded at canary/eval time so the same correction used in training is applied at inference.
+- **TTEN is not needed:** L2 norm is already applied at tower output — all embeddings are unit norm before scoring.
+
 ## Saving / Loading Models
 
 Checkpoints are weights-only (~1MB). The `saved_models/` directory is gitignored.

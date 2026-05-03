@@ -13,7 +13,13 @@ import torch
 import torch.nn.functional as F
 from src.dataset import FeatureStore
 from src.model import MovieRecommender
-from src.train import build_model, get_config, get_device, print_model_summary
+from src.train import build_model, get_config, get_device, load_config_for_checkpoint, print_model_summary
+
+# Inference applies a stronger popularity correction than training.
+# Training: scores = (U @ V_all.T) / temp - alpha * log1p(counts)
+# Inference: raw_scores - temp * alpha * INFERENCE_MULTIPLE * log1p(counts)
+# (multiply training formula through by temp, then scale by INFERENCE_MULTIPLE)
+POPULARITY_ALPHA_INFERENCE_MULTIPLE = 0.0
 
 
 # ── Canary user definitions ───────────────────────────────────────────────────
@@ -63,16 +69,15 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'Dune (1984)'
     ],
     'Crime Lover': [
-        'Goodfellas (1990)',
-        'Reservoir Dogs (1992)',
         'Donnie Brasco (1997)',
         'The Irishman (2019)',
         'Casino (1995)',
-        'Narc (2002)'
+        'Narc (2002)',
+        'American Gangster (2007)',
+        'Sicario (2015)'
     ],
     'Heist Lover':         [
         'Heist (2001)',
-        "Ocean's Eleven (2001)",
         "Ocean's Eleven (a.k.a. Ocean's 11) (1960)",
         'The Drop (2014)',
         'Bank Job, The (2008)',
@@ -145,18 +150,18 @@ USER_TYPE_TO_DISLIKED_MOVIES = {
     'WW2 Lover':              [],
     'Western Lover':          [],
     'Anime Lover':            [
-        'MirrorMask (2005)'
+        # 'MirrorMask (2005)'
     ],
     'Martial Arts Lover':     [],
     "Nick's Recommendations": [
-        'Planet Terror (2007)',
-        'Twilight (2008)'
+        # 'Planet Terror (2007)',
+        # 'Twilight (2008)'
     ],
 }
 
 USER_TYPE_TO_GENOME_TAGS = {
     'Crime Lover':           ['crime', 'gangs'],
-    'Heist Lover':           ['heist'],
+    'Heist Lover':           ['heist', 'robbery', 'con artists', 'caper'],
     'Action Junkie':         ['explosions', 'adrenaline'],
     'Arthouse Lover':        ['art house', 'slow burn'],
     'Superhero Lover':       ['superhero', 'superheroes'],
@@ -196,7 +201,7 @@ def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
         genre_embs   = model.item_genre_tower(genre_t)
         tag_embs     = model.item_tag_tower(tag_t)
         genome_embs  = model.item_genome_tag_tower(genome_t)
-        combined     = model.item_embedding(genre_t, tag_t, genome_t, year_idx, emb_idx)
+        combined     = model.item_embedding(emb_idx)
 
     movieId_to_embedding = {}
     for i, mid in enumerate(all_mids):
@@ -258,18 +263,17 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
     ctx = [0.0] * (2 * n_genres)
     genre_rating_sum  = {}
     genre_movie_count = {}
-    total_movies = 0
     for t, w in liked_with_weights + [(t, VALUE_DISLIKED_MOVIE_RATING) for t in dis_movies]:
         mid = fs.title_to_movieId.get(t)
         if mid is None:
             continue
-        total_movies += 1
         for g in fs.movieId_to_genres.get(mid, []):
             genre_rating_sum[g]  = genre_rating_sum.get(g, 0.0) + w
             genre_movie_count[g] = genre_movie_count.get(g, 0)  + 1
+    total_assign = sum(genre_movie_count.values())  # total genre-movie pairs, matches training
     for g, rsum in genre_rating_sum.items():
         avg_r = rsum / genre_movie_count[g]
-        frac  = genre_movie_count[g] / max(total_movies, 1)
+        frac  = genre_movie_count[g] / max(total_assign, 1)
         if g in fs.user_context_genre_avg_rating_to_i:
             ctx[fs.user_context_genre_avg_rating_to_i[g]]  = avg_r
         if g in fs.user_context_genre_watch_count_to_i:
@@ -302,10 +306,18 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
 
 def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
                     movie_embeddings: dict, all_ids: list, all_embs: torch.Tensor,
+                    popularity_alpha: float = 0.0, temperature: float = 0.1,
                     top_n: int = 10) -> None:
     """Run all canary users and print recommendation tables."""
     model.eval()
     device = next(model.parameters()).device
+
+    # Popularity logit adjustment at inference.
+    # Equivalent to training formula scaled by temp, with extra INFERENCE_MULTIPLE.
+    pop_bias = None
+    if popularity_alpha > 0 and fs.movie_interaction_counts is not None:
+        counts = torch.from_numpy(fs.movie_interaction_counts).to(device)
+        pop_bias = temperature * popularity_alpha * POPULARITY_ALPHA_INFERENCE_MULTIPLE * torch.log1p(counts)
 
     # Use the most recent timestamp from the timestamp range
     ts_max_bin = torch.bucketize(
@@ -323,7 +335,9 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
             anchor_titles = _get_anchor_titles(fs, genome_tags, exclude=set(fav_movies))
             exclude_set = set(fav_movies) | set(dis_movies) | set(anchor_titles)
 
-            raw_scores  = (all_embs @ user_emb.T).squeeze(-1)
+            raw_scores = (all_embs @ user_emb.T).squeeze(-1)
+            if pop_bias is not None:
+                raw_scores = raw_scores - pop_bias
             sorted_idxs = torch.argsort(raw_scores, descending=True).tolist()
 
             recs = []
@@ -347,7 +361,7 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
             if dis_movies:
                 print(f"Disliked: {', '.join(dis_movies)}")
             if anchor_titles:
-                print(f"Anchors:  {', '.join(anchor_titles[:5])}")
+                print(f"Anchors:  {', '.join(anchor_titles)}")
             print()
             header = f"{'Liked Movies':<{col_w}}  Recommendations"
             print(header)
@@ -424,13 +438,9 @@ def probe_genome_context(fs: FeatureStore, top_n: int = 15) -> None:
 
 # ── Embedding probes ──────────────────────────────────────────────────────────
 
-def probe_genre(model: MovieRecommender, genre: str, movie_embeddings: dict,
-                fs: FeatureStore, top_n: int = 10) -> None:
-    """
-    Find the most representative movies for a genre in the item genre embedding space.
-    Passes a one-hot genre vector through item_genre_tower, then compares via cosine
-    similarity against every movie's MOVIE_GENRE_EMBEDDING.
-    """
+def probe_genre(model: MovieRecommender, genre: str, fs: FeatureStore,
+                all_ids: list, all_norm_genre: torch.Tensor, top_n: int = 10) -> None:
+    """One-hot genre → item_genre_tower → cosine similarity via matrix multiply."""
     if genre not in fs.genre_to_i:
         print(f"Genre '{genre}' not in vocabulary.")
         return
@@ -440,28 +450,23 @@ def probe_genre(model: MovieRecommender, genre: str, movie_embeddings: dict,
 
     device = next(model.parameters()).device
     with torch.no_grad():
-        query_emb = model.item_genre_tower(torch.tensor([ctx]).to(device)).view(-1)
-
-    sims = {
-        mid: F.cosine_similarity(
-            query_emb.unsqueeze(0),
-            movie_embeddings[mid]['MOVIE_GENRE_EMBEDDING'].view(-1).unsqueeze(0)
-        ).item()
-        for mid in fs.top_movies
-    }
+        query_norm = F.normalize(
+            model.item_genre_tower(torch.tensor([ctx]).to(device)), dim=1)
+        scores = (all_norm_genre @ query_norm.T).squeeze(-1)
+        top_idx = scores.argsort(descending=True).tolist()
 
     print(f"\nTop-{top_n} movies for genre '{genre}':")
-    for mid, sim in sorted(sims.items(), key=lambda x: x[1], reverse=True)[:top_n]:
-        print(f"  {sim:.4f}  {fs.movieId_to_title[mid]}")
+    seen = 0
+    for idx in top_idx:
+        if seen >= top_n:
+            break
+        print(f"  {scores[idx].item():.4f}  {fs.movieId_to_title[all_ids[idx]]}")
+        seen += 1
 
 
-def probe_tag(model: MovieRecommender, tags: list, movie_embeddings: dict,
-              fs: FeatureStore, top_n: int = 10) -> None:
-    """
-    Find the most representative movies for a tag query in the item tag embedding space.
-    Passes the tag vector through item_tag_tower, then compares via cosine similarity
-    against every movie's MOVIE_TAG_EMBEDDING.
-    """
+def probe_tag(model: MovieRecommender, tags: list, fs: FeatureStore,
+              all_ids: list, all_norm_tag: torch.Tensor, top_n: int = 10) -> None:
+    """Tag vector → item_tag_tower → cosine similarity via matrix multiply."""
     ctx = [0.0] * len(fs.tags_ordered)
     for tag in tags:
         if tag in fs.tag_to_i:
@@ -469,59 +474,52 @@ def probe_tag(model: MovieRecommender, tags: list, movie_embeddings: dict,
 
     device = next(model.parameters()).device
     with torch.no_grad():
-        query_emb = model.item_tag_tower(torch.tensor([ctx], dtype=torch.float).to(device)).view(-1)
-
-    sims = {
-        mid: F.cosine_similarity(
-            query_emb.unsqueeze(0),
-            movie_embeddings[mid]['MOVIE_TAG_EMBEDDING'].view(-1).unsqueeze(0)
-        ).item()
-        for mid in fs.top_movies
-    }
+        query_norm = F.normalize(
+            model.item_tag_tower(torch.tensor([ctx], dtype=torch.float).to(device)), dim=1)
+        scores = (all_norm_tag @ query_norm.T).squeeze(-1)
+        top_idx = scores.argsort(descending=True).tolist()
 
     print(f"\nTop-{top_n} movies for tags {tags}:")
-    for mid, sim in sorted(sims.items(), key=lambda x: x[1], reverse=True)[:top_n]:
-        print(f"  {sim:.4f}  {fs.movieId_to_title[mid]}")
+    seen = 0
+    for idx in top_idx:
+        if seen >= top_n:
+            break
+        print(f"  {scores[idx].item():.4f}  {fs.movieId_to_title[all_ids[idx]]}")
+        seen += 1
 
 
-def probe_genome_tag(model: MovieRecommender, genome_tags: list, movie_embeddings: dict,
-                     fs: FeatureStore, top_n: int = 10, k_anchors: int = 3) -> None:
-    """
-    Find movies most similar to a genome tag query in the item genome tag embedding space.
-    Finds the top-k_anchors most representative movies by raw genome score, averages their
-    MOVIE_GENOME_TAG_EMBEDDING vectors as the query, then compares via cosine similarity
-    against all movies' MOVIE_GENOME_TAG_EMBEDDING. Avoids synthetic OOD inputs entirely.
-    """
-    name_to_idx = {
-        fs.genome_tag_names[tid]: fs.genome_tag_to_i[tid]
-        for tid in fs.genome_tag_to_i
-    }
+def probe_genome_tag(movie_embeddings: dict, fs: FeatureStore,
+                     all_ids: list, all_norm_genome: torch.Tensor,
+                     genome_tags: list, top_n: int = 10, k_anchors: int = 3) -> None:
+    """Average top-k anchor genome embeddings as query → cosine similarity via matrix multiply."""
+    name_to_idx = {fs.genome_tag_names[tid]: fs.genome_tag_to_i[tid] for tid in fs.genome_tag_to_i}
 
-    raw_scores = {}
-    for mid in fs.top_movies:
-        vec = fs.movieId_to_genome_tag_context[mid]
-        raw_scores[mid] = sum(vec[name_to_idx[t]] for t in genome_tags if t in name_to_idx)
-
-    anchors   = sorted(raw_scores, key=raw_scores.get, reverse=True)[:k_anchors]
-    query_emb = torch.stack([
-        movie_embeddings[m]['MOVIE_GENOME_TAG_EMBEDDING'].view(-1) for m in anchors
-    ]).mean(dim=0)
-
-    print(f"\nGenome tag anchors for {genome_tags}: {[fs.movieId_to_title[m] for m in anchors]}")
-
-    sims = {
-        mid: F.cosine_similarity(
-            query_emb.unsqueeze(0),
-            movie_embeddings[mid]['MOVIE_GENOME_TAG_EMBEDDING'].view(-1).unsqueeze(0)
-        ).item()
+    raw_scores = {
+        mid: sum(fs.movieId_to_genome_tag_context[mid][name_to_idx[t]]
+                 for t in genome_tags if t in name_to_idx)
         for mid in fs.top_movies
     }
+    anchors    = sorted(raw_scores, key=raw_scores.get, reverse=True)[:k_anchors]
+    query_emb  = torch.stack([
+        movie_embeddings[m]['MOVIE_GENOME_TAG_EMBEDDING'].view(-1) for m in anchors
+    ]).mean(dim=0)
+    query_norm = F.normalize(query_emb.unsqueeze(0), dim=1).to(all_norm_genome.device)
+
+    with torch.no_grad():
+        scores  = (all_norm_genome @ query_norm.T).squeeze(-1)
+        top_idx = scores.argsort(descending=True).tolist()
 
     anchor_set = set(anchors)
+    print(f"\nGenome tag anchors for {genome_tags}: {[fs.movieId_to_title[m] for m in anchors]}")
     print(f"Top-{top_n} movies:")
-    for mid, sim in sorted(sims.items(), key=lambda x: x[1], reverse=True)[:top_n]:
+    seen = 0
+    for idx in top_idx:
+        if seen >= top_n:
+            break
+        mid    = all_ids[idx]
         marker = " [seed]" if mid in anchor_set else ""
-        print(f"  {sim:.4f}  {fs.movieId_to_title[mid]}{marker}")
+        print(f"  {scores[idx].item():.4f}  {fs.movieId_to_title[mid]}{marker}")
+        seen += 1
 
 
 # ── Shared setup ─────────────────────────────────────────────────────────────
@@ -533,7 +531,7 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
     # Resolve and load checkpoint first — fast, and fails before the slow features load
     # Detect checkpoint type from filename to pick the right config
     def _resolve_config(path):
-        sd  = torch.load(path, weights_only=True)
+        sd  = torch.load(path, weights_only=True, map_location='cpu')
         cfg = get_config()
 
         item_id_dim = sd['item_embedding_lookup.weight'].shape[1]
@@ -554,12 +552,12 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
         cfg['output_dim']  = sd['user_projection.2.weight'].shape[0]
         return cfg
 
-    # Auto-detect most recent checkpoint if none specified
+    # Auto-detect most recent checkpoint if none specified (any best_*.pth)
     _tmp_config = get_config()
     if checkpoint_path is None:
         checkpoint_dir = _tmp_config['checkpoint_dir']
         candidates = sorted(
-            glob.glob(os.path.join(checkpoint_dir, 'best_mse_*.pth')),
+            glob.glob(os.path.join(checkpoint_dir, 'best_*.pth')),
             key=os.path.getmtime, reverse=True,
         )
         if not candidates:
@@ -570,7 +568,7 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
     config = _resolve_config(checkpoint_path)
 
     print(f"Loading checkpoint: {checkpoint_path}")
-    state_dict = torch.load(checkpoint_path, weights_only=True)
+    state_dict = torch.load(checkpoint_path, weights_only=True, map_location='cpu')
 
     print("Loading features ...")
     fs = load_features(data_dir, version)
@@ -605,13 +603,23 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
     movie_embeddings = build_movie_embeddings(model, fs)
 
     print("Precomputing embedding matrices ...")
-    all_ids    = list(movie_embeddings.keys())
-    all_embs   = torch.cat([movie_embeddings[m]['MOVIE_EMBEDDING_COMBINED'] for m in all_ids], dim=0)
-    all_norm   = F.normalize(all_embs, dim=1)
-    all_id_embs = torch.cat([movie_embeddings[m]['MOVIEID_EMBEDDING'] for m in all_ids], dim=0)
-    all_id_norm = F.normalize(all_id_embs, dim=1)
+    all_ids         = list(movie_embeddings.keys())
+    all_embs        = torch.cat([movie_embeddings[m]['MOVIE_EMBEDDING_COMBINED']   for m in all_ids], dim=0)
+    all_id_embs     = torch.cat([movie_embeddings[m]['MOVIEID_EMBEDDING']          for m in all_ids], dim=0)
+    all_genre_embs  = torch.cat([movie_embeddings[m]['MOVIE_GENRE_EMBEDDING']      for m in all_ids], dim=0)
+    all_tag_embs    = torch.cat([movie_embeddings[m]['MOVIE_TAG_EMBEDDING']        for m in all_ids], dim=0)
+    all_genome_embs = torch.cat([movie_embeddings[m]['MOVIE_GENOME_TAG_EMBEDDING'] for m in all_ids], dim=0)
 
-    return model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm, checkpoint_path
+    device = next(model.parameters()).device
+    all_norm        = F.normalize(all_embs,        dim=1).to(device)
+    all_id_norm     = F.normalize(all_id_embs,     dim=1).to(device)
+    all_norm_genre  = F.normalize(all_genre_embs,  dim=1).to(device)
+    all_norm_tag    = F.normalize(all_tag_embs,    dim=1).to(device)
+    all_norm_genome = F.normalize(all_genome_embs, dim=1).to(device)
+
+    return (model, fs, movie_embeddings, all_ids, all_embs,
+            all_norm, all_id_norm, all_norm_genre, all_norm_tag, all_norm_genome,
+            checkpoint_path)
 
 
 # ── Orchestrators ─────────────────────────────────────────────────────────────
@@ -619,11 +627,14 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
 def run_canary(data_dir: str = 'data', checkpoint_path: str = None,
                version: str = 'v1') -> None:
     import contextlib, io, sys
-    model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm, checkpoint_path = _setup(data_dir, checkpoint_path, version)
-    if model is None:
+    result = _setup(data_dir, checkpoint_path, version)
+    if result[0] is None:
         return
-    print("\n── Canary user evaluation ──")
+    model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm, _, _, _, checkpoint_path = result
 
+    cp_config        = load_config_for_checkpoint(checkpoint_path)
+    popularity_alpha = cp_config.get('popularity_alpha', 0.0)
+    temperature      = cp_config.get('temperature', 0.1)
     real_stdout = sys.stdout
     buf = io.StringIO()
 
@@ -632,7 +643,13 @@ def run_canary(data_dir: str = 'data', checkpoint_path: str = None,
         def flush(self):       real_stdout.flush();     buf.flush()
 
     with contextlib.redirect_stdout(_Tee()):
-        run_canary_eval(model, fs, movie_embeddings, all_ids, all_embs)
+        print(f"  popularity_alpha={popularity_alpha} ({'applied' if popularity_alpha > 0 else 'disabled'})  "
+              f"temperature={temperature}  "
+              f"inference_multiple={POPULARITY_ALPHA_INFERENCE_MULTIPLE}  "
+              f"effective_inference_alpha={popularity_alpha * POPULARITY_ALPHA_INFERENCE_MULTIPLE}")
+        print("\n── Canary user evaluation ──")
+        run_canary_eval(model, fs, movie_embeddings, all_ids, all_embs,
+                        popularity_alpha=popularity_alpha, temperature=temperature)
 
     os.makedirs('canary_results', exist_ok=True)
     stem     = os.path.splitext(os.path.basename(checkpoint_path))[0]
@@ -655,72 +672,72 @@ PROBE_SIMILAR_TITLES = [
 
 
 def probe_similar(movie_embeddings: dict, fs: FeatureStore,
-                  all_ids: list, all_norm: torch.Tensor, all_id_norm: torch.Tensor,
+                  all_ids: list, all_norm: torch.Tensor,
                   titles: list, top_n: int = 5) -> None:
     """
-    For each query title, find the top-N most similar movies by cosine similarity,
-    using two embedding spaces:
-      1. MOVIE_EMBEDDING_COMBINED — full model embedding (content + CF signal)
-      2. MOVIEID_EMBEDDING        — item ID embedding only (pure CF signal)
+    For each query title, find the top-N most similar movies by cosine similarity
+    using the full item tower embedding (MOVIE_EMBEDDING_COMBINED).
+
+    all_norm is pre-normalized: F.normalize(combined_embeddings). For v2 (L2-norm
+    at end of item tower) this is a no-op; for v1 it normalizes raw outputs.
+    Either way, dot_product(unit_vec, unit_vec) == cosine_similarity — correct.
     """
     TRUNC = 28  # max chars per cell
 
     def trunc(s: str) -> str:
         return s if len(s) <= TRUNC else s[:TRUNC - 1] + '…'
 
-    def top_n_for(norm_matrix, emb_key):
-        rows = []
-        for title in titles:
-            if title not in fs.title_to_movieId:
-                rows.append((title, []))
+    rows = []
+    for title in titles:
+        if title not in fs.title_to_movieId:
+            rows.append((title, []))
+            continue
+        mid     = fs.title_to_movieId[title]
+        # F.normalize is a no-op for v2 (already unit vector); needed for v1.
+        query   = F.normalize(movie_embeddings[mid]['MOVIE_EMBEDDING_COMBINED'], dim=1)
+        sims    = (all_norm @ query.T).squeeze(-1)
+        top_idx = sims.argsort(descending=True)
+        results = []
+        for idx in top_idx:
+            candidate = all_ids[idx.item()]
+            if candidate == mid:
                 continue
-            mid     = fs.title_to_movieId[title]
-            query   = F.normalize(movie_embeddings[mid][emb_key], dim=1)
-            sims    = (norm_matrix @ query.T).squeeze(-1)
-            top_idx = sims.argsort(descending=True)
-            results = []
-            for idx in top_idx:
-                candidate = all_ids[idx.item()]
-                if candidate == mid:
-                    continue
-                results.append(fs.movieId_to_title[candidate])
-                if len(results) >= top_n:
-                    break
-            rows.append((title, results))
-        return rows
+            results.append(fs.movieId_to_title[candidate])
+            if len(results) >= top_n:
+                break
+        rows.append((title, results))
 
-    def print_table(label, rows):
-        seed_w = max(len(trunc(t)) for t, _ in rows)
-        col_w  = TRUNC
-        header = f"{'Seed':<{seed_w}}" + "".join(f"  {'#'+str(i+1):<{col_w}}" for i in range(top_n))
-        print(f"\n── {label} ──")
-        print(header)
-        print('─' * len(header))
-        for title, results in rows:
-            if not results:
-                print(f"{trunc(title):<{seed_w}}  (not in corpus)")
-                continue
-            row = f"{trunc(title):<{seed_w}}"
-            for t in results:
-                row += f"  {trunc(t):<{col_w}}"
-            print(row)
-
-    print_table("Most similar — combined embedding", top_n_for(all_norm,    'MOVIE_EMBEDDING_COMBINED'))
-    print_table("Most similar — item ID embedding",  top_n_for(all_id_norm, 'MOVIEID_EMBEDDING'))
+    seed_w = max(len(trunc(t)) for t, _ in rows)
+    col_w  = TRUNC
+    header = f"{'Seed':<{seed_w}}" + "".join(f"  {'#'+str(i+1):<{col_w}}" for i in range(top_n))
+    print(f"\n── Most similar — full item embedding ──")
+    print(header)
+    print('─' * len(header))
+    for title, results in rows:
+        if not results:
+            print(f"{trunc(title):<{seed_w}}  (not in corpus)")
+            continue
+        row = f"{trunc(title):<{seed_w}}"
+        for t in results:
+            row += f"  {trunc(t):<{col_w}}"
+        print(row)
 
 
 
 def run_probes(data_dir: str = 'data', checkpoint_path: str = None,
                version: str = 'v1') -> None:
-    model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm, checkpoint_path = _setup(data_dir, checkpoint_path, version)
-    if model is None:
+    result = _setup(data_dir, checkpoint_path, version)
+    if result[0] is None:
         return
+    (model, fs, movie_embeddings, all_ids, all_embs,
+     all_norm, all_id_norm, all_norm_genre, all_norm_tag, all_norm_genome,
+     checkpoint_path) = result
     print("\n── Embedding probes ──")
-    probe_genre(model, 'Horror', movie_embeddings, fs)
-    probe_genre(model, 'Sci-Fi', movie_embeddings, fs)
-    probe_tag(model, ['pixar', 'animation'], movie_embeddings, fs)
-    probe_genome_tag(model, ['horror', 'gore', 'torture'], movie_embeddings, fs)
-    probe_genome_tag(model, ['martial arts', 'kung fu'], movie_embeddings, fs)
-    probe_similar(movie_embeddings, fs, all_ids, all_norm, all_id_norm, PROBE_SIMILAR_TITLES)
+    probe_genre(model, 'Horror',  fs, all_ids, all_norm_genre)
+    probe_genre(model, 'Sci-Fi',  fs, all_ids, all_norm_genre)
+    probe_tag(model, ['pixar', 'animation'], fs, all_ids, all_norm_tag)
+    probe_genome_tag(movie_embeddings, fs, all_ids, all_norm_genome, ['horror', 'gore', 'torture'])
+    probe_genome_tag(movie_embeddings, fs, all_ids, all_norm_genome, ['martial arts', 'kung fu'])
+    probe_similar(movie_embeddings, fs, all_ids, all_norm, PROBE_SIMILAR_TITLES)
 
 

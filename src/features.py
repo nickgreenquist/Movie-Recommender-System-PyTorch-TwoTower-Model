@@ -15,8 +15,6 @@ import pyarrow.parquet as pq
 
 
 FEATURES_VERSION = 'v1'
-MAX_HISTORY_LEN  = 50   # cap watch history to most recent N movies
-
 
 # ── Loaders ───────────────────────────────────────────────────────────────────
 

@@ -1,0 +1,13 @@
+
+── Offline Evaluation [MSE rollback (≤20/user)]  (n=99,866 rollbacks, saved_models/PROD_best_mse_gpool_gctx_proj_20260426_202808.pth) ──────────
+Corpus: 9,375 movies  |  Random Hit Rate@50 baseline: 0.533%
+
+     K    Recall@K   Hit Rate@K    NDCG@K
+─────────────────────────────────────────
+     1      0.0043       0.0043    0.0043
+     5      0.0168       0.0168    0.0105
+    10      0.0270       0.0270    0.0138
+    20      0.0426       0.0426    0.0177
+    50      0.0736       0.0736    0.0238
+─────────────────────────────────────────
+MRR: 0.0133

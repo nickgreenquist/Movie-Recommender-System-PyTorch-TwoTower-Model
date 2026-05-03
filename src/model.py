@@ -1,17 +1,21 @@
 """
-Two-Tower MovieRecommender model (genome pool + genome context always on).
+Two-Tower MovieRecommender model v2 (full softmax, ReLU, L2 norm).
 
 User tower:
-  id_pool(32) + genome_pool(32) + genre(32) + ts(4) [+ genome_ctx(32)] → proj MLP → 128
+  rating_weighted_avg_pool(item_id_emb, 32) + genome_pool(32) + genome_ctx(32)
+  + genre(32) + ts(4) = 132 → proj MLP → L2-normalize → output_dim
 
 Item tower:
-  genre(8) + tag(16) + genome(32) + id(32) + year(8) = 96 → proj MLP → 128
+  genre(8) + tag(16) + genome(32) + id(32) + year(8) = 96 → proj MLP → L2-normalize → output_dim
 
-genre_context_buffer, tag_context_buffer, year_context_buffer are non-persistent buffers
-(not saved in state_dict) — rebuilt from the feature store on every load.
+Dot product of L2-normalized vectors = cosine similarity.
+
+item_embedding() looks up all features from registered buffers — call full_item_embedding()
+to score all corpus items in one batched pass (required by full softmax training).
 """
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class MovieRecommender(nn.Module):
@@ -26,7 +30,7 @@ class MovieRecommender(nn.Module):
                  genome_context_buffer,
                  item_genre_embedding_size=8,
                  item_tag_embedding_size=16,
-                 item_genome_tag_embedding_size=16,
+                 item_genome_tag_embedding_size=32,
                  item_movieId_embedding_size=32,
                  item_year_embedding_size=8,
                  user_genre_embedding_size=32,
@@ -39,80 +43,80 @@ class MovieRecommender(nn.Module):
                  output_dim=128,
                 ):
         """
-        genome_context_buffer: float32 tensor (top_movies_len + 1, genome_tags_len).
-            Row i = genome tag context for movie at embedding index i.
-            Last row (index top_movies_len) = zeros — used as padding.
+        genome_context_buffer: float32 (top_movies_len+1, genome_tags_len) [persistent].
+            Row i = genome scores for movie at corpus index i. Last row = zeros (padding).
 
-        genre_context_buffer: float32 (top_movies_len + 1, genres_len), non-persistent.
-        tag_context_buffer:   float32 (top_movies_len + 1, tags_len), non-persistent.
-        year_context_buffer:  int64   (top_movies_len + 1,), non-persistent.
+        genre_context_buffer:  float32 (top_movies_len+1, genres_len)   [non-persistent]
+        tag_context_buffer:    float32 (top_movies_len+1, tags_len)     [non-persistent]
+        year_context_buffer:   int64   (top_movies_len+1,)              [non-persistent]
         """
         super().__init__()
 
         self.pad_idx = top_movies_len
 
+        # Persistent: genome scores are large and dataset-specific; saved in checkpoint.
         self.register_buffer('genome_context_buffer', genome_context_buffer)
-        # Non-persistent: not saved in state_dict, rebuilt from feature store on every load.
+        # Non-persistent: rebuilt from FeatureStore on every load (saves checkpoint space).
         self.register_buffer('genre_context_buffer', genre_context_buffer, persistent=False)
         self.register_buffer('tag_context_buffer',   tag_context_buffer,   persistent=False)
         self.register_buffer('year_context_buffer',  year_context_buffer,  persistent=False)
 
-        # ── Shared item embedding ─────────────────────────────────────────────
+        # ── Shared item embedding (item tower + user history pool) ────────────
         self.item_embedding_lookup = nn.Embedding(
             top_movies_len + 1, item_movieId_embedding_size, padding_idx=top_movies_len
         )
         self.item_embedding_tower = nn.Sequential(
             nn.Linear(item_movieId_embedding_size, item_movieId_embedding_size),
-            nn.Tanh()
+            nn.ReLU(),
         )
 
         # ── Item feature towers ───────────────────────────────────────────────
         self.item_genre_tower = nn.Sequential(
             nn.Linear(genres_len, item_genre_embedding_size),
-            nn.Tanh()
+            nn.ReLU(),
         )
         self.item_tag_tower = nn.Sequential(
             nn.Linear(tags_len, item_tag_embedding_size),
-            nn.Tanh()
+            nn.ReLU(),
         )
-        # Shared between item side (target movie) and user side (genome pooling)
+        # Shared: used for item-side genome embedding AND user genome pool.
         self.item_genome_tag_tower = nn.Sequential(
             nn.Linear(genome_tags_len, item_genome_tag_embedding_size),
-            nn.Tanh()
+            nn.ReLU(),
         )
         self.year_embedding_lookup = nn.Embedding(all_years_len, item_year_embedding_size)
         self.year_embedding_tower = nn.Sequential(
             nn.Linear(item_year_embedding_size, item_year_embedding_size),
-            nn.Tanh()
+            nn.ReLU(),
         )
 
         # ── User towers ───────────────────────────────────────────────────────
         self.user_genre_tower = nn.Sequential(
             nn.Linear(user_context_size, user_genre_embedding_size),
-            nn.Tanh()
+            nn.ReLU(),
         )
         self.timestamp_embedding_lookup = nn.Embedding(
             timestamp_num_bins, timestamp_feature_embedding_size
         )
         self.timestamp_embedding_tower = nn.Sequential(
             nn.Linear(timestamp_feature_embedding_size, timestamp_feature_embedding_size),
-            nn.Tanh()
+            nn.ReLU(),
         )
-        # Separate tower for the pre-aggregated user genome taste vector (1128 → gctx_dim).
+        # Separate tower: rating-weighted avg of raw genome scores (1128-dim) → compact vector.
         # Distinct from item_genome_tag_tower which processes per-movie genome scores.
         self.user_genome_context_tower = nn.Sequential(
             nn.Linear(genome_tags_len, user_genome_context_embedding_size),
-            nn.Tanh()
+            nn.ReLU(),
         )
 
         # ── Projection MLPs ───────────────────────────────────────────────────
         user_concat_dim = (item_movieId_embedding_size + item_genome_tag_embedding_size
-                           + user_genre_embedding_size + timestamp_feature_embedding_size
-                           + user_genome_context_embedding_size)
+                           + user_genome_context_embedding_size
+                           + user_genre_embedding_size + timestamp_feature_embedding_size)
         item_concat_dim = (item_genre_embedding_size + item_tag_embedding_size
                            + item_genome_tag_embedding_size
                            + item_movieId_embedding_size + item_year_embedding_size)
-        # No activation on the final linear — feeds directly into dot product.
+        # No activation on the final linear — output is L2-normalized.
         self.user_projection = nn.Sequential(
             nn.Linear(user_concat_dim, proj_hidden),
             nn.ReLU(),
@@ -124,11 +128,10 @@ class MovieRecommender(nn.Module):
             nn.Linear(proj_hidden, output_dim),
         )
 
-        # Sub-tower linears: gain=0.1 (not 0.01 — projection adds extra layers)
+        # Sub-tower linears: gain=0.1 keeps initial sub-embeddings small.
         self.apply(self._init_weights)
-        # Projection layers re-initialized at gain=1.0 after the rest.
-        # Without this, gain=0.1^2 compounds across sub-tower + projection and
-        # collapses dot products to zero before training starts.
+        # Projection layers re-initialized at gain=1.0. Without this, gain=0.1^2 compounds
+        # across sub-tower + projection and collapses dot products to near-zero at step 0.
         for proj in [self.user_projection, self.item_projection]:
             for m in proj.modules():
                 if isinstance(m, nn.Linear):
@@ -143,51 +146,52 @@ class MovieRecommender(nn.Module):
         elif isinstance(module, nn.Embedding):
             nn.init.xavier_uniform_(module.weight, gain=0.01)
 
-    def _genome_ctx_emb(self, user_watch_history, rating_weights, weight_sum):
-        """Rating-weighted avg of raw genome scores → user_genome_context_tower. Returns (B, gctx_dim)."""
-        watched_genome_raw = self.genome_context_buffer[user_watch_history]
-        genome_ctx_raw     = (watched_genome_raw * rating_weights).sum(dim=1) / weight_sum
-        return self.user_genome_context_tower(genome_ctx_raw)
-
     def user_embedding(self, user_genre_contexts, user_watch_history,
                        user_watch_history_ratings, timestamps):
-        """User tower: returns (batch, output_dim)."""
+        """User tower: returns (batch, output_dim), L2-normalized."""
         pad_mask       = (user_watch_history != self.pad_idx).float().unsqueeze(-1)
         rating_weights = user_watch_history_ratings.unsqueeze(-1) * pad_mask
         weight_sum     = rating_weights.abs().sum(dim=1).clamp(min=1e-6)
 
-        genre_emb    = self.user_genre_tower(user_genre_contexts)
-        ts_emb       = self.timestamp_embedding_tower(self.timestamp_embedding_lookup(timestamps))
+        # Rating-weighted avg pool over item ID embeddings
         history_embs = self.item_embedding_lookup(user_watch_history)
         history_emb  = (history_embs * rating_weights).sum(dim=1) / weight_sum
 
+        # Rating-weighted avg pool over genome embeddings (shared genome tower)
         watched_genome = self.genome_context_buffer[user_watch_history]
         genome_embs    = self.item_genome_tag_tower(watched_genome)
         genome_emb     = (genome_embs * rating_weights).sum(dim=1) / weight_sum
-        parts = [history_emb, genome_emb, genre_emb, ts_emb]
 
-        parts.append(self._genome_ctx_emb(user_watch_history, rating_weights, weight_sum))
-        return self.user_projection(torch.cat(parts, dim=1))
+        # Rating-weighted avg of raw genome scores (1128-dim) → genome context tower
+        genome_ctx_raw = (watched_genome * rating_weights).sum(dim=1) / weight_sum
+        genome_ctx_emb = self.user_genome_context_tower(genome_ctx_raw)
 
-    def item_embedding(self, movie_genres, movie_tags, movie_genome_tags, years, target_movieId):
-        """Item tower: returns (batch, output_dim)."""
-        item_genre_emb  = self.item_genre_tower(movie_genres)
-        item_tag_emb    = self.item_tag_tower(movie_tags)
-        item_genome_emb = self.item_genome_tag_tower(movie_genome_tags)
+        genre_emb = self.user_genre_tower(user_genre_contexts)
+        ts_emb    = self.timestamp_embedding_tower(self.timestamp_embedding_lookup(timestamps))
+
+        concat = torch.cat([history_emb, genome_emb, genome_ctx_emb, genre_emb, ts_emb], dim=1)
+        return F.normalize(self.user_projection(concat), p=2, dim=1)
+
+    def item_embedding(self, target_movieId):
+        """Item tower: looks up all features from buffers. Returns (batch, output_dim), L2-normalized."""
+        item_genre_emb  = self.item_genre_tower(self.genre_context_buffer[target_movieId])
+        item_tag_emb    = self.item_tag_tower(self.tag_context_buffer[target_movieId])
+        item_genome_emb = self.item_genome_tag_tower(self.genome_context_buffer[target_movieId])
         item_emb        = self.item_embedding_tower(self.item_embedding_lookup(target_movieId))
-        year_emb        = self.year_embedding_tower(self.year_embedding_lookup(years))
+        year_emb        = self.year_embedding_tower(
+                              self.year_embedding_lookup(self.year_context_buffer[target_movieId]))
         concat = torch.cat([item_genre_emb, item_tag_emb, item_genome_emb, item_emb, year_emb], dim=1)
-        return self.item_projection(concat)
+        return F.normalize(self.item_projection(concat), p=2, dim=1)
+
+    def full_item_embedding(self):
+        """Returns all corpus item embeddings (n_movies, output_dim) in one batched pass.
+        Used by full softmax training to build the (batch × n_movies) score matrix."""
+        all_idxs = torch.arange(self.pad_idx, device=self.genome_context_buffer.device)
+        return self.item_embedding(all_idxs)
 
     def forward(self, user_genre_contexts, user_watch_history,
                 user_watch_history_ratings, timestamps, target_movieId):
-        user_combined = self.user_embedding(user_genre_contexts, user_watch_history,
-                                            user_watch_history_ratings, timestamps)
-        item_combined = self.item_embedding(
-            self.genre_context_buffer[target_movieId],
-            self.tag_context_buffer[target_movieId],
-            self.genome_context_buffer[target_movieId],
-            self.year_context_buffer[target_movieId],
-            target_movieId,
-        )
-        return torch.einsum('ij, ij -> i', user_combined, item_combined)
+        user_emb = self.user_embedding(user_genre_contexts, user_watch_history,
+                                       user_watch_history_ratings, timestamps)
+        item_emb = self.item_embedding(target_movieId)
+        return torch.einsum('ij,ij->i', user_emb, item_emb)
