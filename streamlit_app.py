@@ -558,8 +558,14 @@ def tab_about():
     with col:
         st.header("What is this?")
         st.markdown(
-            "A PyTorch two-tower neural network trained on the MovieLens 32M dataset. "
-            "Both towers output L2-normalized embeddings; cosine similarity between them ranks every movie in the corpus."
+            "A **v2 PyTorch two-tower neural network** trained on the MovieLens 32M dataset. "
+            "Both towers output L2-normalized 128-dim embeddings; cosine similarity between them ranks every movie in the corpus."
+        )
+        st.markdown(
+            "The model is trained with **full softmax cross-entropy** (every corpus item as a negative) "
+            "and **Menon et al. (2021) logit-adjusted loss** (α=0.5) to correct for popularity bias — "
+            "popular movies get a log-count boost during training so their embeddings don't dominate inference. "
+            "At inference, raw dot products are used with no post-hoc correction."
         )
 
         st.subheader("The core design choice: no user ID")
@@ -637,12 +643,13 @@ comparable via dot product.
         st.markdown("""
 - **Dataset:** MovieLens 32M — ~33M ratings from ~200K users across ~86K movies
 - **Corpus:** filtered to movies with 200+ ratings (~9,375 movies) and users with 20–500 ratings
-- **Loss:** Full softmax cross-entropy over all ~9,375 corpus items
+- **Loss:** Full softmax cross-entropy over all ~9,375 corpus items, with **Menon et al. (2021) logit-adjusted loss (α=0.5)** for popularity bias correction
 - **Optimizer:** Adam, lr=0.001, batch size 512, temperature=0.1
 - **Steps:** 150,000
 - **Split:** user-based 90/10 — 90% of users are exclusively in train, 10% exclusively in val; no user appears in both
 - **Training protocol:** Rollback — for each watch event, context = all prior watches (chronological), target = next watch. Up to 20 examples per user. The model learns to predict what a user will like *next*, at every stage of their watch history.
 - **L2 normalization:** both towers output unit-norm vectors; dot product = cosine similarity
+- **Inference:** raw dot products, no post-hoc popularity correction needed
 """)
 
         st.header("Popularity Bias Correction")
@@ -653,10 +660,12 @@ comparable via dot product.
             "average user, making them appear relevant to everyone."
         )
         st.markdown(
-            "The fix is the **Menon et al. (2021) logit-adjusted loss**: add `α · log(interaction_count)` "
-            "to each item's logit before softmax during training. Popular items get a free score boost, "
-            "so the model doesn't need to push their embeddings up to make them easy positives — "
-            "their embeddings naturally shrink. At inference, raw dot products are used with no correction needed."
+            "The fix is the **logit-adjusted loss** from "
+            "[Menon et al., \"Long-tail learning via logit adjustment\" (ICLR 2021)](https://arxiv.org/abs/2007.07314): "
+            "add `α · log(interaction_count)` to each item's logit before softmax during training. "
+            "Popular items get a free score boost, so the model doesn't need to push their embeddings up "
+            "to make them easy positives — their embeddings naturally shrink. "
+            "At inference, raw dot products are used with no post-hoc correction needed."
         )
         st.markdown("""
 | α | Effect |
