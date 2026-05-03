@@ -107,39 +107,37 @@ def load_artifacts():
 def _build_user_embedding(model, fs, liked_titles_with_weights, disliked_titles,
                            liked_genres, disliked_genres, ts_inference):
     """
-    Build a combined user embedding from title and genre signals.
+    Build a user embedding via model.user_embedding() — mirrors canary exactly.
     liked_titles_with_weights: list of (title, weight) tuples.
       Explicit liked movies use _LIKED_MOVIE; genome anchors use _ANCHOR_MOVIE.
     disliked_titles: flat list of title strings (always weighted _DISLIKED_MOVIE).
     """
+    # ── Genre context ────────────────────────────────────────────────────────
     n_genres = len(fs['genres_ordered'])
     ctx = [0.0] * (2 * n_genres)
 
-    # Derive genre context from liked/disliked movies — ensures ctx is never
-    # all-zeros when the user picks movies but skips the genre selectors.
     all_titles_with_weights = (
         list(liked_titles_with_weights) +
         [(t, _DISLIKED_MOVIE) for t in disliked_titles]
     )
-    genre_rating_sum   = {}
-    genre_movie_count  = {}
-    total_movies       = 0
+    genre_rating_sum  = {}
+    genre_movie_count = {}
     for t, w in all_titles_with_weights:
         mid = fs['title_to_movieId'].get(t)
         if mid is None:
             continue
-        total_movies += 1
         for g in fs['movieId_to_genres'].get(mid, []):
-            genre_rating_sum[g]  = genre_rating_sum.get(g, 0.0)  + w
-            genre_movie_count[g] = genre_movie_count.get(g, 0)   + 1
+            genre_rating_sum[g]  = genre_rating_sum.get(g, 0.0) + w
+            genre_movie_count[g] = genre_movie_count.get(g, 0)  + 1
 
+    total_assign = sum(genre_movie_count.values())  # total genre-movie pairs, matches training
     for g, rsum in genre_rating_sum.items():
         avg_r = rsum / genre_movie_count[g]
-        frac  = genre_movie_count[g] / max(total_movies, 1)
+        frac  = genre_movie_count[g] / max(total_assign, 1)
         if g in fs['user_context_genre_avg_rating_to_i']:
-            ctx[fs['user_context_genre_avg_rating_to_i'][g]]   = avg_r
+            ctx[fs['user_context_genre_avg_rating_to_i'][g]]  = avg_r
         if g in fs['user_context_genre_watch_count_to_i']:
-            ctx[fs['user_context_genre_watch_count_to_i'][g]]  = frac
+            ctx[fs['user_context_genre_watch_count_to_i'][g]] = frac
 
     # Explicit genre selections override — stronger signal than movie-derived estimates
     for g in liked_genres:
@@ -151,6 +149,7 @@ def _build_user_embedding(model, fs, liked_titles_with_weights, disliked_titles,
         if g in fs['user_context_genre_avg_rating_to_i']:
             ctx[fs['user_context_genre_avg_rating_to_i'][g]] = _DISLIKED_GENRE
 
+    # ── Watch history ────────────────────────────────────────────────────────
     liked_hist = [
         (fs['item_emb_movieId_to_i'][fs['title_to_movieId'][t]], w)
         for t, w in liked_titles_with_weights
@@ -165,56 +164,15 @@ def _build_user_embedding(model, fs, liked_titles_with_weights, disliked_titles,
     ratings = [h[1] for h in liked_hist] + [_DISLIKED_MOVIE] * len(dis_hist)
 
     if history:
-        hist_ids    = torch.tensor([h[0] for h in history], dtype=torch.long).unsqueeze(0)
-        hist_wts    = torch.tensor([ratings], dtype=torch.float)
-        hist_embs   = model.item_embedding_lookup(hist_ids)
-        wt_sum      = hist_wts.unsqueeze(-1).abs().sum(dim=1).clamp(min=1e-6)
-        history_emb = (hist_embs * hist_wts.unsqueeze(-1)).sum(dim=1) / wt_sum
+        hist_ids = torch.tensor([[h[0] for h in history]], dtype=torch.long)
+        hist_wts = torch.tensor([ratings], dtype=torch.float)
     else:
-        history_emb = torch.zeros(1, model.item_embedding_lookup.embedding_dim)
+        hist_ids = torch.tensor([[model.pad_idx]], dtype=torch.long)
+        hist_wts = torch.tensor([[0.0]], dtype=torch.float)
 
-    genre_emb = model.user_genre_tower(torch.tensor([ctx]))
-    ts_emb    = model.timestamp_embedding_tower(model.timestamp_embedding_lookup(ts_inference))
-
-    # Genome pooling — mirrors history pooling in content space (shared tower)
-    genome_contexts = []
-    genome_weights  = []
-    for t, w in list(liked_titles_with_weights) + [(t, _DISLIKED_MOVIE) for t in disliked_titles]:
-        mid = fs['title_to_movieId'].get(t)
-        if mid and mid in fs['movieId_to_genome_tag_context']:
-            genome_contexts.append(fs['movieId_to_genome_tag_context'][mid])
-            genome_weights.append(w)
-
-    if genome_contexts:
-        gc_tensor  = torch.tensor(np.array(genome_contexts, dtype=np.float32))
-        ge_embs    = model.item_genome_tag_tower(gc_tensor)
-        wts        = torch.tensor(genome_weights)
-        wt_sum_g   = wts.abs().sum().clamp(min=1e-6)
-        genome_emb = (ge_embs * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_g
-    else:
-        genome_emb = torch.zeros(1, model.item_genome_tag_tower[0].out_features)
-
-    concat = torch.cat([history_emb, genome_emb, genre_emb, ts_emb], dim=1)
-
-    # Rating-weighted avg of raw genome scores → user_genome_context_tower
-    gctx_contexts = []
-    gctx_weights  = []
-    for t, w in list(liked_titles_with_weights) + [(t, _DISLIKED_MOVIE) for t in disliked_titles]:
-        mid = fs['title_to_movieId'].get(t)
-        if mid and mid in fs['movieId_to_genome_tag_context']:
-            gctx_contexts.append(fs['movieId_to_genome_tag_context'][mid])
-            gctx_weights.append(w)
-    if gctx_contexts:
-        gctx_tensor = torch.tensor(np.array(gctx_contexts, dtype=np.float32))
-        wts         = torch.tensor(gctx_weights)
-        wt_sum_gc   = wts.abs().sum().clamp(min=1e-6)
-        genome_ctx_raw = (gctx_tensor * wts.unsqueeze(-1)).sum(dim=0, keepdim=True) / wt_sum_gc
-    else:
-        genome_ctx_raw = torch.zeros(1, model.user_genome_context_tower[0].in_features)
-    gctx_emb = model.user_genome_context_tower(genome_ctx_raw)
-    concat = torch.cat([concat, gctx_emb], dim=1)
-
-    return model.user_projection(concat)
+    # ── Delegate to model.user_embedding — identical path to canary ──────────
+    X_inf = torch.tensor([ctx])
+    return model.user_embedding(X_inf, hist_ids, hist_wts, ts_inference)
 
 
 def _build_genome_i_to_name(fs):
@@ -331,7 +289,7 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters):
                 fs['genome_tag_names'][tid]: fs['genome_tag_to_i'][tid]
                 for tid in fs['genome_tag_to_i']
             }
-            seen_titles = set()
+            seen_titles = set(liked_titles)  # exclude explicit likes from anchors
             for tag in selected_genome_tags:
                 if tag not in name_to_idx:
                     continue
@@ -391,7 +349,7 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters):
                 fs['genome_tag_names'][tid]: fs['genome_tag_to_i'][tid]
                 for tid in fs['genome_tag_to_i']
             }
-            seen_titles = set()
+            seen_titles = set(fav_movies)  # exclude fav movies from anchors, matches canary
             for tag in genome_tags:
                 if tag not in name_to_idx:
                     continue
@@ -601,7 +559,7 @@ def tab_about():
         st.header("What is this?")
         st.markdown(
             "A PyTorch two-tower neural network trained on the MovieLens 32M dataset. "
-            "A dot product of the user and item embeddings predicts a de-biased rating."
+            "Both towers output L2-normalized embeddings; cosine similarity between them ranks every movie in the corpus."
         )
 
         st.subheader("The core design choice: no user ID")
@@ -679,38 +637,45 @@ comparable via dot product.
         st.markdown("""
 - **Dataset:** MovieLens 32M — ~33M ratings from ~200K users across ~86K movies
 - **Corpus:** filtered to movies with 200+ ratings (~9,375 movies) and users with 20–500 ratings
-- **Loss:** MSE on de-biased ratings (raw rating minus user mean)
-- **Optimizer:** SGD, lr=0.005, momentum=0.9, batch size 64
+- **Loss:** Full softmax cross-entropy over all ~9,375 corpus items
+- **Optimizer:** Adam, lr=0.001, batch size 512, temperature=0.1
 - **Steps:** 150,000
 - **Split:** user-based 90/10 — 90% of users are exclusively in train, 10% exclusively in val; no user appears in both
-- **Training protocol:** Rollback — for each watch event, context = all prior watches (chronological), target = that event's rating. Up to 20 examples per user. The model learns to predict what a user will like *next*, at every stage of their watch history.
+- **Training protocol:** Rollback — for each watch event, context = all prior watches (chronological), target = next watch. Up to 20 examples per user. The model learns to predict what a user will like *next*, at every stage of their watch history.
+- **L2 normalization:** both towers output unit-norm vectors; dot product = cosine similarity
 """)
 
-        st.header("Why MSE and not Softmax?")
+        st.header("Popularity Bias Correction")
         st.markdown(
-            "In-batch negatives softmax (the YouTube DNN approach) works well on user-driven datasets like Goodreads, "
-            "where interactions reflect genuine independent preference."
+            "Full softmax has a structural popularity bias: popular movies dominate every training batch "
+            "as hard negatives, suppressing their embeddings — but they're also frequent positive targets, "
+            "pulling their embeddings up. The net effect: popular-item embeddings are pushed toward the "
+            "average user, making them appear relevant to everyone."
         )
         st.markdown(
-            "MovieLens is different — users rate movies they were *shown* by the platform's own recommender, "
-            "so the interaction data has a strong popularity-driven structure baked in."
-        )
-        st.markdown(
-            "Softmax suppresses popular items (they appear as frequent in-batch negatives), "
-            "but on MovieLens popular movies are genuinely what most users are watching. "
-            "MSE on explicit ratings avoids this — it learns directly from how much each user liked each film."
+            "The fix is the **Menon et al. (2021) logit-adjusted loss**: add `α · log(interaction_count)` "
+            "to each item's logit before softmax during training. Popular items get a free score boost, "
+            "so the model doesn't need to push their embeddings up to make them easy positives — "
+            "their embeddings naturally shrink. At inference, raw dot products are used with no correction needed."
         )
         st.markdown("""
-| Metric | **MSE (this model)** | Softmax |
+| α | Effect |
+|---|---|
+| 0.0 | No correction — popular items dominate every recommendation regardless of taste |
+| **0.5 (this model)** | **Balanced — genre discrimination sharp, popular items appear only when relevant** |
+| 1.0 | Over-corrected — suppresses popular items so hard that obscure/low-quality content surfaces |
+""")
+        st.markdown("""
+| Metric | MSE baseline | **v2 Softmax α=0.5 (this model)** |
 |---|---|---|
-| Hit Rate@1 | **0.43%** | 0.14% |
-| Hit Rate@5 | **1.66%** | 0.57% |
-| Hit Rate@10 | **2.70%** | 1.00% |
-| Hit Rate@20 | **4.28%** | 1.66% |
-| Hit Rate@50 | **7.59%** | 3.45% |
-| MRR | **0.0135** | 0.0058 |
+| Hit Rate@1 | 0.43% | **4.14%** |
+| Hit Rate@5 | 1.68% | **11.73%** |
+| Hit Rate@10 | 2.70% | **17.49%** |
+| Hit Rate@20 | 4.26% | **25.00%** |
+| Hit Rate@50 | 7.36% | **37.80%** |
+| MRR | 0.0133 | **0.0878** |
 
-*Rollback eval protocol: for each held-out user, context = all prior watches, target = next watch. Harder than leave-one-out; numbers are not comparable to other benchmarks using different protocols.*
+*Rollback eval protocol: for each held-out user, context = all prior watches, target = next watch.*
 """)
 
         st.header("What We Tried")
@@ -747,7 +712,7 @@ comparable via dot product.
         st.markdown("""
 - No user ID — personalization is limited to the signals you provide in the app
 - 9,375-movie corpus — films with fewer than 200 ratings are not included
-- War and Western genres can drift toward prestige drama due to overlapping genome signals (acclaimed/serious film cluster)
+- War genre can drift toward prestige drama due to genome overlap with the "acclaimed serious film" cluster
 - The timestamp tower is a weak signal in the app — all users receive the most recent timestamp bin
 """)
 

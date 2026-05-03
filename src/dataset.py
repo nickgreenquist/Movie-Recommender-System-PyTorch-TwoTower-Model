@@ -244,7 +244,7 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
 
     from tqdm import tqdm
     n_users = df['userId'].nunique()
-    for uid, group in tqdm(df.groupby('userId'), total=n_users, desc="Building MSE rollback examples"):
+    for uid, group in tqdm(df.groupby('userId'), total=n_users, desc="Building rollback examples"):
         rows    = list(zip(group['movieId'].tolist(), group['rating'].tolist(), group['timestamp'].tolist()))
         if sort_by_ts:
             rows.sort(key=lambda x: x[2])
@@ -354,11 +354,11 @@ def make_mse_rollback_splits(fs: FeatureStore, data_dir: str = 'data',
     train_users = valid_users[:split]
     val_users   = valid_users[split:]
 
-    print(f"\nBuilding MSE rollback train dataset ({len(train_users):,} users) ...")
+    print(f"\nBuilding rollback train dataset ({len(train_users):,} users) ...")
     train_data = build_mse_rollback_dataset(train_users, fs, raw_df, max_per_user, seed)
     print(f"  X_genre_train shape: {train_data[0].shape}")
 
-    print(f"\nBuilding MSE rollback val dataset ({len(val_users):,} users) ...")
+    print(f"\nBuilding rollback val dataset ({len(val_users):,} users) ...")
     val_data = build_mse_rollback_dataset(val_users, fs, raw_df, max_per_user, seed)
     print(f"  X_genre_val shape:   {val_data[0].shape}")
 

@@ -90,7 +90,7 @@ def _run_rollback_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed):
     rng.shuffle(val_users)
     eval_users = val_users[:n_users]
 
-    print(f"Building rollback examples for {len(eval_users):,} val users ...")
+    print(f"Building rollback examples for {len(eval_users):,} val users (chronological, ≤{MAX_MSE_ROLLBACK_EXAMPLES_PER_USER}/user) ...")
     (X_genre, X_history, X_history_ratings, timestamp, _, target_movieId) = \
         build_mse_rollback_dataset(eval_users, fs, raw_df,
                                    MAX_MSE_ROLLBACK_EXAMPLES_PER_USER, seed=seed + 1)
@@ -137,4 +137,4 @@ def _run_rollback_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed):
         return
 
     _print_results(recall, hit_rate, ndcg, mrr_sum, n_eval, ks, all_ids, checkpoint_path,
-                   f"MSE rollback (≤{MAX_MSE_ROLLBACK_EXAMPLES_PER_USER}/user)")
+                   f"rollback (≤{MAX_MSE_ROLLBACK_EXAMPLES_PER_USER}/user)")

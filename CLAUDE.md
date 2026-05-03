@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Current State
 
-The model is complete and deployed. Best checkpoint: `mse_gpool_gctx_proj_20260501_063808_step_180000.pth` (MSE rollback, genome pool ON, genome context tower ON, projection MLP, 128-dim output, 512k params). This is the prod model running in Streamlit — do not replace it without a clearly better eval result.
+The model is complete and deployed. Best checkpoint: `best_softmax_v2_popularity_alpha_05_20260503_070457.pth` (v2 full softmax, L2 norm, Menon popularity correction alpha=0.5, 128-dim output). This is the prod model running in Streamlit — do not replace it without a clearly better eval result.
 
-The step_180000 periodic checkpoint was chosen over the fully-trained best checkpoint from the same run — late training caused arthouse drift back into Sci-Fi and Crime, and Transformers appeared in the Superhero cluster. Step 180k is the sweet spot.
+Promoted 2026-05-03. Beats MSE prod by ~6.6× MRR (0.0878 vs 0.0133). Alpha=0.5 chosen over alpha=0 (better canary — no popular drift) and alpha=1.0 (over-corrected to obscure items). See alpha comparison table in experiment log below.
 
 To re-export serving artifacts from prod checkpoint:
 
 ```bash
-python main.py export saved_models/mse_gpool_gctx_proj_20260501_063808_step_180000.pth
+python main.py export saved_models/best_softmax_v2_popularity_alpha_05_20260503_070457.pth
 ```
 
 ## Project Overview
@@ -225,16 +225,16 @@ MSE with genome pooling is the right objective for MovieLens. Softmax (validated
 
 All numbers below use the rollback eval protocol (harder than leave-label-out; compare only within this table).
 
-| Metric | Old prod: MSE flat | Softmax proj (genome=16) | MSE rollback proj | **Current prod: + genome context** |
-|---|---|---|---|---|
-| Hit Rate@1 | 0.19% | 0.14% | 0.43% | **0.44%** |
-| Hit Rate@5 | 0.94% | 0.57% | 1.66% | **1.85%** |
-| Hit Rate@10 | 1.70% | 1.00% | 2.70% | **3.01%** |
-| Hit Rate@20 | 2.93% | 1.66% | 4.28% | **4.78%** |
-| Hit Rate@50 | 5.62% | 3.45% | 7.59% | **8.41%** |
-| **MRR** | 0.0084 | 0.0058 | 0.0135 | **0.0146** |
+| Metric | Old prod: MSE flat | Softmax proj (genome=16) | MSE rollback proj | MSE + genome context | **v2 softmax alpha=0** | **v2 softmax alpha=0.5 (PROD)** |
+|---|---|---|---|---|---|---|
+| Hit Rate@1 | 0.19% | 0.14% | 0.43% | 0.44% | 4.31% | **4.14%** |
+| Hit Rate@5 | 0.94% | 0.57% | 1.66% | 1.85% | 12.20% | **11.73%** |
+| Hit Rate@10 | 1.70% | 1.00% | 2.70% | 3.01% | 18.49% | **17.49%** |
+| Hit Rate@20 | 2.93% | 1.66% | 4.28% | 4.78% | 26.87% | **25.00%** |
+| Hit Rate@50 | 5.62% | 3.45% | 7.59% | 8.41% | 41.23% | **37.80%** |
+| **MRR** | 0.0084 | 0.0058 | 0.0135 | 0.0146 | 0.0923 | **0.0878** |
 
-Current prod beats old prod by **+74% MRR** and +77% Hit Rate@10. Adding the genome context tower over the base MSE rollback proj gave an additional **+8% MRR** and fixed Sci-Fi genre drift in canary. Softmax is the worst — confirms MSE is correct for MovieLens.
+v2 softmax alpha=0.5 (current prod) beats MSE prod by **+6.6× MRR**. Alpha=0 wins offline by a small margin but has severe popular drift on canary (War/Fantasy/Heist/Crime collapse to IMDb top-10). Alpha=0.5 is the right tradeoff — small offline MRR cost (−4.9%) buys clean genre discrimination. Alpha=1.0 over-corrects to obscure/low-quality items.
 
 ### Key architecture findings
 

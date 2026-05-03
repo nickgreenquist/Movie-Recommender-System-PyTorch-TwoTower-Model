@@ -321,7 +321,7 @@ def get_v2_config() -> dict:
         'checkpoint_every': 30_000,
         'checkpoint_dir':   'saved_models',
         'temperature':      0.1,
-        'popularity_alpha': 0.0,   # Menon et al. 2021 logit adjustment: subtract alpha*log1p(count_i)
+        'popularity_alpha': 0.0,   # Menon et al. 2021 logit adjustment: add alpha*log1p(count_i) to all logits
     }
 
 

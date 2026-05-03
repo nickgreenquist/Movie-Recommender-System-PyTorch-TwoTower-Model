@@ -122,7 +122,6 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         '300 (2007)',
         'Kill Bill: Vol. 1 (2003)',
         'Lost in Translation (2003)',
-        'Enter the Dragon (1973)',
         'Casino Royale (2006)',
         'Before Sunrise (1995)',
         'Old Boy (2003)',
@@ -160,15 +159,17 @@ USER_TYPE_TO_DISLIKED_MOVIES = {
 }
 
 USER_TYPE_TO_GENOME_TAGS = {
-    'Crime Lover':           ['crime', 'gangs'],
-    'Heist Lover':           ['heist', 'robbery', 'con artists', 'caper'],
-    'Action Junkie':         ['explosions', 'adrenaline'],
-    'Arthouse Lover':        ['art house', 'slow burn'],
-    'Superhero Lover':       ['superhero', 'superheroes'],
-    'WW2 Lover':             ['world war ii', 'wwii'],
-    'Western Lover':         ['spaghetti western'],
-    'Anime Lover':           ['studio ghibli'],
-    'Martial Arts Lover':    ['kung fu'],
+    "Children's Movie Lover": ['pixar animation'],
+    'Fantasy Lover':          ['high fantasy'],
+    'Crime Lover':            ['crime', 'gangs'],
+    'Heist Lover':            ['heist'],
+    'Action Junkie':          ['explosions', 'adrenaline'],
+    'Arthouse Lover':         ['art house', 'slow burn'],
+    'Superhero Lover':        ['superhero'],
+    'WW2 Lover':              ['world war ii', 'wwii'],
+    'Western Lover':          ['spaghetti western'],
+    'Anime Lover':            ['studio ghibli'],
+    'Martial Arts Lover':     ['kung fu'],
     "Nick's Recommendations": []
 }
 
@@ -313,11 +314,13 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
     device = next(model.parameters()).device
 
     # Popularity logit adjustment at inference.
-    # Equivalent to training formula scaled by temp, with extra INFERENCE_MULTIPLE.
+    # movie_interaction_counts is indexed by embedding index (0..n_movies-1), not raw movieId.
+    # all_ids contains raw movieIds → must map through item_emb_movieId_to_i before indexing.
     pop_bias = None
     if popularity_alpha > 0 and fs.movie_interaction_counts is not None:
-        counts = torch.from_numpy(fs.movie_interaction_counts).to(device)
-        pop_bias = temperature * popularity_alpha * POPULARITY_ALPHA_INFERENCE_MULTIPLE * torch.log1p(counts)
+        emb_indices    = torch.tensor([fs.item_emb_movieId_to_i[mid] for mid in all_ids], dtype=torch.long)
+        aligned_counts = torch.from_numpy(fs.movie_interaction_counts)[emb_indices].to(device)
+        pop_bias = temperature * popularity_alpha * POPULARITY_ALPHA_INFERENCE_MULTIPLE * torch.log1p(aligned_counts)
 
     # Use the most recent timestamp from the timestamp range
     ts_max_bin = torch.bucketize(
@@ -550,6 +553,7 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
 
         cfg['proj_hidden'] = sd['user_projection.0.weight'].shape[0]
         cfg['output_dim']  = sd['user_projection.2.weight'].shape[0]
+
         return cfg
 
     # Auto-detect most recent checkpoint if none specified (any best_*.pth)
