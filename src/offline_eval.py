@@ -72,7 +72,7 @@ def _print_results(recall, hit_rate, ndcg, mrr_sum, n_eval, ks, all_ids, checkpo
 def run_offline_eval(model: MovieRecommender, fs: FeatureStore,
                      checkpoint_path: str = '',
                      n_users: int = 5_000,
-                     ks: tuple = (1, 5, 10, 20, 50),
+                     ks: tuple = (1, 5, 10, 20, 50, 100, 150, 200, 250),
                      seed: int = 42,
                      data_dir: str = 'data') -> None:
     _run_rollback_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed)
@@ -110,13 +110,19 @@ def _run_rollback_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed):
     mrr_sum  = 0.0
     n_eval   = 0
 
+    pad = torch.tensor(model.pad_idx, device=device)
+
     with torch.no_grad():
         for s in range(0, n_examples, EVAL_BATCH_SIZE):
             e = min(s + EVAL_BATCH_SIZE, n_examples)
 
-            hist_idx_t = hist_idx_padded[s:e]
-            hist_wts_t = hist_wts_padded[s:e]
-            user_embs  = model.user_embedding(X_genre[s:e], hist_idx_t, hist_wts_t, timestamp[s:e])
+            hist_idx_t    = hist_idx_padded[s:e]
+            hist_wts_t    = hist_wts_padded[s:e]
+            hist_liked_t  = torch.where(hist_wts_t > 0, hist_idx_t, pad)
+            hist_disliked_t = torch.where(hist_wts_t < 0, hist_idx_t, pad)
+            user_embs  = model.user_embedding(X_genre[s:e], hist_idx_t,
+                                              hist_liked_t, hist_disliked_t,
+                                              hist_wts_t, timestamp[s:e])
             scores     = user_embs @ all_embs.T  # (B, n_items)
 
             for i in range(e - s):

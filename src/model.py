@@ -1,9 +1,15 @@
 """
-Two-Tower MovieRecommender model v2 (full softmax, ReLU, L2 norm).
+Two-Tower MovieRecommender model v3 (4-pool user tower, full softmax, ReLU, L2 norm).
 
 User tower:
-  rating_weighted_avg_pool(item_id_emb, 32) + genome_pool(32) + genome_ctx(32)
-  + genre(32) + ts(4) = 132 → proj MLP → L2-normalize → output_dim
+  4×sum_pool(item_id_emb, 32) + genome_ctx(32) + genre(32) + ts(4) = 196
+  → proj MLP → L2-normalize → output_dim
+
+  Pools (all raw item_embedding_lookup, each with its own LayerNorm):
+    full     — unweighted sum, all history
+    liked    — unweighted sum, items with positive debiased rating
+    disliked — unweighted sum, items with negative debiased rating
+    weighted — rating-weighted sum, all history
 
 Item tower:
   genre(8) + tag(16) + genome(32) + id(32) + year(8) = 96 → proj MLP → L2-normalize → output_dim
@@ -109,8 +115,14 @@ class MovieRecommender(nn.Module):
             nn.ReLU(),
         )
 
+        # ── Quadruple history sum pools with LayerNorm ────────────────────────
+        self.hist_full_norm     = nn.LayerNorm(item_movieId_embedding_size)
+        self.hist_liked_norm    = nn.LayerNorm(item_movieId_embedding_size)
+        self.hist_disliked_norm = nn.LayerNorm(item_movieId_embedding_size)
+        self.hist_weighted_norm = nn.LayerNorm(item_movieId_embedding_size)
+
         # ── Projection MLPs ───────────────────────────────────────────────────
-        user_concat_dim = (item_movieId_embedding_size + item_genome_tag_embedding_size
+        user_concat_dim = (4 * item_movieId_embedding_size
                            + user_genome_context_embedding_size
                            + user_genre_embedding_size + timestamp_feature_embedding_size)
         item_concat_dim = (item_genre_embedding_size + item_tag_embedding_size
@@ -146,30 +158,39 @@ class MovieRecommender(nn.Module):
         elif isinstance(module, nn.Embedding):
             nn.init.xavier_uniform_(module.weight, gain=0.01)
 
+    def _sum_pool(self, ids, norm_layer, weights=None):
+        """Sum pool over raw item_embedding_lookup with optional per-item weights."""
+        embs = self.item_embedding_lookup(ids)
+        if weights is not None:
+            embs = embs * weights.unsqueeze(-1)
+        return norm_layer(embs.sum(dim=1))
+
     def user_embedding(self, user_genre_contexts, user_watch_history,
+                       user_hist_liked, user_hist_disliked,
                        user_watch_history_ratings, timestamps):
         """User tower: returns (batch, output_dim), L2-normalized."""
+        # 4 sum pools over raw item ID embeddings
+        # Look up full history once; reuse for both full and weighted pools
+        full_embs     = self.item_embedding_lookup(user_watch_history)
+        pool_full     = self.hist_full_norm(full_embs.sum(dim=1))
+        pool_weighted = self.hist_weighted_norm(
+            (full_embs * user_watch_history_ratings.unsqueeze(-1)).sum(dim=1))
+        pool_liked    = self._sum_pool(user_hist_liked,    self.hist_liked_norm)
+        pool_disliked = self._sum_pool(user_hist_disliked, self.hist_disliked_norm)
+
+        # Rating-weighted avg of raw genome scores (1128-dim) → genome context tower
         pad_mask       = (user_watch_history != self.pad_idx).float().unsqueeze(-1)
         rating_weights = user_watch_history_ratings.unsqueeze(-1) * pad_mask
         weight_sum     = rating_weights.abs().sum(dim=1).clamp(min=1e-6)
-
-        # Rating-weighted avg pool over item ID embeddings
-        history_embs = self.item_embedding_lookup(user_watch_history)
-        history_emb  = (history_embs * rating_weights).sum(dim=1) / weight_sum
-
-        # Rating-weighted avg pool over genome embeddings (shared genome tower)
         watched_genome = self.genome_context_buffer[user_watch_history]
-        genome_embs    = self.item_genome_tag_tower(watched_genome)
-        genome_emb     = (genome_embs * rating_weights).sum(dim=1) / weight_sum
-
-        # Rating-weighted avg of raw genome scores (1128-dim) → genome context tower
         genome_ctx_raw = (watched_genome * rating_weights).sum(dim=1) / weight_sum
         genome_ctx_emb = self.user_genome_context_tower(genome_ctx_raw)
 
         genre_emb = self.user_genre_tower(user_genre_contexts)
         ts_emb    = self.timestamp_embedding_tower(self.timestamp_embedding_lookup(timestamps))
 
-        concat = torch.cat([history_emb, genome_emb, genome_ctx_emb, genre_emb, ts_emb], dim=1)
+        concat = torch.cat([pool_full, pool_liked, pool_disliked, pool_weighted,
+                            genome_ctx_emb, genre_emb, ts_emb], dim=1)
         return F.normalize(self.user_projection(concat), p=2, dim=1)
 
     def item_embedding(self, target_movieId):
@@ -190,8 +211,10 @@ class MovieRecommender(nn.Module):
         return self.item_embedding(all_idxs)
 
     def forward(self, user_genre_contexts, user_watch_history,
+                user_hist_liked, user_hist_disliked,
                 user_watch_history_ratings, timestamps, target_movieId):
         user_emb = self.user_embedding(user_genre_contexts, user_watch_history,
+                                       user_hist_liked, user_hist_disliked,
                                        user_watch_history_ratings, timestamps)
         item_emb = self.item_embedding(target_movieId)
         return torch.einsum('ij,ij->i', user_emb, item_emb)

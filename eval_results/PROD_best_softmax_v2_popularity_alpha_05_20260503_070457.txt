@@ -1,6 +1,6 @@
 
-── Offline Evaluation [rollback (≤20/user)]  (n=99,866 rollbacks, saved_models/best_softmax_v2_popularity_alpha_05_20260503_070457.pth) ──────────
-Corpus: 9,375 movies  |  Random Hit Rate@50 baseline: 0.533%
+── Offline Evaluation [rollback (≤20/user)]  (n=99,866 rollbacks, saved_models/PROD_best_softmax_v2_popularity_alpha_05_20260503_070457.pth) ──────────
+Corpus: 9,375 movies  |  Random Hit Rate@250 baseline: 2.667%
 
      K    Recall@K   Hit Rate@K    NDCG@K
 ─────────────────────────────────────────
@@ -9,5 +9,9 @@ Corpus: 9,375 movies  |  Random Hit Rate@50 baseline: 0.533%
     10      0.1749       0.1749    0.0984
     20      0.2500       0.2500    0.1173
     50      0.3780       0.3780    0.1426
+   100      0.5025       0.5025    0.1628
+   150      0.5796       0.5796    0.1739
+   200      0.6337       0.6337    0.1812
+   250      0.6748       0.6748    0.1864
 ─────────────────────────────────────────
 MRR: 0.0878

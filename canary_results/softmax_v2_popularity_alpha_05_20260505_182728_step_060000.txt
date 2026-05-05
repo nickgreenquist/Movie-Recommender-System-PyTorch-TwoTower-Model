@@ -1,0 +1,306 @@
+  popularity_alpha=0.5 (applied)  temperature=0.1  inference_multiple=0.0  effective_inference_alpha=0.0
+
+── Canary user evaluation ──
+
+════════════════════════════════════════════════════════════════════════
+Children's Movie Lover  |  Genome: pixar animation
+════════════════════════════════════════════════════════════════════════
+Anchors:  Geri's Game (1997), Knick Knack (1989), Boundin' (2003), Bug's Life, A (1998), Incredibles, The (2004)
+
+Liked Movies         Recommendations
+────────────────────────────────────────────────────────────────────────
+Toy Story 2 (1999)   Despicable Me 3 (2017)
+Finding Nemo (2003)  Kung Fu Panda 3 (2016)
+Finding Dory (2016)  Cloudy with a Chance of Meatballs 2 (2013)
+Madagascar (2005)    Ralph Breaks the Internet (2018)
+                     The Boss Baby (2017)
+                     How to Train Your Dragon: The Hidden World (2019)
+                     The Lego Movie 2: The Second Part (2019)
+                     Turbo (2013)
+                     Cars 3 (2017)
+                     Sing (2016)
+
+═════════════════════════════════════════════════════════════════════════
+Horror Lover
+═════════════════════════════════════════════════════════════════════════
+
+Liked Movies                         Recommendations
+─────────────────────────────────────────────────────────────────────────
+Blair Witch Project, The (1999)      Ring, The (2002)
+Texas Chainsaw Massacre, The (2003)  Others, The (2001)
+Exorcism of Emily Rose, The (2005)   Candyman (1992)
+Wrong Turn (2003)                    Amityville Horror, The (2005)
+                                     Strangers, The (2008)
+                                     The Taking of Deborah Logan (2014)
+                                     Last House on the Left, The (2009)
+                                     Insidious: Chapter 2 (2013)
+                                     Amityville Horror, The (1979)
+                                     Orphan (2009)
+
+══════════════════════════════════════════════════════════════════════════
+Sci-Fi Lover
+══════════════════════════════════════════════════════════════════════════
+
+Liked Movies                           Recommendations
+──────────────────────────────────────────────────────────────────────────
+Contact (1997)                         Soylent Green (1973)
+2010: The Year We Make Contact (1984)  Silent Running (1972)
+It Came from Outer Space (1953)        Omega Man, The (1971)
+Solaris (Solyaris) (1972)              Forbidden Planet (1956)
+2001: A Space Odyssey (1968)           Stalker (1979)
+                                       Brazil (1985)
+                                       Destination Moon (1950)
+                                       Black Hole, The (1979)
+                                       Man Who Fell to Earth, The (1976)
+                                       Westworld (1973)
+
+═════════════════════════════════════════════════════════════════════════════════════════════
+Comedy Lover
+═════════════════════════════════════════════════════════════════════════════════════════════
+
+Liked Movies                             Recommendations
+─────────────────────────────────────────────────────────────────────────────────────────────
+American Pie (1999)                      Meet the Parents (2000)
+Dumb & Dumber (Dumb and Dumber) (1994)   Wedding Crashers (2005)
+Dodgeball: A True Underdog Story (2004)  We're the Millers (2013)
+Ted 2 (2015)                             There's Something About Mary (1998)
+                                         Austin Powers: International Man of Mystery (1997)
+                                         Anchorman: The Legend of Ron Burgundy (2004)
+                                         Old School (2003)
+                                         21 Jump Street (2012)
+                                         Horrible Bosses (2011)
+                                         Knocked Up (2007)
+
+═════════════════════════════════════════════════════════════════
+Romance Lover
+═════════════════════════════════════════════════════════════════
+
+Liked Movies                    Recommendations
+─────────────────────────────────────────────────────────────────
+Shakespeare in Love (1998)      You've Got Mail (1998)
+Sense and Sensibility (1995)    My Best Friend's Wedding (1997)
+When Harry Met Sally... (1989)  Bridget Jones's Diary (2001)
+Sleepless in Seattle (1993)     Pride & Prejudice (2005)
+Notting Hill (1999)             French Kiss (1995)
+Pride and Prejudice (1995)      My Big Fat Greek Wedding (2002)
+North & South (2004)            Dirty Dancing (1987)
+                                Persuasion (2007)
+                                Holiday, The (2006)
+                                Love Actually (2003)
+
+═════════════════════════════════════════════════════════════════════
+War Movie Lover
+═════════════════════════════════════════════════════════════════════
+
+Liked Movies                          Recommendations
+─────────────────────────────────────────────────────────────────────
+Bridge on the River Kwai, The (1957)  Band of Brothers (2001)
+Glory (1989)                          The Pacific (2010)
+Downfall (Untergang, Der) (2004)      Greyhound (2020)
+1917 (2019)                           Letters from Iwo Jima (2006)
+Enemy at the Gates (2001)             Tora! Tora! Tora! (1970)
+                                      Longest Day, The (1962)
+                                      Gettysburg (1993)
+                                      Cosmos: A Spacetime Odissey
+                                      Saints and Soldiers (2003)
+                                      Bridge at Remagen, The (1969)
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Fantasy Lover  |  Genome: high fantasy
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Anchors:  Legend (1985), Willow (1988), Lord of the Rings: The Two Towers, The (2002), Hobbit: The Desolation of Smaug, The (2013), Hobbit: An Unexpected Journey, The (2012)
+
+Liked Movies                                             Recommendations
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Lord of the Rings: The Fellowship of the Ring, The (2001)  Wrath of the Titans (2012)
+Dark Crystal, The (1982)                                 The Hobbit: The Battle of the Five Armies (2014)
+Lord of the Rings: The Return of the King, The (2003)    Hansel & Gretel: Witch Hunters (2013)
+Dragonslayer (1981)                                      Solomon Kane (2009)
+Dune (1984)                                              Resident Evil: Retribution (2012)
+                                                         Seventh Son (2014)
+                                                         Dracula Untold (2014)
+                                                         Percy Jackson & the Olympians: The Lightning Thief (2010)
+                                                         Librarian: Quest for the Spear, The (2004)
+                                                         Underworld: Awakening (2012)
+
+══════════════════════════════════════════════════════════════
+Crime Lover  |  Genome: crime, gangs
+══════════════════════════════════════════════════════════════
+Anchors:  Animal Kingdom (2010), Black Mass (2015), Mesrine: Killer Instinct (L'instinct de mort) (2008), Layer Cake (2004), King of New York (1990), Sin Nombre (2009), Warriors, The (1979), Wanderers, The (1979), American Me (1992), Colors (1988)
+
+Liked Movies              Recommendations
+──────────────────────────────────────────────────────────────
+Donnie Brasco (1997)      The Drop (2014)
+The Irishman (2019)       Sicario: Day of the Soldado (2018)
+Casino (1995)             American Made (2017)
+Narc (2002)               Shot Caller (2017)
+American Gangster (2007)  Get the Gringo (2012)
+Sicario (2015)            The Accountant (2016)
+                          Hell or High Water (2016)
+                          Logan Lucky (2017)
+                          End of Watch (2012)
+                          Killing Them Softly (2012)
+
+═══════════════════════════════════════════════════════════════════════════════
+Heist Lover  |  Genome: heist
+═══════════════════════════════════════════════════════════════════════════════
+Anchors:  Good Thief, The (2002), Takers (2010), Rififi (Du rififi chez les hommes) (1955), Score, The (2001), Ocean's Eleven (2001)
+
+Liked Movies                               Recommendations
+───────────────────────────────────────────────────────────────────────────────
+Heist (2001)                               Bourne Supremacy, The (2004)
+Ocean's Eleven (a.k.a. Ocean's 11) (1960)  Deep Cover (1992)
+The Drop (2014)                            Casino Royale (2006)
+Bank Job, The (2008)                       Citizen X (1995)
+Italian Job, The (1969)                    Safe House (2012)
+Town, The (2010)                           Dark Blue (2003)
+                                           Last Seduction, The (1994)
+                                           Presumed Innocent (1990)
+                                           Sicario: Day of the Soldado (2018)
+                                           Eye of the Needle (1981)
+
+═══════════════════════════════════════════════════════════════════════════
+Action Junkie  |  Genome: explosions, adrenaline
+═══════════════════════════════════════════════════════════════════════════
+Anchors:  Con Air (1997), Die Hard (1988), Speed (1994), Expendables 2, The (2012), Expendables, The (2010)
+
+Liked Movies        Recommendations
+───────────────────────────────────────────────────────────────────────────
+Die Hard 2 (1990)   Bad Boys (1995)
+Rambo III (1988)    Glimmer Man, The (1996)
+Under Siege (1992)  Taken 2 (2012)
+                    Mechanic, The (2011)
+                    Escape Plan (2013)
+                    Air Force One (1997)
+                    Lost World: Jurassic Park, The (1997)
+                    Daylight (1996)
+                    Fast & Furious 6 (Fast and the Furious 6, The) (2013)
+                    Good Day to Die Hard, A (2013)
+
+═════════════════════════════════════════════════════════════════════
+Arthouse Lover  |  Genome: art house, slow burn
+═════════════════════════════════════════════════════════════════════
+Anchors:  Under the Skin (2013), Nostalghia (1983), Lost Highway (1997), Eraserhead (1977), Persona (1966)
+
+Liked Movies        Recommendations
+─────────────────────────────────────────────────────────────────────
+The Lobster (2015)  Stalker (1979)
+Antichrist (2009)   Holy Mountain, The (Montaña sagrada, La) (1973)
+                    Melancholia (2011)
+                    Dogtooth (Kynodontas) (2009)
+                    Enter the Void (2009)
+                    Solaris (Solyaris) (1972)
+                    Inland Empire (2006)
+                    Wild at Heart (1990)
+                    Clockwork Orange, A (1971)
+                    Topo, El (1970)
+
+══════════════════════════════════════════════════════════════════════════════════════
+Superhero Lover  |  Genome: superhero
+══════════════════════════════════════════════════════════════════════════════════════
+Anchors:  Iron Man (2008), Hancock (2008), Green Lantern (2011), Captain America: The First Avenger (2011), Ant-Man (2015)
+
+Liked Movies                              Recommendations
+──────────────────────────────────────────────────────────────────────────────────────
+Guardians of the Galaxy (2014)            The Amazing Spider-Man 2 (2014)
+Iron Man 3 (2013)                         Amazing Spider-Man, The (2012)
+Avengers: Age of Ultron (2015)            Man of Steel (2013)
+Ant-Man and the Wasp: Quantumania (2023)  Justice League (2017)
+Aquaman (2018)                            Ant-Man and the Wasp (2018)
+Captain America: Civil War (2016)         X-Men: Apocalypse (2016)
+                                          Captain America: The Winter Soldier (2014)
+                                          Thor: The Dark World (2013)
+                                          Batman v Superman: Dawn of Justice (2016)
+                                          X-Men: Days of Future Past (2014)
+
+═════════════════════════════════════════════════════════════════════════════════════
+WW2 Lover  |  Genome: world war ii, wwii
+═════════════════════════════════════════════════════════════════════════════════════
+Anchors:  Sahara (1943), Black Book (Zwartboek) (2006), Counterfeiters, The (Die Fälscher) (2007), Fighting Seabees, The (1944), Midway (1976), Anthropoid (2016), Twelve O'Clock High (1949), Von Ryan's Express (1965), Judgment at Nuremberg (1961), Eagle Has Landed, The (1976)
+
+Liked Movies                Recommendations
+─────────────────────────────────────────────────────────────────────────────────────
+Stalingrad (1993)           Red Cliff Part II (Chi Bi Xia: Jue Zhan Tian Xia) (2009)
+Run Silent Run Deep (1958)  Like Stars on Earth (Taare Zameen Par) (2007)
+Great Escape, The (1963)    Swades: We, the People (Our Country) (2004)
+Band of Brothers (2001)     Water Diviner, The (2014)
+                            D.C.H. (Dil Chahta Hai) (2001)
+                            Wednesday!, A (2008)
+                            Dangal (2016)
+                            Chak De India! (2007)
+                            Battle of Britain (1969)
+                            Rio Grande (1950)
+
+═══════════════════════════════════════════════════════════════════════════════════════════════════════
+Western Lover  |  Genome: spaghetti western
+═══════════════════════════════════════════════════════════════════════════════════════════════════════
+Anchors:  My Name Is Nobody (Il Mio nome è Nessuno) (1973), Django (1966), Great Silence, The (Grande silenzio, Il) (1969), Good, the Bad and the Ugly, The (Buono, il brutto, il cattivo, Il) (1966), They Call Me Trinity (1971)
+
+Liked Movies                                             Recommendations
+───────────────────────────────────────────────────────────────────────────────────────────────────────
+True Grit (1969)                                         Searchers, The (1956)
+High Plains Drifter (1973)                               Hang 'Em High (1968)
+Cool Hand Luke (1967)                                    Man Who Shot Liberty Valance, The (1962)
+Wild Bill (1995)                                         Sword of Doom, The (Dai-bosatsu tôge) (1966)
+Wyatt Earp (1994)                                        Jeremiah Johnson (1972)
+Fistful of Dollars, A (Per un pugno di dollari) (1964)   Cross of Iron (1977)
+Wild Bunch, The (1969)                                   Paths of Glory (1957)
+For a Few Dollars More (Per qualche dollaro in più) (1965)  El Dorado (1966)
+Once Upon a Time in the West (C'era una volta il West) (1968)  Outlaw Josey Wales, The (1976)
+                                                         Seven Samurai (Shichinin no samurai) (1954)
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Anime Lover  |  Genome: studio ghibli
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Anchors:  From Up on Poppy Hill (Kokuriko-zaka kara) (2011), Secret World of Arrietty, The (Kari-gurashi no Arietti) (2010), Laputa: Castle in the Sky (Tenkû no shiro Rapyuta) (1986), Tale of Princess Kaguya, The (Kaguyahime no monogatari) (2013), My Neighbor Totoro (Tonari no Totoro) (1988)
+
+Liked Movies                                             Recommendations
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Princess Mononoke (Mononoke-hime) (1997)                 Summer Wars (Samâ wôzu) (2009)
+Berserk: The Golden Age Arc 2 - The Battle for Doldrey (2012)  Wolf Children (Okami kodomo no ame to yuki) (2012)
+Ponyo (Gake no ue no Ponyo) (2008)                       5 Centimeters per Second (Byôsoku 5 senchimêtoru) (2007)
+Animatrix, The (2003)                                    Millennium Actress (Sennen joyû) (2001)
+Cowboy Bebop: The Movie (Cowboy Bebop: Tengoku no Tobira) (2001)  Whisper of the Heart (Mimi wo sumaseba) (1995)
+                                                         Garden of Words, The (Koto no ha no niwa) (2013)
+                                                         Tokyo Godfathers (2003)
+                                                         Girl Who Leapt Through Time, The (Toki o kakeru shôjo) (2006)
+                                                         A Silent Voice (2016)
+                                                         Perfect Blue (1997)
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Martial Arts Lover  |  Genome: kung fu
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Anchors:  Drunken Master (Jui kuen) (1978), Iron Monkey (Siu nin Wong Fei-hung ji: Tit Ma Lau) (1993), 36th Chamber of Shaolin, The (Shao Lin san shi liu fang) (Master Killer) (1978), Once Upon a Time in China (Wong Fei Hung) (1991), Kung Fu Panda 2 (2011)
+
+Liked Movies                                             Recommendations
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Ong-Bak: The Thai Warrior (Ong Bak) (2003)               Way of the Dragon, The (a.k.a. Return of the Dragon) (Meng long guo jiang) (1972)
+Jet Li's Fearless (Huo Yuan Jia) (2006)                  Police Story (Ging chaat goo si) (1985)
+Protector, The (a.k.a. Warrior King) (Tom yum goong) (2005)  Big Boss, The (Fists of Fury) (Tang shan da xiong) (1971)
+Unleashed (Danny the Dog) (2005)                         Police Story 2 (Ging chaat goo si juk jaap) (1988)
+The Raid 2: Berandal (2014)                              Dragon Ball Z: Battle of Gods (2013)
+Project A ('A' gai waak) (1983)                          The Golden Voyage of Sinbad (1973)
+Shaolin Soccer (Siu lam juk kau) (2001)                  Hard-Boiled (Lat sau san taam) (1992)
+                                                         Ip Man 3 (2015)
+                                                         Vampire Hunter D (1985)
+                                                         Fist of Fury (Chinese Connection, The) (Jing wu men) (1972)
+
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Nick's Recommendations
+══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Liked Movies                                             Recommendations
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Lord of the Rings: The Fellowship of the Ring, The (2001)  Lord of the Rings: The Two Towers, The (2002)
+Lord of the Rings: The Return of the King, The (2003)    American Psycho (2000)
+300 (2007)                                               Hot Fuzz (2007)
+Kill Bill: Vol. 1 (2003)                                 Borat: Cultural Learnings of America for Make Benefit Glorious Nation of Kazakhstan (2006)
+Lost in Translation (2003)                               Ring, The (2002)
+Casino Royale (2006)                                     Shaun of the Dead (2004)
+Before Sunrise (1995)                                    Harry Potter and the Order of the Phoenix (2007)
+Old Boy (2003)                                           Gladiator (2000)
+Idiocracy (2006)                                         Harry Potter and the Goblet of Fire (2005)
+Parasite (2019)                                          Mulholland Drive (2001)
+28 Days Later (2002)                                     
+Saving Private Ryan (1998)                               
+Ip Man (2008)                                            

@@ -109,8 +109,9 @@ def print_model_summary(model: MovieRecommender) -> None:
             if isinstance(layer, torch.nn.Linear):
                 return layer.out_features
 
-    history_dim      = m.item_embedding_lookup.embedding_dim
+    id_dim           = m.item_embedding_lookup.embedding_dim
     genome_dim       = _out_dim(m.item_genome_tag_tower)
+    gctx_dim         = _out_dim(m.user_genome_context_tower)
     genre_dim        = _out_dim(m.user_genre_tower)
     ts_dim           = m.timestamp_embedding_lookup.embedding_dim
     item_genre_dim   = _out_dim(m.item_genre_tower)
@@ -120,10 +121,10 @@ def print_model_summary(model: MovieRecommender) -> None:
     item_total       = item_genre_dim + item_tag_dim + genome_dim + item_movieId_dim + year_dim
     n_params         = sum(p.nelement() for p in model.parameters() if p.requires_grad)
 
-    gctx_dim   = _out_dim(m.user_genome_context_tower)
-    user_total = history_dim + genome_dim + genre_dim + ts_dim + gctx_dim
-    user_desc  = (f"item_id_pool({history_dim}) + genome_pool({genome_dim}) + "
-                  f"genre_tower({genre_dim}) + ts_emb({ts_dim}) + genome_ctx({gctx_dim})")
+    pool_total = 4 * id_dim
+    user_total = pool_total + gctx_dim + genre_dim + ts_dim
+    user_desc  = (f"4×sum_pool_id({id_dim}) + genome_ctx({gctx_dim}) + "
+                  f"genre({genre_dim}) + ts({ts_dim})")
 
     proj_h  = m.user_projection[0].out_features
     out_dim = m.user_projection[2].out_features
@@ -300,7 +301,7 @@ def load_config_for_checkpoint(checkpoint_path: str) -> dict:
 def get_v2_config() -> dict:
     return {
         # Sub-embedding sizes (same architecture as v1)
-        'item_movieId_embedding_size':      32,
+        'item_movieId_embedding_size':      32, # used for pooling user liked/disliked/full/rating-weighted watch histories (4-pool)
         'item_year_embedding_size':         8,
         'timestamp_feature_embedding_size': 4,
         'item_tag_embedding_size':          16,
@@ -321,7 +322,7 @@ def get_v2_config() -> dict:
         'checkpoint_every': 30_000,
         'checkpoint_dir':   'saved_models',
         'temperature':      0.1,
-        'popularity_alpha': 0.0,   # Menon et al. 2021 logit adjustment: add alpha*log1p(count_i) to all logits
+        'popularity_alpha': 0.5,   # Menon et al. 2021 logit adjustment: add alpha*log1p(count_i) to all logits
     }
 
 
@@ -348,11 +349,11 @@ def train_v2_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple
     print(f"Using device: {device}")
     model.to(device)
 
-    (X_genre_train, X_history_train, X_hist_ratings_train,
-     timestamp_train, target_movieId_train) = train_data
+    (X_genre_train, X_history_train, X_hist_liked_train, X_hist_disliked_train,
+     X_hist_ratings_train, timestamp_train, target_movieId_train) = train_data
 
-    (X_genre_val, X_history_val, X_hist_ratings_val,
-     timestamp_val, target_movieId_val) = val_data
+    (X_genre_val, X_history_val, X_hist_liked_val, X_hist_disliked_val,
+     X_hist_ratings_val, timestamp_val, target_movieId_val) = val_data
 
     # Compact tensors go to device up front; history stays CPU (moved per batch)
     X_genre_train        = X_genre_train.to(device)
@@ -424,6 +425,8 @@ def train_v2_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple
                     U = model.user_embedding(
                         X_genre_val[vidx],
                         X_history_val[vidx].to(device),
+                        X_hist_liked_val[vidx].to(device),
+                        X_hist_disliked_val[vidx].to(device),
                         X_hist_ratings_val[vidx].to(device),
                         timestamp_val[vidx],
                     )
@@ -442,6 +445,8 @@ def train_v2_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple
                     U = model.user_embedding(
                         X_genre_val[vidx],
                         X_history_val[vidx].to(device),
+                        X_hist_liked_val[vidx].to(device),
+                        X_hist_disliked_val[vidx].to(device),
                         X_hist_ratings_val[vidx].to(device),
                         timestamp_val[vidx],
                     )
@@ -479,6 +484,8 @@ def train_v2_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple
             U = model.user_embedding(
                 X_genre_train[ix],
                 X_history_train[ix].to(device),
+                X_hist_liked_train[ix].to(device),
+                X_hist_disliked_train[ix].to(device),
                 X_hist_ratings_train[ix].to(device),
                 timestamp_train[ix],
             )
@@ -504,6 +511,8 @@ def train_v2_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple
             U = model.user_embedding(
                 X_genre_val[vidx],
                 X_history_val[vidx].to(device),
+                X_hist_liked_val[vidx].to(device),
+                X_hist_disliked_val[vidx].to(device),
                 X_hist_ratings_val[vidx].to(device),
                 timestamp_val[vidx],
             )
