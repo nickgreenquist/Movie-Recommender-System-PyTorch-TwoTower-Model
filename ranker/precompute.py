@@ -96,7 +96,10 @@ def _build_rollback_arrays(users: list, fs: FeatureStore, raw_df,
         rows.sort(key=lambda x: x[2])
         n = len(rows)
         if n >= 2:
-            n_examples += min(max_per_user, n - 1)
+            _, ratings_col, _ = zip(*rows)
+            avg_r = float(np.mean(ratings_col))
+            n_liked = sum(1 for i in range(1, n) if ratings_col[i] > avg_r)
+            n_examples += min(max_per_user, n_liked)
             valid_groups.append((int(uid), rows))
 
     print(f"  Pre-allocating buffers for {n_examples:,} examples ...")
@@ -116,7 +119,11 @@ def _build_rollback_arrays(users: list, fs: FeatureStore, raw_df,
         avg_rat        = float(np.mean(ratings))
         n_user_ratings = len(movies)
 
-        eligible    = list(range(1, n_user_ratings))
+        # Only sample positions where the target was rated above the user's mean.
+        # Context (watch history) remains unfiltered — disliked watches still inform
+        # the user embedding, but we don't train the ranker to recommend things
+        # the user rated below their own average.
+        eligible    = [i for i in range(1, n_user_ratings) if ratings[i] > avg_rat]
         k           = min(max_per_user, len(eligible))
         sampled     = sorted(rng.sample(eligible, k))
         sampled_set = set(sampled)
@@ -158,19 +165,19 @@ def _build_rollback_arrays(users: list, fs: FeatureStore, raw_df,
                 running_sum[g_idx]   += d_rat
 
     timestamp_t = torch.bucketize(
-        torch.from_numpy(timestamps_raw).float(),
+        torch.from_numpy(timestamps_raw[:curr]).float(),
         fs.timestamp_bins.float(), right=False,
     ).clamp(max=TIMESTAMP_NUM_BINS - 1).numpy().astype(np.int32)
 
     return {
-        'user_id':           user_id,
-        'rollback_n':        rollback_n,
-        'label_corpus_idx':  label_corpus_idx,
-        'user_avg_rating':   user_avg_rating,
-        'user_rating_count': user_rating_count,
-        'X_genre':           X_genre,
-        'X_history':         X_history,
-        'X_hist_ratings':    X_hist_ratings,
+        'user_id':           user_id[:curr],
+        'rollback_n':        rollback_n[:curr],
+        'label_corpus_idx':  label_corpus_idx[:curr],
+        'user_avg_rating':   user_avg_rating[:curr],
+        'user_rating_count': user_rating_count[:curr],
+        'X_genre':           X_genre[:curr],
+        'X_history':         X_history[:curr],
+        'X_hist_ratings':    X_hist_ratings[:curr],
         'timestamp_bin':     timestamp_t,
     }
 

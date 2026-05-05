@@ -1,87 +1,104 @@
 """
 Ranker evaluation: NDCG@10, MRR, plus the CG baseline (read from precompute parquet).
 
-For each rollback group (1 label + 99 hard negs = 100 candidates):
-  - Score all 100 candidates with the ranker
+For each rollback group (1 label + 249 hard negs = 250 candidates):
+  - Score all 250 candidates with the ranker
   - Compute label's rank within the group (1-indexed)
   - NDCG@10 = 1/log2(rank+1) if rank <= 10 else 0
   - MRR     = 1/rank
 
-Imports src/dataset.load_features through ranker.dataset (canonical FeatureStore loader).
+E2E ceiling: if CG didn't organically retrieve the label (cg_label_rank >= n_cand),
+the ranker never sees it in production → rank = n_cand + 1 (score = 0).
 """
 import numpy as np
 import torch
 
-from ranker.dataset import RankerDataset
+from ranker.dataset import RankerDataset, compute_cross_features
 
 
 @torch.no_grad()
 def compute_label_ranks(model, dataset: RankerDataset, device: torch.device,
-                        batch_size: int = 64) -> np.ndarray:
+                        batch_size: int = 32,
+                        eval_indices: np.ndarray | None = None) -> np.ndarray:
     """
-    Score every rollback group with `model`. Return (N,) array of label ranks (1-indexed).
+    Score rollback groups with `model`. Return label ranks (1-indexed, E2E-adjusted).
 
-    E2E semantics (the Golden Rule of two-stage evaluation):
-      If CG did not organically retrieve the label (cg_label_rank >= n_cand), the ranker
-      never sees it in production → rank is set to n_cand + 1 (score = 0 for all metrics).
-      This enforces Ranker_Hit@K ≤ CG_Recall@n_cand.
-
-    cg_label_rank is capped at n_cand in precompute. cg_label_rank < n_cand means the
-    label's true full-corpus rank < n_cand (unambiguous: label was in CG's organic top-99).
-    cg_label_rank == n_cand is ambiguous (rank n_cand or rank > n_cand); treated conservatively
-    as "not found" to avoid overcounting retrieval successes.
+    eval_indices: optional np.int64 array of row indices to evaluate. If None, evaluates
+                  every val row (slow). For training-time logging, pass a deterministic
+                  sample (fixed seed) so successive evals are directly comparable.
     """
     model.eval()
-    n          = dataset.N
-    n_cand     = 1 + dataset.n_neg                # 100
-    user_dim   = dataset.user_dim
-    item_dim   = dataset.item_dim + dataset.n_interaction_features
-    n_interact = dataset.n_interaction_features
-    label_ranks = np.zeros(n, dtype=np.int32)
+    n_cand      = 1 + dataset.n_neg
+    if eval_indices is None:
+        eval_indices = np.arange(dataset.N, dtype=np.int64)
+    n_eval      = len(eval_indices)
+    label_ranks = np.zeros(n_eval, dtype=np.int32)
 
-    for s in range(0, n, batch_size):
-        e = min(s + batch_size, n)
+    for s in range(0, n_eval, batch_size):
+        e = min(s + batch_size, n_eval)
         B = e - s
+        rows = eval_indices[s:e]
+        rows_t = torch.from_numpy(rows).long()
 
-        rows = np.arange(s, e)
-        user_feat = dataset.user_features_for_rows(rows)               # (B, user_dim) on device
+        # ── User side: compute ONCE per row (not per candidate) ─────────────
+        ugc_b = dataset._user_genre_t[rows_t].to(device)         # (B, 40)
+        xh_b  = dataset._X_history_t[rows_t].to(device)          # (B, max_hist)
+        xhr_b = dataset._X_hist_rat_t[rows_t].to(device)         # (B, max_hist)
+        ts_b  = dataset._timestamp_t[rows_t].to(device)          # (B,)
+        user_concat = model.user_embedding(ugc_b, xh_b, xhr_b, ts_b)        # (B, user_concat_dim)
 
+        # ── Item side: compute per candidate ────────────────────────────────
         cand = np.empty((B, n_cand), dtype=np.int64)
-        cand[:, 0]  = dataset.label_idx[s:e]
-        cand[:, 1:] = dataset.neg_idx[s:e]
-        cand_t      = torch.from_numpy(cand).to(device)
+        cand[:, 0]  = dataset.label_idx[rows]
+        cand[:, 1:] = dataset.neg_idx[rows]
+        cand_flat   = torch.from_numpy(cand.reshape(-1)).to(device)         # (B*n_cand,)
+        item_concat = model.item_embedding(cand_flat)                       # (B*n_cand, item_concat_dim)
 
-        item_feat = dataset.item_features[cand_t]                     # (B, 100, item_dim_base)
-        user_exp  = user_feat.unsqueeze(1).expand(-1, n_cand, -1)     # (B, 100, user_dim)
+        # ── Cross features (per row × candidate) ────────────────────────────
+        cand_feat       = dataset.item_features[cand_flat]
+        cand_genre_oh   = cand_feat[:, 1128:1148]
+        cand_global_avg = cand_feat[:, 1148]
+        cand_log_count  = cand_feat[:, 1149]
+        cand_year_norm  = cand_feat[:, 1150]
 
-        if n_interact > 0:
-            cg_b = np.empty((B, n_cand), dtype=np.float32)
-            cg_b[:, 0]  = dataset.cg_label_score[s:e]
-            cg_b[:, 1:] = dataset.cg_neg_scores[s:e]
-            gc_b = np.empty((B, n_cand), dtype=np.float32)
-            gc_b[:, 0]  = dataset.genome_cosine_label[s:e]
-            gc_b[:, 1:] = dataset.genome_cosine_negs[s:e]
-            interact_t = torch.from_numpy(
-                np.stack([cg_b, gc_b], axis=2).astype(np.float32)
-            ).to(device)                                               # (B, 100, 2)
-            item_feat = torch.cat([item_feat, interact_t], dim=2)
+        ugc_exp       = ugc_b.unsqueeze(1).expand(-1, n_cand, -1).reshape(B * n_cand, -1)
+        user_avg_exp  = dataset._user_avg_t[rows_t].to(device).unsqueeze(1).expand(-1, n_cand).reshape(-1)
+        user_cnt_exp  = dataset._user_count_log1p_t[rows_t].to(device).unsqueeze(1).expand(-1, n_cand).reshape(-1)
+        user_year_exp = dataset.user_mean_year_norm[rows_t.to(device)].unsqueeze(1).expand(-1, n_cand).reshape(-1)
 
-        scores = model(user_exp.reshape(B * n_cand, user_dim),
-                       item_feat.reshape(B * n_cand, item_dim)).reshape(B, n_cand)
+        if dataset.has_genome_cosine:
+            gc = np.empty((B, n_cand), dtype=np.float32)
+            gc[:, 0]  = dataset.genome_cosine_label[rows]
+            gc[:, 1:] = dataset.genome_cosine_negs[rows]
+            genome_cos_exp = torch.from_numpy(gc.reshape(-1)).to(device)
+        else:
+            genome_cos_exp = torch.zeros(B * n_cand, device=device)
+
+        cross = compute_cross_features(
+            ugc_exp, user_avg_exp, user_cnt_exp, user_year_exp,
+            cand_genre_oh, cand_year_norm, cand_global_avg, cand_log_count,
+            genome_cos_exp,
+        )
+
+        # ── Score: cheap broadcast of user_concat across candidates ─────────
+        # expand() creates a view (no copy of the genome pool work).
+        user_concat_exp = user_concat.unsqueeze(1).expand(-1, n_cand, -1).reshape(B * n_cand, -1)
+        scores = model.score_pairs(user_concat_exp, item_concat, cross).reshape(B, n_cand)
 
         label_score = scores[:, 0].unsqueeze(1)
         rank_np = ((scores > label_score).sum(dim=1) + 1).cpu().numpy()
 
-        # E2E ceiling: zero out ranker contribution for examples CG didn't retrieve.
-        cg_found        = dataset.cg_label_rank[s:e] < n_cand
+        cg_found         = dataset.cg_label_rank[rows] < n_cand
         label_ranks[s:e] = np.where(cg_found, rank_np, n_cand + 1)
 
     return label_ranks
 
 
 def evaluate_ndcg_mrr(model, dataset: RankerDataset, device: torch.device,
-                      batch_size: int = 64) -> tuple[float, float]:
-    return _ndcg_mrr_from_ranks(compute_label_ranks(model, dataset, device, batch_size))
+                      batch_size: int = 32,
+                      eval_indices: np.ndarray | None = None) -> tuple[float, float]:
+    return _ndcg_mrr_from_ranks(
+        compute_label_ranks(model, dataset, device, batch_size, eval_indices=eval_indices))
 
 
 def _ndcg_mrr_from_ranks(ranks: np.ndarray) -> tuple[float, float]:
@@ -90,18 +107,12 @@ def _ndcg_mrr_from_ranks(ranks: np.ndarray) -> tuple[float, float]:
     return ndcg, mrr
 
 
-def cg_baseline(dataset: RankerDataset) -> tuple[float, float]:
-    """
-    CG baseline NDCG@10 and MRR, E2E-consistent with compute_label_ranks.
-
-    cg_label_rank is the label's true full-corpus rank capped at n_cand.
-    cg_label_rank == n_cand is treated as "not found" (rank = n_cand + 1, score = 0)
-    to match the same ceiling applied to the ranker.
-    """
+def cg_baseline(dataset: RankerDataset,
+                eval_indices: np.ndarray | None = None) -> tuple[float, float]:
+    """CG baseline NDCG@10 and MRR, E2E-consistent with compute_label_ranks."""
     n_cand = 1 + dataset.n_neg
-    ranks  = np.where(dataset.cg_label_rank < n_cand,
-                      dataset.cg_label_rank,
-                      n_cand + 1)
+    raw    = dataset.cg_label_rank if eval_indices is None else dataset.cg_label_rank[eval_indices]
+    ranks  = np.where(raw < n_cand, raw, n_cand + 1)
     return _ndcg_mrr_from_ranks(ranks)
 
 
