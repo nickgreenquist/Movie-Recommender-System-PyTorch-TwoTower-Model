@@ -394,12 +394,14 @@ def load_mse_rollback_splits(data_dir: str = 'data', version: str = 'v1') -> tup
 #     (shape: N × MAX_HISTORY_LEN) so training can do data[ix] directly
 #     instead of calling pad_history_batch per batch.
 #
-# Returns 5-tuple:
-#   [0] X_genre        — (N, user_context_size) float32
-#   [1] X_history      — (N, MAX_HISTORY_LEN) int64, right-aligned, pad=len(top_movies)
-#   [2] X_hist_ratings — (N, MAX_HISTORY_LEN) float32, right-aligned, pad=0.0
-#   [3] timestamp      — (N,) int64
-#   [4] target_movieId — (N,) int64  (corpus embedding index)
+# Returns 7-tuple:
+#   [0] X_genre           — (N, user_context_size) float32
+#   [1] X_history         — (N, MAX_HISTORY_LEN) int64, right-aligned, pad=len(top_movies)
+#   [2] X_hist_liked      — (N, MAX_HISTORY_LEN) int64  items with positive debiased rating
+#   [3] X_hist_disliked   — (N, MAX_HISTORY_LEN) int64  items with negative debiased rating
+#   [4] X_hist_ratings    — (N, MAX_HISTORY_LEN) float32, right-aligned, pad=0.0
+#   [5] timestamp         — (N,) int64
+#   [6] target_movieId    — (N,) int64  (corpus embedding index)
 
 MAX_V2_SOFTMAX_EXAMPLES_PER_USER = 20
 
@@ -438,11 +440,13 @@ def build_v2_softmax_dataset(users: list, fs: FeatureStore, raw_df,
 
     # ── 2. Pre-allocate NumPy buffers ─────────────────────────────────────────
     print(f"  Pre-allocating buffers for {n_examples:,} examples ...")
-    X_genre        = np.zeros((n_examples, 2 * n_genres), dtype=np.float32)
-    X_history      = np.full((n_examples, max_hist), pad_idx, dtype=np.int32)
-    X_hist_ratings = np.zeros((n_examples, max_hist), dtype=np.float32)
-    timestamps_raw = np.zeros(n_examples, dtype=np.float64)
-    target_arr     = np.zeros(n_examples, dtype=np.int32)
+    X_genre         = np.zeros((n_examples, 2 * n_genres), dtype=np.float32)
+    X_history       = np.full((n_examples, max_hist), pad_idx, dtype=np.int32)
+    X_hist_liked    = np.full((n_examples, max_hist), pad_idx, dtype=np.int32)
+    X_hist_disliked = np.full((n_examples, max_hist), pad_idx, dtype=np.int32)
+    X_hist_ratings  = np.zeros((n_examples, max_hist), dtype=np.float32)
+    timestamps_raw  = np.zeros(n_examples, dtype=np.float64)
+    target_arr      = np.zeros(n_examples, dtype=np.int32)
 
     # ── 3. Fill pass ──────────────────────────────────────────────────────────
     curr = 0
@@ -479,6 +483,15 @@ def build_v2_softmax_dataset(users: list, fs: FeatureStore, raw_df,
                     X_history[curr, max_hist - take:]      = ctx_ids[-take:]
                     X_hist_ratings[curr, max_hist - take:] = ctx_rats[-take:]
 
+                liked_ids    = [idx for idx, r in zip(ctx_ids, ctx_rats) if r > 0]
+                disliked_ids = [idx for idx, r in zip(ctx_ids, ctx_rats) if r < 0]
+                take_l = min(len(liked_ids), max_hist)
+                if take_l > 0:
+                    X_hist_liked[curr, max_hist - take_l:] = liked_ids[-take_l:]
+                take_d = min(len(disliked_ids), max_hist)
+                if take_d > 0:
+                    X_hist_disliked[curr, max_hist - take_d:] = disliked_ids[-take_d:]
+
                 timestamps_raw[curr] = ts
                 target_arr[curr]     = t_idx
                 curr += 1
@@ -499,6 +512,8 @@ def build_v2_softmax_dataset(users: list, fs: FeatureStore, raw_df,
     return (
         torch.from_numpy(X_genre),
         torch.from_numpy(X_history).long(),
+        torch.from_numpy(X_hist_liked).long(),
+        torch.from_numpy(X_hist_disliked).long(),
         torch.from_numpy(X_hist_ratings),
         timestamp_t,
         torch.from_numpy(target_arr).long(),
@@ -544,7 +559,7 @@ def save_v2_softmax_splits(train_data: tuple, val_data: tuple,
     torch.save(train_data, os.path.join(data_dir, f'dataset_softmax_train_{version}.pt'))
     torch.save(val_data,   os.path.join(data_dir, f'dataset_softmax_val_{version}.pt'))
     # Save per-item interaction counts (corpus-index order) for popularity logit adjustment.
-    target_ids = train_data[4].numpy()
+    target_ids = train_data[6].numpy()
     counts = np.bincount(target_ids).astype(np.float32)
     np.save(os.path.join(data_dir, 'movie_interaction_counts_v2.npy'), counts)
     print(f"Saved dataset_softmax_train_{version}.pt, dataset_softmax_val_{version}.pt, "

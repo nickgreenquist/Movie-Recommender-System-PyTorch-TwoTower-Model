@@ -87,7 +87,14 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
     'Action Junkie':       ['Die Hard 2 (1990)', 'Rambo III (1988)', 'Under Siege (1992)'],
     'Arthouse Lover':      ['The Lobster (2015)', 'Antichrist (2009)'],
     'Superhero Lover':     ['Guardians of the Galaxy (2014)', 'Iron Man 3 (2013)', 'Avengers: Age of Ultron (2015)', 'Ant-Man and the Wasp: Quantumania (2023)', 'Aquaman (2018)', 'Captain America: Civil War (2016)'],
-    'WW2 Lover':           ['Stalingrad (1993)', 'Run Silent Run Deep (1958)', 'Great Escape, The (1963)', 'Band of Brothers (2001)'],
+    'WW2 Lover':           [
+        'Stalingrad (1993)',
+        'Great Escape, The (1963)',
+        'Band of Brothers (2001)',
+        'Saving Private Ryan (1998)',
+        'Inglourious Basterds (2009)',
+        'Enemy at the Gates (2001)'
+    ],
     'Western Lover':       [
         'True Grit (1969)',
         'High Plains Drifter (1973)',
@@ -166,7 +173,7 @@ USER_TYPE_TO_GENOME_TAGS = {
     'Action Junkie':          ['explosions', 'adrenaline'],
     'Arthouse Lover':         ['art house', 'slow burn'],
     'Superhero Lover':        ['superhero'],
-    'WW2 Lover':              ['world war ii', 'wwii'],
+    'WW2 Lover':              ['wwii'],
     'Western Lover':          ['spaghetti western'],
     'Anime Lover':            ['studio ghibli'],
     'Martial Arts Lover':     ['kung fu'],
@@ -191,24 +198,19 @@ def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
     all_mids = [int(m) for m in fs.top_movies]
 
     with torch.no_grad():
-        emb_idx  = torch.tensor([fs.item_emb_movieId_to_i[m]          for m in all_mids], dtype=torch.long).to(device)
-        year_idx = torch.tensor([fs.year_to_i[fs.movieId_to_year[m]]  for m in all_mids], dtype=torch.long).to(device)
-        genre_t  = torch.tensor([fs.movieId_to_genre_context[m]       for m in all_mids], dtype=torch.float32).to(device)
-        tag_t    = torch.tensor([fs.movieId_to_tag_context[m]         for m in all_mids], dtype=torch.float32).to(device)
-        genome_t = torch.tensor([fs.movieId_to_genome_tag_context[m]  for m in all_mids], dtype=torch.float32).to(device)
+        emb_idx  = torch.tensor([fs.item_emb_movieId_to_i[m]         for m in all_mids], dtype=torch.long).to(device)
+        genre_t  = torch.tensor([fs.movieId_to_genre_context[m]      for m in all_mids], dtype=torch.float32).to(device)
+        tag_t    = torch.tensor([fs.movieId_to_tag_context[m]        for m in all_mids], dtype=torch.float32).to(device)
+        genome_t = torch.tensor([fs.movieId_to_genome_tag_context[m] for m in all_mids], dtype=torch.float32).to(device)
 
-        id_embs      = model.item_embedding_tower(model.item_embedding_lookup(emb_idx))
-        year_embs    = model.year_embedding_tower(model.year_embedding_lookup(year_idx))
-        genre_embs   = model.item_genre_tower(genre_t)
-        tag_embs     = model.item_tag_tower(tag_t)
-        genome_embs  = model.item_genome_tag_tower(genome_t)
-        combined     = model.item_embedding(emb_idx)
+        genre_embs  = model.item_genre_tower(genre_t)
+        tag_embs    = model.item_tag_tower(tag_t)
+        genome_embs = model.item_genome_tag_tower(genome_t)
+        combined    = model.item_embedding(emb_idx)
 
     movieId_to_embedding = {}
     for i, mid in enumerate(all_mids):
         movieId_to_embedding[mid] = {
-            'MOVIEID_EMBEDDING':          id_embs[i:i+1],
-            'MOVIE_YEAR_EMBEDDING':       year_embs[i:i+1],
             'MOVIE_GENRE_EMBEDDING':      genre_embs[i:i+1],
             'MOVIE_TAG_EMBEDDING':        tag_embs[i:i+1],
             'MOVIE_GENOME_TAG_EMBEDDING': genome_embs[i:i+1],
@@ -295,14 +297,22 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
 
     device = next(model.parameters()).device
     if history:
-        hist_ids = torch.tensor([[h[0] for h in history]], dtype=torch.long).to(device)
-        hist_wts = torch.tensor([ratings], dtype=torch.float).to(device)
+        all_ids  = [h[0] for h in history]
+        all_wts  = ratings
+        liked_ids    = [h[0] for h in liked_hist]
+        disliked_ids = [h[0] for h in dis_hist]
+        hist_ids     = torch.tensor([all_ids],     dtype=torch.long).to(device)
+        hist_wts     = torch.tensor([all_wts],     dtype=torch.float).to(device)
+        liked_t      = torch.tensor([liked_ids],   dtype=torch.long).to(device) if liked_ids    else torch.tensor([[model.pad_idx]], dtype=torch.long).to(device)
+        disliked_t   = torch.tensor([disliked_ids],dtype=torch.long).to(device) if disliked_ids else torch.tensor([[model.pad_idx]], dtype=torch.long).to(device)
     else:
-        hist_ids = torch.tensor([[model.pad_idx]], dtype=torch.long).to(device)
-        hist_wts = torch.tensor([[0.0]], dtype=torch.float).to(device)
+        hist_ids   = torch.tensor([[model.pad_idx]], dtype=torch.long).to(device)
+        hist_wts   = torch.tensor([[0.0]], dtype=torch.float).to(device)
+        liked_t    = torch.tensor([[model.pad_idx]], dtype=torch.long).to(device)
+        disliked_t = torch.tensor([[model.pad_idx]], dtype=torch.long).to(device)
 
     X_inf = torch.tensor([ctx]).to(device)
-    return model.user_embedding(X_inf, hist_ids, hist_wts, ts_inference)
+    return model.user_embedding(X_inf, hist_ids, liked_t, disliked_t, hist_wts, ts_inference)
 
 
 def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
@@ -609,20 +619,18 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
     print("Precomputing embedding matrices ...")
     all_ids         = list(movie_embeddings.keys())
     all_embs        = torch.cat([movie_embeddings[m]['MOVIE_EMBEDDING_COMBINED']   for m in all_ids], dim=0)
-    all_id_embs     = torch.cat([movie_embeddings[m]['MOVIEID_EMBEDDING']          for m in all_ids], dim=0)
     all_genre_embs  = torch.cat([movie_embeddings[m]['MOVIE_GENRE_EMBEDDING']      for m in all_ids], dim=0)
     all_tag_embs    = torch.cat([movie_embeddings[m]['MOVIE_TAG_EMBEDDING']        for m in all_ids], dim=0)
     all_genome_embs = torch.cat([movie_embeddings[m]['MOVIE_GENOME_TAG_EMBEDDING'] for m in all_ids], dim=0)
 
     device = next(model.parameters()).device
     all_norm        = F.normalize(all_embs,        dim=1).to(device)
-    all_id_norm     = F.normalize(all_id_embs,     dim=1).to(device)
     all_norm_genre  = F.normalize(all_genre_embs,  dim=1).to(device)
     all_norm_tag    = F.normalize(all_tag_embs,    dim=1).to(device)
     all_norm_genome = F.normalize(all_genome_embs, dim=1).to(device)
 
     return (model, fs, movie_embeddings, all_ids, all_embs,
-            all_norm, all_id_norm, all_norm_genre, all_norm_tag, all_norm_genome,
+            all_norm, all_norm_genre, all_norm_tag, all_norm_genome,
             checkpoint_path)
 
 
@@ -634,7 +642,7 @@ def run_canary(data_dir: str = 'data', checkpoint_path: str = None,
     result = _setup(data_dir, checkpoint_path, version)
     if result[0] is None:
         return
-    model, fs, movie_embeddings, all_ids, all_embs, all_norm, all_id_norm, _, _, _, checkpoint_path = result
+    model, fs, movie_embeddings, all_ids, all_embs, all_norm, _, _, _, checkpoint_path = result
 
     cp_config        = load_config_for_checkpoint(checkpoint_path)
     popularity_alpha = cp_config.get('popularity_alpha', 0.0)
@@ -734,7 +742,7 @@ def run_probes(data_dir: str = 'data', checkpoint_path: str = None,
     if result[0] is None:
         return
     (model, fs, movie_embeddings, all_ids, all_embs,
-     all_norm, all_id_norm, all_norm_genre, all_norm_tag, all_norm_genome,
+     all_norm, all_norm_genre, all_norm_tag, all_norm_genome,
      checkpoint_path) = result
     print("\n── Embedding probes ──")
     probe_genre(model, 'Horror',  fs, all_ids, all_norm_genre)

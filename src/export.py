@@ -32,7 +32,7 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
         cfg = get_config()
         checkpoint_dir = cfg['checkpoint_dir']
         candidates = sorted(
-            glob.glob(os.path.join(checkpoint_dir, 'best_mse_*.pth')),
+            glob.glob(os.path.join(checkpoint_dir, 'best_*.pth')),
             key=os.path.getmtime, reverse=True,
         )
         if not candidates:

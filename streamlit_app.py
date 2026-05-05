@@ -164,15 +164,21 @@ def _build_user_embedding(model, fs, liked_titles_with_weights, disliked_titles,
     ratings = [h[1] for h in liked_hist] + [_DISLIKED_MOVIE] * len(dis_hist)
 
     if history:
-        hist_ids = torch.tensor([[h[0] for h in history]], dtype=torch.long)
-        hist_wts = torch.tensor([ratings], dtype=torch.float)
+        liked_ids    = [h[0] for h in liked_hist]
+        disliked_ids = [h[0] for h in dis_hist]
+        hist_ids   = torch.tensor([[h[0] for h in history]], dtype=torch.long)
+        hist_wts   = torch.tensor([ratings], dtype=torch.float)
+        liked_t    = torch.tensor([liked_ids],    dtype=torch.long) if liked_ids    else torch.tensor([[model.pad_idx]], dtype=torch.long)
+        disliked_t = torch.tensor([disliked_ids], dtype=torch.long) if disliked_ids else torch.tensor([[model.pad_idx]], dtype=torch.long)
     else:
-        hist_ids = torch.tensor([[model.pad_idx]], dtype=torch.long)
-        hist_wts = torch.tensor([[0.0]], dtype=torch.float)
+        hist_ids   = torch.tensor([[model.pad_idx]], dtype=torch.long)
+        hist_wts   = torch.tensor([[0.0]], dtype=torch.float)
+        liked_t    = torch.tensor([[model.pad_idx]], dtype=torch.long)
+        disliked_t = torch.tensor([[model.pad_idx]], dtype=torch.long)
 
     # ── Delegate to model.user_embedding — identical path to canary ──────────
     X_inf = torch.tensor([ctx])
-    return model.user_embedding(X_inf, hist_ids, hist_wts, ts_inference)
+    return model.user_embedding(X_inf, hist_ids, liked_t, disliked_t, hist_wts, ts_inference)
 
 
 def _build_genome_i_to_name(fs):
@@ -558,7 +564,7 @@ def tab_about():
     with col:
         st.header("What is this?")
         st.markdown(
-            "A **v2 PyTorch two-tower neural network** trained on the MovieLens 32M dataset. "
+            "A **v3 PyTorch two-tower neural network** trained on the MovieLens 32M dataset. "
             "Both towers output L2-normalized 128-dim embeddings; cosine similarity between them ranks every movie in the corpus."
         )
         st.markdown(
@@ -590,18 +596,20 @@ def tab_about():
         st.header("User Tower")
         st.markdown(
             "Each component encodes a different aspect of taste into a fixed-size vector. "
-            "All five outputs are concatenated into a 132-dim vector, then passed through a "
+            "All seven outputs are concatenated into a 196-dim vector, then passed through a "
             "projection MLP (Linear 256 → ReLU → Linear 128) to produce the final 128-dim user embedding."
         )
         st.markdown("""
 | Component | Output | Input | What it learns |
 |---|---|---|---|
-| Rating-Weighted Avg Pool | 32-dim | Watch history — movie IDs weighted by your ratings | Collaborative taste — liked movies pull the user<br>toward similar items in embedding space |
-| Rating-Weighted Genome Pool | 32-dim | Genome scores for each watched movie,<br>passed through the shared genome tower | Content texture — the kinds of films you like<br>(atmospheric, cerebral, gritty, etc.) weighted by how much you liked them |
+| Full History Sum Pool | 32-dim | All watched movies (unweighted item ID embeddings) | Collaborative signal — every watched film shapes the user space |
+| Liked Sum Pool | 32-dim | Movies with positive debiased rating | Positive taste — pulls toward movies you actively liked |
+| Disliked Sum Pool | 32-dim | Movies with negative debiased rating | Negative taste — pushes away from movies you disliked |
+| Rating-Weighted Sum Pool | 32-dim | All watched movies weighted by debiased rating | Combined sentiment — liked films pull, disliked films push |
 | user_genre_tower | 32-dim | Avg rating per genre + watch fraction per genre | Genre affinity — how strongly you lean toward<br>or away from each of the 20 broad genre categories |
 | timestamp_embedding_tower | 4-dim | Month bin of most recent watch activity | Temporal context —<br>captures era-based taste shifts |
 | Genome Context Tower | 32-dim | Rating-weighted avg of raw 1,128-dim genome scores<br>across all watched movies | Overall content taste fingerprint — a dense summary<br>of which genome tags define your taste profile |
-| **Projection MLP** | **128-dim** | concat(132) → Linear(256) → ReLU → Linear(128) | Cross-feature interactions — learns how history,<br>content, genre, timing, and genome taste combine |
+| **Projection MLP** | **128-dim** | concat(196) → Linear(256) → ReLU → Linear(128) | Cross-feature interactions — learns how history,<br>content, genre, timing, and genome taste combine |
 """, unsafe_allow_html=True)
 
         st.header("Item Tower")
@@ -613,8 +621,8 @@ def tab_about():
         st.markdown("""
 | Component | Output | Input | What it learns |
 |---|---|---|---|
-| item_embedding_tower | 32-dim | Movie ID (shared lookup with user history pool) | Collaborative identity — a learned fingerprint<br>for each movie based on who watches it together |
-| item_genome_tag_tower | 32-dim | 1,128 ML-derived relevance scores<br>(shared tower with user genome pool) | Content texture — the film's vibe, themes,<br>and tone in a dense semantic space |
+| item_embedding_tower | 32-dim | Movie ID (shared lookup with all four user history pools) | Collaborative identity — a learned fingerprint<br>for each movie based on who watches it together |
+| item_genome_tag_tower | 32-dim | 1,128 ML-derived relevance scores | Content texture — the film's vibe, themes,<br>and tone in a dense semantic space |
 | item_genre_tower | 8-dim | 20-dim genre one-hot vector | Broad genre positioning |
 | item_tag_tower | 16-dim | 306 user-applied tag counts (normalized) | Crowd-sourced descriptors —<br>how the community collectively labels the film |
 | year_embedding_tower | 8-dim | Release year | Era — captures stylistic and<br>cultural shifts across decades |
@@ -623,20 +631,15 @@ def tab_about():
 
         st.header("Shared Embeddings")
         st.markdown(
-            "Two components are shared between the user and item towers — same weights, same embedding space:"
+            "One component is shared between the user and item towers — same weights, same embedding space:"
         )
         st.markdown("""
-**item_embedding_lookup** — The same embedding table is used for the target movie's ID
-*and* for each movie in the user's watch history pool.
+**item_embedding_lookup** — The same 32-dim embedding table is used for the target movie's ID
+*and* for all four user history pools (full, liked, disliked, rating-weighted).
 
-This forces the user's history representation and the item's identity into the same
-space: a movie you liked pulls your user embedding directly toward that movie's embedding.
-
-**item_genome_tag_tower** — The same linear layer processes genome scores for the target
-movie *and* for each watched movie in the user's genome pool.
-
-This ensures your content taste vector and the item's content vector are directly
-comparable via dot product.
+This forces all four user history representations and the item's identity into the same
+space: a movie you liked pulls your user embedding directly toward that movie's embedding,
+while a disliked movie pushes it away.
 """)
 
         st.header("Training")
@@ -675,46 +678,45 @@ comparable via dot product.
 | 1.0 | Over-corrected — suppresses popular items so hard that obscure/low-quality content surfaces |
 """)
         st.markdown("""
-| Metric | MSE baseline | **v2 Softmax α=0.5 (this model)** |
+| Metric | MSE baseline | **v3 Softmax α=0.5 (this model)** |
 |---|---|---|
-| Hit Rate@1 | 0.43% | **4.14%** |
-| Hit Rate@5 | 1.68% | **11.73%** |
-| Hit Rate@10 | 2.70% | **17.49%** |
-| Hit Rate@20 | 4.26% | **25.00%** |
-| Hit Rate@50 | 7.36% | **37.80%** |
-| MRR | 0.0133 | **0.0878** |
+| Hit Rate@1 | 0.43% | **5.99%** |
+| Hit Rate@5 | 1.68% | **15.49%** |
+| Hit Rate@10 | 2.70% | **22.06%** |
+| Hit Rate@20 | 4.26% | **30.44%** |
+| Hit Rate@50 | 7.36% | **44.38%** |
+| MRR | 0.0133 | **0.1153** |
 
 *Rollback eval protocol: for each held-out user, context = all prior watches, target = next watch.*
 """)
 
         st.header("What We Tried")
         st.markdown(
-            "The user history pool uses a 32-dim item ID lookup — a relatively low-capacity signal. "
-            "The item tower already produces a full 128-dim projected embedding that combines genre, tag, genome, ID, and year. "
-            "The natural question: would pooling over this richer representation produce a better user embedding than the shallow ID pool?"
-        )
-        st.markdown(
-            "We trained two variants. First, replacing both the ID pool and the genome pool with a single 128-dim item pool. "
-            "Second, keeping the genome pool separately and replacing only the ID pool with the 128-dim item pool. "
-            "Both were tested against the prod model on offline eval and qualitative canary users."
+            "The previous user tower had two pools: a rating-weighted avg pool over item ID embeddings, "
+            "and a rating-weighted avg pool over genome tag embeddings for each watched movie. "
+            "The genome pool was expensive (passing 50 movies per user through a Linear(1128→32) each step) "
+            "and conflated positive and negative watches. We replaced it with four sum pools over the same "
+            "32-dim item ID embedding: full history, liked-only, disliked-only, and rating-weighted. "
+            "Each pool has its own LayerNorm. The genome context tower (a single pass of the user's "
+            "rating-weighted average raw genome vector through Linear(1128→32)) was kept."
         )
         st.markdown("""
-| Metric | **Prod (id_pool + genome_pool)** | Full item pool + genome pool |
+| Metric | Previous (avg pool + genome pool) | **This model (4-pool)** |
 |---|---|---|
-| Hit Rate@1 | **1.92%** | 1.74% |
-| Hit Rate@5 | **6.42%** | 6.46% |
-| Hit Rate@10 | **10.88%** | 10.72% |
-| Hit Rate@20 | **17.64%** | 17.38% |
-| Hit Rate@50 | **30.40%** | 30.40% |
-| MRR | **0.0521** | 0.0510 |
+| Hit Rate@1 | 4.14% | **5.99%** |
+| Hit Rate@5 | 11.73% | **15.49%** |
+| Hit Rate@10 | 17.49% | **22.06%** |
+| Hit Rate@20 | 25.00% | **30.44%** |
+| Hit Rate@50 | 37.80% | **44.38%** |
+| MRR | 0.0878 | **0.1153** |
 
-*Leave-label-out eval protocol.*
+*Rollback eval protocol. +31% MRR.*
 """)
         st.markdown(
-            "The richer pooling signal did not help. The prod architecture — separate 32-dim ID pool and 32-dim genome pool — "
-            "proved more effective than pooling over the full 128-dim projected output. "
-            "The projection is trained to match item-side targets, which makes it a noisier history-pooling signal "
-            "than a dedicated low-dimensional lookup."
+            "Separating liked and disliked history into independent pools gives the model explicit positive "
+            "and negative taste signals. The full and rating-weighted pools handle the general collaborative "
+            "signal. All four share the same item ID embedding table, so they live in the same space as the "
+            "item tower — a liked movie directly pulls the user embedding toward that item."
         )
 
         st.header("Limitations")
