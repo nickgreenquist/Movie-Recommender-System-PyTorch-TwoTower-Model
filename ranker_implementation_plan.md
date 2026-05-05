@@ -418,9 +418,35 @@ Per-batch cost: `batch_size × 50 × 1128 × 4` bytes. At batch=1024: 230 MB for
 
 **Before implementing Stage 2, read `src/model.py:149-173` and `src/dataset.py:build_v2_softmax_dataset` in full to understand the memory-efficient pattern, then replicate it exactly.**
 
-### Stage 3 — Cross Features
+### Stage 2b — Cross Features (CG score passthrough + genome cosine sim) ← IMPLEMENTED
+
+**What's in:** Two precomputed interaction scalars appended to item features in `sample_batch()`:
+1. **CG score passthrough** — the CG model's cosine similarity score for this (user, item) pair, stored before label masking. Encodes "how strongly CG retrieval ranked this candidate."
+2. **Genome cosine similarity** — cosine sim between user's rating-weighted average raw genome pool (1128-dim) and candidate's raw genome vector (1128-dim). Computed per batch in `precompute.py` using `model.genome_context_buffer`; stored as scalar in parquet.
+
+**Implementation notes:**
+- Both stored in parquet: `cg_label_score`, `cg_neg_scores`, `genome_cosine_label`, `genome_cosine_negs`
+- `dataset.py` auto-detects presence via `'cg_label_score' in df.columns`; sets `n_interaction_features=2` or 0 for backward compat
+- `train.py` builds model with `item_dim + n_interaction_features` and saves that value in `_config.json` sidecar
+- `canary.py` reads `n_interaction_features` from sidecar; builds genome pool from fav+anchor corpus indices
+- **Requires precompute rerun** to generate the new parquet columns
+
+**Genome cosine implementation detail — raw vs learned space:**
+Currently uses raw 1128-dim genome scores (Option 1). The alternative is to run each history movie through `cg.item_genome_tag_tower` first (1128 → 32-dim learned genome embedding), pool in that 32-dim space, and compute cosine sim against `item_genome_tag_tower(candidate_genome)`. This is Option 3 (CG genome tower sharing):
+
+```python
+# Option 3 (future): learned 32-dim genome space
+genome_raw_hist = model.genome_context_buffer[safe_ids]   # (B, max_hist, 1128)
+genome_emb_hist = model.item_genome_tag_tower(genome_raw_hist.view(-1, 1128)).view(B, max_hist, -1)  # (B, max_hist, 32)
+genome_pool = (genome_emb_hist * rat_w_b.unsqueeze(-1)).sum(dim=1) / w_sum_b  # (B, 32)
+gp_norm = F.normalize(genome_pool, p=2, dim=1)
+lbl_genome = F.normalize(model.item_genome_tag_tower(model.genome_context_buffer[label_b]), p=2, dim=1)
+```
+
+**Why Option 1 first:** Keep the feature pipeline simple before adding model-embedding sharing. Option 3 is a better feature (CG's genome tower learned a semantically meaningful 32-dim compression), but evaluate Option 1's signal first. If genome cosine shows strong NDCG delta, then upgrade to Option 3 as an isolated ablation.
+
+### Stage 3 — Additional Cross Features
 Add to `ranker/precompute.py` (precomputed scalars):
-- `genome_cosine_sim`: `cosine(candidate_genome, history_genome_pool)`
 - `genre_overlap`: fraction of candidate genres in user's history genres
 - `user_avg_rating_for_genre`: mean debiased rating for user's history movies in candidate's primary genre
 
@@ -453,8 +479,9 @@ All numbers on val split (382,138 rollback groups, 1 label + 99 hard negs each).
 | 1a | MLP, static features only | **0** | 0.1422 | 0.1338 | Great offline, **bad canary** (popular drift) |
 | 1b | MLP, static features + Menon α | **1.0** | < CG | < CG | **Loses to CG on offline eval** |
 | 1c | MLP, static features + Menon α | **0.5** | < CG | < CG | **Also loses to CG — user features too weak** |
-| 2 | + user_genome_context (1128-dim) | 0.5 | ? | ? | Next experiment — see Stage 2 notes |
-| 3 | + cross features | 0.5 | ? | ? | vs 2 |
+| 2b | + CG score passthrough + genome cosine sim (raw 1128-dim) | 0.5 | ? | ? | **Next experiment** — requires precompute rerun |
+| 2c | upgrade genome cosine to learned 32-dim (CG genome tower) | 0.5 | ? | ? | vs 2b — only if 2b shows signal |
+| 3 | + genre_overlap, user_avg_rating_for_genre | 0.5 | ? | ? | vs 2 |
 | 4 | + item ID embeddings | 0.5 | ? | ? | vs 3 |
 | 5 | DCN V2 cross network | 0.5 | ? | ? | vs 4 |
 | (α tuning) | tune α after beating CG | tbd | ? | ? | Only attempt after Stage ≥2 beats CG |

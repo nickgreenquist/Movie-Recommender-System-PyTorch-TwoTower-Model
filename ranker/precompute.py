@@ -19,6 +19,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn.functional as F
 from tqdm import tqdm
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -29,7 +30,7 @@ from src.train import build_model, get_device, get_v2_config
 
 
 MAX_ROLLBACK_PER_USER = 20      # match MAX_V2_SOFTMAX_EXAMPLES_PER_USER
-TOP_K_CANDIDATES      = 100     # 1 label + 99 negatives per row
+TOP_K_CANDIDATES      = 250     # 1 label + 249 negatives per row
 SCORING_BATCH_SIZE    = 512
 SPLIT_SEED            = 42
 PCT_TRAIN             = 0.9
@@ -222,8 +223,14 @@ def _score_candidates(model, V_all, arrays, device, batch_size, top_k):
     timestamp      = torch.from_numpy(arrays['timestamp_bin']).long()
     label_idx      = torch.from_numpy(arrays['label_corpus_idx']).long()
 
-    neg_corpus_idxs = np.zeros((n, n_neg), dtype=np.int32)
-    cg_label_rank   = np.zeros(n, dtype=np.int32)
+    neg_corpus_idxs     = np.zeros((n, n_neg), dtype=np.int32)
+    cg_label_rank       = np.zeros(n, dtype=np.int32)
+    cg_label_score      = np.zeros(n, dtype=np.float32)
+    cg_neg_scores       = np.zeros((n, n_neg), dtype=np.float32)
+    genome_cosine_label = np.zeros(n, dtype=np.float32)
+    genome_cosine_negs  = np.zeros((n, n_neg), dtype=np.float32)
+
+    pad_idx_v = model.pad_idx  # == len(fs.top_movies)
 
     for s in tqdm(range(0, n, batch_size), desc="Scoring candidates"):
         e = min(s + batch_size, n)
@@ -235,21 +242,47 @@ def _score_candidates(model, V_all, arrays, device, batch_size, top_k):
             timestamp[s:e].to(device),
         )
         scores = U @ V_all.T  # (B, n_movies)
-        b_idx     = torch.arange(B, device=device)
-        label_b   = label_idx[s:e].to(device)
-        label_sc  = scores[b_idx, label_b]                       # (B,) label scores
+        # NaN scores (e.g. from a degenerate user embedding) cause topk to return
+        # non-unique indices on MPS. Clamp to -inf so they sort last and are excluded.
+        scores = scores.nan_to_num(nan=float('-inf'))
+        b_idx    = torch.arange(B, device=device)
+        label_b  = label_idx[s:e].to(device)
+        label_sc = scores[b_idx, label_b]                       # (B,) label scores
+
+        # Store CG label score BEFORE masking.
+        cg_label_score[s:e] = label_sc.cpu().numpy()
 
         # Compute label rank in full corpus, then cap at top_k (see docstring).
-        # +1 because rank is 1-indexed.
         full_rank = (scores > label_sc.unsqueeze(1)).sum(dim=1) + 1   # (B,) 1-indexed
         cg_label_rank[s:e] = full_rank.clamp(max=top_k).cpu().numpy()
 
-        # NOW mask label position so topk returns only true negatives.
+        # Mask label and retrieve top negatives with their CG scores.
         scores[b_idx, label_b] = float('-inf')
-        top = scores.topk(n_neg, dim=1).indices  # (B, n_neg) — corpus indices, sorted by CG score
-        neg_corpus_idxs[s:e] = top.cpu().numpy()
+        top_result           = scores.topk(n_neg, dim=1)
+        neg_corpus_idxs[s:e] = top_result.indices.cpu().numpy()
+        cg_neg_scores[s:e]   = top_result.values.cpu().numpy()
 
-    return neg_corpus_idxs, cg_label_rank
+        # ── Genome cosine similarity (per-batch, freed immediately) ──────────
+        # Rating-weighted avg of raw genome scores over watch history → user genome pool.
+        hist_ids_b  = X_history[s:e].to(device)           # (B, max_hist)
+        hist_rats_b = X_hist_ratings[s:e].to(device)       # (B, max_hist)
+        pad_mask_b  = (hist_ids_b != pad_idx_v).float()   # 0 for padding positions
+        rat_w_b     = hist_rats_b * pad_mask_b             # (B, max_hist)
+        w_sum_b     = rat_w_b.abs().sum(dim=1, keepdim=True).clamp(min=1e-6)
+        # Clamp to valid genome buffer range; padding rows (weight=0) don't affect pool.
+        safe_ids    = hist_ids_b.clamp(max=pad_idx_v - 1)
+        genome_hist = model.genome_context_buffer[safe_ids]         # (B, max_hist, genome_dim)
+        genome_pool = (genome_hist * rat_w_b.unsqueeze(-1)).sum(dim=1) / w_sum_b  # (B, genome_dim)
+        gp_norm     = F.normalize(genome_pool, p=2, dim=1)
+
+        lbl_genome              = F.normalize(model.genome_context_buffer[label_b], p=2, dim=1)
+        genome_cosine_label[s:e] = (gp_norm * lbl_genome).sum(dim=1).cpu().numpy()
+
+        neg_ids_t              = top_result.indices                  # (B, n_neg)
+        neg_genome             = F.normalize(model.genome_context_buffer[neg_ids_t], p=2, dim=-1)
+        genome_cosine_negs[s:e] = (gp_norm.unsqueeze(1) * neg_genome).sum(dim=-1).cpu().numpy()
+
+    return neg_corpus_idxs, cg_label_rank, cg_label_score, cg_neg_scores, genome_cosine_label, genome_cosine_negs
 
 
 # ── Movie stats (global per-movie features) ──────────────────────────────────
@@ -310,9 +343,18 @@ def _verify_split(arrays, neg_corpus_idxs, cg_label_rank, fs, label, n_movies, t
     assert neg_corpus_idxs.min() >= 0,         f"[{label}] negative idx < 0"
     assert neg_corpus_idxs.max() < n_movies,   f"[{label}] negative idx >= n_movies"
 
-    # 3. each row has exactly 99 unique negatives
+    # 3. each row has exactly (top_k - 1) unique negatives
+    n_neg = top_k - 1
     sample_uniq = np.array([len(np.unique(neg_corpus_idxs[i])) for i in range(min(1000, n))])
-    assert (sample_uniq == 99).all(), f"[{label}] non-unique negatives in some rows"
+    bad_mask = sample_uniq != n_neg
+    if bad_mask.any():
+        bad_counts = sample_uniq[bad_mask]
+        print(f"  [{label}] non-unique negatives in {bad_mask.sum()} / {len(sample_uniq)} sampled rows")
+        print(f"    unique count distribution: min={bad_counts.min()}  max={bad_counts.max()}  "
+              f"mean={bad_counts.mean():.1f}  most common={np.bincount(bad_counts).argmax()}")
+        print(f"    first bad row index: {np.where(bad_mask)[0][0]}")
+        print(f"    first bad row values: {neg_corpus_idxs[np.where(bad_mask)[0][0]]}")
+    assert not bad_mask.any(), f"[{label}] non-unique negatives in some rows (expected {n_neg})"
 
     # 4. history never contains label (label is at position N, history is 0..N-1)
     sample_n = min(1000, n)
@@ -338,17 +380,20 @@ def _verify_split(arrays, neg_corpus_idxs, cg_label_rank, fs, label, n_movies, t
           f"Hit@1={cg_hit1:.4f}  Hit@10={cg_hit10:.4f}  Hit@<{top_k}={cg_max_hit:.4f}")
 
 
-def _build_dataframe(arrays, neg_corpus_idxs, cg_label_rank):
-    """Convert arrays + negatives + cg rank into a parquet-ready DataFrame.
-
-    list-of-int columns stored as Python lists (parquet handles via pyarrow).
-    """
+def _build_dataframe(arrays, neg_corpus_idxs, cg_label_rank,
+                     cg_label_score, cg_neg_scores,
+                     genome_cosine_label, genome_cosine_negs):
+    """Convert arrays + negatives + cg rank + interaction features into a parquet-ready DataFrame."""
     return pd.DataFrame({
         'user_id':                arrays['user_id'],
         'rollback_n':             arrays['rollback_n'].astype(np.int32),
         'label_corpus_idx':       arrays['label_corpus_idx'].astype(np.int32),
         'neg_corpus_idxs':        list(neg_corpus_idxs.astype(np.int32)),
         'cg_label_rank':          cg_label_rank.astype(np.int32),
+        'cg_label_score':         cg_label_score,
+        'cg_neg_scores':          list(cg_neg_scores),
+        'genome_cosine_label':    genome_cosine_label,
+        'genome_cosine_negs':     list(genome_cosine_negs),
         'user_avg_rating':        arrays['user_avg_rating'],
         'user_rating_count':      arrays['user_rating_count'].astype(np.int32),
         'user_genre_ctx':         list(arrays['X_genre']),
@@ -399,9 +444,10 @@ def precompute(checkpoint_path: str | None = None,
     for split_name, users in [('train', train_users), ('val', val_users)]:
         print(f"\n── {split_name.upper()} split ──")
         arrays = _build_rollback_arrays(users, fs, raw_df, max_per_user, SPLIT_SEED)
-        neg, cg_rank = _score_candidates(model, V_all, arrays, device, batch_size, top_k)
+        neg, cg_rank, cg_lscore, cg_nscores, gc_label, gc_negs = _score_candidates(
+            model, V_all, arrays, device, batch_size, top_k)
         _verify_split(arrays, neg, cg_rank, fs, split_name, n_movies, top_k)
-        df = _build_dataframe(arrays, neg, cg_rank)
+        df = _build_dataframe(arrays, neg, cg_rank, cg_lscore, cg_nscores, gc_label, gc_negs)
         out_path = os.path.join(output_dir, f'ranker_candidates_{split_name}.parquet')
         df.to_parquet(out_path, index=False)
         print(f"  → {out_path}  ({len(df):,} rows)")

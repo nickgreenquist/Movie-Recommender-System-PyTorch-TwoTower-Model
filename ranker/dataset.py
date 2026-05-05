@@ -29,7 +29,7 @@ from src.dataset import FeatureStore, load_features
 # Item feature dim = genome(1128) + genre(20) + global_avg(1) + global_count_log1p(1) + year_norm(1)
 # User feature dim = genre_ctx(40) + user_avg(1) + user_count_log1p(1) = 42
 
-CANDIDATES_PER_ROW = 100   # 1 label + 99 negs
+CANDIDATES_PER_ROW = 250   # 1 label + 249 negs
 
 
 # ── Item feature matrix ──────────────────────────────────────────────────────
@@ -98,8 +98,22 @@ class RankerDataset:
         df = pd.read_parquet(parquet_path)
 
         self.label_idx     = df['label_corpus_idx'].values.astype(np.int64)              # (N,)
-        self.neg_idx       = np.stack(df['neg_corpus_idxs'].values).astype(np.int64)     # (N, 99)
+        self.neg_idx       = np.stack(df['neg_corpus_idxs'].values).astype(np.int64)     # (N, 249)
         self.cg_label_rank = df['cg_label_rank'].values.astype(np.int32)                 # (N,)
+
+        # Interaction features: CG score passthrough + genome cosine similarity.
+        # Present only in parquets produced by the updated precompute.py.
+        # n_interaction_features=0 preserves backward compat with old parquets.
+        if 'cg_label_score' in df.columns:
+            self.cg_label_score      = df['cg_label_score'].values.astype(np.float32)          # (N,)
+            self.cg_neg_scores       = np.stack(df['cg_neg_scores'].values).astype(np.float32) # (N, 99)
+            self.genome_cosine_label = df['genome_cosine_label'].values.astype(np.float32)     # (N,)
+            self.genome_cosine_negs  = np.stack(df['genome_cosine_negs'].values).astype(np.float32)  # (N, 99)
+            self.n_interaction_features = 2
+        else:
+            self.cg_label_score = self.cg_neg_scores = None
+            self.genome_cosine_label = self.genome_cosine_negs = None
+            self.n_interaction_features = 0
 
         self.user_genre = np.stack(df['user_genre_ctx'].values).astype(np.float32)       # (N, 40)
         self.user_avg   = df['user_avg_rating'].values.astype(np.float32)                # (N,)
@@ -145,32 +159,59 @@ class RankerDataset:
 # ── Random-tuple batch sampler ───────────────────────────────────────────────
 
 def sample_batch(dataset: RankerDataset, batch_size: int, device: torch.device,
-                 rng: np.random.Generator):
+                 rng: np.random.Generator, easy_neg_frac: float = 0.5):
     """
-    Sample `batch_size` random (row, candidate_position) tuples.
+    Mixed Negative Sampling (MNS): each negative is independently drawn from either
+    the CG hard-negative pool (precomputed top-K) or a random corpus item.
 
-    candidate_position == 0  → label (positive, label=1)
-    candidate_position 1..99 → corresponding entry in neg_idx (negative, label=0)
+    candidate_position == 0           → label (positive, label=1)
+    candidate_position 1..n_neg, hard → CG top-K negative (high CG score)
+    candidate_position 1..n_neg, easy → uniform random corpus item
 
-    By construction this gives ~1% positive rate per batch (the natural data ratio).
-    The plan calls out NOT to put all 100 candidates from one row in the same batch
-    — random sampling across (row, position) does this naturally.
+    Hard negatives teach the model to distinguish near-misses (CG thought these were good).
+    Easy negatives anchor the global decision boundary and prevent embedding collapse
+    toward the CG candidate distribution.
+
+    For easy negatives, interaction features (cg_score, genome_cosine) are set to 0 —
+    CG never scored them, so there is no retrieval signal to pass through.
 
     Returns (user_feat, item_feat, cand_t, label) all on `device`.
     `cand_t` is the per-batch corpus indices — needed for Menon α popularity-bias lookup.
     """
-    rows = rng.integers(0, dataset.N, size=batch_size)
-    pos  = rng.integers(0, CANDIDATES_PER_ROW, size=batch_size)
+    rows     = rng.integers(0, dataset.N, size=batch_size)
+    pos      = rng.integers(0, CANDIDATES_PER_ROW, size=batch_size)
     is_label = (pos == 0)
+    is_neg   = ~is_label
 
-    # neg_idx column to fetch when pos > 0; safe-clamp pos==0 to 0 since is_label gate
-    neg_col = np.maximum(pos - 1, 0)
-    cand_idx = np.where(is_label, dataset.label_idx[rows], dataset.neg_idx[rows, neg_col])
+    neg_col       = np.maximum(pos - 1, 0)
+    cand_idx_hard = np.where(is_label, dataset.label_idx[rows], dataset.neg_idx[rows, neg_col])
 
-    cand_t   = torch.from_numpy(cand_idx).long().to(device)
-    user_t   = dataset.user_features_for_rows(rows).to(device)
-    item_t   = dataset.item_features[cand_t]
-    label_t  = torch.from_numpy(is_label.astype(np.float32)).to(device)
+    # Easy negatives: uniform random across the full corpus.
+    n_movies  = dataset.item_features.shape[0]
+    use_easy  = is_neg & (rng.random(batch_size) < easy_neg_frac)
+    rand_idx  = rng.integers(0, n_movies, size=batch_size)
+    cand_idx  = np.where(use_easy, rand_idx, cand_idx_hard)
+
+    cand_t  = torch.from_numpy(cand_idx).long().to(device)
+    user_t  = dataset.user_features_for_rows(rows).to(device)
+    item_t  = dataset.item_features[cand_t]
+    label_t = torch.from_numpy(is_label.astype(np.float32)).to(device)
+
+    if dataset.n_interaction_features > 0:
+        cg_score   = np.where(is_label,
+                               dataset.cg_label_score[rows],
+                               dataset.cg_neg_scores[rows, neg_col])
+        genome_cos = np.where(is_label,
+                               dataset.genome_cosine_label[rows],
+                               dataset.genome_cosine_negs[rows, neg_col])
+        # Easy negatives were never scored by CG — zero out retrieval signal.
+        cg_score   = np.where(use_easy, 0.0, cg_score).astype(np.float32)
+        genome_cos = np.where(use_easy, 0.0, genome_cos).astype(np.float32)
+        interact_t = torch.from_numpy(
+            np.stack([cg_score, genome_cos], axis=1)
+        ).to(device)
+        item_t = torch.cat([item_t, interact_t], dim=1)
+
     return user_t, item_t, cand_t, label_t
 
 

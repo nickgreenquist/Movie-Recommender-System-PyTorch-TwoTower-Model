@@ -58,7 +58,10 @@ def get_config() -> dict:
         # Menon α logit adjustment — added to BCE logits during training; inference uses raw logits.
         # Default 1.0 (more aggressive than CG's 0.5) per Menon et al. 2021 / production practice:
         # rankers are precision-critical and more prone to popularity memorization.
-        'popularity_alpha':   0.0,
+        'popularity_alpha':      0.5,
+        'easy_neg_frac':         0.5,
+        'genome_dim':            1128,
+        'genome_bottleneck_dim': 64,
     }
 
 
@@ -88,12 +91,22 @@ def train(checkpoint_dir: str | None = None) -> str:
     print(f"\nCG baseline (val): NDCG@10={cg_ndcg:.4f}  MRR={cg_mrr:.4f}")
     print(f"Ranker target:     beat NDCG@10={cg_ndcg:.4f}\n")
 
-    model = MLPRanker(train_ds.user_dim, train_ds.item_dim,
+    n_interact     = train_ds.n_interaction_features
+    total_item_dim = train_ds.item_dim + n_interact
+    config['n_interaction_features'] = n_interact   # persist for canary/eval
+    genome_dim     = config['genome_dim']
+    bottleneck_dim = config['genome_bottleneck_dim']
+    model = MLPRanker(train_ds.user_dim, total_item_dim,
                       hidden_dims=config['hidden_dims'],
-                      dropout=config['dropout']).to(device)
+                      dropout=config['dropout'],
+                      genome_dim=genome_dim,
+                      genome_bottleneck_dim=bottleneck_dim).to(device)
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"MLPRanker: input={train_ds.user_dim + train_ds.item_dim} → "
-          f"hidden={config['hidden_dims']} → 1   ({n_params:,} params)")
+    mlp_in   = train_ds.user_dim + bottleneck_dim + (total_item_dim - genome_dim)
+    print(f"MLPRanker: genome({genome_dim})→bottleneck({bottleneck_dim})  "
+          f"mlp_input={mlp_in} (user={train_ds.user_dim} genome_bn={bottleneck_dim} "
+          f"rest={total_item_dim - genome_dim}) → hidden={config['hidden_dims']} → 1  "
+          f"({n_params:,} params)")
 
     # ── Menon α popularity bias: α · log1p(count_i) for each corpus index.
     # Added to logits during training (BCE); raw logits used at inference.
@@ -137,7 +150,8 @@ def train(checkpoint_dir: str | None = None) -> str:
     pbar = tqdm(range(config['training_steps']), desc="Training")
     for step in pbar:
         model.train()
-        user_b, item_b, cand_b, label_b = sample_batch(train_ds, config['batch_size'], device, rng)
+        user_b, item_b, cand_b, label_b = sample_batch(train_ds, config['batch_size'], device, rng,
+                                                        easy_neg_frac=config['easy_neg_frac'])
         logits = model(user_b, item_b)
 
         # Menon α: add α·log1p(count_i) to logits BEFORE BCE so popular items get a
@@ -197,8 +211,15 @@ def train(checkpoint_dir: str | None = None) -> str:
     return best_path
 
 
-def evaluate_only(checkpoint_path: str):
+def evaluate_only(checkpoint_path: str | None = None):
+    import glob as _glob
     import io as _io
+
+    if checkpoint_path is None:
+        matches = _glob.glob('saved_models/ranker/ranker_mlp_*.pth')
+        if not matches:
+            raise FileNotFoundError("No ranker checkpoint found in saved_models/ranker/")
+        checkpoint_path = max(matches, key=os.path.getmtime)
 
     print(f"Loading datasets ...")
     train_ds, val_ds = load_splits('data')
@@ -207,19 +228,40 @@ def evaluate_only(checkpoint_path: str):
     val_ds.to(device)
 
     config = get_config()
-    model = MLPRanker(val_ds.user_dim, val_ds.item_dim,
+    cfg_path = _config_path(checkpoint_path)
+    if os.path.exists(cfg_path):
+        with open(cfg_path) as f:
+            saved = json.load(f)
+        for k in ('hidden_dims', 'dropout', 'genome_dim', 'genome_bottleneck_dim'):
+            if k in saved:
+                config[k] = saved[k]
+
+    total_item_dim = val_ds.item_dim + val_ds.n_interaction_features
+    model = MLPRanker(val_ds.user_dim, total_item_dim,
                        hidden_dims=config['hidden_dims'],
-                       dropout=config['dropout']).to(device)
+                       dropout=config['dropout'],
+                       genome_dim=config['genome_dim'],
+                       genome_bottleneck_dim=config['genome_bottleneck_dim']).to(device)
     model.load_state_dict(torch.load(checkpoint_path, weights_only=True, map_location=device))
     print(f"Loaded checkpoint: {checkpoint_path}")
 
-    cg_ranks     = val_ds.cg_label_rank
-    ranker_ranks = compute_label_ranks(model, val_ds, device)
+    n_cands      = 1 + val_ds.n_neg  # candidate pool size (100)
+
+    # E2E-adjusted ranks for both CG and ranker: examples where CG didn't organically
+    # retrieve the label count as rank = n_cands + 1 (score = 0). Both sides use the
+    # same ceiling so the comparison is apples-to-apples.
+    raw_cg_ranks  = val_ds.cg_label_rank
+    cg_ranks      = np.where(raw_cg_ranks < n_cands, raw_cg_ranks, n_cands + 1)
+    ranker_ranks  = compute_label_ranks(model, val_ds, device)  # already E2E-adjusted
 
     cg_ndcg, cg_mrr   = _ndcg_mrr_from_ranks(cg_ranks)
     rk_ndcg, rk_mrr   = _ndcg_mrr_from_ranks(ranker_ranks)
     cg_hits           = hit_rates_from_ranks(cg_ranks)
     rk_hits           = hit_rates_from_ranks(ranker_ranks)
+
+    # CG organic retrieval rate: fraction where the label was in CG's top-99 candidates.
+    # This is the hard ceiling for every ranker Hit@K metric in production.
+    cg_recall_at_pool = float((raw_cg_ranks < n_cands).mean())
 
     buf = _io.StringIO()
 
@@ -228,13 +270,16 @@ def evaluate_only(checkpoint_path: str):
         buf.write(line + '\n')
 
     emit(f"Checkpoint: {checkpoint_path}")
-    emit(f"\n{'Metric':<12} {'CG':>10} {'Ranker':>10} {'Delta':>12}")
-    emit("─" * 48)
-    emit(f"{'NDCG@10':<12} {cg_ndcg:>10.4f} {rk_ndcg:>10.4f} {rk_ndcg - cg_ndcg:>+12.4f}")
-    emit(f"{'MRR':<12} {cg_mrr:>10.4f} {rk_mrr:>10.4f} {rk_mrr - cg_mrr:>+12.4f}")
+    emit(f"\n{'Metric':<14} {'CG':>10} {'Ranker':>10} {'Delta':>12}")
+    emit("─" * 50)
+    emit(f"{'NDCG@10':<14} {cg_ndcg:>10.4f} {rk_ndcg:>10.4f} {rk_ndcg - cg_ndcg:>+12.4f}")
+    emit(f"{'MRR':<14} {cg_mrr:>10.4f} {rk_mrr:>10.4f} {rk_mrr - cg_mrr:>+12.4f}")
     for k_name in cg_hits:
         cg_v, rk_v = cg_hits[k_name], rk_hits[k_name]
-        emit(f"{k_name:<12} {cg_v:>10.4f} {rk_v:>10.4f} {rk_v - cg_v:>+12.4f}")
+        emit(f"{k_name:<14} {cg_v:>10.4f} {rk_v:>10.4f} {rk_v - cg_v:>+12.4f}")
+    emit("─" * 50)
+    emit(f"{'Recall@'+str(n_cands):<14} {cg_recall_at_pool:>10.4f} {'(ceiling)':>10}   "
+         f"← max ranker Hit@K in production")
 
     base = os.path.splitext(os.path.basename(checkpoint_path))[0]
     out_dir = 'ranker/eval_results'

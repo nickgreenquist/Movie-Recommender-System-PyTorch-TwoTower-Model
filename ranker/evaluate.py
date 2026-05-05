@@ -20,13 +20,23 @@ def compute_label_ranks(model, dataset: RankerDataset, device: torch.device,
                         batch_size: int = 64) -> np.ndarray:
     """
     Score every rollback group with `model`. Return (N,) array of label ranks (1-indexed).
-    Rank = (count of negs with score > label_score) + 1, in [1, n_cand].
+
+    E2E semantics (the Golden Rule of two-stage evaluation):
+      If CG did not organically retrieve the label (cg_label_rank >= n_cand), the ranker
+      never sees it in production → rank is set to n_cand + 1 (score = 0 for all metrics).
+      This enforces Ranker_Hit@K ≤ CG_Recall@n_cand.
+
+    cg_label_rank is capped at n_cand in precompute. cg_label_rank < n_cand means the
+    label's true full-corpus rank < n_cand (unambiguous: label was in CG's organic top-99).
+    cg_label_rank == n_cand is ambiguous (rank n_cand or rank > n_cand); treated conservatively
+    as "not found" to avoid overcounting retrieval successes.
     """
     model.eval()
     n          = dataset.N
     n_cand     = 1 + dataset.n_neg                # 100
     user_dim   = dataset.user_dim
-    item_dim   = dataset.item_dim
+    item_dim   = dataset.item_dim + dataset.n_interaction_features
+    n_interact = dataset.n_interaction_features
     label_ranks = np.zeros(n, dtype=np.int32)
 
     for s in range(0, n, batch_size):
@@ -41,15 +51,30 @@ def compute_label_ranks(model, dataset: RankerDataset, device: torch.device,
         cand[:, 1:] = dataset.neg_idx[s:e]
         cand_t      = torch.from_numpy(cand).to(device)
 
-        item_feat   = dataset.item_features[cand_t]                   # (B, 100, item_dim)
-        user_exp    = user_feat.unsqueeze(1).expand(-1, n_cand, -1)   # (B, 100, user_dim)
+        item_feat = dataset.item_features[cand_t]                     # (B, 100, item_dim_base)
+        user_exp  = user_feat.unsqueeze(1).expand(-1, n_cand, -1)     # (B, 100, user_dim)
+
+        if n_interact > 0:
+            cg_b = np.empty((B, n_cand), dtype=np.float32)
+            cg_b[:, 0]  = dataset.cg_label_score[s:e]
+            cg_b[:, 1:] = dataset.cg_neg_scores[s:e]
+            gc_b = np.empty((B, n_cand), dtype=np.float32)
+            gc_b[:, 0]  = dataset.genome_cosine_label[s:e]
+            gc_b[:, 1:] = dataset.genome_cosine_negs[s:e]
+            interact_t = torch.from_numpy(
+                np.stack([cg_b, gc_b], axis=2).astype(np.float32)
+            ).to(device)                                               # (B, 100, 2)
+            item_feat = torch.cat([item_feat, interact_t], dim=2)
 
         scores = model(user_exp.reshape(B * n_cand, user_dim),
                        item_feat.reshape(B * n_cand, item_dim)).reshape(B, n_cand)
 
         label_score = scores[:, 0].unsqueeze(1)
-        rank = (scores > label_score).sum(dim=1) + 1
-        label_ranks[s:e] = rank.cpu().numpy()
+        rank_np = ((scores > label_score).sum(dim=1) + 1).cpu().numpy()
+
+        # E2E ceiling: zero out ranker contribution for examples CG didn't retrieve.
+        cg_found        = dataset.cg_label_rank[s:e] < n_cand
+        label_ranks[s:e] = np.where(cg_found, rank_np, n_cand + 1)
 
     return label_ranks
 
@@ -67,13 +92,18 @@ def _ndcg_mrr_from_ranks(ranks: np.ndarray) -> tuple[float, float]:
 
 def cg_baseline(dataset: RankerDataset) -> tuple[float, float]:
     """
-    CG baseline NDCG@10 and MRR from the precomputed cg_label_rank column.
+    CG baseline NDCG@10 and MRR, E2E-consistent with compute_label_ranks.
 
-    cg_label_rank is the label's rank within the 100-candidate group when scored
-    by CG itself (1-indexed, capped at 100). See ranker/precompute.py docstring.
+    cg_label_rank is the label's true full-corpus rank capped at n_cand.
+    cg_label_rank == n_cand is treated as "not found" (rank = n_cand + 1, score = 0)
+    to match the same ceiling applied to the ranker.
     """
-    return _ndcg_mrr_from_ranks(dataset.cg_label_rank)
+    n_cand = 1 + dataset.n_neg
+    ranks  = np.where(dataset.cg_label_rank < n_cand,
+                      dataset.cg_label_rank,
+                      n_cand + 1)
+    return _ndcg_mrr_from_ranks(ranks)
 
 
-def hit_rates_from_ranks(ranks: np.ndarray, ks: list = (1, 5, 10, 20, 50)) -> dict:
+def hit_rates_from_ranks(ranks: np.ndarray, ks: list = (1, 5, 10, 20, 50, 100, 150, 200, 250)) -> dict:
     return {f'Hit@{k}': float((ranks <= k).mean()) for k in ks}
