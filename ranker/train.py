@@ -56,7 +56,7 @@ def get_config() -> dict:
         'seed':               42,
         'checkpoint_dir':     'saved_models/ranker',
         'easy_neg_frac':         0.5,
-        # CG-equivalent sub-tower output dims (mirror src/train.get_v2_config defaults)
+        # CG-equivalent sub-tower output dims (mirror src/train.get_config defaults)
         'item_id_emb_dim':       32,
         'item_genre_emb_dim':    8,
         'item_tag_emb_dim':      16,

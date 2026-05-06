@@ -29,7 +29,7 @@ from src.evaluate import (USER_TYPE_TO_DISLIKED_MOVIES,
                            USER_TYPE_TO_FAVORITE_MOVIES,
                            USER_TYPE_TO_GENOME_TAGS, _build_user_embedding,
                            _get_anchor_titles)
-from src.train import build_model, get_v2_config
+from src.train import build_model, get_config as get_cg_config
 
 
 VALUE_FAVORITE_MOVIE_RATING = 2.0
@@ -151,7 +151,7 @@ def run_canary(cg_checkpoint: str | None = None,
     emit('')
 
     # CG model (read-only, used for retrieval only).
-    cg_cfg = get_v2_config()
+    cg_cfg = get_cg_config()
     cg = build_model(cg_cfg, fs)
     cg.load_state_dict(torch.load(cg_checkpoint, weights_only=True, map_location='cpu'))
     cg.eval().to(device)

@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.dataset import (MAX_HISTORY_LEN, TIMESTAMP_NUM_BINS, FeatureStore,
                          load_features)
-from src.train import build_model, get_device, get_v2_config
+from src.train import build_model, get_device, get_config
 
 
 MAX_ROLLBACK_PER_USER = 20      # match MAX_V2_SOFTMAX_EXAMPLES_PER_USER
@@ -52,7 +52,7 @@ def _resolve_checkpoint(checkpoint_arg: str | None) -> str:
 
 
 def load_cg(checkpoint_path: str, fs: FeatureStore, device: torch.device):
-    config = get_v2_config()
+    config = get_config()
     model = build_model(config, fs)
     state = torch.load(checkpoint_path, weights_only=True, map_location='cpu')
     model.load_state_dict(state)
