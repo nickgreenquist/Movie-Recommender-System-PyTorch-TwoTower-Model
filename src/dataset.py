@@ -3,7 +3,7 @@ Stage 3 — Dataset Loading
 Reads features_*.parquet into a FeatureStore, builds PyTorch tensors.
 
 Usage (from train.py or main.py):
-    from src.dataset import load_features, make_mse_rollback_splits
+    from src.dataset import load_features, make_softmax_splits
 """
 import os
 import random
@@ -46,7 +46,6 @@ class FeatureStore:
     movieId_to_genre_context: dict
     movieId_to_tag_context:   dict
     movieId_to_genome_tag_context: dict
-
 
     # Derived constants
     user_context_size:                    int
@@ -121,8 +120,8 @@ def load_features(data_dir: str = 'data', version: str = 'v1') -> FeatureStore:
     # user genre context = [avg_debiased_rating_per_genre (n_genres) | watch_frac_per_genre (n_genres)]
     user_context_size = 2 * n_genres
 
-    user_context_genre_avg_rating_to_i   = {g: i           for i, g in enumerate(genres_ordered)}  # indices 0..n_genres-1
-    user_context_genre_watch_count_to_i  = {g: n_genres + i for i, g in enumerate(genres_ordered)} # indices n_genres..2*n_genres-1
+    user_context_genre_avg_rating_to_i   = {g: i           for i, g in enumerate(genres_ordered)}
+    user_context_genre_watch_count_to_i  = {g: n_genres + i for i, g in enumerate(genres_ordered)}
 
     ts_min = int(ts_df['ts_min'].iloc[0])
     ts_max = int(ts_df['ts_max'].iloc[0])
@@ -181,46 +180,32 @@ def pad_history_ratings_batch(history_ratings: list) -> torch.Tensor:
     return padded
 
 
-# ── MSE rollback dataset ──────────────────────────────────────────────────────
+# ── Rollback dataset (used by offline eval) ───────────────────────────────────
 #
-# Each user contributes multiple training examples via "rollback":
-# for a user who watched movies [A, B, C, D, E] in order, we generate examples like:
-#   context=[A],       target=B
-#   context=[A,B,C],   target=D
-#   context=[A,B,C,D], target=E
-# Each example uses only movies watched *before* the target — no future leakage.
-# MAX_MSE_ROLLBACK_EXAMPLES_PER_USER caps how many rollback examples we randomly sample per user.
-#
-# Why rollback for BOTH train and val:
-# Rollback produces examples with varying context lengths (short to long).
-# If val used only the last rating per user (full history as context), val would always
-# have long contexts while train has short+long — a distribution mismatch that makes
-# val loss unreliable. Using rollback for both keeps context length distribution consistent.
+# For each val user, sample up to MAX_ROLLBACK_EXAMPLES_PER_USER chronological
+# positions. At each position j: context = history[0..j-1], target = history[j].
+# Val users are held out at the user level, so all positions are valid.
 
-# ── MSE rollback dataset ──────────────────────────────────────────────────────
-
-MAX_MSE_ROLLBACK_EXAMPLES_PER_USER = 20
+MAX_ROLLBACK_EXAMPLES_PER_USER = 20
 
 
-def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
-                                max_per_user: int = MAX_MSE_ROLLBACK_EXAMPLES_PER_USER,
-                                seed: int = 42,
-                                sort_by_ts: bool = True) -> tuple:
+def build_rollback_dataset(users: list, fs: FeatureStore, raw_df,
+                            max_per_user: int = MAX_ROLLBACK_EXAMPLES_PER_USER,
+                            seed: int = 42,
+                            sort_by_ts: bool = True) -> tuple:
     """
-    Build rollback training examples for MSE training.
+    Build rollback examples for offline evaluation.
 
     raw_df must have columns: userId, movieId, rating, timestamp,
     already filtered to corpus movies and valid users.
 
     Returns 6-tuple:
         [0] X_genre            — (N, user_context_size) float  rollback genre context
-        [1] X_history          — list[list[int]]  (padded at training time)
+        [1] X_history          — list[list[int]]  (padded at eval time)
         [2] X_history_ratings  — list[list[float]]
         [3] timestamp          — (N,) long  (binned)
-        [4] Y                  — (N,) float  debiased target rating
+        [4] Y                  — (N,) float  debiased target rating (unused in retrieval eval)
         [5] target_movieId     — (N,) long  (embedding index)
-    target_genre/tag/genome/year are NOT stored — look them up from model buffers
-    at training time using target_movieId as the corpus index.
     """
     rng       = random.Random(seed)
     users_set = set(users)
@@ -294,7 +279,7 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
                 running_sum[g_idx]   += d_rat
 
     n = len(target_movieId)
-    print(f"  {n:,} MSE rollback examples — building tensors ...")
+    print(f"  {n:,} rollback examples — building tensors ...")
 
     X_genre_t         = torch.from_numpy(np.array(X_genre,        dtype=np.float32))
     Y_t               = torch.from_numpy(np.array(Y,              dtype=np.float32))
@@ -308,10 +293,7 @@ def build_mse_rollback_dataset(users: list, fs: FeatureStore, raw_df,
 
 def get_val_users(fs: FeatureStore, data_dir: str = 'data',
                   pct_train: float = 0.9, seed: int = 42) -> tuple:
-    """
-    Return (val_users, corpus-filtered raw_df) using the same split as make_mse_rollback_splits.
-    Used by offline_eval to avoid duplicating the split logic.
-    """
+    """Return (val_users, corpus-filtered raw_df) — same split as make_softmax_splits."""
     ratings_path = os.path.join(data_dir, 'base_ratings.parquet')
     raw_df = pd.read_parquet(ratings_path)
     corpus_set = set(fs.item_emb_movieId_to_i.keys())
@@ -325,74 +307,10 @@ def get_val_users(fs: FeatureStore, data_dir: str = 'data',
     return valid_users[split:], raw_df
 
 
-def make_mse_rollback_splits(fs: FeatureStore, data_dir: str = 'data',
-                              max_per_user: int = MAX_MSE_ROLLBACK_EXAMPLES_PER_USER,
-                              pct_train: float = 0.9, seed: int = 42,
-                              max_users: int = None) -> tuple:
-    """
-    Load raw interactions, split users 90/10 at the user level,
-    build MSE rollback datasets.
-    Returns (train_data, val_data) each a 6-tuple from build_mse_rollback_dataset().
-    """
-    ratings_path = os.path.join(data_dir, 'base_ratings.parquet')
-    print(f"Loading {ratings_path} ...")
-    raw_df = pd.read_parquet(ratings_path)
-    # Filter to corpus movies only
-    corpus_set = set(fs.item_emb_movieId_to_i.keys())
-    raw_df = raw_df[raw_df['movieId'].isin(corpus_set)]
-    print(f"  {len(raw_df):,} raw interactions, {raw_df['userId'].nunique():,} users")
-
-    valid_users = sorted(raw_df['userId'].astype(int).unique().tolist())
-    rng = random.Random(seed)
-    rng.shuffle(valid_users)
-
-    if max_users is not None:
-        valid_users = valid_users[:max_users]
-        print(f"  [debug] subsampled to {len(valid_users):,} users")
-
-    split       = int(len(valid_users) * pct_train)
-    train_users = valid_users[:split]
-    val_users   = valid_users[split:]
-
-    print(f"\nBuilding rollback train dataset ({len(train_users):,} users) ...")
-    train_data = build_mse_rollback_dataset(train_users, fs, raw_df, max_per_user, seed)
-    print(f"  X_genre_train shape: {train_data[0].shape}")
-
-    print(f"\nBuilding rollback val dataset ({len(val_users):,} users) ...")
-    val_data = build_mse_rollback_dataset(val_users, fs, raw_df, max_per_user, seed)
-    print(f"  X_genre_val shape:   {val_data[0].shape}")
-
-    return train_data, val_data
-
-
-def save_mse_rollback_splits(train_data: tuple, val_data: tuple,
-                              data_dir: str = 'data', version: str = 'v1') -> None:
-    torch.save(train_data, os.path.join(data_dir, f'dataset_mse_rollback_train_{version}.pt'))
-    torch.save(val_data,   os.path.join(data_dir, f'dataset_mse_rollback_val_{version}.pt'))
-    print(f"Saved dataset_mse_rollback_train_{version}.pt and dataset_mse_rollback_val_{version}.pt → {data_dir}/")
-
-
-def load_mse_rollback_splits(data_dir: str = 'data', version: str = 'v1') -> tuple:
-    train_path = os.path.join(data_dir, f'dataset_mse_rollback_train_{version}.pt')
-    val_path   = os.path.join(data_dir, f'dataset_mse_rollback_val_{version}.pt')
-    print(f"Loading {train_path} ...")
-    train_data = torch.load(train_path, weights_only=False)
-    print(f"Loading {val_path} ...")
-    val_data   = torch.load(val_path, weights_only=False)
-    return train_data[:6], val_data[:6]
-
-
-# ── V2 softmax dataset (full softmax) ────────────────────────────────────────
+# ── Softmax dataset (full softmax training) ───────────────────────────────────
 #
-# Same rollback structure as MSE: per user, sort by timestamp, sample up to
-# MAX_V2_SOFTMAX_EXAMPLES_PER_USER rollback positions. All watched movies are
-# eligible targets (no rating filter — same as book and game recommenders).
-#
-# Key difference from MSE dataset:
-#   - No Y label (cross-entropy target is the item index, not a rating)
-#   - X_history and X_hist_ratings are pre-padded fixed-size tensors
-#     (shape: N × MAX_HISTORY_LEN) so training can do data[ix] directly
-#     instead of calling pad_history_batch per batch.
+# Same rollback structure as eval: per user, sort by timestamp, sample up to
+# MAX_SOFTMAX_EXAMPLES_PER_USER rollback positions.
 #
 # Returns 7-tuple:
 #   [0] X_genre           — (N, user_context_size) float32
@@ -403,19 +321,19 @@ def load_mse_rollback_splits(data_dir: str = 'data', version: str = 'v1') -> tup
 #   [5] timestamp         — (N,) int64
 #   [6] target_movieId    — (N,) int64  (corpus embedding index)
 
-MAX_V2_SOFTMAX_EXAMPLES_PER_USER = 20
+MAX_SOFTMAX_EXAMPLES_PER_USER = 20
 
 
-def build_v2_softmax_dataset(users: list, fs: FeatureStore, raw_df,
-                              max_per_user: int = MAX_V2_SOFTMAX_EXAMPLES_PER_USER,
-                              seed: int = 42) -> tuple:
+def build_softmax_dataset(users: list, fs: FeatureStore, raw_df,
+                           max_per_user: int = MAX_SOFTMAX_EXAMPLES_PER_USER,
+                           seed: int = 42) -> tuple:
     from tqdm import tqdm
 
     rng       = random.Random(seed)
     users_set = set(users)
     max_hist  = MAX_HISTORY_LEN
     n_genres  = len(fs.genres_ordered)
-    pad_idx   = len(fs.top_movies)  # one past end of embedding table
+    pad_idx   = len(fs.top_movies)
 
     movie_genre_idxs = {
         mid: [fs.genre_to_i[g] for g in fs.movieId_to_genres.get(mid, []) if g in fs.genre_to_i]
@@ -425,7 +343,7 @@ def build_v2_softmax_dataset(users: list, fs: FeatureStore, raw_df,
     df = raw_df[raw_df['userId'].isin(users_set)].copy()
     print(f"  {len(df):,} interactions, {df['userId'].nunique():,} users")
 
-    # ── 1. Counting pass: exact buffer size before allocating ─────────────────
+    # ── 1. Counting pass ──────────────────────────────────────────────────────
     print("  Counting pass ...")
     n_examples   = 0
     valid_groups = []
@@ -450,7 +368,7 @@ def build_v2_softmax_dataset(users: list, fs: FeatureStore, raw_df,
 
     # ── 3. Fill pass ──────────────────────────────────────────────────────────
     curr = 0
-    for uid, rows in tqdm(valid_groups, desc="Building v2 softmax examples"):
+    for uid, rows in tqdm(valid_groups, desc="Building softmax examples"):
         movies, ratings, ts_vals = zip(*rows)
         avg_rat = float(np.mean(ratings))
         n       = len(movies)
@@ -502,7 +420,7 @@ def build_v2_softmax_dataset(users: list, fs: FeatureStore, raw_df,
                 running_count[g_idx] += 1
                 running_sum[g_idx]   += d_rat
 
-    print(f"  {n_examples:,} v2 softmax examples — converting to tensors ...")
+    print(f"  {n_examples:,} softmax examples — converting to tensors ...")
 
     timestamp_t = torch.bucketize(
         torch.from_numpy(timestamps_raw).float(),
@@ -520,10 +438,10 @@ def build_v2_softmax_dataset(users: list, fs: FeatureStore, raw_df,
     )
 
 
-def make_v2_softmax_splits(fs: FeatureStore, data_dir: str = 'data',
-                            max_per_user: int = MAX_V2_SOFTMAX_EXAMPLES_PER_USER,
-                            pct_train: float = 0.9, seed: int = 42,
-                            max_users: int = None) -> tuple:
+def make_softmax_splits(fs: FeatureStore, data_dir: str = 'data',
+                         max_per_user: int = MAX_SOFTMAX_EXAMPLES_PER_USER,
+                         pct_train: float = 0.9, seed: int = 42,
+                         max_users: int = None) -> tuple:
     ratings_path = os.path.join(data_dir, 'base_ratings.parquet')
     print(f"Loading {ratings_path} ...")
     raw_df = pd.read_parquet(ratings_path)
@@ -543,22 +461,21 @@ def make_v2_softmax_splits(fs: FeatureStore, data_dir: str = 'data',
     train_users = valid_users[:split]
     val_users   = valid_users[split:]
 
-    print(f"\nBuilding v2 softmax train dataset ({len(train_users):,} users) ...")
-    train_data = build_v2_softmax_dataset(train_users, fs, raw_df, max_per_user, seed)
+    print(f"\nBuilding softmax train dataset ({len(train_users):,} users) ...")
+    train_data = build_softmax_dataset(train_users, fs, raw_df, max_per_user, seed)
     print(f"  X_genre_train shape: {train_data[0].shape}")
 
-    print(f"\nBuilding v2 softmax val dataset ({len(val_users):,} users) ...")
-    val_data = build_v2_softmax_dataset(val_users, fs, raw_df, max_per_user, seed)
+    print(f"\nBuilding softmax val dataset ({len(val_users):,} users) ...")
+    val_data = build_softmax_dataset(val_users, fs, raw_df, max_per_user, seed)
     print(f"  X_genre_val shape:   {val_data[0].shape}")
 
     return train_data, val_data
 
 
-def save_v2_softmax_splits(train_data: tuple, val_data: tuple,
-                            data_dir: str = 'data', version: str = 'v2') -> None:
+def save_softmax_splits(train_data: tuple, val_data: tuple,
+                         data_dir: str = 'data', version: str = 'v2') -> None:
     torch.save(train_data, os.path.join(data_dir, f'dataset_softmax_train_{version}.pt'))
     torch.save(val_data,   os.path.join(data_dir, f'dataset_softmax_val_{version}.pt'))
-    # Save per-item interaction counts (corpus-index order) for popularity logit adjustment.
     target_ids = train_data[6].numpy()
     counts = np.bincount(target_ids).astype(np.float32)
     np.save(os.path.join(data_dir, 'movie_interaction_counts_v2.npy'), counts)
@@ -566,7 +483,7 @@ def save_v2_softmax_splits(train_data: tuple, val_data: tuple,
           f"movie_interaction_counts_v2.npy → {data_dir}/")
 
 
-def load_v2_softmax_splits(data_dir: str = 'data', version: str = 'v2') -> tuple:
+def load_softmax_splits(data_dir: str = 'data', version: str = 'v2') -> tuple:
     train_path = os.path.join(data_dir, f'dataset_softmax_train_{version}.pt')
     val_path   = os.path.join(data_dir, f'dataset_softmax_val_{version}.pt')
     print(f"Loading {train_path} ...")
