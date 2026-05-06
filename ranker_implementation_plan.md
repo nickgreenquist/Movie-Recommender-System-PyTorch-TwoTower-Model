@@ -3,10 +3,12 @@
 ## Pipeline Overview
 
 Two-stage retrieve-and-rank:
-1. **CG** (v2 softmax two-tower, L2-normalized, 128-dim) — retrieves top-250 candidates per rollback example
+1. **CG** (v3 softmax two-tower, 4-pool user tower, L2-normalized, 128-dim) — retrieves top-250 candidates per rollback example
 2. **Ranker** (Wide & Deep MLP) — reranks the 250 candidates using richer features
 
-CG baseline (val, 250-candidate pool, E2E-adjusted): **NDCG@10=0.0965 · MRR=0.0871 · Hit@10=0.1717 · Recall@250=0.6737**
+> **Note:** Ranker candidates were precomputed with v2 CG. Re-running `ranker/precompute.py` with the v3 checkpoint will give a stronger CG baseline and harder negatives. Do this before the next training run.
+
+CG baseline (val, 250-candidate pool, E2E-adjusted, liked-only labels): **NDCG@10=0.0938 · MRR=0.0845**
 
 Every ranker experiment is measured against this number.
 
@@ -103,7 +105,6 @@ data/
 **Interaction features:** `n_interaction_features = 1` (genome cosine only)
 - `cg_label_score` / `cg_neg_scores` are loaded from parquet but **not used as model input**
 - Reason: ranker must beat CG using independent signal before being given CG's own retrieval score
-- Re-enable by setting `n_interaction_features = 2` in `dataset.py`
 
 ### `ranker/model.py` — WideDeepRanker
 
@@ -124,7 +125,7 @@ Item features (1152-dim)
 ```
 
 **Why Wide & Deep:**
-The genome_cosine scalar has one learned weight in the head — a direct gradient path. Without the wide bypass, this single scalar must compete against 130 input dims for attention in the first hidden layer (256 neurons). Any useful signal can get washed out during backprop through many layers before reaching the output weight.
+The genome_cosine scalar has one learned weight in the head — a direct gradient path. Without the wide bypass, this single scalar must compete against 130 input dims for attention in the first hidden layer. Any useful signal can get washed out during backprop through many layers.
 
 **Why genome bottleneck:**
 Raw 1128-dim genome dominates the first hidden layer numerically — 1128 of 130 inputs (after bottleneck: 64 of 130). Without compression, genome swamps all other features.
@@ -137,7 +138,7 @@ genome_bottleneck_dim: 64
 wide_dim:           1      # genome_cosine bypass
 ```
 
-All architecture params saved in `_config.json` sidecar alongside each checkpoint. `evaluate_only()` and `canary.py` read these for correct model reconstruction.
+All architecture params saved in `_config.json` sidecar alongside each checkpoint.
 
 ### `ranker/dataset.py` — Mixed Negative Sampling (MNS)
 
@@ -186,9 +187,7 @@ wide_dim:         1
 - Labels are also often popular → model learns "popular = bad" → labels score below random at inference
 - Result: NDCG@10 < 0.01, below random chance (~0.023 for 250-candidate pool)
 
-**Principle:** The ranker needs to learn clean content-based personalization signals first. Popularity correction can be layered on top once the ranker demonstrates it can beat CG without it.
-
-**Re-enable:** Set `popularity_alpha = 0.5` in `get_config()` after beating CG baseline (NDCG@10 > 0.0965).
+**Principle:** The ranker needs to learn clean content-based personalization signals first. Re-enable by setting `popularity_alpha = 0.5` in `get_config()` after beating CG (NDCG@10 > 0.0938).
 
 ---
 
@@ -200,147 +199,106 @@ wide_dim:         1
 
 **Evidence:** The 50k run with CG score got NDCG@10=0.0885 immediately at step 5k. That fast convergence is the CG score doing all the work, not the ranker learning.
 
-**Re-enable (as a final improvement):** After the ranker beats CG on content features alone, add CG score back as one more input. Set `n_interaction_features = 2` in `dataset.py` and uncomment the CG score block in `sample_batch()` and `evaluate.py`.
+**Re-enable (as a final improvement):** After the ranker beats CG on content features alone, add CG score back as one more wide input. Set `n_interaction_features = 2` in `dataset.py`.
+
+---
+
+## Feature Engineering Roadmap
+
+The whole point of a ranking model is **cross features** — signals that capture the interaction between a specific user and a specific item that neither pure user nor pure item features can express alone. Each feature below is assigned to the **wide bypass** (direct skip to head) or the **deep path** (through MLP).
+
+**Wide path** — sparse, interpretable, scalar interactions. One learned weight each in the head. Prevents dilution by deep layer competition.
+
+**Deep path** — dense features that benefit from non-linear mixing (user behavioral stats, item side signals).
+
+All wide features beyond genome_cosine must be **normalized before concatenation** using fixed statistics registered as model buffers (not BatchNorm — train/eval batch composition differs, causing mismatch). Compute per-feature mean/std from a single pass over training data, register as `register_buffer(persistent=False)`.
+
+```
+Expected ranges (pre-normalization):
+  Genre Affinity       [0, 1]        → Z-score (skewed distribution)
+  Era Bias             [0, ~4.6]     → Z-score (log1p of year diff up to ~100yr)
+  Genome Residual      [~−0.5, 0.5]  → Z-score (centered by construction)
+  Rating Calibration   [~−4, +4]     → Z-score
+  Popularity Match     [0, ~8]       → Z-score (log1p)
+  Dislike Similarity   [−1, 1]       → no normalization needed
+  Genome Peak Match    [0, 1]        → Z-score
+  Genre Intersection   [0, 1]        → Z-score
+genome_cosine (slot 0) is already in [−1, 1] — no normalization needed.
+```
+
+When all wide features are added, the head becomes:
+```
+wide = cat(genome_cosine(1), cross_features(N))   # (B, N+1)
+logit = head(cat(deep_out(64), wide))              # Linear(65+N → 1)
+```
+
+Initialize new wide feature weights at 0.1 so they start with a small non-zero signal without swamping the deep path's learned representation.
+
+### Complete Feature Table
+
+| Priority | Feature | Path | Formula / Source | Status |
+|----------|---------|------|-----------------|--------|
+| — | **Genome Cosine** | Wide | `cosine(user_genome_pool, item_genome_vec)` — from parquet | **Done (baseline)** |
+| 1 | **Weighted Genre Affinity** | Wide | `dot(user_genre_ctx_avg, item_genre_onehot) / sum(item_genre_onehot)` | Pending |
+| 2 | **Era Bias** | Wide | `log1p(abs(user_median_release_year - item_release_year))` | Pending |
+| 3 | **Genome Cosine Residual** | Wide | `genome_cosine - user_mean_genome_cosine` (replaces raw genome_cosine) | Pending |
+| 4 | **Rating Calibration** | Wide | `user_avg_rating - item_global_avg_rating` | Pending |
+| 5 | **Popularity Match** | Wide | `abs(user_avg_log_count - item_log_count)` | Pending |
+| 6 | **Dislike Similarity** | Wide | `cosine(user_disliked_pool, item_embedding)` — ranker-owned embedding | CG parity |
+| 7 | **Genre Intersection** | Wide | Jaccard(user_top_genres, item_genres) — prevents embedding dilution | CG parity |
+| 8 | **User Genome Context** | Deep | Rating-weighted avg of raw genome scores over X_history → ranker Linear(1128→64) | CG parity |
+| 9 | **User History Pool** | Deep | Rating-weighted avg of ranker item embeddings over X_history → 32-dim | CG parity |
+| 10 | **Item ID Embedding** | Deep | Ranker `nn.Embedding(n_movies, 32)` lookup for candidate (shared table with pool) | CG parity |
+| 11 | **Genome Peak Match** | Deep | `max(user_genome_profile * item_genome_scores)` — the "one tag spark" | Later |
+| 12 | **Rating Entropy** | Deep | Shannon entropy of user rating distribution — calibrates criticality | Later |
+| 13 | **User Rating Variance** | Deep | Std dev of user ratings — distinguishes opinionated critics from indifferent raters | Later |
+| 14 | **Genre Diversity** | Deep | Entropy of history genre distribution — specialist vs generalist | Later |
+| 15 | **History Confidence** | Deep | `log1p(total_user_ratings)` — how much to trust latent signals | Later |
+| 16 | **CG Score** | Wide | Raw CG dot-product — see CG Score section above | After beating CG |
+| 17 | **Popularity Alpha** | — | Menon logit adjustment α=0.5 — see Popularity Alpha section above | After beating CG |
+
+### No CG Coupling — Ranker Owns All Its Parameters
+
+"Porting CG features" means replicating the same *types* of signals CG computes, using ranker-owned parameters trained from scratch. It does not mean loading CG's `item_embedding_lookup` or freezing CG tensors into the ranker graph. Coupling creates optimization conflicts (CG embeddings are trained for retrieval, not reranking), deployment brittleness, and invalid ablations.
+
+**The rule:** The ranker's only connection to CG is: (1) the candidate list output of CG (the 250 corpus indices), (2) precomputed features in the parquet (`genome_cosine`, CG scores), and (3) static feature data both models read from disk (genome scores, genre vectors). No shared `nn.Module`, no shared `state_dict` tensors.
 
 ---
 
 ## Planned Ablation Sequence
 
-The whole point of a ranking model is **cross features** — signals that capture the interaction between a specific user and a specific item that neither pure user nor pure item features can express alone. Prioritize cross features before adding more user-side or item-side features in isolation.
-
-Change ONE thing per experiment. Measure NDCG@10 delta before proceeding.
-
-### Cross-Feature Priority Ranking
-
-Five cross features ranked by expected NDCG impact on MovieLens. All are computed on-the-fly in `sample_batch` / `evaluate.py` / `canary.py` — no precompute rerun needed unless noted.
-
-| Rank | Feature | Importance | Formula | Rationale |
-|------|---------|------------|---------|-----------|
-| 1 | **Weighted Genre Affinity** | Critical | `dot(user_genre_ctx[avg_slot], item_genre_vec) / sum(item_genre_vec)` | MovieLens users are highly modal — if they hate Horror, they really hate Horror. Acts as a categorical kill switch. Normalizing by genre count prevents multi-genre movies from dominating. |
-| 2 | **Era Bias (Year Gap)** | High | `log1p(abs(user_median_release_year - item_release_year))` | Captures look-and-feel fit. A user who loves 70s grain is unlikely to enjoy 2020s CGI-heavy films regardless of genre match. `user_median_release_year` computed from X_history via `fs.movieId_to_year`. |
-| 3 | **Genome Cosine Residual** | High | `genome_cosine - user_mean_genome_cosine` | Subtracts the user's mean cosine similarity across the corpus to isolate true item-specific relevance from "user generally likes everything" baseline noise. `user_mean_genome_cosine` precomputed once per user batch. |
-| 4 | **Rating Calibration** | Medium | `user_avg_rating - item_global_avg` | Positive = hidden gem (user is harsher than crowd, so item is underrated). Negative = guilty pleasure (user rates higher than crowd). Captures alignment between user pickiness and item quality perception. |
-| 5 | **Popularity Match** | Medium | `abs(user_avg_log_count - item_log_count)` | Identifies head-seeker vs tail-hunter. High value = mismatch (blockbuster fan shown indie, or vice versa). `user_avg_log_count` = mean `log1p(global_rating_count)` over watch history. |
-
-### Wide Bypass Architecture for Cross Features
-
-All five cross features are passed through the **wide bypass** (skip-connection directly to the head), not through the deep MLP. This prevents dilution in the first hidden layer where they'd compete against 130+ input dims.
-
-```
-interaction_features = [genre_affinity, era_gap, genome_residual, rating_cal, pop_match]  # (B, 5)
-
-deep_out   = MLP(user + genome_bn + rest)      # (B, 64)
-wide       = cat(genome_cosine, interaction_features)  # (B, 6)  ← existing + 5 new
-combined   = cat(deep_out, wide)                # (B, 70)
-logit      = head(combined)                     # Linear(70, 1)
-```
-
-Weight initialization for the 5 new wide features: `nn.init.constant_(head.weight[:, 65:], 0.1)` — gives them a non-zero starting signal without swamping the deep path's learned representation.
-
-### Feature Normalization (Required Before Head)
-
-All 5 cross features **must be normalized before concatenation into the wide vector**. Without normalization, the head weight for a large-magnitude feature (e.g. era_gap in years) will dominate gradient updates over a unit-range feature (e.g. genre_affinity ∈ [0,1]) — gradient competition between wide features is unfair.
-
-**Normalization method: fixed statistics registered as model buffers (not BatchNorm).**
-
-Do NOT use `nn.BatchNorm1d` on the wide block. BatchNorm has different behavior at train vs eval time (running stats vs batch stats), which introduces a train/inference mismatch in a ranking model where batch composition (hard + easy negatives) differs from eval (full candidate pool). Fixed statistics are stable and deterministic at both train and eval time.
-
-**Implementation:**
-1. After all 5 features are added and their value ranges are understood from one pass over the training set, compute per-feature `mean` and `std` (for signed features) or `min`/`max` (for non-negative bounded features).
-2. Register as non-trainable buffers in `WideDeepRanker`:
-   ```python
-   self.register_buffer('wide_mean', torch.zeros(5))   # exclude genome_cosine — already in [-1,1]
-   self.register_buffer('wide_std',  torch.ones(5))
-   ```
-3. Apply in `forward()` before concatenation:
-   ```python
-   interact_norm = (interaction_features - self.wide_mean) / (self.wide_std + 1e-8)
-   wide = torch.cat([genome_cosine_vec, interact_norm], dim=1)  # (B, 6)
-   ```
-4. Stats are computed once from training data (e.g. a 50k-sample pass in `train.py`) and stored in the checkpoint via the buffer mechanism — no separate file needed.
-
-**Expected ranges per feature (pre-normalization):**
-
-| Feature | Range | Method |
-|---------|-------|--------|
-| Genre Affinity | [0, 1] (already normalized by genre count) | Z-score still recommended — distribution is skewed |
-| Era Gap | [0, ~4.6] after log1p (year diffs up to ~100 years) | Z-score |
-| Genome Cosine Residual | roughly [−0.5, 0.5] (centered by construction) | Z-score |
-| Rating Calibration | roughly [−4, +4] (ratings ∈ [0.5, 5], mean ~3.5) | Z-score |
-| Popularity Match | [0, ~8] after log1p | Z-score |
-
-`genome_cosine` (the existing wide feature, slot 0) is already in [−1, 1] and needs no additional normalization.
-
-### Industry Principle: CG Features First, Then Cross Features on Top
-
-**Industry rankers are built on top of the retrieval model's own feature set, not instead of it.**
-
-In production two-stage systems (Google, YouTube, Netflix), the ranker always receives every signal the CG model had access to — and then adds more on top. The ranker's advantage is not that it ignores CG's features; it's that it can use them more expressively (cross products, non-linear interactions, richer user representations) in a computation budget that wouldn't be feasible at CG scale.
-
-Our ranker currently knows far less than CG about each user:
-- **CG user representation:** rating-weighted pool of 128-dim projected item embeddings + genome pool + genre tower + timestamp
-- **Ranker user representation:** 40-dim genre ctx (averages only) + scalar avg rating + scalar log count
-
-A ranker that's informationally poorer than CG cannot be expected to beat CG, no matter how good its cross features are. The strategy is:
-
-1. **Phase 1 (cross features):** Add the 5 cross features to test the architecture's ability to learn user×item interactions — these are cheap (no precompute rerun) and isolate the cross-signal hypothesis cleanly.
-2. **Phase 2 (CG parity):** Add CG's own feature set to the ranker so it has at least as much information as CG. A ranker with strictly more information than CG that still loses is a bug, not a feature gap.
-3. **Phase 3 (combined):** Cross features + CG features together — this is the full ranker as industry would build it.
-
-### No CG Coupling — Ranker Owns All Its Parameters
-
-**The ranker does not share weights, embeddings, or towers with the CG model. Ever.**
-
-"Porting CG features" means replicating the same *types* of signals CG computes, using ranker-owned parameters trained from scratch. It does not mean loading CG's `item_embedding_lookup`, extracting CG's linear layers, or freezing CG tensors into the ranker graph. Coupling would create:
-
-- **Optimization conflict:** CG's embeddings are trained for retrieval (maximize dot product between user and item towers). The ranker needs item representations optimized for reranking (maximize BCE over the 250-candidate pool). Same embedding table cannot serve both objectives.
-- **Deployment brittleness:** upgrading CG requires redeploying the ranker. They must evolve independently.
-- **False ablations:** if the ranker uses CG's learned embeddings, any "CG parity" experiment actually measures the quality of CG's learned representations, not the ranker's ability to learn from raw features.
-
-**The rule:** The ranker's only connection to CG is: (1) the candidate list output of CG (the 250 corpus indices), (2) the raw precomputed features in the parquet (`genome_cosine`, CG scores, etc.), and (3) static feature data that both models read from disk (genome scores, genre vectors). No shared `nn.Module`, no shared `state_dict` tensors.
-
-### CG Features to Port to the Ranker
-
-All implemented with ranker-owned parameters. Raw feature data (genome scores, genre vectors, year) comes from the feature store / parquet — the same source CG reads at training time. No CG checkpoint loading needed.
-
-| CG Feature | Ranker-Owned Implementation | Data Source | Why It Matters |
-|------------|----------------------------|-------------|----------------|
-| **User history pool** | Ranker's own `nn.Embedding(n_movies, 32)` lookup; rating-weighted avg over `X_history` → 32-dim | `X_history`, `X_hist_ratings` from parquet | CF signal: user's taste in embedding space, learned by the ranker independently |
-| **User genome context** | Rating-weighted avg of raw genome scores (1128-dim) over `X_history` → ranker's own `Linear(1128→64)` → 64-dim | `item_features[:, 0:1128]` (already in memory) + `X_history` | Content texture of watch history; genome scores are static data, projection is ranker-trained |
-| **Item ID embedding** | Same `nn.Embedding(n_movies, 32)` shared with user pool (same design as CG — item and history pool share one table) | candidate corpus index | Candidate CF signal, trained by ranker |
-| **Item genome tower** | Ranker's own `Linear(1128→32)` applied to `item_features[:, 0:1128]`; replaces the current genome bottleneck | `item_features[:, 0:1128]` (already in memory) | Gives genome a dedicated trained projection; same data as bottleneck, different (ranker-owned) weights |
-
-Note: `item_features[:, 0:1128]` is already loaded into the ranker's item feature matrix — the genome scores are static data derived from `genome-scores.csv`, not learned by CG. Using them does not create any CG coupling.
-
-### Ablation Sequence
+Change **one thing per experiment**. Measure NDCG@10 delta before proceeding.
 
 | Priority | Experiment | Phase | Change | Hypothesis |
 |----------|------------|-------|--------|------------|
-| **Now** | WideDeepRanker, liked-only labels, α=0 | baseline | Current (liked-only parquets) | Establish new baseline with cleaner labels |
-| **Next** | Weighted Genre Affinity | cross #1 | `dot(user_genre_ctx_avg, item_genre_vec) / sum(item_genre_vec)` → wide bypass | Modal genre kill switch — strongest cheap signal |
-| **Then** | Era Bias | cross #2 | `log1p(abs(user_median_year - item_year))` → wide bypass | Look-and-feel fit orthogonal to genre |
+| ~~**Done**~~ | WideDeepRanker, liked-only labels, α=0 | baseline | — | Established baseline: NDCG@10=0.0532 (56.7% of CG) |
+| **Next** | Recompute candidates with v3 CG | infra | Re-run `ranker/precompute.py` with v3 checkpoint | Stronger CG negatives; establishes new CG baseline |
+| **Then** | Weighted Genre Affinity | cross #1 | `dot(user_genre_ctx_avg, item_genre_onehot) / sum(item_genre_onehot)` → wide | Modal genre kill switch — strongest cheap signal |
+| **Then** | Era Bias | cross #2 | `log1p(abs(user_median_year - item_year))` → wide | Look-and-feel fit orthogonal to genre |
 | **Then** | Genome Cosine Residual | cross #3 | `genome_cosine - user_mean_cosine` replaces raw genome_cosine | Denoises existing signal by subtracting user baseline |
-| **Then** | Rating Calibration | cross #4 | `user_avg_rating - item_global_avg` → wide bypass | Hidden gem vs guilty pleasure signal |
-| **Then** | Popularity Match | cross #5 | `abs(user_avg_log_count - item_log_count)` → wide bypass | Head-seeker vs tail-hunter alignment |
-| **Then** | User genome context | CG parity | rating-weighted avg of raw genome over X_history → Linear(1128→64) → user concat | CG's +8% MRR feature; ranker must have at least this |
-| **Then** | User history pool | CG parity | rating-weighted avg of item ID embeddings over X_history → user concat | CG's primary CF user signal |
-| **Then** | Item ID embedding | CG parity | `nn.Embedding(n_movies, 64)` lookup for candidate → item concat | CG's candidate CF signal |
+| **Then** | Rating Calibration | cross #4 | `user_avg_rating - item_global_avg` → wide | Hidden gem vs guilty pleasure signal |
+| **Then** | Popularity Match | cross #5 | `abs(user_avg_log_count - item_log_count)` → wide | Head-seeker vs tail-hunter alignment |
+| **Then** | User Genome Context | CG parity | Rating-weighted avg of raw genome over X_history → ranker Linear(1128→64) | CG's strongest user content signal |
+| **Then** | User History Pool + Item ID Embedding | CG parity | Ranker-owned embeddings for watch history pool and candidate | CG's primary CF signal; add together (they share one embedding table) |
+| **Then** | Dislike Similarity + Genre Intersection | cross #6-7 | cosine(disliked_pool, item_emb); Jaccard(user_genres, item_genres) | Veto signal + genre precision |
 | **Then** | Re-enable popularity alpha | regularization | `popularity_alpha = 0.5` | Prevent popular drift once content signal is established |
 | **Then** | CG score | retrieval signal | `n_interaction_features = 2` — re-enable CG score passthrough | Final boost: give ranker CG's own retrieval confidence |
-| **Later** | DCN V2 cross network | architecture | Replace WideDeepRanker deep path with explicit cross layers | Feature crossing at scale once feature set is locked |
+| **Later** | DCN V2 cross network | architecture | Replace deep path with explicit cross layers | Feature crossing at scale once feature set is locked |
 
 **Rule:** Beat CG on independent content features before adding CG score. But do add CG's feature set — that is not the same as leaking the CG score.
+
+**Industry principle:** In production two-stage systems (Google, YouTube, Netflix), the ranker always receives every signal the CG model had access to — and then adds more on top. A ranker that's informationally poorer than CG cannot be expected to beat CG regardless of how good its cross features are.
 
 ---
 
 ## Diagnostic: If Ranker Still Can't Beat CG After Full CG Parity + Cross Features
 
-If a ranker with all CG features + all 5 cross features + CG score still can't beat CG's NDCG@10, the bug is in the training objective or architecture, not features:
+If a ranker with all CG features + all cross features + CG score still can't beat CG's NDCG@10, the bug is in the training objective or architecture, not features:
 
 - **BCE vs softmax:** BCE on random (row, candidate) tuples has very different gradient structure than softmax over the full candidate pool. Try evaluating with softmax loss over the 250-candidate pool.
-- **MNS easy-negative fraction:** easy negatives (random corpus items) may be too easy, wasting batch capacity. Try reducing `easy_neg_frac` from 0.5 to 0.2.
+- **MNS easy-negative fraction:** easy negatives may be too easy, wasting batch capacity. Try reducing `easy_neg_frac` from 0.5 to 0.2.
 - **Negative sampling leakage:** verify hard negatives are genuinely hard (high CG score) and not contaminated by easy items appearing in the hard slot.
-- **Architecture capacity:** `[256, 128, 64]` with a 130-dim input may not be deep enough for the expanded feature set. Try `[512, 256, 128]`.
+- **Architecture capacity:** `[256, 128, 64]` with 130-dim input may not be deep enough for the expanded feature set. Try `[512, 256, 128]`.
 
 A ranker with strictly more information than CG that still loses is a bug, not a feature gap.
 
@@ -354,11 +312,11 @@ CG baseline shifted at liked-only parquet rerun: **NDCG@10=0.0938 · MRR=0.0845*
 |-----|-----------|-------------|---------|-------------|-------|
 | CG baseline (old parquets) | — | 0.0965 | 0.0871 | — | Recall@250=0.6737, all-movie labels |
 | CG baseline (liked-only parquets) | — | 0.0938 | 0.0845 | — | Harder task; use this for all future comparisons |
-| 50k, MLPRanker, α=0.5, CG score + genome cosine | 200k steps, alpha=0.5 | 0.0885 | 0.0798 | −0.0080 | Best at step 20k, degraded after. CG score leakage — ranker learned to follow CG, not beat it. |
-| 200k, WideDeepRanker, α=0, genome cosine only, all-movie labels | 200k steps, alpha=0 | 0.0324 | 0.0348 | −0.0641 | Step 10k only — run was superseded. Shows label noise effect. |
-| **200k, WideDeepRanker, α=0, genome cosine only, liked-only labels** | `ranker_mlp_alpha_0_20260505_111114.pth` | **0.0532** | **0.0521** | **−0.0406** | Steady improvement 10k→190k (0.0440→0.0532). Still improving at end of run. 56.7% of CG NDCG. |
+| 50k, MLPRanker, α=0.5, CG score + genome cosine | alpha=0.5 | 0.0885 | 0.0798 | −0.0080 | Best at step 20k, degraded after. CG score leakage — ranker learned to follow CG, not beat it. |
+| 200k, WideDeepRanker, α=0, genome cosine only, all-movie labels | alpha=0 | 0.0324 | 0.0348 | −0.0641 | Step 10k only — run superseded. Shows label noise effect. |
+| **200k, WideDeepRanker, α=0, genome cosine only, liked-only labels** | `ranker_mlp_alpha_0_20260505_111114.pth` | **0.0532** | **0.0521** | **−0.0406** | Steady improvement 10k→190k (0.0440→0.0532). Still improving at end. 56.7% of CG NDCG. |
 
-### Training curve (liked-only baseline)
+### Training curve (liked-only WideDeep baseline)
 
 | Step | NDCG@10 | MRR | Notes |
 |------|---------|-----|-------|
@@ -384,7 +342,7 @@ Monotonically improving through end of run with no sign of overfitting — more 
 ## Experiment Discipline Rules
 
 1. **One change at a time.** Every run isolates exactly one variable. If two things change simultaneously, the result is uninterpretable.
-2. **Beat CG on content features before adding CG score.** Ranker should earn its NDCG@10 > 0.0965 from independent signal.
+2. **Beat CG on content features before adding CG score.** Ranker should earn its NDCG@10 > 0.0938 from independent signal.
 3. **Beat CG before tuning alpha.** Don't chase canary quality until offline metrics confirm the ranker works.
 4. **No src/ modifications.** Ranker is fully self-contained; CG code is read-only.
 5. **No streamlit/export changes** until a model is verified better by eval + canary.
