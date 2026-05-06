@@ -239,13 +239,21 @@ def _score_candidates(model, V_all, arrays, device, batch_size, top_k):
 
     pad_idx_v = model.pad_idx  # == len(fs.top_movies)
 
+    pad = torch.tensor(pad_idx_v, device=device)
+
     for s in tqdm(range(0, n, batch_size), desc="Scoring candidates"):
         e = min(s + batch_size, n)
         B = e - s
+        hist_idx_b = X_history[s:e].to(device)
+        hist_wts_b = X_hist_ratings[s:e].to(device)
+        hist_liked_b    = torch.where(hist_wts_b > 0, hist_idx_b, pad)
+        hist_disliked_b = torch.where(hist_wts_b < 0, hist_idx_b, pad)
         U = model.user_embedding(
             X_genre[s:e].to(device),
-            X_history[s:e].to(device),
-            X_hist_ratings[s:e].to(device),
+            hist_idx_b,
+            hist_liked_b,
+            hist_disliked_b,
+            hist_wts_b,
             timestamp[s:e].to(device),
         )
         scores = U @ V_all.T  # (B, n_movies)
