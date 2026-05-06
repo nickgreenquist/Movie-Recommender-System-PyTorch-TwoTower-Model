@@ -1,5 +1,6 @@
 """
 Two-Tower MovieRecommender model v3 (4-pool user tower, full softmax, ReLU, L2 norm).
+Serving: user concat dim = 196 (4×32 + 32 + 32 + 4).
 
 User tower:
   4×sum_pool(item_id_emb, 32) + genome_ctx(32) + genre(32) + ts(4) = 196

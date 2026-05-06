@@ -107,6 +107,12 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         "Once Upon a Time in the West (C'era una volta il West) (1968)",
 
     ],
+    'Musical Lover': [
+        'Madame Butterfly (1995)',
+        'Grease (1978)',
+        'Mary Poppins (1964)',
+        "Singin' in the Rain (1952)",
+    ],
     'Anime Lover':         [
         'Princess Mononoke (Mononoke-hime) (1997)',
         'Berserk: The Golden Age Arc 2 - The Battle for Doldrey (2012)',
@@ -155,14 +161,10 @@ USER_TYPE_TO_DISLIKED_MOVIES = {
     'Superhero Lover':        [],
     'WW2 Lover':              [],
     'Western Lover':          [],
-    'Anime Lover':            [
-        # 'MirrorMask (2005)'
-    ],
+    'Musical Lover':          [],
+    'Anime Lover':            [],
     'Martial Arts Lover':     [],
-    "Nick's Recommendations": [
-        # 'Planet Terror (2007)',
-        # 'Twilight (2008)'
-    ],
+    "Nick's Recommendations": [],
 }
 
 USER_TYPE_TO_GENOME_TAGS = {
@@ -175,6 +177,7 @@ USER_TYPE_TO_GENOME_TAGS = {
     'Superhero Lover':        ['superhero'],
     'WW2 Lover':              ['wwii'],
     'Western Lover':          ['spaghetti western'],
+    'Musical Lover':          ['musical'],
     'Anime Lover':            ['studio ghibli'],
     'Martial Arts Lover':     ['kung fu'],
     "Nick's Recommendations": []
