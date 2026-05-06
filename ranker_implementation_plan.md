@@ -6,11 +6,18 @@ Two-stage retrieve-and-rank:
 1. **CG** (v3 softmax two-tower, 4-pool user tower, L2-normalized, 128-dim) — retrieves top-250 candidates per rollback example
 2. **Ranker** (Wide & Deep MLP) — reranks the 250 candidates using richer features
 
-> **Note:** Ranker candidates were precomputed with v2 CG. Re-running `ranker/precompute.py` with the v3 checkpoint will give a stronger CG baseline and harder negatives. Do this before the next training run.
+> **Action required:** Ranker candidates were precomputed with v2 CG. Re-run `ranker/precompute.py` with the v3 checkpoint before the next training run to get a stronger CG baseline and harder negatives.
 
-CG baseline (val, 250-candidate pool, E2E-adjusted, liked-only labels): **NDCG@10=0.0938 · MRR=0.0845**
+**CG baselines:**
 
-Every ranker experiment is measured against this number.
+| Model | Protocol | NDCG@10 | MRR | Hit@10 | Recall@250 |
+|-------|----------|---------|-----|--------|-----------|
+| v2 (old prod) | Full-corpus rollback | 0.0984 | 0.0878 | 17.49% | 67.48% |
+| v2 (old prod) | E2E-adjusted, 250-cand, liked-only | 0.0938 | 0.0845 | — | — |
+| **v3 (current prod)** | **Full-corpus rollback** | **0.1296** | **0.1153** | **22.06%** | **72.52%** |
+| v3 (current prod) | E2E-adjusted, 250-cand, liked-only | **TBD** — re-run precompute | | | |
+
+Every ranker experiment is measured against the v3 E2E-adjusted baseline (TBD). Until precompute is re-run, use v3 full-corpus NDCG@10=0.1296 as the target to beat.
 
 ---
 
@@ -187,7 +194,7 @@ wide_dim:         1
 - Labels are also often popular → model learns "popular = bad" → labels score below random at inference
 - Result: NDCG@10 < 0.01, below random chance (~0.023 for 250-candidate pool)
 
-**Principle:** The ranker needs to learn clean content-based personalization signals first. Re-enable by setting `popularity_alpha = 0.5` in `get_config()` after beating CG (NDCG@10 > 0.0938).
+**Principle:** The ranker needs to learn clean content-based personalization signals first. Re-enable by setting `popularity_alpha = 0.5` in `get_config()` after beating the v3 CG baseline.
 
 ---
 
@@ -306,7 +313,7 @@ A ranker with strictly more information than CG that still loses is a bug, not a
 
 ## Ablation Results Log
 
-CG baseline shifted at liked-only parquet rerun: **NDCG@10=0.0938 · MRR=0.0845** (harder task — liked-only val labels). All runs below use this baseline unless noted.
+All runs below used v2 CG precomputed candidates. V3 CG baseline (E2E-adjusted) is TBD — re-run precompute before the next experiment.
 
 | Run | Key config | Val NDCG@10 | Val MRR | Delta vs CG | Notes |
 |-----|-----------|-------------|---------|-------------|-------|
@@ -342,7 +349,7 @@ Monotonically improving through end of run with no sign of overfitting — more 
 ## Experiment Discipline Rules
 
 1. **One change at a time.** Every run isolates exactly one variable. If two things change simultaneously, the result is uninterpretable.
-2. **Beat CG on content features before adding CG score.** Ranker should earn its NDCG@10 > 0.0938 from independent signal.
+2. **Beat CG on content features before adding CG score.** Ranker should earn its NDCG@10 > v3 CG baseline (TBD after precompute rerun) from independent signal.
 3. **Beat CG before tuning alpha.** Don't chase canary quality until offline metrics confirm the ranker works.
 4. **No src/ modifications.** Ranker is fully self-contained; CG code is read-only.
 5. **No streamlit/export changes** until a model is verified better by eval + canary.
