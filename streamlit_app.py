@@ -589,7 +589,27 @@ def tab_about():
         st.markdown("This means the model can generate recommendations for **any user** as long as you can provide even a small amount of signal: a few movies they liked.")
         st.markdown("No retraining required. No cold-start problem at the user level. The same trained model works in production for users who never existed when the model was trained.")
 
-    st.image('diagram.png')
+    st.code("""\
+User Tower (4-pool):
+  sum_pool(item_embedding_lookup[full_history])            →  pool_full      (32)  [LayerNorm]
+  sum_pool(item_embedding_lookup[liked_history])           →  pool_liked     (32)  [LayerNorm]
+  sum_pool(item_embedding_lookup[disliked_history])        →  pool_disliked  (32)  [LayerNorm]
+  rating_weighted_sum(item_embedding_lookup[full_history]) →  pool_weighted  (32)  [LayerNorm]
+  user_genome_context_tower(rating_weighted_avg(genome[history]))  →  genome_ctx  (32)
+  user_genre_tower([avg_rating_per_genre | watch_frac])    →  genre_emb      (32)
+  timestamp_embedding_tower(watch_month)                   →  ts_emb          (4)
+  concat (196) → Linear(256) → ReLU → Linear(128) → L2-normalize → user_emb (128)
+
+Item Tower:
+  item_embedding_tower(movie_id)        →  item_id_emb      (32)  [shared lookup with all 4 user pools]
+  item_genome_tag_tower(genome_scores)  →  item_genome_emb  (32)
+  item_genre_tower(genre_onehot)        →  item_genre_emb    (8)
+  item_tag_tower(tag_vector)            →  item_tag_emb     (16)
+  year_embedding_tower(release_year)    →  year_emb          (8)
+  concat (96) → Linear(256) → ReLU → Linear(128) → L2-normalize → item_emb (128)
+
+Prediction: dot_product(user_emb, item_emb) = cosine similarity (both L2-normalized)
+""", language=None)
 
     col, _ = st.columns([1, 1])
     with col:
