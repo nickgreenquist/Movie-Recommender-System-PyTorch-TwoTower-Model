@@ -2,8 +2,8 @@
 Offline retrieval evaluation — Recall@K, NDCG@K, Hit Rate@K, MRR.
 
 Rollback protocol: for each val user (held out at user level), sample up to
-MAX_MSE_ROLLBACK_EXAMPLES_PER_USER chronological positions.  At each position j,
-context = history[0..j-1], target = history[j].  All positions are
+MAX_ROLLBACK_EXAMPLES_PER_USER chronological positions. At each position j,
+context = history[0..j-1], target = history[j]. All positions are
 valid since val users were never seen in training.
 
 Results are written to eval_results/<checkpoint_stem>.txt
@@ -19,8 +19,8 @@ import random
 import torch
 
 from src.dataset import (FeatureStore, pad_history_batch, pad_history_ratings_batch,
-                          build_mse_rollback_dataset, get_val_users,
-                          MAX_MSE_ROLLBACK_EXAMPLES_PER_USER)
+                          build_rollback_dataset, get_val_users,
+                          MAX_ROLLBACK_EXAMPLES_PER_USER)
 from src.evaluate import build_movie_embeddings
 from src.model import MovieRecommender
 
@@ -90,10 +90,10 @@ def _run_rollback_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed):
     rng.shuffle(val_users)
     eval_users = val_users[:n_users]
 
-    print(f"Building rollback examples for {len(eval_users):,} val users (chronological, ≤{MAX_MSE_ROLLBACK_EXAMPLES_PER_USER}/user) ...")
+    print(f"Building rollback examples for {len(eval_users):,} val users (chronological, ≤{MAX_ROLLBACK_EXAMPLES_PER_USER}/user) ...")
     (X_genre, X_history, X_history_ratings, timestamp, _, target_movieId) = \
-        build_mse_rollback_dataset(eval_users, fs, raw_df,
-                                   MAX_MSE_ROLLBACK_EXAMPLES_PER_USER, seed=seed + 1)
+        build_rollback_dataset(eval_users, fs, raw_df,
+                               MAX_ROLLBACK_EXAMPLES_PER_USER, seed=seed + 1)
 
     n_examples = int(target_movieId.shape[0])
 
@@ -143,4 +143,4 @@ def _run_rollback_eval(model, fs, checkpoint_path, data_dir, n_users, ks, seed):
         return
 
     _print_results(recall, hit_rate, ndcg, mrr_sum, n_eval, ks, all_ids, checkpoint_path,
-                   f"rollback (≤{MAX_MSE_ROLLBACK_EXAMPLES_PER_USER}/user)")
+                   f"rollback (≤{MAX_ROLLBACK_EXAMPLES_PER_USER}/user)")

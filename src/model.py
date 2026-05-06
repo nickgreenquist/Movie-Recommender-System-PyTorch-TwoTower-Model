@@ -86,7 +86,6 @@ class MovieRecommender(nn.Module):
             nn.Linear(tags_len, item_tag_embedding_size),
             nn.ReLU(),
         )
-        # Shared: used for item-side genome embedding AND user genome pool.
         self.item_genome_tag_tower = nn.Sequential(
             nn.Linear(genome_tags_len, item_genome_tag_embedding_size),
             nn.ReLU(),
