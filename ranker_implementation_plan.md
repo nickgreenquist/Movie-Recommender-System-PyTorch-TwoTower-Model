@@ -10,14 +10,14 @@ Two-stage retrieve-and-rank:
 
 **CG baselines:**
 
-| Model | Protocol | NDCG@10 | MRR | Hit@10 | Recall@250 |
-|-------|----------|---------|-----|--------|-----------|
-| v2 (old prod) | Full-corpus rollback | 0.0984 | 0.0878 | 17.49% | 67.48% |
-| v2 (old prod) | E2E-adjusted, 250-cand, liked-only | 0.0938 | 0.0845 | — | — |
-| **v3 (current prod)** | **Full-corpus rollback** | **0.1296** | **0.1153** | **22.06%** | **72.52%** |
-| v3 (current prod) | E2E-adjusted, 250-cand, liked-only | **TBD** — re-run precompute | | | |
+| Model | Protocol | NDCG@10 | MRR | Hit@1 | Hit@10 | Recall@250 |
+|-------|----------|---------|-----|-------|--------|-----------|
+| v2 (old prod) | Full-corpus rollback | 0.0984 | 0.0878 | — | 17.49% | 67.48% |
+| v2 (old prod) | E2E-adjusted, 250-cand | 0.0938 | 0.0845 | — | — | — |
+| v3 (current prod) | Full-corpus rollback | 0.1296 | 0.1153 | 5.99% | 22.06% | 72.52% |
+| **v3 (current prod)** | **E2E-adjusted, 250-cand** | **0.1233** | **0.1106** | **5.60%** | **21.17%** | **72.65%** |
 
-Every ranker experiment is measured against the v3 E2E-adjusted baseline (TBD). Until precompute is re-run, use v3 full-corpus NDCG@10=0.1296 as the target to beat.
+Every ranker experiment is measured against **NDCG@10 = 0.1233**.
 
 ---
 
@@ -194,7 +194,7 @@ wide_dim:         1
 - Labels are also often popular → model learns "popular = bad" → labels score below random at inference
 - Result: NDCG@10 < 0.01, below random chance (~0.023 for 250-candidate pool)
 
-**Principle:** The ranker needs to learn clean content-based personalization signals first. Re-enable by setting `popularity_alpha = 0.5` in `get_config()` after beating the v3 CG baseline.
+**Principle:** The ranker needs to learn clean content-based personalization signals first. Re-enable by setting `popularity_alpha = 0.5` in `get_config()` after beating CG (NDCG@10 > 0.1233).
 
 ---
 
@@ -278,9 +278,9 @@ Change **one thing per experiment**. Measure NDCG@10 delta before proceeding.
 
 | Priority | Experiment | Phase | Change | Hypothesis |
 |----------|------------|-------|--------|------------|
-| ~~**Done**~~ | WideDeepRanker, liked-only labels, α=0 | baseline | — | Established baseline: NDCG@10=0.0532 (56.7% of CG) |
-| **Next** | Recompute candidates with v3 CG | infra | Re-run `ranker/precompute.py` with v3 checkpoint | Stronger CG negatives; establishes new CG baseline |
-| **Then** | Weighted Genre Affinity | cross #1 | `dot(user_genre_ctx_avg, item_genre_onehot) / sum(item_genre_onehot)` → wide | Modal genre kill switch — strongest cheap signal |
+| ~~**Done**~~ | WideDeepRanker, liked-only labels, α=0 | baseline | — | Established baseline: NDCG@10=0.0532 (43% of v3 CG) |
+| ~~**Done**~~ | Recompute candidates with v3 CG | infra | Re-ran `ranker/precompute.py` with v3 checkpoint | V3 CG baseline: NDCG@10=0.1233, MRR=0.1106, Recall@250=72.65% |
+| **Next** | Weighted Genre Affinity | cross #1 | `dot(user_genre_ctx_avg, item_genre_onehot) / sum(item_genre_onehot)` → wide | Modal genre kill switch — strongest cheap signal |
 | **Then** | Era Bias | cross #2 | `log1p(abs(user_median_year - item_year))` → wide | Look-and-feel fit orthogonal to genre |
 | **Then** | Genome Cosine Residual | cross #3 | `genome_cosine - user_mean_cosine` replaces raw genome_cosine | Denoises existing signal by subtracting user baseline |
 | **Then** | Rating Calibration | cross #4 | `user_avg_rating - item_global_avg` → wide | Hidden gem vs guilty pleasure signal |
@@ -313,12 +313,13 @@ A ranker with strictly more information than CG that still loses is a bug, not a
 
 ## Ablation Results Log
 
-All runs below used v2 CG precomputed candidates. V3 CG baseline (E2E-adjusted) is TBD — re-run precompute before the next experiment.
+Runs before 2026-05-05 used v2 CG candidates. V3 CG baseline (E2E-adjusted, 250-cand): **NDCG@10=0.1233 · MRR=0.1106**. All future runs use v3 candidates.
 
 | Run | Key config | Val NDCG@10 | Val MRR | Delta vs CG | Notes |
 |-----|-----------|-------------|---------|-------------|-------|
 | CG baseline (old parquets) | — | 0.0965 | 0.0871 | — | Recall@250=0.6737, all-movie labels |
-| CG baseline (liked-only parquets) | — | 0.0938 | 0.0845 | — | Harder task; use this for all future comparisons |
+| CG baseline v2 (liked-only parquets) | — | 0.0938 | 0.0845 | — | Old baseline; superseded by v3 |
+| **CG baseline v3 (250-cand, E2E-adj)** | — | **0.1233** | **0.1106** | — | **Current target** |
 | 50k, MLPRanker, α=0.5, CG score + genome cosine | alpha=0.5 | 0.0885 | 0.0798 | −0.0080 | Best at step 20k, degraded after. CG score leakage — ranker learned to follow CG, not beat it. |
 | 200k, WideDeepRanker, α=0, genome cosine only, all-movie labels | alpha=0 | 0.0324 | 0.0348 | −0.0641 | Step 10k only — run superseded. Shows label noise effect. |
 | **200k, WideDeepRanker, α=0, genome cosine only, liked-only labels** | `ranker_mlp_alpha_0_20260505_111114.pth` | **0.0532** | **0.0521** | **−0.0406** | Steady improvement 10k→190k (0.0440→0.0532). Still improving at end. 56.7% of CG NDCG. |
@@ -349,7 +350,7 @@ Monotonically improving through end of run with no sign of overfitting — more 
 ## Experiment Discipline Rules
 
 1. **One change at a time.** Every run isolates exactly one variable. If two things change simultaneously, the result is uninterpretable.
-2. **Beat CG on content features before adding CG score.** Ranker should earn its NDCG@10 > v3 CG baseline (TBD after precompute rerun) from independent signal.
+2. **Beat CG on content features before adding CG score.** Ranker should earn its NDCG@10 > 0.1233 from independent signal.
 3. **Beat CG before tuning alpha.** Don't chase canary quality until offline metrics confirm the ranker works.
 4. **No src/ modifications.** Ranker is fully self-contained; CG code is read-only.
 5. **No streamlit/export changes** until a model is verified better by eval + canary.
