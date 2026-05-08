@@ -1,12 +1,12 @@
 """
-Stage 2 — Wide & Deep ranker training loop with full CG feature parity.
+Stage 2 — Wide & Deep ranker training loop with full v3 CG feature parity.
 
 Architecture (see ranker/model.py):
-  User concat (132): history_pool(32) + genome_pool(32) + genome_ctx(32)
-                     + genre_emb(32) + ts_emb(4)
+  User concat (196): pool_full(32) + pool_liked(32) + pool_disliked(32)
+                     + pool_weighted(32) + genome_ctx(32) + genre_emb(32) + ts_emb(4)
   Item concat  (96): item_genre(8) + item_tag(16) + item_genome(32)
                      + item_id(32) + year(8)
-  Deep MLP (228 → [256,128,64]) → 64
+  Deep MLP (292 → [256,128,64]) → 64
   Head: cat(deep_out(64), cross_features(5)) → Linear(69, 1)
 
 Cross features (wide bypass): genome_cosine, genre_affinity, era_gap, rating_calibration,
@@ -43,7 +43,7 @@ def get_device() -> torch.device:
 
 def get_config() -> dict:
     return {
-        'lr':                 1e-2,
+        'lr':                 1e-3,
         'weight_decay':       0.0,
         'adam_eps':           1e-6,   # match CG — protects sparse embedding updates from oversized steps
 
@@ -71,14 +71,10 @@ def get_config() -> dict:
         # Training-time eval: sample N val rows (deterministic, fixed seed) for fast logging.
         # Final eval (end of training) and evaluate_only always use the full val set.
         'n_eval_samples':        20_000,
-        # User-side genome toggles. When BOTH are False, the ranker skips the
-        # genome_buffer[X_history] lookup → ~3-5x training speedup on MPS.
-        # Genome user→item match is preserved via the genome_cosine cross feature.
-        'use_user_watch_history_genome_pool': False,
-        'use_user_genome_context':            False,
-        # Warm start from CG (Option B): copy CG's pretrained item/user tower weights
-        # into the ranker before training. Ranker still owns the params and fine-tunes
-        # them — no runtime CG coupling. Set to None to disable. Glob matches latest.
+        # Warm start from CG (Option B): copy CG's pretrained tower + LayerNorm
+        # weights into the ranker before training. Ranker still owns the params and
+        # fine-tunes them — no runtime CG coupling. Set to None to disable.
+        # Glob matches the latest PROD softmax checkpoint (currently v3).
         'warm_start_cg_checkpoint':           'saved_models/PROD_best_softmax_v2_popularity_alpha_*.pth',
     }
 
@@ -145,6 +141,15 @@ _CG_TO_RANKER_KEY_MAP = {
     'timestamp_embedding_tower.0.bias':     'ts_tower.0.bias',
     'user_genome_context_tower.0.weight':   'user_genome_ctx_tower.0.weight',
     'user_genome_context_tower.0.bias':     'user_genome_ctx_tower.0.bias',
+    # 4-pool LayerNorms (CG v3) — same names on both sides
+    'hist_full_norm.weight':                'hist_full_norm.weight',
+    'hist_full_norm.bias':                  'hist_full_norm.bias',
+    'hist_liked_norm.weight':               'hist_liked_norm.weight',
+    'hist_liked_norm.bias':                 'hist_liked_norm.bias',
+    'hist_disliked_norm.weight':            'hist_disliked_norm.weight',
+    'hist_disliked_norm.bias':              'hist_disliked_norm.bias',
+    'hist_weighted_norm.weight':            'hist_weighted_norm.weight',
+    'hist_weighted_norm.bias':              'hist_weighted_norm.bias',
 }
 
 
@@ -230,8 +235,6 @@ def build_ranker(config: dict, fs) -> WideDeepRanker:
         hidden_dims=config['hidden_dims'],
         dropout=config['dropout'],
         n_cross_features=config['n_cross_features'],
-        use_user_watch_history_genome_pool=config.get('use_user_watch_history_genome_pool', True),
-        use_user_genome_context=config.get('use_user_genome_context', True),
     )
 
     # Optional: warm start from CG (Option B — copy weights, then fine-tune; no runtime coupling).
@@ -420,8 +423,7 @@ def evaluate_only(checkpoint_path: str | None = None):
         for k in ('hidden_dims', 'dropout', 'item_id_emb_dim', 'item_genre_emb_dim',
                   'item_tag_emb_dim', 'item_genome_emb_dim', 'item_year_emb_dim',
                   'user_genre_emb_dim', 'user_genome_ctx_emb_dim', 'ts_emb_dim',
-                  'n_cross_features',
-                  'use_user_watch_history_genome_pool', 'use_user_genome_context'):
+                  'n_cross_features'):
             if k in saved:
                 config[k] = saved[k]
 

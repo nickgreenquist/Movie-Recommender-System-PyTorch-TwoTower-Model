@@ -171,8 +171,7 @@ def run_canary(cg_checkpoint: str | None = None,
         for k in ('hidden_dims', 'dropout', 'item_id_emb_dim', 'item_genre_emb_dim',
                   'item_tag_emb_dim', 'item_genome_emb_dim', 'item_year_emb_dim',
                   'user_genre_emb_dim', 'user_genome_ctx_emb_dim', 'ts_emb_dim',
-                  'n_cross_features',
-                  'use_user_watch_history_genome_pool', 'use_user_genome_context'):
+                  'n_cross_features'):
             if k in saved_cfg:
                 cfg[k] = saved_cfg[k]
     n_cross = cfg.get('n_cross_features', 0)

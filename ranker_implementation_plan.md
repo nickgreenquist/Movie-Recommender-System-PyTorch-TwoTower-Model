@@ -380,16 +380,16 @@ Change **one thing per experiment**. Measure NDCG@10 delta before proceeding.
 |----------|------------|-------|--------|------------|
 | ~~**Done**~~ | WideDeepRanker, liked-only labels, α=0 | baseline (legacy) | — | Established baseline: NDCG@10=0.0532 (43% of v3 CG) |
 | ~~**Done**~~ | Recompute candidates with v3 CG | infra | Re-ran `ranker/precompute.py` with v3 checkpoint | V3 CG baseline: NDCG@10=0.1233, MRR=0.1106, Recall@250=72.65% |
-| **Next** | **Build full CG-parity baseline** | **CG parity** | All 12 deep-concat features (292-dim) + `genome_cosine` wide. Warm-start sub-tower weights from v3 CG state_dict where shapes match. No new cross features. | Information parity with CG is a precondition for beating CG. Expect NDCG@10 in the same neighborhood as v3 CG (≈0.12) before any cross feature is added. |
-| Then | Weighted Genre Affinity | cross #1 | wide bypass | Modal genre kill switch — strongest cheap cross signal |
-| Then | Era Bias | cross #2 | wide bypass | Look-and-feel fit orthogonal to genre |
-| Then | Genome Cosine Residual | cross #3 | wide; replaces raw `genome_cosine` | Denoises existing signal by subtracting user baseline |
-| Then | Rating Calibration | cross #4 | wide bypass | Hidden gem vs guilty pleasure |
-| Then | Popularity Match | cross #5 | wide bypass | Head-seeker vs tail-hunter alignment |
-| Then | Dislike Similarity + Genre Intersection | cross #6-7 | wide bypass | Veto signal + genre precision |
-| Then | Re-enable popularity alpha | regularization | `popularity_alpha = 0.5` | Prevent popular drift once content signal is established |
-| Then | CG score | retrieval signal | `n_interaction_features = 2` — re-enable CG score passthrough | Final boost: give ranker CG's own retrieval confidence |
+| ~~**Done**~~ | **CG-parity baseline + 5 wide cross features** | **CG parity + cross** | Full 12 deep-concat features (292-dim) with v3 CG warm-start; wide bypass = `[genome_cosine, genre_affinity, era_gap, rating_cal, pop_match]` (n_cross=5); BCE on 1:249, lr=1e-3 cosine, MNS easy_neg_frac=0.5. | **Result: sampled NDCG@10=0.1299 (+0.0083, +6.8% vs CG sampled 0.1216).** Cleared CG cleanly with stable monotonic climb. Acts as the new starting line; further cross features add on top of this number. |
+| **Next** | Re-enable popularity alpha | regularization | `popularity_alpha = 0.5` | Canary shows clear popularity drift (WW2→LotR, Western→Godfather, Musical→Shrek). CG has been beaten (0.1287 > 0.1233), which is the stated trigger. Fix the drift before adding more cross features. |
+| Then | Dislike Similarity | cross #6 | wide bypass | Leverages the warm-started disliked pool — veto signal that no current cross feature carries |
+| Then | Genre Intersection | cross #7 | wide bypass | Jaccard(user_top_genres, item_genres) — sharp genre precision |
+| Then | Genome Cosine Residual | replaces #1 | wide; swaps raw `genome_cosine` for `genome_cosine - user_mean` | Denoises an existing feature; not additive — replaces a slot |
+| Then | Genome Peak Match | cross #8 | wide bypass | `max(user_genome * item_genome)` — the "one tag spark" signal |
+| Then | CG score | retrieval signal | `n_interaction_features += 1` — re-enable CG score passthrough | Final boost: give ranker CG's own retrieval confidence |
 | Later | DCN V2 cross network | architecture | Replace deep path with explicit cross layers | Feature crossing at scale once feature set is locked |
+
+> **Note on the bundled CG-parity-plus-5-cross experiment.** The plan originally called for building pure CG-parity first (only `genome_cosine` in the wide bypass) and adding cross features one at a time. The actual code shipped with all 5 wide cross features wired from the start, so the first run measured CG-parity *plus* `[genre_affinity, era_gap, rating_cal, pop_match]` together. We're treating the +0.0083 result as the new starting line rather than re-running for an isolated baseline — pragmatic for a portfolio project, would matter more in production.
 
 **Rule:** Beat CG on CG-parity + cross features before adding CG score. But do add CG's feature set — that is not the same as leaking the CG score.
 
@@ -428,23 +428,89 @@ Runs before 2026-05-05 used v2 CG candidates. V3 CG baseline (E2E-adjusted, 250-
 |-----|-----------|-------------|---------|-------------|-------|
 | CG baseline (old parquets) | — | 0.0965 | 0.0871 | — | Recall@250=0.6737, all-movie labels |
 | CG baseline v2 (liked-only parquets) | — | 0.0938 | 0.0845 | — | Old baseline; superseded by v3 |
-| **CG baseline v3 (250-cand, E2E-adj)** | — | **0.1233** | **0.1106** | — | **Current target** |
+| **CG baseline v3 (250-cand, E2E-adj)** | — | **0.1233** | **0.1106** | — | Full-val target |
+| **CG baseline v3 (sampled, n=20k)** | — | **0.1216** | **0.1094** | — | Training-time sampled target |
 | 50k, MLPRanker, α=0.5, CG score + genome cosine | alpha=0.5 | 0.0885 | 0.0798 | −0.0080 | Best at step 20k, degraded after. CG score leakage — ranker learned to follow CG, not beat it. |
 | 200k, WideDeepRanker, α=0, genome cosine only, all-movie labels | alpha=0 | 0.0324 | 0.0348 | −0.0641 | Step 10k only — run superseded. Shows label noise effect. |
-| **200k, WideDeepRanker, α=0, genome cosine only, liked-only labels** | `ranker_mlp_alpha_0_20260505_111114.pth` | **0.0532** | **0.0521** | **−0.0406** | Steady improvement 10k→190k (0.0440→0.0532). Still improving at end. 56.7% of CG NDCG. |
+| 200k, WideDeepRanker, α=0, genome cosine only, liked-only labels | `ranker_mlp_alpha_0_20260505_111114.pth` | 0.0532 | 0.0521 | −0.0406 | Pre-CG-parity baseline. 56.7% of CG NDCG. |
+| 80k partial, lr=1e-2, CG-parity + 5 cross, warm-start | (run abandoned) | 0.0702 peak | — | — | Aggressive lr washed out warm-start; NDCG oscillated ±0.05 between checkpoints. Killed at step 28k. |
+| **150k, lr=1e-3, CG-parity + 5 cross, v3 warm-start** | `ranker_mlp_alpha_0_20260508_170820.pth` | **0.1287** (full-val E2E) · 0.1299 sampled | **0.1155** (full-val) · 0.1168 sampled | **+0.0054 E2E** (+4.4% vs CG) | First ranker to clear CG. Smooth monotonic climb. Full-val confirmed. **New starting line.** |
 
-### Training curve (liked-only WideDeep baseline)
+### Run 0508 — full feature inventory
 
-| Step | NDCG@10 | MRR | Notes |
-|------|---------|-----|-------|
-| 10k | 0.0440 | 0.0440 | |
-| 50k | 0.0471 | 0.0460 | |
-| 100k | 0.0491 | 0.0482 | |
-| 150k | 0.0522 | 0.0513 | |
-| 190k | 0.0532 | 0.0521 | best checkpoint |
-| 200k | 0.0532 | — | final (tied best) |
+What was actually active in the +0.0083 result:
 
-Monotonically improving through end of run with no sign of overfitting — more steps or cross features are the right next move, not early stopping.
+**Deep concat (292 dims, all warm-started where shapes match):**
+- `pool_full`, `pool_liked`, `pool_disliked`, `pool_weighted` (4 × 32 + LayerNorm) — derived inside `user_embedding` from `(X_history, X_hist_ratings)` via `torch.where`
+- `user_genome_ctx` (1128→32, pool-then-tower)
+- `user_genre_emb` (40→32)
+- `ts_emb` (Embedding lookup, 4-dim)
+- `item_id_emb` (32-dim lookup → 32→32 + ReLU; lookup shared with all 4 pools)
+- `item_genre_emb` (20→8)
+- `item_tag_emb` (306→16)
+- `item_genome_emb` (1128→32)
+- `year_emb` (Embedding lookup, 8-dim)
+
+**Wide bypass (5 cross features):**
+1. `genome_cosine` — precomputed in parquet, cosine(user_genome_pool, item_genome)
+2. `genre_affinity` — `dot(user_genre_ctx_avg, item_genre_onehot) / sum(item_genre_onehot)`
+3. `era_gap` — `abs(user_mean_year_norm - item_year_norm)`
+4. `rating_cal` — `user_avg_rating - item_global_avg_rating`
+5. `pop_match` — `abs(user_count_log1p - item_log_count)`
+
+**Training:** lr=1e-3 cosine→1e-5, batch=4096, 150k steps, BCE on 1:249, MNS easy_neg_frac=0.5, popularity_alpha=0, no dropout, grad_clip=1.0.
+
+**Warm-start:** 27 of 36 ranker tensors loaded from `PROD_best_softmax_v2_popularity_alpha_05_20260505_182728.pth`. The 9 not warm-started are deep MLP (4 layers), head, and non-persistent buffers — random/fresh init.
+
+### Training curve — Run 0508
+
+| Step | NDCG@10 | MRR | Loss | Note |
+|------|---------|-----|------|------|
+| 2k | 0.0700 | 0.0645 | 0.0237 | already past prior 200k checkpoint's final |
+| 8k | 0.0817 | 0.0734 | 0.0223 | smooth climb |
+| 18k | 0.0927 | 0.0832 | 0.0218 | crossing prior CG sample baseline (0.0924) |
+| 30k | 0.1020 | 0.0910 | 0.0218 | crossed 0.10 |
+| 50k | 0.1082 | 0.0966 | 0.0216 | |
+| 70k | 0.1170 | 0.1047 | 0.0213 | |
+| 78k | 0.1201 | 0.1067 | 0.0212 | within 0.0015 of CG sample |
+| 100k | ~0.124 | — | ~0.021 | (interpolated) crossed CG sample |
+| 146k | 0.1299 | 0.1168 | 0.0209 | best checkpoint |
+| 150k | 0.1295 | 0.1165 | 0.0210 | final (tied with 0.1299 best) |
+
+Monotonic climb, near-zero oscillation. Loss dropped 0.0237 → 0.0210 in lockstep — actual learning, not just lucky rerankings. Cosine annealing to lr=1e-5 by end produced graceful saturation rather than a hard plateau.
+
+### Run 0508 — full-val E2E results
+
+| Metric | CG | Ranker | Delta |
+|--------|----|--------|-------|
+| NDCG@10 | 0.1233 | **0.1287** | +0.0054 (+4.4%) |
+| MRR | 0.1106 | **0.1155** | +0.0049 (+4.4%) |
+| Hit@1 | 0.0560 | 0.0590 | +0.0030 |
+| Hit@10 | 0.2117 | 0.2192 | +0.0075 |
+| Hit@100 | 0.5630 | 0.5868 | +0.0238 |
+| Hit@150 | 0.6366 | 0.6628 | +0.0262 |
+| Hit@250 | 0.7265 | 0.7265 | +0.0000 (ceiling) |
+
+Pure reranking quality (label in CG set only, n=252,101): NDCG@10=**0.1772** vs CG 0.1697 (+4.4%). Gains compound at the tail (Hit@100+, Hit@150+) — ranker is meaningfully reordering the back half.
+
+### Run 0508 — canary analysis
+
+**Improvements vs CG:**
+- **Children's**: Coco, Emperor's New Groove, Shrek 2, Frozen, Lilo & Stitch — clearly higher quality than CG's Cars 3 / Turbo / Cloudy 2 sequels
+- **Superhero**: MCU quality slate (Doctor Strange, Guardians 2, Winter Soldier, Ragnarok, Infinity War) vs CG's lower-quality superhero picks
+- **Anime**: Well-known classics (Spirited Away #1, Howl's #2, Ghost in Shell, Akira, Grave of Fireflies) — trades depth for coverage quality
+- **Nick's list**: Matrix, Pulp Fiction, Shaun of Dead, Spirited Away, Fight Club, Eternal Sunshine, Pan's Labyrinth — excellent diverse cinephile list
+
+**Regressions vs CG (popularity drift):**
+- **Sci-Fi**: CG gives arthouse slow-burn (Stalker, Soylent Green, Fantastic Planet, Metropolis). Ranker: Star Wars ESB #2, Fight Club #3 (not sci-fi), Terminator #10, Jurassic Park #12, Total Recall #13
+- **WW2**: Ranker: LotR Return of King #1, Gladiator #2, Inception #5, Troy #6, Last Samurai #8 — wrong genre entirely
+- **Western**: Ranker: Raiders of the Lost Ark #1, Godfather #2, Apocalypse Now #3 — pure IMDb Top 250, no genre specificity
+- **Musical**: Princess Bride, LotR Two Towers, Shrek — not musicals
+- **War Movie**: Unforgiven #7 (western), Ford v Ferrari #8 (racing), Lincoln #13 (political drama)
+
+**Root cause:** alpha=0 means no popularity penalty. When popular movies align with the user's genre (Superhero, Children's, Anime mainstream), the ranker excels. When popular movies are a different genre entirely (LotR for WW2, Godfather for Western), the ranker recommends those blockbusters anyway. The ranker has the right genre signals — it's just overridden by popularity for niche tastes.
+
+**Implication for next experiment:** The ranker has now beaten CG (0.1287 > 0.1233), which is the plan's stated trigger for enabling popularity correction. Adding more cross features on a popularity-drifting foundation makes ablations harder to interpret. **Popularity alpha correction should be the next experiment** before adding cross features #6+.
 
 ### Historical (pre-250-candidate schema — not directly comparable)
 
