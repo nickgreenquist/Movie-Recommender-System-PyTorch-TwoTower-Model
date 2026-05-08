@@ -10,7 +10,7 @@ DATA_DIR     = 'data'
 VERSION      = 'v1'
 TOP_K        = 100
 
-from src.dataset import load_features, get_val_users, build_mse_rollback_dataset, MAX_MSE_ROLLBACK_EXAMPLES_PER_USER
+from src.dataset import load_features, get_val_users, build_rollback_dataset, MAX_ROLLBACK_EXAMPLES_PER_USER
 
 print("Loading feature store ...")
 fs = load_features(DATA_DIR, VERSION)
@@ -33,8 +33,8 @@ def run_and_print(sort_by_ts: bool):
     col_pct   = f"% - {'ts sorted' if sort_by_ts else 'shuffled'}"
 
     print(f"\nBuilding rollback examples — {label} ...")
-    _, _, _, _, _, target_movieId_t = build_mse_rollback_dataset(
-        val_users, fs, raw_df, MAX_MSE_ROLLBACK_EXAMPLES_PER_USER,
+    _, _, _, _, _, target_movieId_t = build_rollback_dataset(
+        val_users, fs, raw_df, MAX_ROLLBACK_EXAMPLES_PER_USER,
         sort_by_ts=sort_by_ts,
     )
 
