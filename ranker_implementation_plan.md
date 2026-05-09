@@ -272,17 +272,22 @@ wide_dim:         1
 
 ---
 
-## Popularity Alpha: Disabled Until Ranker Beats CG
+## Popularity Alpha: CLOSED — Menon Correction Incompatible with BCE Ranker
 
-**Current status:** `popularity_alpha = 0.0` (Menon debiasing OFF)
+**Status:** `popularity_alpha = 0.0` permanently. Do not revisit.
 
-**Why disabled:** Without a strong user-item interaction signal (CG score), the Menon bias at α=0.5 overwhelms weak content signals early in training:
-- Hard CG negatives (items CG also liked) tend to be popular
-- α=0.5 adds a large upward boost to popular items' logits during training → model is pushed hard to score popular items DOWN
-- Labels are also often popular → model learns "popular = bad" → labels score below random at inference
-- Result: NDCG@10 < 0.01, below random chance (~0.023 for 250-candidate pool)
+**Experiment:** Ran full 150k steps at alpha=0.5 (same as CG prod). Full-val E2E result:
+- NDCG@10: **0.1146** (vs CG 0.1233, **−7.1%**) — 129 points *below* CG
+- MRR: **0.1037** (vs CG 0.1106, −6.2%)
+- Hit@50: −0.0528, Hit@100: −0.0413 — massive regression at all K
+- Train/val loss gap: train=0.0210, **val=0.0337** (+60% gap) — training and inference objectives misaligned
 
-**Principle:** The ranker needs to learn clean content-based personalization signals first. Re-enable by setting `popularity_alpha = 0.5` in `get_config()` after beating CG (NDCG@10 > 0.1233).
+**Why it fails in BCE but works in softmax (CG):**  
+In softmax, the Menon logit adjustment shifts the full probability distribution over all ~9,375 items — the effect is normalized across the denominator. In BCE at 1:249 positive:negative ratio, each example is trained independently. Adding `alpha * log(count_i)` to a popular positive's logit during training forces the model to produce a *lower raw score* to minimize loss. Since popular items appear constantly as true positives, the model is trained to systematically undervalue exactly the items it needs to rank high. The result is NDCG collapse, not genre correction.
+
+**Canary at alpha=0.5 (not shown separately):** Genre drift was *worse* than alpha=0.0, not better. The correction that works in CG's retrieval stage does not transfer to BCE reranking.
+
+**How we address popularity drift instead:** Rich cross features that give the model enough explicit user-item compatibility signal to make genre-specific choices without a loss-function penalty. See ablation sequence.
 
 ---
 
@@ -381,15 +386,17 @@ Change **one thing per experiment**. Measure NDCG@10 delta before proceeding.
 | ~~**Done**~~ | WideDeepRanker, liked-only labels, α=0 | baseline (legacy) | — | Established baseline: NDCG@10=0.0532 (43% of v3 CG) |
 | ~~**Done**~~ | Recompute candidates with v3 CG | infra | Re-ran `ranker/precompute.py` with v3 checkpoint | V3 CG baseline: NDCG@10=0.1233, MRR=0.1106, Recall@250=72.65% |
 | ~~**Done**~~ | **CG-parity baseline + 5 wide cross features** | **CG parity + cross** | Full 12 deep-concat features (292-dim) with v3 CG warm-start; wide bypass = `[genome_cosine, genre_affinity, era_gap, rating_cal, pop_match]` (n_cross=5); BCE on 1:249, lr=1e-3 cosine, MNS easy_neg_frac=0.5. | **Result: sampled NDCG@10=0.1299 (+0.0083, +6.8% vs CG sampled 0.1216).** Cleared CG cleanly with stable monotonic climb. Acts as the new starting line; further cross features add on top of this number. |
-| **Next** | Re-enable popularity alpha | regularization | `popularity_alpha = 0.5` | Canary shows clear popularity drift (WW2→LotR, Western→Godfather, Musical→Shrek). CG has been beaten (0.1287 > 0.1233), which is the stated trigger. Fix the drift before adding more cross features. |
-| Then | Dislike Similarity | cross #6 | wide bypass | Leverages the warm-started disliked pool — veto signal that no current cross feature carries |
-| Then | Genre Intersection | cross #7 | wide bypass | Jaccard(user_top_genres, item_genres) — sharp genre precision |
-| Then | Genome Cosine Residual | replaces #1 | wide; swaps raw `genome_cosine` for `genome_cosine - user_mean` | Denoises an existing feature; not additive — replaces a slot |
-| Then | Genome Peak Match | cross #8 | wide bypass | `max(user_genome * item_genome)` — the "one tag spark" signal |
+| ~~**Done**~~ | ~~Re-enable popularity alpha~~ | ~~regularization~~ | `popularity_alpha = 0.5` | **Result: NDCG@10=0.1146 (−7.1% vs CG). Menon correction is incompatible with BCE ranker training.** See "Popularity Alpha: CLOSED" section. |
+| **Next** | **Genre Intersection** | cross #6 | Wide bypass — `Jaccard(user_top_genres, item_genres)` | Sharpest genre-precision signal available. Directly attacks the popularity gravity well by giving the model an explicit measure of how well an item's genre matches the user's demonstrated taste. |
+| Then | **Dislike Similarity** | cross #7 | Wide bypass — `cosine(user_disliked_pool, item_id_emb)` | Veto signal: negative cosine = item is close to something the user disliked. Leverages the warm-started disliked pool directly. |
+| Then | **Genome Peak Match** | cross #8 | Wide bypass — `max(user_genome_profile * item_genome_scores)` | "One tag spark" — finds whether a single dominant tag creates a match. Complementary to cosine (global similarity vs single strongest signal). |
+| Then | **Genome Cosine Residual** | replaces cross #1 | Swap raw `genome_cosine` → `genome_cosine - user_mean_genome_cosine` | Centers genome cosine per-user, removing the average-user bias. Not additive — replaces one existing wide slot. |
 | Then | CG score | retrieval signal | `n_interaction_features += 1` — re-enable CG score passthrough | Final boost: give ranker CG's own retrieval confidence |
 | Later | DCN V2 cross network | architecture | Replace deep path with explicit cross layers | Feature crossing at scale once feature set is locked |
 
 > **Note on the bundled CG-parity-plus-5-cross experiment.** The plan originally called for building pure CG-parity first (only `genome_cosine` in the wide bypass) and adding cross features one at a time. The actual code shipped with all 5 wide cross features wired from the start, so the first run measured CG-parity *plus* `[genre_affinity, era_gap, rating_cal, pop_match]` together. We're treating the +0.0083 result as the new starting line rather than re-running for an isolated baseline — pragmatic for a portfolio project, would matter more in production.
+
+**Strategy for popularity drift:** Menon logit adjustment (alpha) is closed as a tool (see below). The path forward is richer cross features — give the model enough explicit user-item compatibility signal that the MLP learns to trust content over popularity rather than fighting popularity in the loss function. Genre Intersection, Dislike Similarity, and Genome Peak Match are the priority signals: together they give the model a sharp genre fingerprint, an explicit veto channel, and a tag-level "spark" match.
 
 **Rule:** Beat CG on CG-parity + cross features before adding CG score. But do add CG's feature set — that is not the same as leaking the CG score.
 
@@ -435,6 +442,7 @@ Runs before 2026-05-05 used v2 CG candidates. V3 CG baseline (E2E-adjusted, 250-
 | 200k, WideDeepRanker, α=0, genome cosine only, liked-only labels | `ranker_mlp_alpha_0_20260505_111114.pth` | 0.0532 | 0.0521 | −0.0406 | Pre-CG-parity baseline. 56.7% of CG NDCG. |
 | 80k partial, lr=1e-2, CG-parity + 5 cross, warm-start | (run abandoned) | 0.0702 peak | — | — | Aggressive lr washed out warm-start; NDCG oscillated ±0.05 between checkpoints. Killed at step 28k. |
 | **150k, lr=1e-3, CG-parity + 5 cross, v3 warm-start** | `ranker_mlp_alpha_0_20260508_170820.pth` | **0.1287** (full-val E2E) · 0.1299 sampled | **0.1155** (full-val) · 0.1168 sampled | **+0.0054 E2E** (+4.4% vs CG) | First ranker to clear CG. Smooth monotonic climb. Full-val confirmed. **New starting line.** |
+| **150k, same as above but α=0.5** | `ranker_mlp_alpha_05_20260508_193850.pth` | **0.1146** (full-val E2E) | **0.1037** | **−0.0087 (−7.1%)** | BCE + Menon correction is incompatible. Train/val loss gap +60% (0.0210→0.0337). Hit@50 −0.0528. Closed — do not retry alpha correction in ranker. |
 
 ### Run 0508 — full feature inventory
 
