@@ -41,6 +41,10 @@ _DISLIKED_GENRE = -2.0
 _ANCHOR_MOVIE   =  1.0
 _ANCHORS_PER_TAG = 5
 
+_POSTER_COLS   = 5      # poster grid columns
+_PAGE_SIZE     = 20     # movies per page
+_TOTAL_RESULTS = 60     # total movies to fetch (3 pages)
+
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 
@@ -191,7 +195,7 @@ def _top_genome_tags(mid, fs, i_to_name, n=5):
     return ', '.join(i_to_name[i] for i in top_idx)
 
 
-def _score_movies(user_emb, all_ids, all_embs, fs, exclude_titles, top_n=20):
+def _score_movies(user_emb, all_ids, all_embs, fs, exclude_titles, top_n=_TOTAL_RESULTS):
     """Dot-product score all movies, filter seeds, return top-n as a DataFrame."""
     raw_scores = (all_embs @ user_emb.T).squeeze(-1)
     exclude    = set(exclude_titles)
@@ -212,32 +216,59 @@ def _score_movies(user_emb, all_ids, all_embs, fs, exclude_titles, top_n=20):
     return pd.DataFrame(rows)
 
 
-_POSTER_COLS = 5
+# ── Paginated results grid ────────────────────────────────────────────────────
 
-def _show_results(df, posters, fs):
-    """Display recommendation results as a poster grid, falling back to a table if no posters."""
-    if not posters:
-        st.dataframe(df, use_container_width=True, hide_index=True)
+def _store_results(df, result_key: str) -> None:
+    """Save a results DataFrame to session state and reset to page 0."""
+    st.session_state[f'{result_key}_df']   = df
+    st.session_state[f'{result_key}_page'] = 0
+
+
+def _show_results(result_key: str, posters, fs) -> None:
+    """Render the current page of stored results with Prev / Next navigation."""
+    df = st.session_state.get(f'{result_key}_df')
+    if df is None or df.empty:
         return
 
-    titles = df['Title'].tolist()
-    for row_start in range(0, len(titles), _POSTER_COLS):
-        row_titles = titles[row_start:row_start + _POSTER_COLS]
-        cols = st.columns(_POSTER_COLS)
-        for col, title in zip(cols, row_titles):
-            mid = fs['title_to_movieId'].get(title)
-            url = posters.get(str(mid), '') if mid else ''
-            with col:
-                if url:
-                    st.image(url, use_container_width=True)
-                else:
-                    st.markdown(
-                        "<div style='background:#1e1e1e;border-radius:6px;aspect-ratio:2/3;"
-                        "display:flex;align-items:center;justify-content:center;"
-                        "font-size:2rem;'>🎬</div>",
-                        unsafe_allow_html=True,
-                    )
-                st.caption(title)
+    page        = st.session_state.get(f'{result_key}_page', 0)
+    total_pages = max(1, (len(df) + _PAGE_SIZE - 1) // _PAGE_SIZE)
+    page_df     = df.iloc[page * _PAGE_SIZE:(page + 1) * _PAGE_SIZE]
+
+    if not posters:
+        st.dataframe(page_df, use_container_width=True, hide_index=True)
+    else:
+        titles = page_df['Title'].tolist()
+        for row_start in range(0, len(titles), _POSTER_COLS):
+            row_titles = titles[row_start:row_start + _POSTER_COLS]
+            cols = st.columns(_POSTER_COLS)
+            for col, title in zip(cols, row_titles):
+                clean_title = title.replace('  ◀ ANCHOR', '').replace('  ◀ anchor', '')
+                mid = fs['title_to_movieId'].get(clean_title)
+                url = posters.get(str(mid), '') if mid else ''
+                with col:
+                    if url:
+                        st.image(url, use_container_width=True)
+                    else:
+                        st.markdown(
+                            "<div style='background:#1e1e1e;border-radius:6px;aspect-ratio:2/3;"
+                            "display:flex;align-items:center;justify-content:center;"
+                            "font-size:2rem;'>🎬</div>",
+                            unsafe_allow_html=True,
+                        )
+                    st.caption(title)
+
+    if total_pages > 1:
+        _, prev_col, info_col, next_col, _ = st.columns([3, 1, 1, 1, 3])
+        if prev_col.button('← Prev', disabled=(page == 0), key=f'{result_key}_prev'):
+            st.session_state[f'{result_key}_page'] = page - 1
+            st.rerun()
+        info_col.markdown(
+            f"<div style='text-align:center;padding-top:0.4rem'>{page + 1} / {total_pages}</div>",
+            unsafe_allow_html=True,
+        )
+        if next_col.button('Next →', disabled=(page >= total_pages - 1), key=f'{result_key}_next'):
+            st.session_state[f'{result_key}_page'] = page + 1
+            st.rerun()
 
 
 # ── Tab: Recommend ────────────────────────────────────────────────────────────
@@ -254,6 +285,8 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters):
     if st.session_state.pop('_clear_rec', False):
         for key in ('rec_liked', 'rec_genome_tags'):
             st.session_state[key] = []
+        for key in ('rec_df', 'rec_page', 'rec_anchor_caption'):
+            st.session_state.pop(key, None)
 
     profile = st.session_state.pop('_load_profile', None)
     if profile:
@@ -288,48 +321,56 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters):
     if btn_col.button("Get Recommendations", use_container_width=True):
         if not liked_titles and not selected_genome_tags:
             st.warning("Select at least one movie or genome tag.")
-            return
-        anchor_tag_title_pairs = []
-        if selected_genome_tags:
-            name_to_idx = {
-                fs['genome_tag_names'][tid]: fs['genome_tag_to_i'][tid]
-                for tid in fs['genome_tag_to_i']
-            }
-            seen_titles = set(liked_titles)  # exclude explicit likes from anchors
-            for tag in selected_genome_tags:
-                if tag not in name_to_idx:
-                    continue
-                tag_idx     = name_to_idx[tag]
-                sorted_mids = sorted(
-                    fs['top_movies'],
-                    key=lambda mid: float(fs['movieId_to_genome_tag_context'][mid][tag_idx]),
-                    reverse=True,
-                )
-                count = 0
-                for mid in sorted_mids:
-                    if count >= _ANCHORS_PER_TAG:
-                        break
-                    title = fs['movieId_to_title'][mid]
-                    if title not in seen_titles:
-                        anchor_tag_title_pairs.append((tag, title))
-                        seen_titles.add(title)
-                        count += 1
-        liked_with_weights = (
-            [(t, _LIKED_MOVIE)  for t in liked_titles] +
-            [(t, _ANCHOR_MOVIE) for _, t in anchor_tag_title_pairs]
-        )
-        with torch.no_grad():
-            user_emb = _build_user_embedding(
-                model, fs, liked_with_weights, [],
-                [], [], ts_inference,
+        else:
+            anchor_tag_title_pairs = []
+            if selected_genome_tags:
+                name_to_idx = {
+                    fs['genome_tag_names'][tid]: fs['genome_tag_to_i'][tid]
+                    for tid in fs['genome_tag_to_i']
+                }
+                seen_titles = set(liked_titles)  # exclude explicit likes from anchors
+                for tag in selected_genome_tags:
+                    if tag not in name_to_idx:
+                        continue
+                    tag_idx     = name_to_idx[tag]
+                    sorted_mids = sorted(
+                        fs['top_movies'],
+                        key=lambda mid: float(fs['movieId_to_genome_tag_context'][mid][tag_idx]),
+                        reverse=True,
+                    )
+                    count = 0
+                    for mid in sorted_mids:
+                        if count >= _ANCHORS_PER_TAG:
+                            break
+                        title = fs['movieId_to_title'][mid]
+                        if title not in seen_titles:
+                            anchor_tag_title_pairs.append((tag, title))
+                            seen_titles.add(title)
+                            count += 1
+            liked_with_weights = (
+                [(t, _LIKED_MOVIE)  for t in liked_titles] +
+                [(t, _ANCHOR_MOVIE) for _, t in anchor_tag_title_pairs]
             )
-        if anchor_tag_title_pairs:
-            st.caption("Genome anchors — " + " · ".join(
-                f"{tag}: {title}" for tag, title in anchor_tag_title_pairs
-            ))
-        df = _score_movies(user_emb, all_ids, all_embs, fs,
-                           exclude_titles=liked_titles)
-        _show_results(df, posters, fs)
+            with torch.no_grad():
+                user_emb = _build_user_embedding(
+                    model, fs, liked_with_weights, [],
+                    [], [], ts_inference,
+                )
+            df = _score_movies(user_emb, all_ids, all_embs, fs,
+                               exclude_titles=liked_titles)
+            _store_results(df, 'rec')
+            if anchor_tag_title_pairs:
+                st.session_state['rec_anchor_caption'] = "Genome anchors — " + " · ".join(
+                    f"{tag}: {title}" for tag, title in anchor_tag_title_pairs
+                )
+            else:
+                st.session_state.pop('rec_anchor_caption', None)
+
+    if 'rec_df' in st.session_state:
+        caption = st.session_state.get('rec_anchor_caption')
+        if caption:
+            st.caption(caption)
+    _show_results('rec', posters, fs)
 
 
 # ── Tab: Recommend (Examples) ─────────────────────────────────────────────────
@@ -343,11 +384,20 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters):
         label_visibility="collapsed",
     )
 
-    if selected_profile:
-        fav_movies  = USER_TYPE_TO_FAVORITE_MOVIES[selected_profile]
-        dis_movies  = USER_TYPE_TO_DISLIKED_MOVIES[selected_profile]
-        genome_tags = USER_TYPE_TO_GENOME_TAGS.get(selected_profile, [])
+    if not selected_profile:
+        st.session_state.pop('examples_profile', None)
+        return
 
+    fav_movies  = USER_TYPE_TO_FAVORITE_MOVIES[selected_profile]
+    dis_movies  = USER_TYPE_TO_DISLIKED_MOVIES[selected_profile]
+    genome_tags = USER_TYPE_TO_GENOME_TAGS.get(selected_profile, [])
+
+    # Debug: report any fav_movies that didn't resolve to a corpus title
+    missing = [t for t in fav_movies if t not in fs['title_to_movieId']]
+    if missing:
+        st.warning("⚠️ Not found in corpus (check title format): " + ", ".join(missing))
+
+    if st.session_state.get('examples_profile') != selected_profile:
         # For genome-driven profiles, compute anchor movies from tags
         anchor_tag_title_pairs = []
         if genome_tags:
@@ -380,11 +430,6 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters):
             [(t, _ANCHOR_MOVIE) for _, t in anchor_tag_title_pairs]
         )
 
-        # Debug: report any fav_movies that didn't resolve to a corpus title
-        missing = [t for t in fav_movies if t not in fs['title_to_movieId']]
-        if missing:
-            st.warning("⚠️ Not found in corpus (check title format): " + ", ".join(missing))
-
         with torch.no_grad():
             user_emb = _build_user_embedding(
                 model, fs, liked_with_weights, dis_movies,
@@ -393,12 +438,24 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters):
         df = _score_movies(user_emb, all_ids, all_embs, fs,
                            exclude_titles=fav_movies + dis_movies +
                                           [t for _, t in anchor_tag_title_pairs])
-        st.subheader(f"Recommendations for: {selected_profile}")
-        if fav_movies:
-            st.caption("Because you like these movies: " + ", ".join(fav_movies))
-        if genome_tags:
-            st.caption("Because you like these genome tags: " + ", ".join(genome_tags))
-        _show_results(df, posters, fs)
+        _store_results(df, 'examples')
+        if anchor_tag_title_pairs:
+            st.session_state['examples_anchor_caption'] = "Genome anchors: " + ", ".join(
+                title for _, title in anchor_tag_title_pairs
+            )
+        else:
+            st.session_state.pop('examples_anchor_caption', None)
+        st.session_state['examples_profile'] = selected_profile
+
+    st.subheader(f"Recommendations for: {selected_profile}")
+    if fav_movies:
+        st.caption("Because you like these movies: " + ", ".join(fav_movies))
+    if genome_tags:
+        st.caption("Because you like these genome tags: " + ", ".join(genome_tags))
+    anchor_caption = st.session_state.get('examples_anchor_caption')
+    if anchor_caption:
+        st.caption(anchor_caption)
+    _show_results('examples', posters, fs)
 
 
 # ── Tab: Similar ──────────────────────────────────────────────────────────────
@@ -416,33 +473,42 @@ def tab_similar(me, fs, all_ids, all_norm, posters):
     if st.button("Find Similar Movies"):
         if not selections:
             st.warning("Select a movie.")
-            return
-        for title in selections:
-            mid = fs['title_to_movieId'].get(title)
-            if mid not in me:
-                st.error(f"'{title}' not in corpus.")
-                continue
-
-            with torch.no_grad():
-                seed_norm = F.normalize(me[mid]['MOVIE_EMBEDDING_COMBINED'], dim=1)
-                sims      = (all_norm @ seed_norm.T).squeeze(-1)
-
-            i_to_name = _build_genome_i_to_name(fs)
-            rows = []
-            for idx in sims.argsort(descending=True).tolist():
-                candidate = all_ids[idx]
-                if candidate == mid:
+        else:
+            for old_title in st.session_state.get('sim_active_titles', []):
+                st.session_state.pop(f'sim_{old_title}_df', None)
+                st.session_state.pop(f'sim_{old_title}_page', None)
+            active_titles = []
+            for title in selections:
+                mid = fs['title_to_movieId'].get(title)
+                if mid not in me:
+                    st.error(f"'{title}' not in corpus.")
                     continue
-                rows.append({
-                    'Title':           fs['movieId_to_title'][candidate],
-                    'Genres':          ', '.join(fs['movieId_to_genres'][candidate]),
-                    'Top Genome Tags': _top_genome_tags(candidate, fs, i_to_name),
-                    'Score':           f"{sims[idx].item():.3f}",
-                })
-                if len(rows) >= 20:
-                    break
+
+                with torch.no_grad():
+                    seed_norm = F.normalize(me[mid]['MOVIE_EMBEDDING_COMBINED'], dim=1)
+                    sims      = (all_norm @ seed_norm.T).squeeze(-1)
+
+                i_to_name = _build_genome_i_to_name(fs)
+                rows = []
+                for idx in sims.argsort(descending=True).tolist():
+                    candidate = all_ids[idx]
+                    if candidate == mid:
+                        continue
+                    rows.append({
+                        'Title':           fs['movieId_to_title'][candidate],
+                        'Genres':          ', '.join(fs['movieId_to_genres'][candidate]),
+                        'Top Genome Tags': _top_genome_tags(candidate, fs, i_to_name),
+                    })
+                    if len(rows) >= _TOTAL_RESULTS:
+                        break
+                _store_results(pd.DataFrame(rows), f'sim_{title}')
+                active_titles.append(title)
+            st.session_state['sim_active_titles'] = active_titles
+
+    for title in selections:
+        if f'sim_{title}_df' in st.session_state:
             st.subheader(f"Similar to: {title}")
-            _show_results(pd.DataFrame(rows), posters, fs)
+            _show_results(f'sim_{title}', posters, fs)
 
 
 # ── Tab: Explore Genres ───────────────────────────────────────────────────────
@@ -458,30 +524,31 @@ def tab_explore_genres(model, me, fs, posters):
     if st.button("Explore", key='btn_genre'):
         if not selected_genres:
             st.warning("Select at least one genre.")
-            return
-        ctx = [0.0] * len(genres)
-        for g in selected_genres:
-            ctx[fs['genre_to_i'][g]] = 1.0
-        with torch.no_grad():
-            query = model.item_genre_tower(torch.tensor([ctx])).view(-1)
-        sims = {
-            mid: F.cosine_similarity(
-                query.unsqueeze(0),
-                me[mid]['MOVIE_GENRE_EMBEDDING'].view(-1).unsqueeze(0),
-            ).item()
-            for mid in fs['top_movies']
-        }
-        i_to_name = _build_genome_i_to_name(fs)
-        rows = [
-            {
-                'Title':           fs['movieId_to_title'][mid],
-                'Genres':          ', '.join(fs['movieId_to_genres'][mid]),
-                'Top Genome Tags': _top_genome_tags(mid, fs, i_to_name),
-                'Score':           f'{s:.4f}',
+        else:
+            ctx = [0.0] * len(genres)
+            for g in selected_genres:
+                ctx[fs['genre_to_i'][g]] = 1.0
+            with torch.no_grad():
+                query = model.item_genre_tower(torch.tensor([ctx])).view(-1)
+            sims = {
+                mid: F.cosine_similarity(
+                    query.unsqueeze(0),
+                    me[mid]['MOVIE_GENRE_EMBEDDING'].view(-1).unsqueeze(0),
+                ).item()
+                for mid in fs['top_movies']
             }
-            for mid, s in sorted(sims.items(), key=lambda x: x[1], reverse=True)[:20]
-        ]
-        _show_results(pd.DataFrame(rows), posters, fs)
+            i_to_name = _build_genome_i_to_name(fs)
+            rows = [
+                {
+                    'Title':           fs['movieId_to_title'][mid],
+                    'Genres':          ', '.join(fs['movieId_to_genres'][mid]),
+                    'Top Genome Tags': _top_genome_tags(mid, fs, i_to_name),
+                }
+                for mid, s in sorted(sims.items(), key=lambda x: x[1], reverse=True)[:_TOTAL_RESULTS]
+            ]
+            _store_results(pd.DataFrame(rows), 'genres')
+
+    _show_results('genres', posters, fs)
 
 
 # ── Tab: Explore Genome Tags ──────────────────────────────────────────────────
@@ -500,61 +567,68 @@ def tab_explore_genome(model, me, fs, posters):
     if st.button("Explore", key='btn_genome'):
         if not selected_tags:
             st.warning("Select at least one genome tag.")
-            return
-
-        name_to_idx = {
-            fs['genome_tag_names'][tid]: fs['genome_tag_to_i'][tid]
-            for tid in fs['genome_tag_to_i']
-        }
-        anchor_tag_title_pairs = []
-        seen_titles = set()
-        for tag in selected_tags:
-            if tag not in name_to_idx:
-                continue
-            tag_idx     = name_to_idx[tag]
-            sorted_mids = sorted(
-                fs['top_movies'],
-                key=lambda mid: float(fs['movieId_to_genome_tag_context'][mid][tag_idx]),
-                reverse=True,
-            )
-            count = 0
-            for mid in sorted_mids:
-                if count >= _ANCHORS_PER_TAG:
-                    break
-                title = fs['movieId_to_title'][mid]
-                if title not in seen_titles:
-                    anchor_tag_title_pairs.append((tag, mid, title))
-                    seen_titles.add(title)
-                    count += 1
-
-        anchor_mids = [mid for _, mid, _ in anchor_tag_title_pairs]
-        anchor_set  = set(anchor_mids)
-        query_emb   = torch.stack([
-            me[m]['MOVIE_GENOME_TAG_EMBEDDING'].view(-1) for m in anchor_mids
-        ]).mean(dim=0)
-
-        sims = {
-            mid: F.cosine_similarity(
-                query_emb.unsqueeze(0),
-                me[mid]['MOVIE_GENOME_TAG_EMBEDDING'].view(-1).unsqueeze(0),
-            ).item()
-            for mid in fs['top_movies']
-        }
-        i_to_name = _build_genome_i_to_name(fs)
-        rows = [
-            {
-                'Title':           fs['movieId_to_title'][mid] + ('  ◀ ANCHOR' if mid in anchor_set else ''),
-                'Genres':          ', '.join(fs['movieId_to_genres'][mid]),
-                'Top Genome Tags': _top_genome_tags(mid, fs, i_to_name),
-                'Score':           f'{s:.4f}',
+        else:
+            name_to_idx = {
+                fs['genome_tag_names'][tid]: fs['genome_tag_to_i'][tid]
+                for tid in fs['genome_tag_to_i']
             }
-            for mid, s in sorted(sims.items(), key=lambda x: x[1], reverse=True)[:20]
-        ]
-        st.caption(
-            "Genome anchors — "
-            + " · ".join(f"{tag}: {title}" for tag, _, title in anchor_tag_title_pairs)
-        )
-        _show_results(pd.DataFrame(rows), posters, fs)
+            anchor_tag_title_pairs = []
+            seen_titles = set()
+            for tag in selected_tags:
+                if tag not in name_to_idx:
+                    continue
+                tag_idx     = name_to_idx[tag]
+                sorted_mids = sorted(
+                    fs['top_movies'],
+                    key=lambda mid: float(fs['movieId_to_genome_tag_context'][mid][tag_idx]),
+                    reverse=True,
+                )
+                count = 0
+                for mid in sorted_mids:
+                    if count >= _ANCHORS_PER_TAG:
+                        break
+                    title = fs['movieId_to_title'][mid]
+                    if title not in seen_titles:
+                        anchor_tag_title_pairs.append((tag, mid, title))
+                        seen_titles.add(title)
+                        count += 1
+
+            if not anchor_tag_title_pairs:
+                st.warning("No genome tags matched the vocabulary.")
+            else:
+                anchor_mids = [mid for _, mid, _ in anchor_tag_title_pairs]
+                anchor_set  = set(anchor_mids)
+                query_emb   = torch.stack([
+                    me[m]['MOVIE_GENOME_TAG_EMBEDDING'].view(-1) for m in anchor_mids
+                ]).mean(dim=0)
+
+                sims = {
+                    mid: F.cosine_similarity(
+                        query_emb.unsqueeze(0),
+                        me[mid]['MOVIE_GENOME_TAG_EMBEDDING'].view(-1).unsqueeze(0),
+                    ).item()
+                    for mid in fs['top_movies']
+                }
+                i_to_name = _build_genome_i_to_name(fs)
+                rows = [
+                    {
+                        'Title':           fs['movieId_to_title'][mid] + ('  ◀ ANCHOR' if mid in anchor_set else ''),
+                        'Genres':          ', '.join(fs['movieId_to_genres'][mid]),
+                        'Top Genome Tags': _top_genome_tags(mid, fs, i_to_name),
+                    }
+                    for mid, s in sorted(sims.items(), key=lambda x: x[1], reverse=True)[:_TOTAL_RESULTS]
+                ]
+                _store_results(pd.DataFrame(rows), 'genome')
+                st.session_state['genome_anchor_caption'] = (
+                    "Genome anchors — "
+                    + " · ".join(f"{tag}: {title}" for tag, _, title in anchor_tag_title_pairs)
+                )
+
+    if 'genome_df' in st.session_state:
+        caption = st.session_state.get('genome_anchor_caption')
+        if caption:
+            st.caption(caption)
+    _show_results('genome', posters, fs)
 
 
 # ── Tab: About ───────────────────────────────────────────────────────────────
