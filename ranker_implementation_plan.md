@@ -352,7 +352,7 @@ These are signals the ranker has that CG doesn't compute. Each one is added in i
 
 ### Wide-feature normalization
 
-All wide features beyond `genome_cosine` and `Dislike Similarity` must be **normalized before concatenation** using fixed statistics registered as model buffers (not BatchNorm — train/eval batch composition differs, causing mismatch). Compute per-feature mean/std from a single pass over training data, register as `register_buffer(persistent=False)`.
+All wide features beyond `genome_cosine` and `Dislike Similarity` must be **normalized before concatenation** using fixed statistics registered as model buffers (not BatchNorm — train/eval batch composition differs, causing mismatch). Compute per-feature mean/std from a single pass over training data, register with `register_buffer(name, tensor)` (persistent — the default). The stats MUST be saved with the checkpoint so eval/inference Z-score with the same training-time mean/std. Do not pass `persistent=False` — that excludes the buffer from `state_dict`, so the stats reset to whatever the constructor sets (likely zeros) on load and silently degrade the model.
 
 ```
 Expected ranges (pre-normalization):
