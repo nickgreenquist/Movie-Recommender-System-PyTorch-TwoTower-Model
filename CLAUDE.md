@@ -125,7 +125,7 @@ Sub-tower linears: Xavier uniform `gain=0.1`. Projection linears re-initialized 
 - **Batch size**: 512, **Temperature**: 0.1, **Steps**: 150,000
 - **L2 normalization** at end of both towers
 - **Popularity bias correction (Menon et al. 2021):** logit-adjusted loss — **add** `alpha * log(count_i)` to item i's logit before softmax. `alpha=0.5` chosen (see alpha comparison below). **Do NOT subtract** — wrong sign.
-- **Inference:** raw dot products — no post-hoc correction needed. `POPULARITY_ALPHA_INFERENCE_MULTIPLE = 0.0`.
+- **Inference:** raw dot products — no post-hoc correction. Menon α is training-only.
 - **Config sidecar:** `alpha` and `temperature` saved as JSON alongside each checkpoint.
 - **Dataset**: rollback examples — for each watch event, context = all prior watches (chronological). 7-tuple: `(X_genre, X_history, X_hist_liked, X_hist_disliked, X_hist_ratings, timestamp, target_movieId)`. Capped at `MAX_SOFTMAX_EXAMPLES_PER_USER` per user.
 - **Checkpointing**: `saved_models/best_softmax_<timestamp>.pth`; periodic checkpoints every 30,000 steps.

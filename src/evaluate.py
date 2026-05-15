@@ -13,13 +13,7 @@ import torch
 import torch.nn.functional as F
 from src.dataset import FeatureStore
 from src.model import MovieRecommender
-from src.train import build_model, get_config, get_device, load_config_for_checkpoint, print_model_summary
-
-# Inference applies a stronger popularity correction than training.
-# Training: scores = (U @ V_all.T) / temp - alpha * log1p(counts)
-# Inference: raw_scores - temp * alpha * INFERENCE_MULTIPLE * log1p(counts)
-# (multiply training formula through by temp, then scale by INFERENCE_MULTIPLE)
-POPULARITY_ALPHA_INFERENCE_MULTIPLE = 0.0
+from src.train import build_model, get_config, get_device, print_model_summary
 
 
 # ── Canary user definitions ───────────────────────────────────────────────────
@@ -320,20 +314,10 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
 
 def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
                     movie_embeddings: dict, all_ids: list, all_embs: torch.Tensor,
-                    popularity_alpha: float = 0.0, temperature: float = 0.1,
                     top_n: int = 10) -> None:
     """Run all canary users and print recommendation tables."""
     model.eval()
     device = next(model.parameters()).device
-
-    # Popularity logit adjustment at inference.
-    # movie_interaction_counts is indexed by embedding index (0..n_movies-1), not raw movieId.
-    # all_ids contains raw movieIds → must map through item_emb_movieId_to_i before indexing.
-    pop_bias = None
-    if popularity_alpha > 0 and fs.movie_interaction_counts is not None:
-        emb_indices    = torch.tensor([fs.item_emb_movieId_to_i[mid] for mid in all_ids], dtype=torch.long)
-        aligned_counts = torch.from_numpy(fs.movie_interaction_counts)[emb_indices].to(device)
-        pop_bias = temperature * popularity_alpha * POPULARITY_ALPHA_INFERENCE_MULTIPLE * torch.log1p(aligned_counts)
 
     # Use the most recent timestamp from the timestamp range
     ts_max_bin = torch.bucketize(
@@ -352,8 +336,6 @@ def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
             exclude_set = set(fav_movies) | set(dis_movies) | set(anchor_titles)
 
             raw_scores = (all_embs @ user_emb.T).squeeze(-1)
-            if pop_bias is not None:
-                raw_scores = raw_scores - pop_bias
             sorted_idxs = torch.argsort(raw_scores, descending=True).tolist()
 
             recs = []
@@ -647,9 +629,6 @@ def run_canary(data_dir: str = 'data', checkpoint_path: str = None,
         return
     model, fs, movie_embeddings, all_ids, all_embs, all_norm, _, _, _, checkpoint_path = result
 
-    cp_config        = load_config_for_checkpoint(checkpoint_path)
-    popularity_alpha = cp_config.get('popularity_alpha', 0.0)
-    temperature      = cp_config.get('temperature', 0.1)
     real_stdout = sys.stdout
     buf = io.StringIO()
 
@@ -658,13 +637,8 @@ def run_canary(data_dir: str = 'data', checkpoint_path: str = None,
         def flush(self):       real_stdout.flush();     buf.flush()
 
     with contextlib.redirect_stdout(_Tee()):
-        print(f"  popularity_alpha={popularity_alpha} ({'applied' if popularity_alpha > 0 else 'disabled'})  "
-              f"temperature={temperature}  "
-              f"inference_multiple={POPULARITY_ALPHA_INFERENCE_MULTIPLE}  "
-              f"effective_inference_alpha={popularity_alpha * POPULARITY_ALPHA_INFERENCE_MULTIPLE}")
         print("\n── Canary user evaluation ──")
-        run_canary_eval(model, fs, movie_embeddings, all_ids, all_embs,
-                        popularity_alpha=popularity_alpha, temperature=temperature)
+        run_canary_eval(model, fs, movie_embeddings, all_ids, all_embs)
 
     os.makedirs('canary_results', exist_ok=True)
     stem     = os.path.splitext(os.path.basename(checkpoint_path))[0]
