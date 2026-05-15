@@ -5,15 +5,32 @@ Loads ranker_candidates_{train,val}.parquet plus the item-feature matrix used
 for on-the-fly cross-feature computation. The model itself does not consume
 item_features — it has its own registered buffers (built from the FeatureStore
 in train.py via build_ranker). The dataset's item_features tensor exists only
-to support cross-feature computation in sample_batch.
+to support cross-feature computation done by the caller.
 
-sample_batch returns 7-tuple:
-  user_genre_ctx, X_history, X_hist_ratings, timestamp_bin, cand_idx, label,
-  cross_features (B, n_cross)
+sample_batch returns the raw inputs needed to (1) run the model and
+(2) build the wide cross_features tensor. The caller (train / evaluate / canary)
+runs user_embedding / item_embedding / user_genome_profile on the model first,
+then assembles the 8-feature cross_features tensor by calling compute_cross_features.
 
-Cross features are the wide-bypass scalars: [genome_cosine, genre_affinity,
-era_gap, rating_calibration, popularity_match]. Computed here so the model
-forward can be a pure tower-and-MLP forward pass.
+Why the model-aware refactor: 3 of the 8 wide features (Dislike Similarity,
+Genome Peak Match, Genre Intersection's pool inputs) require model-derived
+tensors (user_concat slices, item_id_lookup outputs, user_genome_profile).
+sample_batch can't compute them without the model; the cleanest split is to
+have sample_batch return raw inputs and let the caller assemble cross_features.
+
+Wide bypass features (12 total):
+  1. genome_cosine        — parquet-sourced cosine of user genome pool vs item genome
+  2. genre_affinity       — dot(user_genre_avg, item_genre_oh) / sum(item_genre_oh)
+  3. era_gap              — abs(user_mean_year_norm - item_year_norm)
+  4. rating_cal           — user_avg - item_global_avg
+  5. pop_match            — abs(user_count_log1p - item_log_count)             — total user activity vs item pop
+  6. jaccard              — Jaccard(user_genre_set, item_genre_set)
+  7. genome_peak          — max(user_genome_profile * item_genome_scores)  ← model-aware
+  8. dis_sim              — cosine(pool_disliked, item_id_lookup[cand])     ← model-aware
+  9. recent_cf_sim        — last_item_emb · item_id_lookup[cand]            ← recency CF
+ 10. recent_genome_sim    — mean(last_5_genome) · item_genome_scores         ← recency content
+ 11. genome_residual      — genome_cosine - user_genome_baseline             ← per-user calibration
+ 12. liked_pop_gap        — cand_log_count - user_mean_liked_log_count       ← popularity taste fit (signed)
 
 Imports src/dataset.py for `load_features` (canonical FeatureStore loader).
 """
@@ -24,6 +41,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
+import torch.nn.functional as F
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -159,7 +177,17 @@ class RankerDataset:
         self.user_mean_year_norm = torch.from_numpy(
             ((hist_years * valid).sum(axis=1) / hist_cnt).astype(np.float32)
         )
-        del clamped, hist_years, valid
+
+        # Liked-popularity precompute: user's mean log_count over LIKED history items.
+        # item_features[:, 1149] = global_rating_count (already log1p). Liked = rating > 0.
+        log_count_col   = self.item_features[:, 1149].cpu().numpy()                       # (n_movies,)
+        hist_log_counts = log_count_col[clamped]                                           # (N, max_hist)
+        liked_mask      = ((self.X_history < n_mov) & (self.X_hist_rat > 0)).astype(np.float32)
+        liked_cnt       = liked_mask.sum(axis=1).clip(min=1.0)                             # (N,) — clamp guards 0-liked users
+        self.user_mean_liked_log_count = torch.from_numpy(
+            ((hist_log_counts * liked_mask).sum(axis=1) / liked_cnt).astype(np.float32)
+        )
+        del clamped, hist_years, valid, hist_log_counts, liked_mask
 
         # Pre-cache user-feature tensors.
         self._user_genre_t      = torch.from_numpy(self.user_genre)
@@ -178,9 +206,10 @@ class RankerDataset:
         attributes). Saves ~2.4 GB on Apple Silicon (MPS=unified=RAM, so device copies
         are NOT free — they double-count without this cleanup).
         """
-        self.item_features         = self.item_features.to(device)
-        self.user_mean_year_norm   = self.user_mean_year_norm.to(device)
-        self._user_genre_t         = self._user_genre_t.to(device)
+        self.item_features              = self.item_features.to(device)
+        self.user_mean_year_norm        = self.user_mean_year_norm.to(device)
+        self.user_mean_liked_log_count  = self.user_mean_liked_log_count.to(device)
+        self._user_genre_t              = self._user_genre_t.to(device)
         self._user_avg_t           = self._user_avg_t.to(device)
         self._user_count_log1p_t   = self._user_count_log1p_t.to(device)
         self._X_history_t          = self._X_history_t.to(device)
@@ -202,7 +231,15 @@ def compute_cross_features(user_genre_ctx: torch.Tensor,
                            cand_year_norm: torch.Tensor,
                            cand_global_avg: torch.Tensor,
                            cand_log_count: torch.Tensor,
-                           genome_cosine: torch.Tensor) -> torch.Tensor:
+                           genome_cosine: torch.Tensor,
+                           pool_disliked: torch.Tensor,
+                           item_id_raw: torch.Tensor,
+                           user_genome_profile: torch.Tensor,
+                           cand_genome_scores: torch.Tensor,
+                           last_item_emb: torch.Tensor,
+                           last_k_mean_genome: torch.Tensor,
+                           user_genome_baseline: torch.Tensor,
+                           user_mean_liked_log_count: torch.Tensor) -> torch.Tensor:
     """
     All inputs are (B, ...) tensors on the same device.
 
@@ -213,11 +250,34 @@ def compute_cross_features(user_genre_ctx: torch.Tensor,
       cand_year_norm       : (B,)
       cand_global_avg      : (B,)
       cand_log_count       : (B,)
+      pool_disliked        : (B, item_id_emb_dim) — sliced from user_concat by caller
+      item_id_raw          : (B, item_id_emb_dim) — model.item_id_lookup(cand_idx)
+      user_genome_profile  : (B, n_genome_tags)   — model.user_genome_profile(...)
+      cand_genome_scores   : (B, n_genome_tags)   — model.genome_buffer[cand_idx]
+      last_item_emb        : (B, item_id_emb_dim) — from model.user_recent_signals(...)
+      last_k_mean_genome   : (B, n_genome_tags)   — from model.user_recent_signals(...)
+      user_genome_baseline       : (B,)            — from model.user_genome_baseline(...)
+      user_mean_liked_log_count  : (B,)            — precomputed in RankerDataset.__init__
 
-    Returns (B, 5) — [genome_cosine, genre_affinity, era_gap, rating_cal, pop_match].
+    Returns (B, 12) — [genome_cosine, genre_affinity, era_gap, rating_cal, pop_match,
+                       jaccard, genome_peak, dis_sim, recent_cf_sim, recent_genome_sim,
+                       genome_residual, liked_pop_gap].
+
+    Strict ranker-only features (CG cannot meaningfully use them at retrieval):
+      - jaccard: set ops, non-linear
+      - genome_peak: max operator
+      - dis_sim, recent_cf_sim, recent_genome_sim: require multiple user vectors
+        (disliked pool, last-item embedding, recent-window genome) — CG's single
+        user output can't expose them.
+      - genome_residual: per-user constant shift; mathematically computable in CG
+        but doesn't change retrieval ordering. Useful only for ranker calibration.
+      - liked_pop_gap: subtraction of user-side scalar from item-side scalar (same
+        class as era_gap, rating_cal). CG's dot product cannot represent it.
     """
+    n_genres = cand_genre_oh.shape[1]
+
     # Cross #1: Weighted Genre Affinity
-    user_genre_avg = user_genre_ctx[:, :cand_genre_oh.shape[1]]                # (B, 20)
+    user_genre_avg = user_genre_ctx[:, :n_genres]                              # (B, 20)
     genre_dot      = (user_genre_avg * cand_genre_oh).sum(dim=1)               # (B,)
     genre_cnt      = cand_genre_oh.sum(dim=1).clamp(min=1.0)
     genre_affinity = genre_dot / genre_cnt
@@ -231,7 +291,51 @@ def compute_cross_features(user_genre_ctx: torch.Tensor,
     # Cross #4: Popularity Match
     pop_match = torch.abs(user_count_log1p - cand_log_count)
 
-    return torch.stack([genome_cosine, genre_affinity, era_gap, rating_cal, pop_match], dim=1)
+    # Cross #6: Genre Intersection (Jaccard)
+    # user_genre_ctx layout: [0:20]=avg_rating per genre, [20:40]=watch_fraction per genre.
+    # User "set" of genres = those with any watches (watch_frac > 0).
+    user_genre_mask = (user_genre_ctx[:, n_genres:2 * n_genres] > 0).float()   # (B, 20)
+    inter           = (user_genre_mask * cand_genre_oh).sum(dim=1)             # (B,)
+    union           = ((user_genre_mask + cand_genre_oh) > 0).float().sum(dim=1).clamp(min=1.0)
+    jaccard         = inter / union                                            # (B,) in [0, 1]
+
+    # Cross #7: Genome Peak Match — single dominant tag overlap.
+    # max(user_genome_profile * cand_genome) finds the strongest co-tag, which a dot
+    # product (sum) averages out. The "one tag spark" signal.
+    genome_peak = (user_genome_profile * cand_genome_scores).max(dim=1).values  # (B,)
+
+    # Cross #8: Dislike Similarity — cosine of disliked pool with raw item ID embedding.
+    dis_sim = F.cosine_similarity(pool_disliked, item_id_raw, dim=1)           # (B,) in [-1, 1]
+
+    # Cross #9: Recent CF Similarity — last item ID embedding · target item ID embedding.
+    # Sequential next-item signal: "is this candidate close to what the user JUST watched?"
+    # The 4 user pools are unordered sums — they have no temporal awareness. This restores it.
+    recent_cf_sim = (last_item_emb * item_id_raw).sum(dim=1)                   # (B,)
+
+    # Cross #10: Recent Genome Similarity — mean(last 5 genome) · candidate genome.
+    # Content-space recency: smoothed "current taste vector" vs candidate. Distinct from
+    # the all-history rating-weighted genome_cosine — this isolates the recent window.
+    recent_genome_sim = (last_k_mean_genome * cand_genome_scores).sum(dim=1)   # (B,)
+
+    # Cross #11: Genome Cosine Residual — candidate's genome cosine MINUS the user's
+    # baseline (mean cosine of their profile vs their watched items). Calibrates the
+    # raw cosine per user: positive = candidate is unusually compatible *for this user*,
+    # negative = below the user's typical similarity bar.
+    genome_residual = genome_cosine - user_genome_baseline                     # (B,)
+
+    # Cross #12: Liked Popularity Gap — signed distance between candidate's log_count
+    # and the mean log_count of items the user has LIKED (rating > 0). Captures the
+    # user's preferred popularity tier: positive = candidate is more popular than the
+    # user's typical pick, negative = more obscure. Distinct from pop_match (which uses
+    # user's TOTAL rating count, i.e. user activity, not their popularity preference).
+    liked_pop_gap = cand_log_count - user_mean_liked_log_count                 # (B,)
+
+    return torch.stack(
+        [genome_cosine, genre_affinity, era_gap, rating_cal, pop_match,
+         jaccard, genome_peak, dis_sim,
+         recent_cf_sim, recent_genome_sim, genome_residual, liked_pop_gap],
+        dim=1,
+    )
 
 
 # ── Random-tuple batch sampler ───────────────────────────────────────────────
@@ -239,11 +343,15 @@ def compute_cross_features(user_genre_ctx: torch.Tensor,
 def sample_batch(dataset: RankerDataset, batch_size: int, device: torch.device,
                  rng: np.random.Generator, easy_neg_frac: float = 0.5):
     """
-    Mixed Negative Sampling (MNS). See class docstring for shape contract.
+    Mixed Negative Sampling (MNS). Returns raw inputs needed for both the model forward
+    AND for compute_cross_features (called by the caller after running model embeddings).
 
-    Returns:
+    Returns 15-tuple:
       user_genre_ctx (B, 40), X_history (B, H), X_hist_ratings (B, H), timestamp (B,),
-      cand_idx (B,), label (B,), cross_features (B, 5)
+      cand_idx (B,), label (B,),
+      genome_cosine (B,), user_avg (B,), user_count_log1p (B,), user_mean_year_norm (B,),
+      cand_genre_oh (B, 20), cand_year_norm (B,), cand_global_avg (B,), cand_log_count (B,),
+      user_mean_liked_log_count (B,)
     """
     rows     = rng.integers(0, dataset.N, size=batch_size)
     pos      = rng.integers(0, CANDIDATES_PER_ROW, size=batch_size)
@@ -283,18 +391,17 @@ def sample_batch(dataset: RankerDataset, batch_size: int, device: torch.device,
     cand_log_count  = cand_feat[:, 1149]                                 # (B,)
     cand_year_norm  = cand_feat[:, 1150]                                 # (B,)
 
-    user_avg_b   = dataset._user_avg_t[rows_t].to(device)
-    user_cnt_b   = dataset._user_count_log1p_t[rows_t].to(device)
-    user_year_b  = dataset.user_mean_year_norm[rows_t.to(device)]
-
-    cross_features = compute_cross_features(
-        user_genre_ctx_t, user_avg_b, user_cnt_b, user_year_b,
-        cand_genre_oh, cand_year_norm, cand_global_avg, cand_log_count,
-        genome_cosine_t,
-    )
+    user_avg_b      = dataset._user_avg_t[rows_t].to(device)
+    user_cnt_b      = dataset._user_count_log1p_t[rows_t].to(device)
+    rows_t_dev      = rows_t.to(device)
+    user_year_b     = dataset.user_mean_year_norm[rows_t_dev]
+    user_liked_pop  = dataset.user_mean_liked_log_count[rows_t_dev]
 
     return (user_genre_ctx_t, X_history_t, X_hist_rat_t, timestamp_t,
-            cand_t, label_t, cross_features)
+            cand_t, label_t,
+            genome_cosine_t, user_avg_b, user_cnt_b, user_year_b,
+            cand_genre_oh, cand_year_norm, cand_global_avg, cand_log_count,
+            user_liked_pop)
 
 
 # ── Public loader ───────────────────────────────────────────────────────────

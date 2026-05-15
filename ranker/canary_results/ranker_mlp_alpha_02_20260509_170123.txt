@@ -1,0 +1,512 @@
+CG checkpoint:     saved_models/PROD_best_softmax_v2_popularity_alpha_05_20260505_182728.pth
+Ranker checkpoint: saved_models/ranker/ranker_mlp_alpha_02_20260509_170123.pth
+Top-N per canary:  20
+Canaries:          18
+
+Device: mps
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Children's Movie Lover  |  Genome: pixar animation
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Toy Story 2 (1999), Finding Nemo (2003), Finding Dory (2016), Madagascar (2005)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    Cars 3 (2017)                                       Shrek 2 (2004)                                    
+2    The Lego Movie 2: The Second Part (2019)            Coco (2017)                                       
+3    Kung Fu Panda 3 (2016)                              Despicable Me (2010)                              
+4    Cloudy with a Chance of Meatballs (2009)            Cars (2006)                                       
+5    Turbo (2013)                                        Wreck-It Ralph (2012)                             
+6    Surf's Up (2007)                                    Lilo & Stitch (2002)                              
+7    Toy Story 4 (2019)                                  Moana (2016)                                      
+8    Despicable Me 3 (2017)                              Emperor's New Groove, The (2000)                  
+9    Over the Hedge (2006)                               The Lego Movie (2014)                             
+10   Monsters University (2013)                          Wallace & Gromit in The Curse of the Were-Rabbit …
+11   The Boss Baby (2017)                                Megamind (2010)                                   
+12   The Secret Life of Pets 2 (2019)                    How to Train Your Dragon 2 (2014)                 
+13   Cloudy with a Chance of Meatballs 2 (2013)          Incredibles 2 (2018)                              
+14   Ralph Breaks the Internet (2018)                    Piper (2016)                                      
+15   Captain Underpants: The First Epic Movie (2017)     Over the Hedge (2006)                             
+16   Ferdinand (2017)                                    Croods, The (2013)                                
+17   Spies in Disguise (2019)                            Peter Rabbit (2018)                               
+18   Despicable Me 2 (2013)                              Hotel Transylvania (2012)                         
+19   Croods, The (2013)                                  Frozen (2013)                                     
+20   Cars (2006)                                         Paddington 2 (2017)                               
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Horror Lover
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Blair Witch Project, The (1999), Texas Chainsaw Massacre, The (2003), Exorcism of Emily Rose, The (2005), Wrong Turn (2003)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    Ring, The (2002)                                    Sinister (2012)                                   
+2    Others, The (2001)                                  Insidious (2010)                                  
+3    Session 9 (2001)                                    Ring, The (2002)                                  
+4    Shutter (2004)                                      Skeleton Key, The (2005)                          
+5    Uninvited, The (2009)                               Descent, The (2005)                               
+6    Strangers, The (2008)                               I Know What You Did Last Summer (1997)            
+7    Signs (2002)                                        Halloween: The Curse of Michael Myers (Halloween …
+8    In the Mouth of Madness (1995)                      Eden Lake (2008)                                  
+9    Last House on the Left, The (2009)                  Nightmare on Elm Street, A (1984)                 
+10   28 Days Later (2002)                                Ju-on: The Grudge (2002)                          
+11   Case 39 (2009)                                      Saw (2003)                                        
+12   American Psycho (2000)                              Others, The (2001)                                
+13   Scream (1996)                                       American Psycho (2000)                            
+14   I Am Legend (2007)                                  Cabin Fever (2002)                                
+15   The Taking of Deborah Logan (2014)                  House of Wax (2005)                               
+16   Vacancy (2007)                                      Strangers, The (2008)                             
+17   I Spit on Your Grave (2010)                         Collector, The (2009)                             
+18   Candyman (1992)                                     Candyman (1992)                                   
+19   Hills Have Eyes II, The (2007)                      Ghost Ship (2002)                                 
+20   Ruins, The (2008)                                   Final Destination, The (Final Destination 4) (Fin…
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Sci-Fi Lover
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Contact (1997), 2010: The Year We Make Contact (1984), It Came from Outer Space (1953), Solaris (Solyaris) (1972), 2001: A Space Odyssey (1968)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    Stalker (1979)                                      Alien (1979)                                      
+2    Soylent Green (1973)                                Blade Runner (1982)                               
+3    Silent Running (1972)                               Clockwork Orange, A (1971)                        
+4    Fantastic Planet, The (Planète sauvage, La) (1973)  Brazil (1985)                                     
+5    Brazil (1985)                                       Aliens (1986)                                     
+6    Metropolis (1927)                                   Metropolis (1927)                                 
+7    1984 (Nineteen Eighty-Four) (1984)                  Star Wars: Episode V - The Empire Strikes Back (1…
+8    Omega Man, The (1971)                               Dr. Strangelove or: How I Learned to Stop Worryin…
+9    Colossus: The Forbin Project (1970)                 Close Encounters of the Third Kind (1977)         
+10   Forbidden Planet (1956)                             Terminator, The (1984)                            
+11   Zardoz (1974)                                       Day the Earth Stood Still, The (1951)             
+12   Fifth Element, The (1997)                           Thing, The (1982)                                 
+13   Westworld (1973)                                    Forbidden Planet (1956)                           
+14   Man Who Fell to Earth, The (1976)                   Dark City (1998)                                  
+15   Alien (1979)                                        Invasion of the Body Snatchers (1956)             
+16   Close Encounters of the Third Kind (1977)           Gattaca (1997)                                    
+17   Atlas Shrugged: Part 1 (2011)                       Moon (2009)                                       
+18   Clockwork Orange, A (1971)                          Stalker (1979)                                    
+19   Quiet Earth, The (1985)                             Fifth Element, The (1997)                         
+20   Altered States (1980)                               Total Recall (1990)                               
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Comedy Lover
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: American Pie (1999), Dumb & Dumber (Dumb and Dumber) (1994), Dodgeball: A True Underdog Story (2004), Ted 2 (2015)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    There's Something About Mary (1998)                 American Pie 2 (2001)                             
+2    Austin Powers: International Man of Mystery (1997)  Scary Movie (2000)                                
+3    40-Year-Old Virgin, The (2005)                      Me, Myself & Irene (2000)                         
+4    Wedding Crashers (2005)                             Big Daddy (1999)                                  
+5    50 First Dates (2004)                               Road Trip (2000)                                  
+6    Anchorman: The Legend of Ron Burgundy (2004)        Ace Ventura: When Nature Calls (1995)             
+7    Knocked Up (2007)                                   Meet the Parents (2000)                           
+8    American Pie 2 (2001)                               Austin Powers: The Spy Who Shagged Me (1999)      
+9    Meet the Parents (2000)                             What Women Want (2000)                            
+10   Superbad (2007)                                     Clueless (1995)                                   
+11   Austin Powers: The Spy Who Shagged Me (1999)        Mask, The (1994)                                  
+12   Legally Blonde (2001)                               Bring It On (2000)                                
+13   Mean Girls (2004)                                   Charlie's Angels (2000)                           
+14   Bruce Almighty (2003)                               Meet the Fockers (2004)                           
+15   Hitch (2005)                                        Ted (2012)                                        
+16   Forgetting Sarah Marshall (2008)                    Office Space (1999)                               
+17   Girl Next Door, The (2004)                          Austin Powers in Goldmember (2002)                
+18   Borat: Cultural Learnings of America for Make Ben…  Hangover, The (2009)                              
+19   Yes Man (2008)                                      Jumanji (1995)                                    
+20   Zoolander (2001)                                    Miss Congeniality (2000)                          
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Romance Lover
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Shakespeare in Love (1998), Sense and Sensibility (1995), When Harry Met Sally... (1989), Sleepless in Seattle (1993), Notting Hill (1999), Pride and Prejudice (1995), North & South (2004)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    You've Got Mail (1998)                              Emma (1996)                                       
+2    My Best Friend's Wedding (1997)                     Persuasion (1995)                                 
+3    Persuasion (2007)                                   Pride & Prejudice (2005)                          
+4    Young Victoria, The (2009)                          Sabrina (1954)                                    
+5    Pretty Woman (1990)                                 Mansfield Park (1999)                             
+6    Bridget Jones's Diary (2001)                        While You Were Sleeping (1995)                    
+7    Becoming Jane (2007)                                Love, Rosie (2014)                                
+8    Holiday, The (2006)                                 Young Victoria, The (2009)                        
+9    My Big Fat Greek Wedding (2002)                     The Hundred-Foot Journey (2014)                   
+10   Four Weddings and a Funeral (1994)                  Far from the Madding Crowd (2015)                 
+11   Pride & Prejudice (2005)                            Charade (1963)                                    
+12   No Reservations (2007)                              Roman Holiday (1953)                              
+13   Wedding Date, The (2005)                            Much Ado About Nothing (1993)                     
+14   Leap Year (2010)                                    Persuasion (2007)                                 
+15   Far from the Madding Crowd (2015)                   Becoming Jane (2007)                              
+16   While You Were Sleeping (1995)                      Breakfast at Tiffany's (1961)                     
+17   Roman Holiday (1953)                                Remains of the Day, The (1993)                    
+18   Emma (1996)                                         Jane Eyre (2011)                                  
+19   Love Actually (2003)                                Sound of Music, The (1965)                        
+20   Dirty Dancing (1987)                                My Fair Lady (1964)                               
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+War Movie Lover
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Bridge on the River Kwai, The (1957), Glory (1989), Downfall (Untergang, Der) (2004), 1917 (2019), Enemy at the Gates (2001)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    Band of Brothers (2001)                             Black Hawk Down (2001)                            
+2    The Pacific (2010)                                  Platoon (1986)                                    
+3    Bridge Too Far, A (1977)                            We Were Soldiers (2002)                           
+4    Letters from Iwo Jima (2006)                        Captain Phillips (2013)                           
+5    Zulu (1964)                                         Longest Day, The (1962)                           
+6    Cross of Iron (1977)                                Cinderella Man (2005)                             
+7    Tora! Tora! Tora! (1970)                            Patton (1970)                                     
+8    Longest Day, The (1962)                             Papillon (1973)                                   
+9    Bridge at Remagen, The (1969)                       Deer Hunter, The (1978)                           
+10   We Were Soldiers (2002)                             Unforgiven (1992)                                 
+11   Gettysburg (1993)                                   Good, the Bad and the Ugly, The (Buono, il brutto…
+12   Greyhound (2020)                                    Great Escape, The (1963)                          
+13   Flags of Our Fathers (2006)                         Letters from Iwo Jima (2006)                      
+14   Battle of Britain (1969)                            For a Few Dollars More (Per qualche dollaro in pi…
+15   Open Range (2003)                                   Ford v. Ferrari (2019)                            
+16   Enron: The Smartest Guys in the Room (2005)         Kingdom of Heaven (2005)                          
+17   Man Who Shot Liberty Valance, The (1962)            The Irishman (2019)                               
+18   Windtalkers (2002)                                  Thirteen Days (2000)                              
+19   Judgment at Nuremberg (1961)                        Lincoln (2012)                                    
+20   Restrepo (2010)                                     Outlaw Josey Wales, The (1976)                    
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Fantasy Lover  |  Genome: high fantasy
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Lord of the Rings: The Fellowship of the Ring, The (2001), Dark Crystal, The (1982), Lord of the Rings: The Return of the King, The (2003), Dragonslayer (1981), Dune (1984)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    The Hobbit: The Battle of the Five Armies (2014)    The Hobbit: The Battle of the Five Armies (2014)  
+2    Hansel & Gretel: Witch Hunters (2013)               Iron Man 3 (2013)                                 
+3    Percy Jackson & the Olympians: The Lightning Thie…  Harry Potter and the Deathly Hallows: Part 2 (201…
+4    Dracula Untold (2014)                               Harry Potter and the Deathly Hallows: Part 1 (201…
+5    Thor: The Dark World (2013)                         X-Men: First Class (2011)                         
+6    Percy Jackson: Sea of Monsters (2013)               Avengers: Age of Ultron (2015)                    
+7    Solomon Kane (2009)                                 Pirates of the Caribbean: On Stranger Tides (2011)
+8    Wrath of the Titans (2012)                          Indiana Jones and the Temple of Doom (1984)       
+9    Seventh Son (2014)                                  Harry Potter and the Goblet of Fire (2005)        
+10   Underworld: Awakening (2012)                        Thor (2011)                                       
+11   Resident Evil: Retribution (2012)                   Harry Potter and the Prisoner of Azkaban (2004)   
+12   Librarian: Quest for the Spear, The (2004)          Harry Potter and the Sorcerer's Stone (a.k.a. Har…
+13   Three Musketeers, The (2011)                        Captain America: The First Avenger (2011)         
+14   Chronicles of Narnia: The Voyage of the Dawn Trea…  Captain America: The Winter Soldier (2014)        
+15   Jack the Giant Slayer (2013)                        Underworld (2003)                                 
+16   The Huntsman Winter's War (2016)                    X-Men (2000)                                      
+17   Teenage Mutant Ninja Turtles (2014)                 Thor: The Dark World (2013)                       
+18   Krull (1983)                                        Harry Potter and the Chamber of Secrets (2002)    
+19   The Amazing Spider-Man 2 (2014)                     Fantastic Beasts and Where to Find Them (2016)    
+20   Pirates of the Caribbean: On Stranger Tides (2011)  Pirates of the Caribbean: Dead Men Tell No Tales …
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Crime Lover  |  Genome: crime, gangs
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Donnie Brasco (1997), The Irishman (2019), Casino (1995), Narc (2002), American Gangster (2007), Sicario (2015)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    The Drop (2014)                                     New Jack City (1991)                              
+2    Sicario: Day of the Soldado (2018)                  No Way Out (1987)                                 
+3    Killing Them Softly (2012)                          Sydney (Hard Eight) (1996)                        
+4    Shot Caller (2017)                                  Carlito's Way (1993)                              
+5    American Made (2017)                                Training Day (2001)                               
+6    A Most Violent Year (2014)                          Seven Psychopaths (2012)                          
+7    Deep Cover (1992)                                   Lawless (2012)                                    
+8    November Man, The (2014)                            Lincoln Lawyer, The (2011)                        
+9    A Most Wanted Man (2014)                            Last Seduction, The (1994)                        
+10   End of Watch (2012)                                 The Drop (2014)                                   
+11   Margin Call (2011)                                  The Gentlemen (2020)                              
+12   Equalizer, The (2014)                               Long Good Friday, The (1980)                      
+13   Get the Gringo (2012)                               Dirty Harry (1971)                                
+14   Hell or High Water (2016)                           Mean Streets (1973)                               
+15   Bourne Supremacy, The (2004)                        Deep Cover (1992)                                 
+16   Town, The (2010)                                    A Most Violent Year (2014)                        
+17   New Jack City (1991)                                Sea of Love (1989)                                
+18   The Accountant (2016)                               Margin Call (2011)                                
+19   Safe House (2012)                                   Bourne Identity, The (2002)                       
+20   Presumed Innocent (1990)                            Mad Dog and Glory (1993)                          
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Heist Lover  |  Genome: heist
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Heist (2001), Ocean's Eleven (a.k.a. Ocean's 11) (1960), The Drop (2014), Bank Job, The (2008), Italian Job, The (1969), Town, The (2010)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    Bourne Supremacy, The (2004)                        Bourne Supremacy, The (2004)                      
+2    Deep Cover (1992)                                   Casino Royale (2006)                              
+3    Breakdown (1997)                                    Bourne Ultimatum, The (2007)                      
+4    Safe House (2012)                                   Rock, The (1996)                                  
+5    Traitor (2008)                                      Ronin (1998)                                      
+6    Casino Royale (2006)                                Italian Job, The (2003)                           
+7    Package, The (1989)                                 Clear and Present Danger (1994)                   
+8    Clear and Present Danger (1994)                     Layer Cake (2004)                                 
+9    Sicario: Day of the Soldado (2018)                  No Country for Old Men (2007)                     
+10   Brooklyn's Finest (2010)                            Rising Sun (1993)                                 
+11   Last Seduction, The (1994)                          Den of Thieves (2018)                             
+12   Triple Frontier (2019)                              Negotiator, The (1998)                            
+13   Jack Reacher: Never Go Back (2016)                  Shooter (2007)                                    
+14   Killer Elite (2011)                                 16 Blocks (2006)                                  
+15   November Man, The (2014)                            Patriot Games (1992)                              
+16   Funeral in Berlin (1966)                            The Equalizer 2 (2018)                            
+17   Street Kings (2008)                                 London (2005)                                     
+18   Kingdom, The (2007)                                 The Highwaymen (2019)                             
+19   King of New York (1990)                             Brooklyn's Finest (2010)                          
+20   Patriot Games (1992)                                Absolute Power (1997)                             
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Action Junkie  |  Genome: explosions, adrenaline
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Die Hard 2 (1990), Rambo III (1988), Under Siege (1992)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    Air Force One (1997)                                Salt (2010)                                       
+2    Good Day to Die Hard, A (2013)                      Transporter, The (2002)                           
+3    U.S. Marshals (1998)                                Air Force One (1997)                              
+4    Lethal Weapon 3 (1992)                              Transporter 2 (2005)                              
+5    Taken 2 (2012)                                      Tomorrow Never Dies (1997)                        
+6    London Has Fallen (2016)                            Independence Day (a.k.a. ID4) (1996)              
+7    Taken 3 (2015)                                      Rock, The (1996)                                  
+8    Mercury Rising (1998)                               Fast Five (Fast and the Furious 5, The) (2011)    
+9    Fast & Furious 6 (Fast and the Furious 6, The) (2…  Bourne Legacy, The (2012)                         
+10   Peacemaker, The (1997)                              Bad Boys (1995)                                   
+11   Escape Plan (2013)                                  Jack Reacher (2012)                               
+12   Lethal Weapon 4 (1998)                              Glimmer Man, The (1996)                           
+13   Jack Ryan: Shadow Recruit (2014)                    Twister (1996)                                    
+14   Jackal, The (1997)                                  Shooter (2007)                                    
+15   Mechanic, The (2011)                                Mission: Impossible (1996)                        
+16   Bad Boys (1995)                                     Fast & Furious 6 (Fast and the Furious 6, The) (2…
+17   Transporter 3 (2008)                                Fast & Furious (Fast and the Furious 4, The) (200…
+18   Need for Speed (2014)                               Equalizer, The (2014)                             
+19   Killer Elite (2011)                                 Rambo (Rambo 4) (2008)                            
+20   The Expendables 3 (2014)                            Blown Away (1994)                                 
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Arthouse Lover  |  Genome: art house, slow burn
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: The Lobster (2015), Antichrist (2009)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    Dogtooth (Kynodontas) (2009)                        Stalker (1979)                                    
+2    Stalker (1979)                                      Seventh Seal, The (Sjunde inseglet, Det) (1957)   
+3    Enter the Void (2009)                               Wild Strawberries (Smultronstället) (1957)        
+4    Melancholia (2011)                                  Mirror, The (Zerkalo) (1975)                      
+5    Holy Mountain, The (Montaña sagrada, La) (1973)     Chungking Express (Chung Hing sam lam) (1994)     
+6    Nymphomaniac: Volume II (2013)                      Solaris (Solyaris) (1972)                         
+7    Topo, El (1970)                                     Mulholland Dr. (1999)                             
+8    Nymphomaniac: Volume I (2013)                       400 Blows, The (Les quatre cents coups) (1959)    
+9    Gummo (1997)                                        Mulholland Drive (2001)                           
+10   Wild at Heart (1990)                                Breathless (À bout de souffle) (1960)             
+11   Mulholland Drive (2001)                             Fallen Angels (Duo luo tian shi) (1995)           
+12   Salo, or The 120 Days of Sodom (Salò o le 120 gio…  8 1/2 (8½) (1963)                                 
+13   Twin Peaks: Fire Walk with Me (1992)                Blue Velvet (1986)                                
+14   Piano Teacher, The (La pianiste) (2001)             Old Boy (2003)                                    
+15   Songs From the Second Floor (Sånger från andra vå…  Twin Peaks: Fire Walk with Me (1992)              
+16   Irreversible (Irréversible) (2002)                  Requiem for a Dream (2000)                        
+17   Inland Empire (2006)                                Discreet Charm of the Bourgeoisie, The (Charme di…
+18   Fallen Angels (Duo luo tian shi) (1995)             Taxi Driver (1976)                                
+19   Funny Games (1997)                                  Paris, Texas (1984)                               
+20   Holy Motors (2012)                                  In the Mood For Love (Fa yeung nin wa) (2000)     
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Superhero Lover  |  Genome: superhero
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Guardians of the Galaxy (2014), Iron Man 3 (2013), Avengers: Age of Ultron (2015), Ant-Man and the Wasp: Quantumania (2023), Aquaman (2018), Captain America: Civil War (2016)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    The Amazing Spider-Man 2 (2014)                     Captain America: The Winter Soldier (2014)        
+2    Justice League (2017)                               Doctor Strange (2016)                             
+3    Venom (2018)                                        Amazing Spider-Man, The (2012)                    
+4    Incredible Hulk, The (2008)                         Iron Man 2 (2010)                                 
+5    Amazing Spider-Man, The (2012)                      Jurassic World (2015)                             
+6    Ant-Man and the Wasp (2018)                         X-Men: Days of Future Past (2014)                 
+7    Thor: The Dark World (2013)                         Captain Marvel (2018)                             
+8    Man of Steel (2013)                                 X-Men: First Class (2011)                         
+9    X-Men Origins: Wolverine (2009)                     X-Men Origins: Wolverine (2009)                   
+10   Pacific Rim: Uprising (2018)                        Thor (2011)                                       
+11   Men in Black III (M.III.B.) (M.I.B.³) (2012)        The Hunger Games: Mockingjay - Part 1 (2014)      
+12   X-Men: Apocalypse (2016)                            Wonder Woman (2017)                               
+13   Captain Marvel (2018)                               Spider-Man 3 (2007)                               
+14   Batman v Superman: Dawn of Justice (2016)           Black Panther (2017)                              
+15   Iron Man 2 (2010)                                   Ant-Man and the Wasp (2018)                       
+16   Transformers: The Last Knight (2017)                Thor: The Dark World (2013)                       
+17   Journey 2: The Mysterious Island (2012)             Man of Steel (2013)                               
+18   Spider-Man: Far from Home (2019)                    Avengers: Infinity War - Part I (2018)            
+19   Jurassic World: Fallen Kingdom (2018)               Venom (2018)                                      
+20   Teenage Mutant Ninja Turtles: Out of the Shadows …  Star Trek Beyond (2016)                           
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+WW2 Lover  |  Genome: wwii
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Stalingrad (1993), Great Escape, The (1963), Band of Brothers (2001), Saving Private Ryan (1998), Inglourious Basterds (2009), Enemy at the Gates (2001)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    Bridge Too Far, A (1977)                            Bridge at Remagen, The (1969)                     
+2    The Pacific (2010)                                  Devil's Brigade, The (1968)                       
+3    Rio Grande (1950)                                   Midway (1976)                                     
+4    Man Who Shot Liberty Valance, The (1962)            Sink the Bismark! (1960)                          
+5    Battle of Britain (1969)                            Battle of Britain (1969)                          
+6    Cross of Iron (1977)                                Fighting Seabees, The (1944)                      
+7    Searchers, The (1956)                               The Pacific (2010)                                
+8    Zulu (1964)                                         Caine Mutiny, The (1954)                          
+9    Ride the High Country (1962)                        Enemy Below, The (1957)                           
+10   Red Cliff Part II (Chi Bi Xia: Jue Zhan Tian Xia)…  Longest Day, The (1962)                           
+11   Midway (2019)                                       John Adams (2008)                                 
+12   Rio Bravo (1959)                                    Anatomy of a Murder (1959)                        
+13   Greyhound (2020)                                    Chak De India! (2007)                             
+14   Sand Pebbles, The (1966)                            Rocco and His Brothers (Rocco e i suoi fratelli) …
+15   Magnificent Seven, The (1960)                       Like Stars on Earth (Taare Zameen Par) (2007)     
+16   Fighting Seabees, The (1944)                        Horse Soldiers, The (1959)                        
+17   Shootist, The (1976)                                Shenandoah (1965)                                 
+18   For a Few Dollars More (Per qualche dollaro in pi…  Cross of Iron (1977)                              
+19   Where Eagles Dare (1968)                            Witness for the Prosecution (1957)                
+20   How the West Was Won (1962)                         Sand Pebbles, The (1966)                          
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Western Lover  |  Genome: spaghetti western
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: True Grit (1969), High Plains Drifter (1973), Cool Hand Luke (1967), Wild Bill (1995), Wyatt Earp (1994), Fistful of Dollars, A (Per un pugno di dollari) (1964), Wild Bunch, The (1969), For a Few Dollars More (Per qualche dollaro in più) (1965), Once Upon a Time in the West (C'era una volta il West) (1968)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    Searchers, The (1956)                               Death Wish (1974)                                 
+2    Man Who Shot Liberty Valance, The (1962)            Wages of Fear, The (Salaire de la peur, Le) (1953)
+3    Cross of Iron (1977)                                Jeremiah Johnson (1972)                           
+4    Hang 'Em High (1968)                                Boot, Das (Boat, The) (1981)                      
+5    Jeremiah Johnson (1972)                             Butch Cassidy and the Sundance Kid (1969)         
+6    Fort Apache (1948)                                  Gunfight at the O.K. Corral (1957)                
+7    High Noon (1952)                                    Cross of Iron (1977)                              
+8    Sansho the Bailiff (Sanshô dayû) (1954)             McLintock! (1963)                                 
+9    Sons of Katie Elder (1965)                          Raiders of the Lost Ark (Indiana Jones and the Ra…
+10   Red River (1948)                                    Hang 'Em High (1968)                              
+11   Winchester '73 (1950)                               Geronimo: An American Legend (1993)               
+12   Paths of Glory (1957)                               Sons of Katie Elder (1965)                        
+13   Angel and the Badman (1947)                         Dirty Harry (1971)                                
+14   Magnificent Seven, The (1960)                       Great Escape, The (1963)                          
+15   Outlaw Josey Wales, The (1976)                      Apocalypse Now (1979)                             
+16   Professionals, The (1966)                           Ran (1985)                                        
+17   Rio Lobo (1970)                                     Bad Sleep Well, The (Warui yatsu hodo yoku nemuru…
+18   Public Enemy, The (1931)                            Cowboys, The (1972)                               
+19   Cowboys, The (1972)                                 Stalag 17 (1953)                                  
+20   Davy Crockett, King of the Wild Frontier (1955)     Point Blank (1967)                                
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Musical Lover  |  Genome: musical
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Madame Butterfly (1995), Grease (1978), Mary Poppins (1964), Singin' in the Rain (1952)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    Music Man, The (1962)                               Blue Hawaii (1961)                                
+2    Camelot (1967)                                      Princess Bride, The (1987)                        
+3    Seven Brides for Seven Brothers (1954)              Babes in Toyland (1961)                           
+4    White Christmas (1954)                              Lord of the Rings: The Two Towers, The (2002)     
+5    Bishop's Wife, The (1947)                           Gentlemen Prefer Blondes (1953)                   
+6    High Society (1956)                                 Seven Brides for Seven Brothers (1954)            
+7    Funny Girl (1968)                                   Gypsy (1962)                                      
+8    Into the Woods (1991)                               Funny Girl (1968)                                 
+9    Wiz, The (1978)                                     Anchors Aweigh (1945)                             
+10   Meet Me in St. Louis (1944)                         Fiddler on the Roof (1971)                        
+11   Brigadoon (1954)                                    Shrek (2001)                                      
+12   Pillow Talk (1959)                                  White Christmas (1954)                            
+13   Easter Parade (1948)                                South Pacific (1958)                              
+14   Chitty Chitty Bang Bang (1968)                      Hello, Dolly! (1969)                              
+15   Trouble with Angels, The (1966)                     Great Muppet Caper, The (1981)                    
+16   Funny Face (1957)                                   Pollyanna (1960)                                  
+17   How to Succeed in Business Without Really Trying …  Xanadu (1980)                                     
+18   Rudolph, the Red-Nosed Reindeer (1964)              High Society (1956)                               
+19   Chorus Line, A (1985)                               Annie (1982)                                      
+20   Holiday Inn (1942)                                  Muppets Take Manhattan, The (1984)                
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Anime Lover  |  Genome: studio ghibli
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Princess Mononoke (Mononoke-hime) (1997), Berserk: The Golden Age Arc 2 - The Battle for Doldrey (2012), Ponyo (Gake no ue no Ponyo) (2008), Animatrix, The (2003), Cowboy Bebop: The Movie (Cowboy Bebop: Tengoku no Tobira) (2001)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    Summer Wars (Samâ wôzu) (2009)                      Howl's Moving Castle (Hauru no ugoku shiro) (2004)
+2    Tokyo Godfathers (2003)                             Spirited Away (Sen to Chihiro no kamikakushi) (20…
+3    Wolf Children (Okami kodomo no ame to yuki) (2012)  Nausicaä of the Valley of the Wind (Kaze no tani …
+4    A Silent Voice (2016)                               Kiki's Delivery Service (Majo no takkyûbin) (1989)
+5    5 Centimeters per Second (Byôsoku 5 senchimêtoru)…  Grave of the Fireflies (Hotaru no haka) (1988)    
+6    Patema Inverted (2013)                              Porco Rosso (Crimson Pig) (Kurenai no buta) (1992)
+7    Millennium Actress (Sennen joyû) (2001)             Ghost in the Shell (Kôkaku kidôtai) (1995)        
+8    Disappearance of Haruhi Suzumiya, The (Suzumiya H…  Coraline (2009)                                   
+9    Garden of Words, The (Koto no ha no niwa) (2013)    Your Name. (2016)                                 
+10   Paranoia Agent (2004)                               Akira (1988)                                      
+11   Into the Forest of Fireflies' Light (2011)          Paprika (Papurika) (2006)                         
+12   Girl Who Leapt Through Time, The (Toki o kakeru s…  Cat Returns, The (Neko no ongaeshi) (2002)        
+13   Evangelion: 1.0 You Are (Not) Alone (Evangerion s…  Girl Who Leapt Through Time, The (Toki o kakeru s…
+14   The Boy and the Beast (2015)                        Wind Rises, The (Kaze tachinu) (2013)             
+15   Tekkonkinkreet (Tekkon kinkurîto) (2006)            Lupin III: The Castle Of Cagliostro (Rupan sansei…
+16   Perfect Blue (1997)                                 Whisper of the Heart (Mimi wo sumaseba) (1995)    
+17   Neon Genesis Evangelion: The End of Evangelion (S…  Over the Garden Wall (2013)                       
+18   Evangelion: 2.0 You Can (Not) Advance (Evangerion…  A Silent Voice (2016)                             
+19   Cat Soup (Nekojiru-so) (2001)                       Perfect Blue (1997)                               
+20   Jin Roh: The Wolf Brigade (Jin-Rô) (1998)           Ninja Scroll (Jûbei ninpûchô) (1995)              
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Martial Arts Lover  |  Genome: kung fu
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Ong-Bak: The Thai Warrior (Ong Bak) (2003), Jet Li's Fearless (Huo Yuan Jia) (2006), Protector, The (a.k.a. Warrior King) (Tom yum goong) (2005), Unleashed (Danny the Dog) (2005), The Raid 2: Berandal (2014), Project A ('A' gai waak) (1983), Shaolin Soccer (Siu lam juk kau) (2001)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    Police Story (Ging chaat goo si) (1985)             Supercop (Police Story 3: Supercop) (Jing cha gu …
+2    Way of the Dragon, The (a.k.a. Return of the Drag…  Armour of God (Long xiong hu di) (1987)           
+3    Big Boss, The (Fists of Fury) (Tang shan da xiong…  Ip Man (2008)                                     
+4    Police Story 2 (Ging chaat goo si juk jaap) (1988)  Kung Fu Hustle (Gong fu) (2004)                   
+5    Once Upon a Time in China II (Wong Fei-hung Ji Yi…  Twin Dragons (Shuang long hui) (1992)             
+6    Better Tomorrow, A (Ying hung boon sik) (1986)      Mr. Nice Guy (Yat goh ho yan) (1997)              
+7    Fist of Legend (Jing wu ying xiong) (1994)          Kung Fu Panda 3 (2016)                            
+8    Vampire Hunter D (1985)                             First Strike (Police Story 4: First Strike) (Ging…
+9    Dobermann (1997)                                    Legend of Drunken Master, The (Jui kuen II) (1994)
+10   Ip Man 2 (2010)                                     Blind Swordsman: Zatoichi, The (Zatôichi) (2003)  
+11   Game of Death (1978)                                Who Am I? (Wo shi shei) (1998)                    
+12   Legend, The (Legend of Fong Sai-Yuk, The) (Fong S…  Black Mask (Hak hap) (1996)                       
+13   Hard-Boiled (Lat sau san taam) (1992)               Way of the Dragon, The (a.k.a. Return of the Drag…
+14   Fist of Fury (Chinese Connection, The) (Jing wu m…  Ninja Assassin (2009)                             
+15   Samurai Fiction (SF: Episode One) (1998)            Armour of God II: Operation Condor (Operation Con…
+16   Infernal Affairs 2 (Mou gaan dou II) (2003)         Kickboxer (1989)                                  
+17   The Golden Voyage of Sinbad (1973)                  Game of Death (1978)                              
+18   Dragon Ball Z: Battle of Gods (2013)                Fist of Legend (Jing wu ying xiong) (1994)        
+19   Mr. Nice Guy (Yat goh ho yan) (1997)                Police Story (Ging chaat goo si) (1985)           
+20   Ip Man 3 (2015)                                     Switchblade Sisters (1975)                        
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Nick's Recommendations
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+Liked: Lord of the Rings: The Fellowship of the Ring, The (2001), Lord of the Rings: The Return of the King, The (2003), 300 (2007), Kill Bill: Vol. 1 (2003), Lost in Translation (2003), Casino Royale (2006), Before Sunrise (1995), Old Boy (2003), Idiocracy (2006), Parasite (2019), 28 Days Later (2002), Saving Private Ryan (1998), Ip Man (2008)
+
+#    CG top-20                                           Ranker top-20                                     
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+1    Lord of the Rings: The Two Towers, The (2002)       Sympathy for Mr. Vengeance (Boksuneun naui geot) …
+2    Shrek (2001)                                        Lady Vengeance (Sympathy for Lady Vengeance) (Chi…
+3    Memories of Murder (Salinui chueok) (2003)          I Saw the Devil (Akmareul boatda) (2010)          
+4    Sin City (2005)                                     Memories of Murder (Salinui chueok) (2003)        
+5    Kill Bill: Vol. 2 (2004)                            [REC] (2007)                                      
+6    Gladiator (2000)                                    Bittersweet Life, A (Dalkomhan insaeng) (2005)    
+7    Death Proof (2007)                                  Dawn of the Dead (1978)                           
+8    Dark Knight, The (2008)                             Irreversible (Irréversible) (2002)                
+9    Memento (2000)                                      Descent, The (2005)                               
+10   Lady Vengeance (Sympathy for Lady Vengeance) (Chi…  Battle Royale (Batoru rowaiaru) (2000)            
+11   Godfather: Part II, The (1974)                      Chaser, The (Chugyeogja) (2008)                   
+12   Mother (Madeo) (2009)                               Saw (2004)                                        
+13   The Wailing (2016)                                  Audition (Ôdishon) (1999)                         
+14   Pulp Fiction (1994)                                 Tale of Two Sisters, A (Janghwa, Hongryeon) (2003)
+15   Shaun of the Dead (2004)                            Chinese Ghost Story, A (Sinnui yauwan) (1987)     
+16   No Country for Old Men (2007)                       Lord of the Rings: The Two Towers, The (2002)     
+17   Spirited Away (Sen to Chihiro no kamikakushi) (20…  Deep Red (Profondo rosso) (1975)                  
+18   Ring, The (2002)                                    Pulp Fiction (1994)                               
+19   Harry Potter and the Goblet of Fire (2005)          Funny Games (1997)                                
+20   Pirates of the Caribbean: The Curse of the Black …  In Bruges (2008)                                  
+

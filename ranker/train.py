@@ -7,13 +7,28 @@ Architecture (see ranker/model.py):
   Item concat  (96): item_genre(8) + item_tag(16) + item_genome(32)
                      + item_id(32) + year(8)
   Deep MLP (292 → [256,128,64]) → 64
-  Head: cat(deep_out(64), cross_features(5)) → Linear(69, 1)
+  Head: cat(deep_out(64), cross_features(12)) → Linear(76, 1)
 
-Cross features (wide bypass): genome_cosine, genre_affinity, era_gap, rating_calibration,
-popularity_match — computed in dataset.sample_batch / evaluate.compute_label_ranks.
+Cross features (wide bypass) — all 12:
+  1. genome_cosine        — parquet-sourced cosine of user genome pool vs item genome
+  2. genre_affinity       — dot(user_genre_avg, item_genre_oh) / sum(item_genre_oh)
+  3. era_gap              — abs(user_mean_year_norm - item_year_norm)
+  4. rating_cal           — user_avg - item_global_avg
+  5. pop_match            — abs(user_count_log1p - item_log_count)             — total user activity vs item pop
+  6. jaccard              — Jaccard(user_genre_set, item_genre_set)
+  7. genome_peak          — max(user_genome_profile * item_genome_scores)  ← model-aware
+  8. dis_sim              — cosine(pool_disliked, item_id_lookup[cand])     ← model-aware
+  9. recent_cf_sim        — last_item_emb · item_id_lookup[cand]            ← recency CF
+ 10. recent_genome_sim    — mean(last_5_genome) · item_genome_scores         ← recency content
+ 11. genome_residual      — genome_cosine - user_genome_baseline             ← per-user calibration
+ 12. liked_pop_gap        — cand_log_count - user_mean_liked_log_count       ← popularity taste fit (signed)
 
-Menon α: same mechanic as before — added to logits during training, raw at inference.
-Currently disabled (α=0) until ranker beats CG.
+Features 6-12 are strict ranker-only — CG cannot meaningfully use them at retrieval.
+Features 9-10 attack the recency gap; #11 calibrates raw cosine per user;
+#12 captures the user's preferred popularity tier (vs total activity in #5).
+
+Menon α: CLOSED. alpha=0.5 was attempted and failed conclusively (see plan markdown).
+BCE+Menon trains the model to undervalue popular positives, hurting NDCG. Stays at 0.
 """
 import glob
 import json
@@ -30,7 +45,7 @@ from ranker.dataset import (compute_cross_features, load_splits, sample_batch,
 from ranker.evaluate import (cg_baseline, compute_label_ranks,
                               evaluate_ndcg_mrr, hit_rates_from_ranks,
                               _ndcg_mrr_from_ranks)
-from ranker.model import WideDeepRanker
+from ranker.model import WideDeepRanker, USER_CONCAT_LAYOUT
 
 
 def get_device() -> torch.device:
@@ -65,9 +80,14 @@ def get_config() -> dict:
         'user_genre_emb_dim':    32,
         'user_genome_ctx_emb_dim': 32,
         'ts_emb_dim':            4,
-        # Wide bypass: genome_cosine + genre_affinity + era_gap + rating_cal + pop_match.
-        'n_cross_features':      5,
-        'popularity_alpha':      0.0,
+        # Wide bypass: 5 CG-parity (genome_cosine, genre_affinity, era_gap, rating_cal,
+        # pop_match) + 3 ranker-only attacking popularity (jaccard, genome_peak, dis_sim)
+        # + 2 ranker-only attacking recency (recent_cf_sim, recent_genome_sim)
+        # + 1 ranker-only per-user calibration (genome_residual)
+        # + 1 ranker-only popularity-taste-fit (liked_pop_gap) = 12 total.
+        'n_cross_features':      12,
+        # Menon α — CLOSED for ranker. BCE+Menon hurts NDCG (see plan markdown). Stays 0.
+        'popularity_alpha':      0.2,
         # Training-time eval: sample N val rows (deterministic, fixed seed) for fast logging.
         # Final eval (end of training) and evaluate_only always use the full val set.
         'n_eval_samples':        20_000,
@@ -323,14 +343,42 @@ def train(checkpoint_dir: str | None = None) -> str:
           f"batch={config['batch_size']}, lr={config['lr']}) ...\n")
     start = time.time()
 
+    pool_disliked_slice = slice(*USER_CONCAT_LAYOUT['pool_disliked'])
+
+    def _forward_batch(batch):
+        """Run the full forward pass over a sample_batch tuple. Returns (logits, label, cand)."""
+        (ugc, xh, xhr, ts, cand_b, label_b,
+         genome_cos_b, user_avg_b, user_cnt_b, user_year_b,
+         cand_genre_oh, cand_year_norm, cand_global_avg, cand_log_count,
+         user_liked_pop) = batch
+
+        # ONE user-side pass — shares the (B, H, n_genome) genome lookup across pools,
+        # genome_ctx, profile, baseline, and recent signals (was 3 separate lookups).
+        us = model.user_forward(ugc, xh, xhr, ts, k=5)
+
+        item_concat   = model.item_embedding(cand_b)
+        pool_disliked = us.user_concat[:, pool_disliked_slice]
+        item_id_raw   = model.item_id_lookup(cand_b)
+        cand_g_scores = model.genome_buffer[cand_b]
+
+        cross = compute_cross_features(
+            ugc, user_avg_b, user_cnt_b, user_year_b,
+            cand_genre_oh, cand_year_norm, cand_global_avg, cand_log_count,
+            genome_cos_b,
+            pool_disliked, item_id_raw, us.profile, cand_g_scores,
+            us.last_item_emb, us.last_k_mean_genome,
+            us.baseline,
+            user_liked_pop,
+        )
+        return model.score_pairs(us.user_concat, item_concat, cross), label_b, cand_b
+
     from tqdm import tqdm
     pbar = tqdm(range(config['training_steps']), desc="Training")
     for step in pbar:
         model.train()
-        ugc, xh, xhr, ts, cand_b, label_b, cross_b = sample_batch(
-            train_ds, config['batch_size'], device, rng,
-            easy_neg_frac=config['easy_neg_frac'])
-        logits = model(ugc, xh, xhr, ts, cand_b, cross_b)
+        batch = sample_batch(train_ds, config['batch_size'], device, rng,
+                             easy_neg_frac=config['easy_neg_frac'])
+        logits, label_b, cand_b = _forward_batch(batch)
 
         if popularity_bias is not None:
             logits = logits + popularity_bias[cand_b]
@@ -361,11 +409,10 @@ def train(checkpoint_dir: str | None = None) -> str:
             with torch.no_grad():
                 vl_buf = []
                 for _ in range(8):
-                    vugc, vxh, vxhr, vts, vc, vl, vcross = sample_batch(
-                        val_ds, config['batch_size'], device, val_rng,
-                        easy_neg_frac=config['easy_neg_frac'])
-                    vl_buf.append(F.binary_cross_entropy_with_logits(
-                        model(vugc, vxh, vxhr, vts, vc, vcross), vl).item())
+                    vbatch = sample_batch(val_ds, config['batch_size'], device, val_rng,
+                                          easy_neg_frac=config['easy_neg_frac'])
+                    vlogits, vlabel, _ = _forward_batch(vbatch)
+                    vl_buf.append(F.binary_cross_entropy_with_logits(vlogits, vlabel).item())
             val_loss = float(np.mean(vl_buf))
 
             improved = ndcg > best_ndcg

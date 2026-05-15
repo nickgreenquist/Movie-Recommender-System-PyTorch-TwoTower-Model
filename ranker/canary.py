@@ -23,6 +23,7 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from ranker.dataset import _build_item_features, compute_cross_features
+from ranker.model import USER_CONCAT_LAYOUT
 from ranker.train import build_ranker, get_config, get_device
 from src.dataset import MAX_HISTORY_LEN, load_features
 from src.evaluate import (USER_TYPE_TO_DISLIKED_MOVIES,
@@ -236,15 +237,25 @@ def run_canary(cg_checkpoint: str | None = None,
         else:
             user_year_val = 0.5
 
+        # User mean log_count over LIKED items (rating > 0) — canary's "fav + anchors" set.
+        liked_cidxs = [int(cidx) for cidx, r in zip(hist_ids.tolist(), hist_rats.tolist())
+                       if cidx < pad_idx and r > 0]
+        if liked_cidxs:
+            liked_t = torch.tensor(liked_cidxs, dtype=torch.long, device=device)
+            user_liked_pop_val = float(item_features[liked_t, 1149].mean().item())
+        else:
+            user_liked_pop_val = 0.0
+
         cand_feat       = item_features[cand_t]
         cand_genre_oh   = cand_feat[:, 1128:1148]
         cand_global_avg = cand_feat[:, 1148]
         cand_log_count  = cand_feat[:, 1149]
         cand_year_norm  = cand_feat[:, 1150]
 
-        user_avg_t  = torch.full((n_cand,), SYNTHETIC_USER_AVG, device=device)
-        user_cnt_t  = torch.full((n_cand,), user_count_log1p,    device=device)
-        user_year_t = torch.full((n_cand,), user_year_val,       device=device)
+        user_avg_t          = torch.full((n_cand,), SYNTHETIC_USER_AVG, device=device)
+        user_cnt_t          = torch.full((n_cand,), user_count_log1p,    device=device)
+        user_year_t         = torch.full((n_cand,), user_year_val,       device=device)
+        user_liked_pop_t    = torch.full((n_cand,), user_liked_pop_val,  device=device)
 
         # Genome cosine for synthetic user vs each candidate (using ranker's own genome_buffer).
         if valid_cidxs:
@@ -253,20 +264,37 @@ def run_canary(cg_checkpoint: str | None = None,
             gp_norm = torch.nn.functional.normalize(gp_raw, p=2, dim=1)
         else:
             gp_norm = torch.zeros(1, ranker.genome_buffer.shape[1], device=device)
-        cand_genome  = torch.nn.functional.normalize(ranker.genome_buffer[cand_t], p=2, dim=1)
-        genome_cos_t = (gp_norm * cand_genome).sum(dim=1)                      # (n_cand,)
-
-        cross = compute_cross_features(
-            ugc_t, user_avg_t, user_cnt_t, user_year_t,
-            cand_genre_oh, cand_year_norm, cand_global_avg, cand_log_count,
-            genome_cos_t,
-        )
+        cand_genome_norm = torch.nn.functional.normalize(ranker.genome_buffer[cand_t], p=2, dim=1)
+        genome_cos_t = (gp_norm * cand_genome_norm).sum(dim=1)                 # (n_cand,)
 
         with torch.no_grad():
-            user_concat_one = ranker.user_embedding(ugc_one, xh_one, xhr_one, ts_one)  # (1, U)
-            user_concat_exp = user_concat_one.expand(n_cand, -1)                       # cheap view
+            # ONE user-side pass — shares the genome lookup across all signals.
+            us = ranker.user_forward(ugc_one, xh_one, xhr_one, ts_one, k=5)
+            user_concat_exp = us.user_concat.expand(n_cand, -1)                        # cheap view
             item_concat     = ranker.item_embedding(cand_t)                            # (n_cand, I)
-            ranker_scores   = ranker.score_pairs(user_concat_exp, item_concat, cross)  # (n_cand,)
+
+            # Model-aware cross-feature inputs.
+            pool_disliked_exp = user_concat_exp[:, slice(*USER_CONCAT_LAYOUT['pool_disliked'])]
+            item_id_raw       = ranker.item_id_lookup(cand_t)                          # (n_cand, id_dim)
+            cand_g_scores     = ranker.genome_buffer[cand_t]                           # (n_cand, n_genome)
+
+            # Per-row signals broadcast across candidates.
+            user_g_prof_exp     = us.profile.expand(n_cand, -1)
+            last_item_emb_exp   = us.last_item_emb.expand(n_cand, -1)
+            last_k_mean_g_exp   = us.last_k_mean_genome.expand(n_cand, -1)
+            user_g_baseline_exp = us.baseline.expand(n_cand)
+
+            cross = compute_cross_features(
+                ugc_t, user_avg_t, user_cnt_t, user_year_t,
+                cand_genre_oh, cand_year_norm, cand_global_avg, cand_log_count,
+                genome_cos_t,
+                pool_disliked_exp, item_id_raw, user_g_prof_exp, cand_g_scores,
+                last_item_emb_exp, last_k_mean_g_exp,
+                user_g_baseline_exp,
+                user_liked_pop_t,
+            )
+
+            ranker_scores = ranker.score_pairs(user_concat_exp, item_concat, cross)    # (n_cand,)
 
         rk_order = torch.argsort(ranker_scores, descending=True).tolist()
         rk_top   = [cg_top100_corpus[i] for i in rk_order[:top_n]]

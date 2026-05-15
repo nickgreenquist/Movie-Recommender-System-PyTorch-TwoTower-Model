@@ -26,8 +26,35 @@ Head: cat(deep_out(64), cross_features(n_cross)) → Linear(64+n_cross, 1)
 
 ZERO src/ imports — buffers built externally from FeatureStore and passed in.
 """
+from collections import namedtuple
+
 import torch
 import torch.nn as nn
+
+
+# Slice layout of `user_concat` returned by WideDeepRanker.user_embedding() / user_forward().
+# Callers (eval / canary / cross-feature computation) use this to extract specific pools
+# without hardcoding offsets. Keep in sync with the order in user_concat construction.
+USER_CONCAT_LAYOUT = {
+    'pool_full':     (0, 32),
+    'pool_liked':    (32, 64),
+    'pool_disliked': (64, 96),
+    'pool_weighted': (96, 128),
+    'genome_ctx':    (128, 160),
+    'genre_emb':     (160, 192),
+    'ts_emb':        (192, 196),
+}
+
+
+# Bundled result of WideDeepRanker.user_forward() — the unified user-side pass that
+# shares one (B, H, n_genome) genome_buffer lookup across all auxiliary signals.
+UserForwardResult = namedtuple('UserForwardResult', [
+    'user_concat',           # (B, user_concat_dim) — main user embedding
+    'profile',               # (B, n_genome)        — rating-weighted avg of history genome
+    'baseline',              # (B,)                 — mean cosine of profile vs history items
+    'last_item_emb',         # (B, item_id_emb_dim) — most recent watch's item ID embedding
+    'last_k_mean_genome',    # (B, n_genome)        — mean genome over last k real watches
+])
 
 
 class WideDeepRanker(nn.Module):
@@ -174,6 +201,78 @@ class WideDeepRanker(nn.Module):
             nn.init.xavier_uniform_(module.weight, gain=0.01)
 
     # ── User tower ────────────────────────────────────────────────────────────
+
+    def user_forward(self, user_genre_ctx, X_history, X_hist_ratings, timestamp, k: int = 5):
+        """
+        Unified user-side forward pass. Computes user_concat AND every auxiliary signal
+        the cross features need (profile, baseline, last_item_emb, last_k_mean_genome)
+        in ONE pass with a SINGLE genome_buffer[X_history] lookup.
+
+        The (B, H, n_genome) lookup allocates ~922 MB at B=4096, H=50, n_genome=1128.
+        Doing it 3x (one per signal: user_embedding's genome_ctx + user_genome_profile +
+        user_genome_baseline) was the dominant per-batch cost on MPS — this collapses
+        all three into one. The profile is also reused for genome_ctx_emb (avoiding
+        recomputation) and for baseline (via bmm). Recent signals slice from hist_genome
+        (zero-copy view).
+
+        Returns UserForwardResult NamedTuple. Empty-history users get safe defaults
+        (zero last_item_emb, zero baseline).
+        """
+        pad           = self.pad_idx
+        is_real       = (X_history != pad)
+        is_real_f     = is_real.float()                                             # (B, H)
+
+        # ── 4 user pools (item_id_lookup over full / liked / disliked) ───────
+        liked_mask    = is_real & (X_hist_ratings > 0)
+        disliked_mask = is_real & (X_hist_ratings < 0)
+        X_hist_liked    = torch.where(liked_mask,    X_history, torch.full_like(X_history, pad))
+        X_hist_disliked = torch.where(disliked_mask, X_history, torch.full_like(X_history, pad))
+
+        full_embs     = self.item_id_lookup(X_history)                              # (B, H, id_dim)
+        pool_full     = self.hist_full_norm(full_embs.sum(dim=1))
+        pool_weighted = self.hist_weighted_norm(
+            (full_embs * X_hist_ratings.unsqueeze(-1)).sum(dim=1))
+        pool_liked    = self.hist_liked_norm(self.item_id_lookup(X_hist_liked).sum(dim=1))
+        pool_disliked = self.hist_disliked_norm(self.item_id_lookup(X_hist_disliked).sum(dim=1))
+
+        # ── ONE genome lookup, shared across genome_ctx / profile / baseline / recent ──
+        hist_genome    = self.genome_buffer[X_history]                              # (B, H, n_genome)
+
+        # Profile: rating-weighted avg of history genome (also feeds genome_ctx_tower).
+        rating_weights = X_hist_ratings.unsqueeze(-1) * is_real_f.unsqueeze(-1)     # (B, H, 1)
+        weight_sum     = rating_weights.abs().sum(dim=1).clamp(min=1e-6)            # (B, 1)
+        profile        = torch.bmm(rating_weights.transpose(1, 2),
+                                    hist_genome).squeeze(1) / weight_sum            # (B, n_genome)
+        genome_ctx_emb = self.user_genome_ctx_tower(profile)                        # (B, ctx_dim)
+
+        # ── Genre / TS sub-towers ────────────────────────────────────────────
+        genre_emb = self.user_genre_tower(user_genre_ctx)                           # (B, user_genre_dim)
+        ts_emb    = self.ts_tower(self.ts_lookup(timestamp))                        # (B, ts_dim)
+
+        user_concat = torch.cat([pool_full, pool_liked, pool_disliked, pool_weighted,
+                                  genome_ctx_emb, genre_emb, ts_emb], dim=1)
+
+        # ── Baseline: mean cosine of profile vs each history item via bmm ───
+        # (Avoids materializing a (B, H, n_genome) normalized intermediate.)
+        unnorm_dot   = torch.bmm(profile.unsqueeze(1),
+                                  hist_genome.transpose(1, 2)).squeeze(1)            # (B, H)
+        profile_norm = profile.norm(dim=1).clamp(min=1e-8)                           # (B,)
+        hist_norm    = hist_genome.norm(dim=2).clamp(min=1e-8)                       # (B, H)
+        cos_per_item = unnorm_dot / (profile_norm.unsqueeze(1) * hist_norm)          # (B, H)
+        n_real       = is_real_f.sum(dim=1).clamp(min=1.0)                           # (B,)
+        baseline     = (cos_per_item * is_real_f).sum(dim=1) / n_real                # (B,)
+
+        # ── Recent signals: slice from hist_genome (zero-copy view) ──────────
+        last_idx       = X_history[:, -1]                                            # (B,)
+        last_real_mask = (last_idx != pad).float().unsqueeze(-1)                     # (B, 1)
+        last_item_emb  = self.item_id_lookup(last_idx) * last_real_mask              # (B, item_id_dim)
+
+        last_k_genome  = hist_genome[:, -k:, :]                                      # (B, k, n_genome) view
+        last_k_real    = is_real_f[:, -k:]                                           # (B, k) view
+        last_k_n       = last_k_real.sum(dim=1).clamp(min=1.0).unsqueeze(-1)         # (B, 1)
+        last_k_mean    = (last_k_genome * last_k_real.unsqueeze(-1)).sum(dim=1) / last_k_n
+
+        return UserForwardResult(user_concat, profile, baseline, last_item_emb, last_k_mean)
 
     def user_embedding(self, user_genre_ctx, X_history, X_hist_ratings, timestamp):
         """

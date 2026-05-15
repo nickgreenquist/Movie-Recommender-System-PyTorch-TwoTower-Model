@@ -14,6 +14,7 @@ import numpy as np
 import torch
 
 from ranker.dataset import RankerDataset, compute_cross_features
+from ranker.model import USER_CONCAT_LAYOUT
 
 
 @torch.no_grad()
@@ -45,7 +46,14 @@ def compute_label_ranks(model, dataset: RankerDataset, device: torch.device,
         xh_b  = dataset._X_history_t[rows_t].to(device)          # (B, max_hist)
         xhr_b = dataset._X_hist_rat_t[rows_t].to(device)         # (B, max_hist)
         ts_b  = dataset._timestamp_t[rows_t].to(device)          # (B,)
-        user_concat = model.user_embedding(ugc_b, xh_b, xhr_b, ts_b)        # (B, user_concat_dim)
+        # ONE user-side pass — shares the (B, H, n_genome) genome lookup across pools,
+        # genome_ctx, profile, baseline, and recent signals.
+        us = model.user_forward(ugc_b, xh_b, xhr_b, ts_b, k=5)
+        user_concat       = us.user_concat
+        user_g_prof_b     = us.profile
+        last_item_emb_b   = us.last_item_emb
+        last_k_mean_g_b   = us.last_k_mean_genome
+        user_g_baseline_b = us.baseline
 
         # ── Item side: compute per candidate ────────────────────────────────
         cand = np.empty((B, n_cand), dtype=np.int64)
@@ -53,6 +61,8 @@ def compute_label_ranks(model, dataset: RankerDataset, device: torch.device,
         cand[:, 1:] = dataset.neg_idx[rows]
         cand_flat   = torch.from_numpy(cand.reshape(-1)).to(device)         # (B*n_cand,)
         item_concat = model.item_embedding(cand_flat)                       # (B*n_cand, item_concat_dim)
+        item_id_raw = model.item_id_lookup(cand_flat)                       # (B*n_cand, item_id_dim)
+        cand_g_scores = model.genome_buffer[cand_flat]                      # (B*n_cand, n_genome)
 
         # ── Cross features (per row × candidate) ────────────────────────────
         cand_feat       = dataset.item_features[cand_flat]
@@ -74,15 +84,28 @@ def compute_label_ranks(model, dataset: RankerDataset, device: torch.device,
         else:
             genome_cos_exp = torch.zeros(B * n_cand, device=device)
 
+        # User concat is per-row → expand across candidates. expand() is a view (cheap).
+        user_concat_exp = user_concat.unsqueeze(1).expand(-1, n_cand, -1).reshape(B * n_cand, -1)
+        pool_disliked_exp = user_concat_exp[:, slice(*USER_CONCAT_LAYOUT['pool_disliked'])]
+        # Per-row recency / content profiles broadcast across candidates.
+        user_g_prof_exp     = user_g_prof_b.unsqueeze(1).expand(-1, n_cand, -1).reshape(B * n_cand, -1)
+        last_item_emb_exp   = last_item_emb_b.unsqueeze(1).expand(-1, n_cand, -1).reshape(B * n_cand, -1)
+        last_k_mean_g_exp   = last_k_mean_g_b.unsqueeze(1).expand(-1, n_cand, -1).reshape(B * n_cand, -1)
+        user_g_baseline_exp = user_g_baseline_b.unsqueeze(1).expand(-1, n_cand).reshape(B * n_cand)
+        user_liked_pop_exp  = (dataset.user_mean_liked_log_count[rows_t.to(device)]
+                               .unsqueeze(1).expand(-1, n_cand).reshape(B * n_cand))
+
         cross = compute_cross_features(
             ugc_exp, user_avg_exp, user_cnt_exp, user_year_exp,
             cand_genre_oh, cand_year_norm, cand_global_avg, cand_log_count,
             genome_cos_exp,
+            pool_disliked_exp, item_id_raw, user_g_prof_exp, cand_g_scores,
+            last_item_emb_exp, last_k_mean_g_exp,
+            user_g_baseline_exp,
+            user_liked_pop_exp,
         )
 
         # ── Score: cheap broadcast of user_concat across candidates ─────────
-        # expand() creates a view (no copy of the genome pool work).
-        user_concat_exp = user_concat.unsqueeze(1).expand(-1, n_cand, -1).reshape(B * n_cand, -1)
         scores = model.score_pairs(user_concat_exp, item_concat, cross).reshape(B, n_cand)
 
         label_score = scores[:, 0].unsqueeze(1)
