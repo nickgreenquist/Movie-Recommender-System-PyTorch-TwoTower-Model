@@ -61,18 +61,62 @@ Movie-Recommender-System-PyTorch-TwoTower-Model/
 │       └── llm_merged/                 ← merged per-movie feature dicts
 │           └── {movieId}.json
 ├── data/
+│   ├── llm_experiment_movies_phase1.json  ← filtered ~4-5k movie list (Phase 1)
 │   └── llm_features_v1.pt              ← (n_movies, feature_dim) tensor
 │       (parallel to existing genome_context_buffer)
 ├── saved_models/
-│   ├── best_mse_genome_*.pth           ← existing prod model (genome features)
-│   └── best_mse_llm_*.pth              ← new model (LLM features)
+│   ├── best_mse_genome_*.pth           ← Model A (genome features)
+│   ├── best_mse_llm_*.pth              ← Model B (LLM features)
+│   └── best_mse_nocontent_*.pth        ← Model C (no content slot, floor baseline)
 └── results/
     └── llm_vs_genome_ablation.md       ← results writeup
 ```
 
 ---
 
+## Two-Phase Approach
+
+This experiment runs in **two phases** to validate the approach cheaply before committing to full-corpus extraction.
+
+- **Phase 1 — Reduced Corpus Pilot:** Filter the corpus down to ~4-5k movies, run the full pipeline (scrape → extract → merge → train BOTH models → eval) on that reduced set, and check whether the approach works. Both models (genome AND LLM) are retrained on the reduced corpus — do NOT compare against the existing full-corpus prod model in Phase 1; that's apples-to-oranges.
+- **Decision Gate:** Pause. The user reviews Phase 1 results and decides whether they justify the additional Phase 2 cost.
+- **Phase 2 — Full Corpus:** Only if Phase 1 looks good. Scale scraping/extraction to the full 9,375-movie corpus, train the LLM model on the full corpus, and compare directly against the existing deployed prod (genome) model.
+
+The stages below are written for Phase 1 (reduced corpus). The "Phase 2: Full Corpus" section near the end describes the scale-up deltas. The Decision Gate between them is mandatory.
+
+---
+
+## Stage 0: Corpus Filtering (Phase 1)
+
+**Goal:** Validate the experimental approach cheaply before committing to full-corpus extraction.
+
+### `llm_features/filter_corpus.py`
+
+Apply a higher rating-count threshold to filter the MovieLens corpus down to **~4-5k movies** (vs. the full 9,375).
+
+- Target: keep movies with at least **100-200 ratings** — tune the threshold until you hit the ~4-5k target size.
+- Save the filtered movie list to `data/llm_experiment_movies_phase1.json`.
+- Document the exact threshold and resulting movie count in CLAUDE.md.
+
+All Phase 1 stages (scrape, extract, train) operate on this filtered list, not the full corpus.
+
+### Phase 1 success criteria
+
+After Phase 1, you should be able to answer:
+
+1. Does the grouped extraction pipeline work without manual intervention?
+2. Do the LLM features pass the similarity sanity checks (Toy Story 1/2/3 similar, etc)?
+3. Does Model B (LLM features) train without issues?
+4. Is the quantitative comparison meaningful — clear winner, clear loser, or roughly equivalent?
+5. Do the canary user comparisons reveal interesting qualitative differences?
+
+If all of these are yes, proceed to the Decision Gate and then Phase 2. If any are no, fix the problem before scaling.
+
+---
+
 ## Stage 1: Web Scraping Per Movie
+
+> **Phase 1:** Scrape only the filtered ~4-5k movies from `data/llm_experiment_movies_phase1.json`, not all 9,375.
 
 ### `llm_features/scrape.py`
 
@@ -95,11 +139,13 @@ Collect raw web content per movie that the LLM will reason over.
 - Print summary at end: how many movies have full data, how many partial, how many failed
 
 ### Estimated cost & time
-Zero cost. A few hours of scraping for 9,375 movies if rate-limited properly.
+Zero cost. Phase 1: ~1-2 hours for the filtered ~4-5k movies if rate-limited properly. Phase 2: a similar amount for the remaining long tail (full corpus ~9,375).
 
 ---
 
 ## Stage 2: LLM Feature Extraction (Grouped + Structured)
+
+> **Phase 1:** Run extraction only on the filtered ~4-5k movies. Cost: 4-5k movies × 6 groups × ~600 tokens ≈ **$50-70**. Hard cap for Phase 1: **$100**.
 
 ### Critical design decision: grouped prompts with structured output
 
@@ -299,15 +345,24 @@ If similarities don't look right, extraction or aggregation is broken. Fix befor
 
 ---
 
-## Stage 5: Train Two Models
+## Stage 5: Train Three Models
 
-Train two two-tower models with **identical hyperparameters**. The only difference is the content feature buffer.
+Train three two-tower models with **identical hyperparameters**. The only difference is what fills the content slot: genome (A), LLM (B), or nothing (C).
 
-### Model A — Genome (existing prod)
-Already trained. Use existing best_mse checkpoint or retrain on same split for cleanest comparison.
+> **Phase 1:** Retrain all three models on the reduced ~4-5k corpus. Do NOT compare against the existing full-corpus prod model — that's apples-to-oranges. Models A, B, and C must use identical hyperparameters and the same reduced corpus.
+
+### Model A — Genome
+**Phase 1:** Retrain on the filtered ~4-5k corpus (same split) so the comparison is corpus-matched. **Phase 2:** Use the existing deployed prod (genome) checkpoint directly — at full corpus it is the right baseline and does not need retraining.
 
 ### Model B — LLM features
-Same architecture as Model A, but `genome_context_buffer` is replaced with `llm_features_v1.pt`.
+Same architecture as Model A, but `genome_context_buffer` is replaced with `llm_features_v1.pt`. **Phase 1:** train on the reduced ~4-5k corpus. **Phase 2:** train on the full 9,375-movie corpus.
+
+### Model C — No content slot (floor baseline)
+Same architecture as A and B, but with the **genome/LLM slot removed entirely** — no genome buffer, no LLM buffer. This is the floor: it measures how much *any* content feature adds over the model's remaining signals.
+
+**Critical — remove ONLY the slot under test.** Keep every other item feature identical to A and B: genre one-hot, tag vector, item ID embedding, year. Do NOT also strip genre/tag — that would make C a different model, not a matched control. The only difference between A/B/C is what fills the content slot (genome / LLM / nothing).
+
+**Phase 1 only.** Model C is a floor baseline; once the floor is established on the reduced corpus there's no need to retrain it on the full corpus. Cost: $0 (no extraction).
 
 ```python
 config = {
@@ -321,8 +376,9 @@ Same:
 - Train/val split (same random seed)
 - Optimizer (Adam, same lr)
 - Batch size, epochs, loss, negative sampling, evaluation protocol
+- **Menon popularity correction `alpha = 0` for all models, both phases** — NO popularity debiasing anywhere in this experiment. This ablation is purely about genome tags vs. LLM features; introducing popularity correction would confound the comparison. Do not set `alpha=0.5` (the prod default) here.
 
-**Only content feature source varies.**
+**Only the content slot varies (genome / LLM / nothing).**
 
 ---
 
@@ -330,12 +386,14 @@ Same:
 
 ### Quantitative metrics
 
-| Metric | Genome (Model A) | LLM (Model B) | Δ |
-|---|---|---|---|
-| Hit@10 | ? | ? | ? |
-| NDCG@10 | ? | ? | ? |
-| MRR | ? | ? | ? |
-| Recall@10 | ? | ? | ? |
+| Metric | No content (Model C) | Genome (Model A) | LLM (Model B) | A−C | B−C |
+|---|---|---|---|---|---|
+| Hit@10 | ? | ? | ? | ? | ? |
+| NDCG@10 | ? | ? | ? | ? | ? |
+| MRR | ? | ? | ? | ? | ? |
+| Recall@10 | ? | ? | ? | ? | ? |
+
+Model C is the floor. The A−C and B−C columns are the content-feature lift — how much genome and LLM each add over no content slot. The headline comparison is still A vs. B, but the lift columns make it interpretable.
 
 ### Qualitative comparison via canary users
 3-5 canary user profiles. For each, top-10 from both models side by side. The interesting cases are where they disagree.
@@ -374,6 +432,47 @@ Structure:
 
 ---
 
+## Decision Gate Between Phases
+
+Do NOT automatically proceed from Phase 1 to Phase 2. After Phase 1, **pause and ask the user to review**:
+
+- The quantitative comparison table (both models, reduced corpus)
+- 3-5 canary user qualitative comparisons
+- Any cross-group consistency warnings from the LLM extraction
+- Total cost spent so far
+
+The user decides whether the Phase 1 results justify the additional Phase 2 cost. If Phase 1 shows LLM features dramatically underperform genome tags, Phase 2 may not be worth running — the finding is clear enough already.
+
+---
+
+## Phase 2: Full Corpus (Only If Phase 1 Looks Good)
+
+**Goal:** Validate the Phase 1 finding on the full MovieLens corpus and against the existing deployed prod model.
+
+### Phase 2 work
+
+1. **Scale up scraping** — scrape the remaining ~4-5k movies that weren't in Phase 1 (the long tail). Reuse the Phase 1 cache for movies already scraped.
+
+2. **Scale up LLM extraction** — run grouped extraction on the remaining movies. Reuse the Phase 1 cache (per-movie, per-group responses are already saved).
+
+3. **Train Model B (full corpus)** — train the LLM-feature model on the full 9,375-movie corpus using identical hyperparameters to the existing prod genome model.
+
+4. **Compare against existing prod model directly** — at full corpus, the existing prod (genome) model is the right baseline. No need to retrain it.
+
+### Phase 2 success criteria
+
+- LLM-feature model on full corpus trained successfully
+- Quantitative comparison against existing prod (genome) model on full corpus
+- Long-tail performance specifically called out — does LLM still match/beat on less popular movies?
+- Streamlit demo updated to use the full-corpus models
+
+### Phase 2 cost
+
+- Incremental LLM extraction: **~$50-80** for the additional ~4-5k movies
+- Total experiment cost (Phase 1 + Phase 2): **~$100-150**
+
+---
+
 ## Updated README
 
 ```markdown
@@ -395,22 +494,38 @@ See [results/llm_vs_genome_ablation.md](results/llm_vs_genome_ablation.md).
 
 ## Implementation Order (Strict)
 
-1. **Stage 1 (test)** — Build scraper, scrape 10 movies
-2. **Verify Stage 1** — Inspect 10 movies' content quality
-3. **Stage 1 (full)** — Scrape all 9,375 movies (overnight)
-4. **Stage 2 setup** — Define 6 schemas, draft 6 prompts
-5. **Stage 2 (test)** — Run grouped extraction on 5 movies
-6. **Verify Stage 2** — Calibration check, similarity check, no defaulting to 0.5
-7. **Stage 2 (full)** — Run grouped extraction on all 9,375 (~3-4 hours)
-8. **Stage 3** — Merge groups, run cross-group consistency validation
-9. **Stage 4** — Build feature tensor, similarity sanity check
-10. **Verify Stage 4** — Confirm Toy Story 1/2/3 similar in LLM feature space
-11. **Stage 5** — Train Model B
-12. **Stage 6** — Run evaluation, generate results
-13. **Stage 7** — Add Streamlit tab
-14. **Stage 8** — Write up findings honestly
+### Phase 1 — Reduced Corpus Pilot
 
-Do not move to stage N+1 until stage N is verified.
+1. **Stage 0** — Filter corpus to ~4-5k movies, save `data/llm_experiment_movies_phase1.json`
+2. **Stage 1 (test)** — Build scraper, scrape 10 movies
+3. **Verify Stage 1** — Inspect 10 movies' content quality
+4. **Stage 1 (Phase 1)** — Scrape the filtered ~4-5k movies
+5. **Stage 2 setup** — Define 6 schemas, draft 6 prompts
+6. **Stage 2 (test)** — Run grouped extraction on 5 movies
+7. **Verify Stage 2** — Calibration check, similarity check, no defaulting to 0.5
+8. **Stage 2 (Phase 1)** — Run grouped extraction on the filtered ~4-5k movies
+9. **Stage 3** — Merge groups, run cross-group consistency validation
+10. **Stage 4** — Build feature tensor, similarity sanity check
+11. **Verify Stage 4** — Confirm Toy Story 1/2/3 similar in LLM feature space
+12. **Stage 5 (Phase 1)** — Train all three models (genome + LLM + no-content floor) on the reduced corpus
+13. **Stage 6** — Run evaluation, generate results
+14. **Stage 8** — Write up Phase 1 findings honestly
+
+### Decision Gate
+
+15. **Pause** — Present Phase 1 results to the user. The user decides whether to proceed to Phase 2.
+
+### Phase 2 — Full Corpus (only if approved)
+
+16. **Stage 1 (Phase 2)** — Scrape the remaining long-tail movies (reuse Phase 1 cache)
+17. **Stage 2 (Phase 2)** — Extract features on the remaining movies (reuse Phase 1 cache)
+18. **Stage 4 (Phase 2)** — Rebuild full-corpus feature tensor
+19. **Stage 5 (Phase 2)** — Train Model B on full corpus; use existing prod genome model as baseline
+20. **Stage 6 (Phase 2)** — Evaluate vs. prod, call out long-tail performance
+21. **Stage 7** — Add Streamlit tab (full-corpus models)
+22. **Stage 8** — Finalize writeup
+
+Do not move to stage N+1 until stage N is verified. Do not cross the Decision Gate without user approval.
 
 ---
 
@@ -418,12 +533,13 @@ Do not move to stage N+1 until stage N is verified.
 
 | Item | Estimated Cost |
 |---|---|
-| Web scraping | $0 |
-| LLM extraction (Claude Sonnet, 6 groups × 9k movies) | $100-150 |
+| Web scraping (both phases) | $0 |
+| LLM extraction — Phase 1 (6 groups × ~4-5k movies) | $50-70 |
+| LLM extraction — Phase 2 (incremental, remaining ~4-5k movies) | $50-80 |
 | Training compute | $0 |
-| **Total** | **~$120-150** |
+| **Total (Phase 1 + Phase 2)** | **~$100-150** |
 
-Hard upper bound: $200. If approaching $175 mid-extraction, stop and revise prompts.
+**Phase 1 hard cap: $100.** Overall hard upper bound: $200. If approaching $175 across both phases mid-extraction, stop and revise prompts.
 
 ---
 
