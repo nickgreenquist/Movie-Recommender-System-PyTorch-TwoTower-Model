@@ -22,7 +22,7 @@ A PyTorch Two-Tower neural network recommender system trained on the MovieLens 3
 
 ## Running the Code
 
-The project is a Python CLI (`main.py`). Notebooks in `jupyter/` are archived references only — the canonical code is in `src/`.
+The project is a Python CLI (`main.py`). Notebooks in `archive/notebooks/` are archived references only — the canonical code is in `src/`.
 
 ```bash
 python main.py preprocess          # Stage 1: raw CSVs → data/base_*.parquet
@@ -281,10 +281,9 @@ The two-tower architecture was validated on Goodreads (user-driven data) where s
 
 ## Potential Next Improvements
 
-1. **Ranking model** — a second-stage reranker over the top-K retrieval candidates. Would learn to order by predicted rating rather than retrieval score.
-2. **Rating variance per genre** in the user context vector — distinguishes genuine fans from casual watchers.
-3. **Genre + year interaction in the item tower** — directly attacks era confusion in War/WW2/Western drift.
-4. **Embedding size tuning** — larger genome/genre dims may improve representation capacity.
+1. **Rating variance per genre** in the user context vector — distinguishes genuine fans from casual watchers.
+2. **Genre + year interaction in the item tower** — directly attacks era confusion in War/WW2/Western drift.
+3. **Embedding size tuning** — larger genome/genre dims may improve representation capacity.
 
 ## Known Code Inconsistency
 
@@ -292,12 +291,28 @@ The two-tower architecture was validated on Goodreads (user-driven data) where s
 
 ---
 
-## Git Workflow
+## Working Style and Guidelines
+
+### Git workflow
 
 Never commit and push in the same command. Always commit first, then ask before pushing.
 
-## Experiment Discipline
+For changes that require retraining to validate (hyperparameters, optimizer, scheduler, loss, dataset logic, model architecture): write the code, then stop. Do not commit until the user has run training and confirmed the results look better.
 
-**Change one thing at a time.** Every training run should isolate exactly one variable. If asked to make multiple architectural changes in the same run, stop and warn before proceeding — the canary comparison becomes uninterpretable when multiple things change simultaneously.
+**After any model/training change: always wait for the user to run `python main.py train`, then `python main.py canary`, then `python main.py eval`, and confirm the results are acceptable before committing anything.**
+
+### Behavioral guidelines
+
+These supplement (not replace) the Claude Code system prompt. The standard "don't speculate, don't over-abstract, don't over-comment" rules already live there — what follows is project-specific or worth re-stating because it's bitten us before.
+
+- **Match the existing style.** This codebase has a strong house style: long docstring headers on every util, NamedTuple bundles for related buffers, multi-paragraph comment banners on training-loop functions, named slice offsets instead of magic numbers, parquet column comments that line up vertically. When you add code, match what's around it even if you'd structure it differently.
+
+- **Surgical changes.** Touch only what the task requires. Don't "improve" adjacent code, comments, or formatting. If you notice unrelated dead code or a refactor opportunity, mention it — don't act on it. The test: every changed line should trace directly to the user's request.
+
+- **Verification belongs to the user for model changes.** The Git workflow above is the contract: any change that affects training behavior gets the code-only treatment. You verify imports compile, shapes match, smoke-test passes — the user verifies metrics. Don't claim success on a model/dataset change based on smoke tests alone, and don't update results tables in CLAUDE.md or the implementation plan until the user reports numbers back.
+
+- **Surface tradeoffs early, in one or two sentences.** If multiple interpretations of a request exist, name them briefly and pick the one you think is right with a stated assumption — don't silently choose, and don't open a multi-option AskUserQuestion for routine calls. Default to action with a stated assumption; the user can redirect.
+
+- **Use TaskCreate for multi-step work, not text-form plans.** When a task has 3+ steps with their own verifications (e.g. "implement Bucket N"), track them with TaskCreate/TaskUpdate so progress is visible in the UI. Don't also write the plan out as inline prose or a separate `.md` file — that's redundant.
 
 **Do not touch `streamlit_app.py` or `src/export.py` until a model change is verified good.** The workflow is: train → canary → eval → if better, then update export/streamlit.
