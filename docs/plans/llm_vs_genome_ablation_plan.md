@@ -6,7 +6,7 @@ Test whether LLM-generated item features can match or beat the human-curated Mov
 
 **Research question:** Can modern LLMs replace expensive human curation for content features in recommendation systems?
 
-**Deliverable:** Two trained two-tower models on MovieLens 32M — one using genome tags (current prod), one using LLM-generated features from scraped web content. Quantified ablation of which produces better recommendations.
+**Deliverable:** Three trained two-tower models on MovieLens 32M — one using genome tags (current prod), one using LLM-generated features from scraped web content, and a no-content-slot floor baseline. Quantified ablation of which produces better recommendations, with the floor baseline measuring how much either content source adds at all.
 
 This is a **parallel experiment** within the existing Movie Recommender repo, not a new repo or project.
 
@@ -78,7 +78,7 @@ Movie-Recommender-System-PyTorch-TwoTower-Model/
 
 This experiment runs in **two phases** to validate the approach cheaply before committing to full-corpus extraction.
 
-- **Phase 1 — Reduced Corpus Pilot:** Filter the corpus down to ~4-5k movies, run the full pipeline (scrape → extract → merge → train BOTH models → eval) on that reduced set, and check whether the approach works. Both models (genome AND LLM) are retrained on the reduced corpus — do NOT compare against the existing full-corpus prod model in Phase 1; that's apples-to-oranges.
+- **Phase 1 — Reduced Corpus Pilot:** Filter the corpus down to ~4-5k movies, run the full pipeline (scrape → extract → merge → train all three models → eval) on that reduced set, and check whether the approach works. All three models (genome, LLM, and no-content floor) are trained on the reduced corpus — do NOT compare against the existing full-corpus prod model in Phase 1; that's apples-to-oranges.
 - **Decision Gate:** Pause. The user reviews Phase 1 results and decides whether they justify the additional Phase 2 cost.
 - **Phase 2 — Full Corpus:** Only if Phase 1 looks good. Scale scraping/extraction to the full 9,375-movie corpus, train the LLM model on the full corpus, and compare directly against the existing deployed prod (genome) model.
 
@@ -436,7 +436,7 @@ Structure:
 
 Do NOT automatically proceed from Phase 1 to Phase 2. After Phase 1, **pause and ask the user to review**:
 
-- The quantitative comparison table (both models, reduced corpus)
+- The quantitative comparison table (all three models, reduced corpus)
 - 3-5 canary user qualitative comparisons
 - Any cross-group consistency warnings from the LLM extraction
 - Total cost spent so far
@@ -478,12 +478,14 @@ The user decides whether the Phase 1 results justify the additional Phase 2 cost
 ```markdown
 ## LLM-Generated Features Ablation
 
-This repo contains TWO trained models on MovieLens 32M:
+This repo contains THREE trained models on MovieLens 32M:
 1. **Prod (genome tags)** — MovieLens's curated 1128-dimension genome features
 2. **LLM (extracted features)** — ~145 dimensions of LLM-extracted structured content
    features from scraped IMDB/TMDB/Wikipedia content
+3. **No content slot (floor baseline)** — same model with the content slot removed,
+   measuring how much either content source adds at all
 
-Identical architecture, identical training, only content feature source differs.
+Identical architecture, identical training, only the content slot differs.
 
 **Finding:** [Fill in after experiment]
 
@@ -571,13 +573,13 @@ Do not move to stage N+1 until stage N is verified. Do not cross the Decision Ga
 
 The experiment is complete when:
 
-1. Both models trained with identical hyperparameters, only content feature source differs
+1. All three models trained with identical hyperparameters, only the content slot differs
 2. Quantitative comparison table filled in
 3. Qualitative canary user comparison for 3-5 profiles
 4. Cross-group consistency validation passed (or documented if not)
 5. Streamlit demo updated with side-by-side tab
 6. Writeup documents finding honestly
-7. README updated to reflect dual-model nature
+7. README updated to reflect the three-model nature
 
 The result itself doesn't determine success — experimental rigor does.
 
