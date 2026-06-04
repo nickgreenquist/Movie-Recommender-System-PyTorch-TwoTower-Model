@@ -89,7 +89,7 @@ User Tower (4-pool):
   sum_pool(item_embedding_lookup[liked_history])           →  pool_liked     (32)  [LayerNorm]
   sum_pool(item_embedding_lookup[disliked_history])        →  pool_disliked  (32)  [LayerNorm]
   rating_weighted_sum(item_embedding_lookup[full_history]) →  pool_weighted  (32)  [LayerNorm]
-  user_genome_context_tower(rating_weighted_avg(raw_genome[history]))  →  genome_ctx  (32)
+  user_content_tower(rating_weighted_avg(raw_genome[history]))  →  content_ctx  (32)
   user_genre_tower([avg_rating_per_genre | watch_frac])   →  genre_emb      (32)
   timestamp_embedding_tower(watch_month)                  →  ts_emb         (4)
   concat (196) → Linear(256) → ReLU → Linear(128) → L2-normalize → user_emb (128)
@@ -97,7 +97,7 @@ User Tower (4-pool):
 Item Tower:
   item_genre_tower(genre_onehot)        →  item_genre_emb   (8)
   item_tag_tower(tag_vector)            →  item_tag_emb     (16)
-  item_genome_tag_tower(genome_scores)  →  item_genome_emb  (32)
+  item_content_tower(genome_scores)  →  item_content_emb  (32)
   item_embedding_tower(movie_id)        →  item_emb         (32)  [shared lookup with all 4 user pools]
   year_embedding_tower(release_year)    →  year_emb         (8)
   concat (96) → Linear(256) → ReLU → Linear(128) → L2-normalize → item_emb (128)
@@ -111,8 +111,9 @@ Sub-tower linears: Xavier uniform `gain=0.1`. Projection linears re-initialized 
 
 - **4-pool user tower:** Full, liked, disliked, and rating-weighted sum pools all operate on `item_embedding_lookup` (32-dim raw ID embedding). Each has its own LayerNorm. The liked/disliked pools are pre-computed in the dataset builder as right-aligned padded tensors; the model receives them directly.
 - **Shared item embedding:** `item_embedding_lookup` is shared between the item tower and all four user history pools. Removing `item_embedding_tower` (the Linear+ReLU on top of the lookup) causes severe genre clustering — do not remove it.
-- **Genome context tower:** `user_genome_context_tower` runs a single Linear(1128→32) over the rating-weighted average of raw genome scores across the user's full history. This is a compact dense content fingerprint. It is NOT a pool over `item_genome_tag_tower` outputs — do not confuse the two.
-- **`item_genome_tag_tower` is item-side only.** It is no longer shared with the user tower. It compresses per-movie genome scores (1128→32) for the item embedding.
+- **Content context tower:** `user_content_tower` runs a single Linear(1128→32) over the rating-weighted average of raw genome scores across the user's full history. This is a compact dense content fingerprint. It is NOT a pool over `item_content_tower` outputs — do not confuse the two.
+- **`item_content_tower` is item-side only.** It is no longer shared with the user tower. It compresses per-movie genome scores (1128→32) for the item embedding.
+- **Swappable content slot:** `item_content_tower` / `user_content_tower` are a swappable slot set by `content_feature_source` (`'genome'` | `'llm'` | `None`), filled by **genome** in prod. `None` omits both towers and the buffer (the ablation's no-content baseline). Legacy checkpoints load via `LEGACY_KEY_REMAP` in `src/checkpoint.py`. The genome *product feature* (probes, anchors, Explore-Genome tab) stays genome-named — only the slot was renamed.
 - **Genome sub-tower size matters:** genome compresses 1,128 → 32 dims. Do not shrink below 32 — information is lost before the projection MLP can mix it. Tested at 16, was noticeably worse.
 - **L2 normalization:** both towers output unit-norm vectors. Dot product = cosine similarity. No post-hoc popularity correction needed at inference.
 
@@ -131,6 +132,8 @@ Sub-tower linears: Xavier uniform `gain=0.1`. Projection linears re-initialized 
 - **Checkpointing**: `saved_models/best_softmax_<timestamp>.pth`; periodic checkpoints every 30,000 steps.
 
 ### Alpha selection (Menon popularity correction)
+
+**Workflow rule — alpha is a deployment-time knob, never a training-search knob.** Always train at `alpha=0` while iterating on model/architecture: it gives the best offline MRR and the cleanest signal for comparing variants, and it is the setting all ablation/experiment runs use. Only once a new best model/architecture is locked in do you fine-tune `alpha` — sweep values, pick the one with the best **canary** results — before deployment. The committed `get_config` default is therefore `alpha=0.0` (search mode); the `alpha=0.5` below is the fine-tuned value chosen for the *current prod model*, not the training default.
 
 `alpha=0.5` chosen over alternatives:
 - `alpha=0.0` — best offline MRR but severe popular drift on canary (War/Fantasy/Heist/Crime collapse to IMDb top-10)
