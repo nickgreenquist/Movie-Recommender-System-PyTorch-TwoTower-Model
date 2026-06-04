@@ -14,9 +14,17 @@ import pandas as pd
 import pyarrow.parquet as pq
 import torch
 
+from src.features import FEATURES_VERSION
+
 
 TIMESTAMP_NUM_BINS = 1_500
 MAX_HISTORY_LEN    = 50   # cap watch history to most recent N movies
+
+# Artifact versions (filename markers). FEATURES_VERSION (src/features.py) tags the
+# features_movies_*.parquet; DATASET_VERSION tags the softmax dataset .pt splits and the
+# movie_interaction_counts .npy that is built alongside them. They are independent — keep
+# them distinct, do not collapse into one shared string.
+DATASET_VERSION = 'v2'
 
 
 # ── FeatureStore ──────────────────────────────────────────────────────────────
@@ -55,14 +63,14 @@ class FeatureStore:
     user_context_genre_watch_count_to_i:  dict
 
     # Per-corpus-item interaction counts (float32 array, index = corpus idx).
-    # Populated by load_features() when movie_interaction_counts_v2.npy exists.
+    # Populated by load_features() when movie_interaction_counts_<DATASET_VERSION>.npy exists.
     # None if the file is missing (popularity_alpha=0 is safe in that case).
     movie_interaction_counts: object = field(default=None)  # np.ndarray | None
 
 
 # ── Loader ────────────────────────────────────────────────────────────────────
 
-def load_features(data_dir: str = 'data', version: str = 'v1') -> FeatureStore:
+def load_features(data_dir: str = 'data', version: str = FEATURES_VERSION) -> FeatureStore:
     """Load feature parquets and base vocab/movies into a FeatureStore."""
     vocab_df   = pd.read_parquet(os.path.join(data_dir, 'base_vocab.parquet'))
     movies_df  = pd.read_parquet(os.path.join(data_dir, 'base_movies.parquet'))
@@ -129,7 +137,7 @@ def load_features(data_dir: str = 'data', version: str = 'v1') -> FeatureStore:
         np.linspace(ts_min, ts_max, TIMESTAMP_NUM_BINS)
     )
 
-    counts_path = os.path.join(data_dir, 'movie_interaction_counts_v2.npy')
+    counts_path = os.path.join(data_dir, f'movie_interaction_counts_{DATASET_VERSION}.npy')
     movie_interaction_counts = np.load(counts_path) if os.path.exists(counts_path) else None
 
     return FeatureStore(
@@ -473,17 +481,20 @@ def make_softmax_splits(fs: FeatureStore, data_dir: str = 'data',
 
 
 def save_softmax_splits(train_data: tuple, val_data: tuple,
-                         data_dir: str = 'data', version: str = 'v2') -> None:
+                         data_dir: str = 'data', version: str = DATASET_VERSION) -> None:
     torch.save(train_data, os.path.join(data_dir, f'dataset_softmax_train_{version}.pt'))
     torch.save(val_data,   os.path.join(data_dir, f'dataset_softmax_val_{version}.pt'))
     target_ids = train_data[6].numpy()
     counts = np.bincount(target_ids).astype(np.float32)
-    np.save(os.path.join(data_dir, 'movie_interaction_counts_v2.npy'), counts)
+    # Counts are read back by load_features() (which has no dataset-version arg), so name
+    # them by the canonical DATASET_VERSION rather than the per-call version param.
+    counts_name = f'movie_interaction_counts_{DATASET_VERSION}.npy'
+    np.save(os.path.join(data_dir, counts_name), counts)
     print(f"Saved dataset_softmax_train_{version}.pt, dataset_softmax_val_{version}.pt, "
-          f"movie_interaction_counts_v2.npy → {data_dir}/")
+          f"{counts_name} → {data_dir}/")
 
 
-def load_softmax_splits(data_dir: str = 'data', version: str = 'v2') -> tuple:
+def load_softmax_splits(data_dir: str = 'data', version: str = DATASET_VERSION) -> tuple:
     train_path = os.path.join(data_dir, f'dataset_softmax_train_{version}.pt')
     val_path   = os.path.join(data_dir, f'dataset_softmax_val_{version}.pt')
     print(f"Loading {train_path} ...")

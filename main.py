@@ -20,7 +20,9 @@ import sys
 
 DATA_DIR = 'data'
 RAW_DIR  = 'data/ml-32m'
-VERSION  = 'v1'
+# Artifact versions live with the modules that produce them — features_movies_*.parquet uses
+# src/features.py FEATURES_VERSION (the library defaults below resolve to it); the softmax
+# dataset .pt / counts use src/dataset.py DATASET_VERSION, threaded through explicitly.
 
 
 def cmd_preprocess():
@@ -30,25 +32,26 @@ def cmd_preprocess():
 
 def cmd_features():
     from src.features import run
-    run(data_dir=DATA_DIR, version=VERSION)
+    run(data_dir=DATA_DIR)
 
 
 def cmd_dataset():
-    from src.dataset import load_features, make_softmax_splits, save_softmax_splits
+    from src.dataset import (DATASET_VERSION, load_features, make_softmax_splits,
+                             save_softmax_splits)
     print("Loading features ...")
-    fs = load_features(DATA_DIR, VERSION)
+    fs = load_features(DATA_DIR)
     print("\nBuilding softmax datasets ...")
     train_data, val_data = make_softmax_splits(fs, DATA_DIR)
-    save_softmax_splits(train_data, val_data, DATA_DIR)
+    save_softmax_splits(train_data, val_data, DATA_DIR, version=DATASET_VERSION)
 
 
 def cmd_train():
-    from src.dataset import load_features, load_softmax_splits
+    from src.dataset import DATASET_VERSION, load_features, load_softmax_splits
     from src.train import get_config, build_model, train_softmax
     print("Loading features ...")
-    fs = load_features(DATA_DIR, VERSION)
+    fs = load_features(DATA_DIR)
     print("\nLoading softmax datasets ...")
-    train_data, val_data = load_softmax_splits(DATA_DIR)
+    train_data, val_data = load_softmax_splits(DATA_DIR, version=DATASET_VERSION)
     config = get_config()
     model  = build_model(config, fs)
     train_softmax(model, train_data, val_data, config, fs)
@@ -56,19 +59,19 @@ def cmd_train():
 
 def cmd_canary(checkpoint_path=None):
     from src.evaluate import run_canary
-    run_canary(data_dir=DATA_DIR, checkpoint_path=checkpoint_path, version=VERSION)
+    run_canary(data_dir=DATA_DIR, checkpoint_path=checkpoint_path)
 
 
 def cmd_probe(checkpoint_path=None):
     from src.evaluate import run_probes
-    run_probes(data_dir=DATA_DIR, checkpoint_path=checkpoint_path, version=VERSION)
+    run_probes(data_dir=DATA_DIR, checkpoint_path=checkpoint_path)
 
 
 def cmd_eval(checkpoint_path=None):
     from src.evaluate import _setup
     from src.offline_eval import run_offline_eval
 
-    result = _setup(data_dir=DATA_DIR, checkpoint_path=checkpoint_path, version=VERSION)
+    result = _setup(data_dir=DATA_DIR, checkpoint_path=checkpoint_path)
     model, fs = result[0], result[1]
     checkpoint_path = result[-1]
     run_offline_eval(model, fs, checkpoint_path=checkpoint_path or '', data_dir=DATA_DIR)
@@ -76,7 +79,7 @@ def cmd_eval(checkpoint_path=None):
 
 def cmd_export(checkpoint_path=None):
     from src.export import run_export
-    run_export(data_dir=DATA_DIR, checkpoint_path=checkpoint_path, version=VERSION)
+    run_export(data_dir=DATA_DIR, checkpoint_path=checkpoint_path)
 
 
 def cmd_posters():

@@ -12,6 +12,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from src.dataset import FeatureStore
+from src.features import FEATURES_VERSION
 from src.model import MovieRecommender
 from src.train import build_model, get_config, get_device, print_model_summary
 
@@ -522,7 +523,7 @@ def probe_genome_tag(movie_embeddings: dict, fs: FeatureStore,
 
 # ── Shared setup ─────────────────────────────────────────────────────────────
 
-def _setup(data_dir: str, checkpoint_path: str, version: str):
+def _setup(data_dir: str, checkpoint_path: str, version: str = FEATURES_VERSION):
     """Load features, build model, load checkpoint, print dims, build embeddings."""
     from src.dataset import load_features
 
@@ -622,7 +623,7 @@ def _setup(data_dir: str, checkpoint_path: str, version: str):
 # ── Orchestrators ─────────────────────────────────────────────────────────────
 
 def run_canary(data_dir: str = 'data', checkpoint_path: str = None,
-               version: str = 'v1') -> None:
+               version: str = FEATURES_VERSION) -> None:
     import contextlib, io, sys
     result = _setup(data_dir, checkpoint_path, version)
     if result[0] is None:
@@ -714,7 +715,7 @@ def probe_similar(movie_embeddings: dict, fs: FeatureStore,
 
 
 def run_probes(data_dir: str = 'data', checkpoint_path: str = None,
-               version: str = 'v1') -> None:
+               version: str = FEATURES_VERSION) -> None:
     result = _setup(data_dir, checkpoint_path, version)
     if result[0] is None:
         return

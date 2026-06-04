@@ -20,13 +20,14 @@ import torch.nn.functional as F
 
 from src.dataset import load_features
 from src.evaluate import build_movie_embeddings
+from src.features import FEATURES_VERSION
 from src.train import build_model, get_config
 
 SERVING_DIR = 'serving'
 
 
 def run_export(data_dir: str = 'data', checkpoint_path: str = None,
-               version: str = 'v1') -> None:
+               version: str = FEATURES_VERSION) -> None:
     # Resolve checkpoint
     if checkpoint_path is None:
         cfg = get_config()

@@ -7,13 +7,13 @@ import collections
 import pandas as pd
 
 DATA_DIR     = 'data'
-VERSION      = 'v1'
 TOP_K        = 100
 
 from src.dataset import load_features, get_val_users, build_rollback_dataset, MAX_ROLLBACK_EXAMPLES_PER_USER
+from src.features import FEATURES_VERSION
 
 print("Loading feature store ...")
-fs = load_features(DATA_DIR, VERSION)
+fs = load_features(DATA_DIR, FEATURES_VERSION)
 
 print("Getting val users ...")
 val_users, raw_df = get_val_users(fs, DATA_DIR)
