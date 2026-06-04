@@ -13,6 +13,7 @@ import torch
 import torch.nn.functional as F
 from src.dataset import FeatureStore
 from src.features import FEATURES_VERSION
+from src.inference import build_user_embedding
 from src.model import MovieRecommender
 from src.train import build_model, get_config, get_device, print_model_summary
 
@@ -247,7 +248,12 @@ def _get_anchor_titles(fs: FeatureStore, genome_tags: list, exclude: set) -> lis
 
 def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: str,
                           ts_inference: torch.Tensor) -> torch.Tensor:
-    """Build the combined user embedding for a canary user type. Mirrors website logic."""
+    """Build the combined user embedding for a canary user type. Mirrors website logic.
+
+    Resolves the canary user_type into liked/disliked titles and genome anchors here, then
+    delegates the genre-context + history packing + model call to the shared inference path
+    (src/inference.py) so canary and the Streamlit app feed the user tower identically.
+    """
     fav_movies   = USER_TYPE_TO_FAVORITE_MOVIES[user_type]
     dis_movies   = USER_TYPE_TO_DISLIKED_MOVIES[user_type]
     genome_tags  = USER_TYPE_TO_GENOME_TAGS.get(user_type, [])
@@ -259,58 +265,10 @@ def _build_user_embedding(model: MovieRecommender, fs: FeatureStore, user_type: 
         [(t, VALUE_FAVORITE_MOVIE_RATING) for t in fav_movies] +
         [(t, VALUE_ANCHOR_MOVIE_RATING)   for t in anchor_titles]
     )
-    # Genre context — derived from fav/disliked movies
-    n_genres = len(fs.genres_ordered)
-    ctx = [0.0] * (2 * n_genres)
-    genre_rating_sum  = {}
-    genre_movie_count = {}
-    for t, w in liked_with_weights + [(t, VALUE_DISLIKED_MOVIE_RATING) for t in dis_movies]:
-        mid = fs.title_to_movieId.get(t)
-        if mid is None:
-            continue
-        for g in fs.movieId_to_genres.get(mid, []):
-            genre_rating_sum[g]  = genre_rating_sum.get(g, 0.0) + w
-            genre_movie_count[g] = genre_movie_count.get(g, 0)  + 1
-    total_assign = sum(genre_movie_count.values())  # total genre-movie pairs, matches training
-    for g, rsum in genre_rating_sum.items():
-        avg_r = rsum / genre_movie_count[g]
-        frac  = genre_movie_count[g] / max(total_assign, 1)
-        if g in fs.user_context_genre_avg_rating_to_i:
-            ctx[fs.user_context_genre_avg_rating_to_i[g]]  = avg_r
-        if g in fs.user_context_genre_watch_count_to_i:
-            ctx[fs.user_context_genre_watch_count_to_i[g]] = frac
-    # Watch history
-    liked_hist = [
-        (fs.item_emb_movieId_to_i[fs.title_to_movieId[t]], w)
-        for t, w in liked_with_weights
-        if t in fs.title_to_movieId and fs.title_to_movieId[t] in fs.item_emb_movieId_to_i
-    ]
-    dis_hist = [
-        (fs.item_emb_movieId_to_i[fs.title_to_movieId[t]], VALUE_DISLIKED_MOVIE_RATING)
-        for t in dis_movies
-        if t in fs.title_to_movieId and fs.title_to_movieId[t] in fs.item_emb_movieId_to_i
-    ]
-    history = liked_hist + dis_hist
-    ratings = [h[1] for h in liked_hist] + [VALUE_DISLIKED_MOVIE_RATING] * len(dis_hist)
-
-    device = next(model.parameters()).device
-    if history:
-        all_ids  = [h[0] for h in history]
-        all_wts  = ratings
-        liked_ids    = [h[0] for h in liked_hist]
-        disliked_ids = [h[0] for h in dis_hist]
-        hist_ids     = torch.tensor([all_ids],     dtype=torch.long).to(device)
-        hist_wts     = torch.tensor([all_wts],     dtype=torch.float).to(device)
-        liked_t      = torch.tensor([liked_ids],   dtype=torch.long).to(device) if liked_ids    else torch.tensor([[model.pad_idx]], dtype=torch.long).to(device)
-        disliked_t   = torch.tensor([disliked_ids],dtype=torch.long).to(device) if disliked_ids else torch.tensor([[model.pad_idx]], dtype=torch.long).to(device)
-    else:
-        hist_ids   = torch.tensor([[model.pad_idx]], dtype=torch.long).to(device)
-        hist_wts   = torch.tensor([[0.0]], dtype=torch.float).to(device)
-        liked_t    = torch.tensor([[model.pad_idx]], dtype=torch.long).to(device)
-        disliked_t = torch.tensor([[model.pad_idx]], dtype=torch.long).to(device)
-
-    X_inf = torch.tensor([ctx]).to(device)
-    return model.user_embedding(X_inf, hist_ids, liked_t, disliked_t, hist_wts, ts_inference)
+    return build_user_embedding(
+        model, fs, liked_with_weights, dis_movies, ts_inference,
+        disliked_movie_value=VALUE_DISLIKED_MOVIE_RATING,
+    )
 
 
 def run_canary_eval(model: MovieRecommender, fs: FeatureStore,
