@@ -12,6 +12,7 @@ from datetime import datetime
 import numpy as np
 import torch
 import torch.nn.functional as F
+from src.corpus import CORPUS, corpus_suffix
 from src.dataset import FeatureStore
 from src.model import MovieRecommender
 
@@ -33,10 +34,12 @@ def get_config() -> dict:
         'item_year_embedding_size':         8,
         'timestamp_feature_embedding_size': 4,
         'item_tag_embedding_size':          16,
-        'item_genome_tag_embedding_size':   32,
+        'item_content_embedding_size':      32,
         'user_genre_embedding_size':        32,
         'item_genre_embedding_size':        8,
-        'user_genome_context_embedding_size': 32,
+        'user_content_embedding_size':      32,
+        # Swappable content slot: 'genome' (prod) | 'llm' | None (ablation Model C).
+        'content_feature_source':           'genome',
         # Projection MLP
         'proj_hidden':  256,
         'output_dim':   128,
@@ -50,19 +53,26 @@ def get_config() -> dict:
         'checkpoint_every': 30_000,
         'checkpoint_dir':   'saved_models',
         'temperature':      0.1,
-        'popularity_alpha': 0.5,
+        'popularity_alpha': 0.0,
     }
 
 
 # ── Model factory ─────────────────────────────────────────────────────────────
 
 def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
-    genome_matrix = np.array(
-        [fs.movieId_to_genome_tag_context[mid] for mid in fs.top_movies],
-        dtype=np.float32,
-    )
-    pad_row = np.zeros((1, genome_matrix.shape[1]), dtype=np.float32)
-    genome_context_buffer = torch.from_numpy(np.vstack([genome_matrix, pad_row]))
+    content_feature_source = config.get('content_feature_source', 'genome')
+
+    # Content slot (genome today, LLM later). Built from the genome FeatureStore field for the
+    # 'genome' source; None when the slot is disabled (ablation Model C). The genome field name is
+    # unchanged — genome is the *product feature* that happens to fill the content slot today.
+    content_context_buffer = None
+    if content_feature_source is not None:
+        content_matrix = np.array(
+            [fs.movieId_to_genome_tag_context[mid] for mid in fs.top_movies],
+            dtype=np.float32,
+        )
+        pad_row = np.zeros((1, content_matrix.shape[1]), dtype=np.float32)
+        content_context_buffer = torch.from_numpy(np.vstack([content_matrix, pad_row]))
 
     genre_matrix = np.array(
         [fs.movieId_to_genre_context[mid] for mid in fs.top_movies], dtype=np.float32)
@@ -85,15 +95,16 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
         all_years_len=len(fs.years_ordered),
         timestamp_num_bins=fs.timestamp_num_bins,
         user_context_size=fs.user_context_size,
-        genome_context_buffer=genome_context_buffer,
+        content_context_buffer=content_context_buffer,
+        content_feature_source=content_feature_source,
         item_genre_embedding_size=config['item_genre_embedding_size'],
         item_tag_embedding_size=config['item_tag_embedding_size'],
-        item_genome_tag_embedding_size=config['item_genome_tag_embedding_size'],
+        item_content_embedding_size=config['item_content_embedding_size'],
         item_movieId_embedding_size=config['item_movieId_embedding_size'],
         item_year_embedding_size=config['item_year_embedding_size'],
         user_genre_embedding_size=config['user_genre_embedding_size'],
         timestamp_feature_embedding_size=config['timestamp_feature_embedding_size'],
-        user_genome_context_embedding_size=config.get('user_genome_context_embedding_size', 32),
+        user_content_embedding_size=config.get('user_content_embedding_size', 32),
         genre_context_buffer=genre_context_buffer,
         tag_context_buffer=tag_context_buffer,
         year_context_buffer=year_context_buffer,
@@ -109,30 +120,35 @@ def print_model_summary(model: MovieRecommender) -> None:
             if isinstance(layer, torch.nn.Linear):
                 return layer.out_features
 
+    # Content slot (genome today, LLM later) is omitted entirely when source is None (Model C).
+    has_content      = m.content_feature_source is not None
     id_dim           = m.item_embedding_lookup.embedding_dim
-    genome_dim       = _out_dim(m.item_genome_tag_tower)
-    gctx_dim         = _out_dim(m.user_genome_context_tower)
+    content_dim      = _out_dim(m.item_content_tower) if has_content else 0
+    cctx_dim         = _out_dim(m.user_content_tower) if has_content else 0
     genre_dim        = _out_dim(m.user_genre_tower)
     ts_dim           = m.timestamp_embedding_lookup.embedding_dim
     item_genre_dim   = _out_dim(m.item_genre_tower)
     item_tag_dim     = _out_dim(m.item_tag_tower)
     item_movieId_dim = _out_dim(m.item_embedding_tower)
     year_dim         = _out_dim(m.year_embedding_tower)
-    item_total       = item_genre_dim + item_tag_dim + genome_dim + item_movieId_dim + year_dim
+    item_total       = item_genre_dim + item_tag_dim + content_dim + item_movieId_dim + year_dim
     n_params         = sum(p.nelement() for p in model.parameters() if p.requires_grad)
 
     pool_total = 4 * id_dim
-    user_total = pool_total + gctx_dim + genre_dim + ts_dim
-    user_desc  = (f"4×sum_pool_id({id_dim}) + genome_ctx({gctx_dim}) + "
+    user_total = pool_total + cctx_dim + genre_dim + ts_dim
+    content_user_desc = f"content_ctx({cctx_dim}) + " if has_content else ""
+    content_item_desc = f"content({content_dim}) + " if has_content else ""
+    user_desc  = (f"4×sum_pool_id({id_dim}) + {content_user_desc}"
                   f"genre({genre_dim}) + ts({ts_dim})")
 
     proj_h  = m.user_projection[0].out_features
     out_dim = m.user_projection[2].out_features
 
     print(f"\n── Model dimensions ──")
+    print(f"  Content slot: {m.content_feature_source}")
     print(f"  User side:  {user_desc}  =  {user_total}")
-    print(f"  Item side:  genre({item_genre_dim}) + tag({item_tag_dim}) + genome({genome_dim})"
-          f" + movieId({item_movieId_dim}) + year({year_dim})  =  {item_total}")
+    print(f"  Item side:  genre({item_genre_dim}) + tag({item_tag_dim}) + {content_item_desc}"
+          f"movieId({item_movieId_dim}) + year({year_dim})  =  {item_total}")
     print(f"  Projection: Linear({proj_h}) → ReLU → Linear({out_dim})  [both towers]")
     print(f"  Parameters: {n_params:,}")
 
@@ -211,8 +227,10 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
     run_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     alpha         = config['popularity_alpha']
     alpha_tag     = str(alpha).replace('.', '') if alpha != int(alpha) else str(int(alpha))
+    corpus_sfx    = corpus_suffix()  # '' for the full corpus, '_<corpus>' otherwise
+    print(f"  Corpus: {CORPUS}  (checkpoint suffix: {corpus_sfx!r})")
     best_val_loss = float('inf')
-    best_path     = os.path.join(checkpoint_dir, f'best_softmax_v2_popularity_alpha_{alpha_tag}_{run_timestamp}.pth')
+    best_path     = os.path.join(checkpoint_dir, f'best_softmax_v2_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}.pth')
 
     val_eval_size = min(8_192, n_val)
     rng_val = torch.Generator()
@@ -295,7 +313,7 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
 
             if i > 0 and i % checkpoint_every == 0:
                 periodic = os.path.join(checkpoint_dir,
-                                        f'softmax_v2_popularity_alpha_{alpha_tag}_{run_timestamp}_step_{i:06d}.pth')
+                                        f'softmax_v2_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}_step_{i:06d}.pth')
                 torch.save(model.state_dict(), periodic)
                 _save_config(config, periodic)
                 print(f"  → periodic checkpoint → {periodic}")

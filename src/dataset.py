@@ -14,6 +14,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 import torch
 
+from src.corpus import CORPUS, corpus_suffix
 from src.features import FEATURES_VERSION
 
 
@@ -72,11 +73,13 @@ class FeatureStore:
 
 def load_features(data_dir: str = 'data', version: str = FEATURES_VERSION) -> FeatureStore:
     """Load feature parquets and base vocab/movies into a FeatureStore."""
-    vocab_df   = pd.read_parquet(os.path.join(data_dir, 'base_vocab.parquet'))
-    movies_df  = pd.read_parquet(os.path.join(data_dir, 'base_movies.parquet'))
-    ts_df      = pd.read_parquet(os.path.join(data_dir, 'base_timestamps.parquet'))
+    sfx = corpus_suffix()
+    print(f"Corpus: {CORPUS}  (artifact suffix: {sfx!r})")
+    vocab_df   = pd.read_parquet(os.path.join(data_dir, f'base_vocab{sfx}.parquet'))
+    movies_df  = pd.read_parquet(os.path.join(data_dir, f'base_movies{sfx}.parquet'))
+    ts_df      = pd.read_parquet(os.path.join(data_dir, f'base_timestamps{sfx}.parquet'))
 
-    movie_feat_path = os.path.join(data_dir, f'features_movies_{version}.parquet')
+    movie_feat_path = os.path.join(data_dir, f'features_movies_{version}{sfx}.parquet')
 
     # PyArrow reads list columns properly
     movie_feat_df = pq.read_table(movie_feat_path).to_pandas()
@@ -137,7 +140,7 @@ def load_features(data_dir: str = 'data', version: str = FEATURES_VERSION) -> Fe
         np.linspace(ts_min, ts_max, TIMESTAMP_NUM_BINS)
     )
 
-    counts_path = os.path.join(data_dir, f'movie_interaction_counts_{DATASET_VERSION}.npy')
+    counts_path = os.path.join(data_dir, f'movie_interaction_counts_{DATASET_VERSION}{sfx}.npy')
     movie_interaction_counts = np.load(counts_path) if os.path.exists(counts_path) else None
 
     return FeatureStore(
@@ -302,7 +305,7 @@ def build_rollback_dataset(users: list, fs: FeatureStore, raw_df,
 def get_val_users(fs: FeatureStore, data_dir: str = 'data',
                   pct_train: float = 0.9, seed: int = 42) -> tuple:
     """Return (val_users, corpus-filtered raw_df) — same split as make_softmax_splits."""
-    ratings_path = os.path.join(data_dir, 'base_ratings.parquet')
+    ratings_path = os.path.join(data_dir, f'base_ratings{corpus_suffix()}.parquet')
     raw_df = pd.read_parquet(ratings_path)
     corpus_set = set(fs.item_emb_movieId_to_i.keys())
     raw_df = raw_df[raw_df['movieId'].isin(corpus_set)]
@@ -450,7 +453,7 @@ def make_softmax_splits(fs: FeatureStore, data_dir: str = 'data',
                          max_per_user: int = MAX_SOFTMAX_EXAMPLES_PER_USER,
                          pct_train: float = 0.9, seed: int = 42,
                          max_users: int = None) -> tuple:
-    ratings_path = os.path.join(data_dir, 'base_ratings.parquet')
+    ratings_path = os.path.join(data_dir, f'base_ratings{corpus_suffix()}.parquet')
     print(f"Loading {ratings_path} ...")
     raw_df = pd.read_parquet(ratings_path)
     corpus_set = set(fs.item_emb_movieId_to_i.keys())
@@ -482,21 +485,23 @@ def make_softmax_splits(fs: FeatureStore, data_dir: str = 'data',
 
 def save_softmax_splits(train_data: tuple, val_data: tuple,
                          data_dir: str = 'data', version: str = DATASET_VERSION) -> None:
-    torch.save(train_data, os.path.join(data_dir, f'dataset_softmax_train_{version}.pt'))
-    torch.save(val_data,   os.path.join(data_dir, f'dataset_softmax_val_{version}.pt'))
+    sfx = corpus_suffix()
+    torch.save(train_data, os.path.join(data_dir, f'dataset_softmax_train_{version}{sfx}.pt'))
+    torch.save(val_data,   os.path.join(data_dir, f'dataset_softmax_val_{version}{sfx}.pt'))
     target_ids = train_data[6].numpy()
     counts = np.bincount(target_ids).astype(np.float32)
     # Counts are read back by load_features() (which has no dataset-version arg), so name
     # them by the canonical DATASET_VERSION rather than the per-call version param.
-    counts_name = f'movie_interaction_counts_{DATASET_VERSION}.npy'
+    counts_name = f'movie_interaction_counts_{DATASET_VERSION}{sfx}.npy'
     np.save(os.path.join(data_dir, counts_name), counts)
-    print(f"Saved dataset_softmax_train_{version}.pt, dataset_softmax_val_{version}.pt, "
+    print(f"Saved dataset_softmax_train_{version}{sfx}.pt, dataset_softmax_val_{version}{sfx}.pt, "
           f"{counts_name} → {data_dir}/")
 
 
 def load_softmax_splits(data_dir: str = 'data', version: str = DATASET_VERSION) -> tuple:
-    train_path = os.path.join(data_dir, f'dataset_softmax_train_{version}.pt')
-    val_path   = os.path.join(data_dir, f'dataset_softmax_val_{version}.pt')
+    sfx = corpus_suffix()
+    train_path = os.path.join(data_dir, f'dataset_softmax_train_{version}{sfx}.pt')
+    val_path   = os.path.join(data_dir, f'dataset_softmax_val_{version}{sfx}.pt')
     print(f"Loading {train_path} ...")
     train_data = torch.load(train_path, weights_only=False)
     print(f"Loading {val_path} ...")

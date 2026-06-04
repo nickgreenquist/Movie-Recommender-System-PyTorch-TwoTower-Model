@@ -35,15 +35,19 @@ N_TS_BINS     = 12
 OUTPUT_DIM    = 128  # prod default — documents the output contract
 
 
-def _build_tiny_model(seed: int = 0) -> MovieRecommender:
-    """Construct a MovieRecommender with synthetic context buffers (last row = padding)."""
+def _build_tiny_model(seed: int = 0, content_feature_source: str = 'genome') -> MovieRecommender:
+    """Construct a MovieRecommender with synthetic context buffers (last row = padding).
+
+    content_feature_source: 'genome' | 'llm' | None — the swappable content slot under test.
+    'genome'/'llm' build identical towers (only the label differs); None omits them (Model C).
+    """
     torch.manual_seed(seed)
     n_pad = N_MOVIES + 1  # corpus rows + one padding row
 
-    genome_buf = torch.rand(n_pad, N_GENOME_TAGS); genome_buf[-1] = 0.0
-    genre_buf  = torch.rand(n_pad, N_GENRES);      genre_buf[-1]  = 0.0
-    tag_buf    = torch.rand(n_pad, N_TAGS);        tag_buf[-1]    = 0.0
-    year_buf   = torch.randint(0, N_YEARS, (n_pad,), dtype=torch.long); year_buf[-1] = 0
+    content_buf = torch.rand(n_pad, N_GENOME_TAGS); content_buf[-1] = 0.0
+    genre_buf   = torch.rand(n_pad, N_GENRES);      genre_buf[-1]  = 0.0
+    tag_buf     = torch.rand(n_pad, N_TAGS);        tag_buf[-1]    = 0.0
+    year_buf    = torch.randint(0, N_YEARS, (n_pad,), dtype=torch.long); year_buf[-1] = 0
 
     return MovieRecommender(
         genres_len=N_GENRES,
@@ -53,7 +57,8 @@ def _build_tiny_model(seed: int = 0) -> MovieRecommender:
         all_years_len=N_YEARS,
         timestamp_num_bins=N_TS_BINS,
         user_context_size=2 * N_GENRES,
-        genome_context_buffer=genome_buf,
+        content_context_buffer=(content_buf if content_feature_source is not None else None),
+        content_feature_source=content_feature_source,
         genre_context_buffer=genre_buf,
         tag_context_buffer=tag_buf,
         year_context_buffer=year_buf,
@@ -117,8 +122,63 @@ def test_forward_scores_shape_and_range():
     assert scores.abs().max().item() <= 1.0 + 1e-5, f"score out of range: {scores}"
 
 
+def _param_shapes(model: MovieRecommender) -> dict:
+    return {name: tuple(p.shape) for name, p in model.named_parameters()}
+
+
+def test_content_slot_variants_differ_only_in_slot():
+    """Build genome / llm / None content-slot variants and assert they differ ONLY in the slot.
+
+    The ablation's validity rests on A (genome) and B (llm) being identical apart from the
+    content feature — so this is the guard against a confounded result:
+      - genome and llm are structurally identical (same parameter names/shapes); only the label
+        differs.
+      - None (Model C) omits exactly the content towers + buffer, and shrinks each projection's
+        input dim by exactly the content contribution — every other tower is untouched.
+      - all three still emit unit-norm (batch, OUTPUT_DIM) embeddings.
+    """
+    genome = _build_tiny_model(content_feature_source='genome')
+    llm    = _build_tiny_model(content_feature_source='llm')
+    none_  = _build_tiny_model(content_feature_source=None)
+
+    # A and B: structurally identical (only content_feature_source, a non-parameter, differs).
+    assert _param_shapes(genome) == _param_shapes(llm), \
+        "genome and llm variants must be structurally identical"
+
+    # Slot present for genome/llm, absent for None.
+    for m in (genome, llm):
+        assert hasattr(m, 'item_content_tower') and hasattr(m, 'user_content_tower')
+        assert hasattr(m, 'content_context_buffer')
+    for missing in ('item_content_tower', 'user_content_tower', 'content_context_buffer'):
+        assert not hasattr(none_, missing), f"Model C must omit {missing}"
+
+    # None drops exactly the content contribution from each projection's input dim.
+    item_content_dim = genome.item_content_tower[0].out_features
+    user_content_dim = genome.user_content_tower[0].out_features
+    assert genome.user_projection[0].in_features - none_.user_projection[0].in_features == user_content_dim
+    assert genome.item_projection[0].in_features - none_.item_projection[0].in_features == item_content_dim
+
+    # Every NON-content, non-projection parameter is shape-identical between genome and None.
+    g_shapes, n_shapes = _param_shapes(genome), _param_shapes(none_)
+    for k, v in g_shapes.items():
+        if 'content_tower' in k or k.startswith(('user_projection', 'item_projection')):
+            continue
+        assert n_shapes.get(k) == v, f"non-slot parameter {k} changed between genome and None"
+
+    # All three produce unit-norm (batch, OUTPUT_DIM) outputs.
+    user_ctx, hist, liked, disliked, ratings, ts, target = _synthetic_batch()
+    for name, m in (('genome', genome), ('llm', llm), ('none', none_)):
+        m.eval()
+        with torch.no_grad():
+            user_emb = m.user_embedding(user_ctx, hist, liked, disliked, ratings, ts)
+            item_emb = m.item_embedding(target)
+        _assert_unit_norm(user_emb, user_ctx.shape[0], f"{name} user_emb")
+        _assert_unit_norm(item_emb, target.shape[0], f"{name} item_emb")
+
+
 if __name__ == '__main__':
     test_user_embedding_shape_and_norm()
     test_item_embedding_shape_and_norm()
     test_forward_scores_shape_and_range()
+    test_content_slot_variants_differ_only_in_slot()
     print("All model shape/norm smoke tests passed.")
