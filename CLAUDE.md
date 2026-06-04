@@ -149,7 +149,7 @@ Sub-tower linears: Xavier uniform `gain=0.1`. Projection linears re-initialized 
 
 ## Saving / Loading Models
 
-Checkpoints are weights-only (~1MB). The `saved_models/` directory is gitignored.
+Checkpoints are weights-only (~1MB). (Checkpoints saved before the genome context buffer was made non-persistent are ~42MB until re-saved/re-trained — the prod checkpoint above is one of these.) The `saved_models/` directory is gitignored.
 
 Auto-detection (no path given) picks the most recently modified `best_*.pth` checkpoint.
 

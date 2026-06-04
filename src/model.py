@@ -50,7 +50,7 @@ class MovieRecommender(nn.Module):
                  output_dim=128,
                 ):
         """
-        genome_context_buffer: float32 (top_movies_len+1, genome_tags_len) [persistent].
+        genome_context_buffer: float32 (top_movies_len+1, genome_tags_len) [non-persistent].
             Row i = genome scores for movie at corpus index i. Last row = zeros (padding).
 
         genre_context_buffer:  float32 (top_movies_len+1, genres_len)   [non-persistent]
@@ -61,12 +61,11 @@ class MovieRecommender(nn.Module):
 
         self.pad_idx = top_movies_len
 
-        # Persistent: genome scores are large and dataset-specific; saved in checkpoint.
-        self.register_buffer('genome_context_buffer', genome_context_buffer)
         # Non-persistent: rebuilt from FeatureStore on every load (saves checkpoint space).
-        self.register_buffer('genre_context_buffer', genre_context_buffer, persistent=False)
-        self.register_buffer('tag_context_buffer',   tag_context_buffer,   persistent=False)
-        self.register_buffer('year_context_buffer',  year_context_buffer,  persistent=False)
+        self.register_buffer('genome_context_buffer', genome_context_buffer, persistent=False)
+        self.register_buffer('genre_context_buffer',  genre_context_buffer,  persistent=False)
+        self.register_buffer('tag_context_buffer',    tag_context_buffer,    persistent=False)
+        self.register_buffer('year_context_buffer',   year_context_buffer,   persistent=False)
 
         # ── Shared item embedding (item tower + user history pool) ────────────
         self.item_embedding_lookup = nn.Embedding(

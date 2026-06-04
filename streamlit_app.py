@@ -83,7 +83,11 @@ def load_artifacts():
         proj_hidden=cfg.get('proj_hidden', None),
         output_dim=cfg.get('output_dim', 128),
     )
-    model.load_state_dict(torch.load('serving/model.pth', weights_only=True))
+    state_dict = torch.load('serving/model.pth', weights_only=True)
+    # genome_context_buffer is non-persistent (rebuilt above); drop it if an older
+    # serving/model.pth still carries it, so strict load works on old and new artifacts.
+    state_dict.pop('genome_context_buffer', None)
+    model.load_state_dict(state_dict)
     model.eval()
 
     all_ids  = list(me.keys())
