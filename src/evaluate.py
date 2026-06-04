@@ -11,6 +11,7 @@ from itertools import zip_longest
 import numpy as np
 import torch
 import torch.nn.functional as F
+from src.checkpoint import load_checkpoint
 from src.dataset import FeatureStore
 from src.features import FEATURES_VERSION
 from src.inference import build_user_embedding
@@ -485,35 +486,10 @@ def _setup(data_dir: str, checkpoint_path: str, version: str = FEATURES_VERSION)
     """Load features, build model, load checkpoint, print dims, build embeddings."""
     from src.dataset import load_features
 
-    # Resolve and load checkpoint first — fast, and fails before the slow features load
-    # Detect checkpoint type from filename to pick the right config
-    def _resolve_config(path):
-        sd  = torch.load(path, weights_only=True, map_location='cpu')
-        cfg = get_config()
-
-        item_id_dim = sd['item_embedding_lookup.weight'].shape[1]
-        ts_dim      = sd['timestamp_embedding_lookup.weight'].shape[1]
-        genre_dim   = sd['user_genre_tower.0.weight'].shape[0]
-        genome_dim  = sd['item_genome_tag_tower.0.weight'].shape[0]
-        cfg['item_movieId_embedding_size']      = item_id_dim
-        cfg['user_genre_embedding_size']        = genre_dim
-        cfg['timestamp_feature_embedding_size'] = ts_dim
-        cfg['item_genre_embedding_size']        = sd['item_genre_tower.0.weight'].shape[0]
-        cfg['item_tag_embedding_size']          = sd['item_tag_tower.0.weight'].shape[0]
-        cfg['item_genome_tag_embedding_size']   = genome_dim
-        cfg['item_year_embedding_size']         = sd['year_embedding_lookup.weight'].shape[1]
-
-        cfg['user_genome_context_embedding_size'] = sd['user_genome_context_tower.0.weight'].shape[0]
-
-        cfg['proj_hidden'] = sd['user_projection.0.weight'].shape[0]
-        cfg['output_dim']  = sd['user_projection.2.weight'].shape[0]
-
-        return cfg
-
+    # Resolve and load checkpoint first — fast, and fails before the slow features load.
     # Auto-detect most recent checkpoint if none specified (any best_*.pth)
-    _tmp_config = get_config()
     if checkpoint_path is None:
-        checkpoint_dir = _tmp_config['checkpoint_dir']
+        checkpoint_dir = get_config()['checkpoint_dir']
         candidates = sorted(
             glob.glob(os.path.join(checkpoint_dir, 'best_*.pth')),
             key=os.path.getmtime, reverse=True,
@@ -523,10 +499,8 @@ def _setup(data_dir: str, checkpoint_path: str, version: str = FEATURES_VERSION)
             return None, None, None
         checkpoint_path = candidates[0]
 
-    config = _resolve_config(checkpoint_path)
-
     print(f"Loading checkpoint: {checkpoint_path}")
-    state_dict = torch.load(checkpoint_path, weights_only=True, map_location='cpu')
+    config, state_dict = load_checkpoint(checkpoint_path)
 
     print("Loading features ...")
     fs = load_features(data_dir, version)

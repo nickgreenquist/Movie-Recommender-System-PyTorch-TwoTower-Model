@@ -18,6 +18,7 @@ import pandas as pd
 import torch
 import torch.nn.functional as F
 
+from src.checkpoint import load_checkpoint
 from src.dataset import load_features
 from src.evaluate import build_movie_embeddings
 from src.features import FEATURES_VERSION
@@ -41,28 +42,8 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
             return
         checkpoint_path = candidates[0]
 
-    config = get_config()
-
     print(f"Checkpoint: {checkpoint_path}")
-    state_dict = torch.load(checkpoint_path, weights_only=True, map_location='cpu')
-
-    sd = state_dict
-    item_id_dim = sd['item_embedding_lookup.weight'].shape[1]
-    ts_dim      = sd['timestamp_embedding_lookup.weight'].shape[1]
-    genre_dim   = sd['user_genre_tower.0.weight'].shape[0]
-    genome_dim  = sd['item_genome_tag_tower.0.weight'].shape[0]
-    config['item_movieId_embedding_size']      = item_id_dim
-    config['user_genre_embedding_size']        = genre_dim
-    config['timestamp_feature_embedding_size'] = ts_dim
-    config['item_genre_embedding_size']        = sd['item_genre_tower.0.weight'].shape[0]
-    config['item_tag_embedding_size']          = sd['item_tag_tower.0.weight'].shape[0]
-    config['item_genome_tag_embedding_size']   = genome_dim
-    config['item_year_embedding_size']         = sd['year_embedding_lookup.weight'].shape[1]
-
-    config['user_genome_context_embedding_size'] = sd['user_genome_context_tower.0.weight'].shape[0]
-
-    config['proj_hidden'] = sd['user_projection.0.weight'].shape[0]
-    config['output_dim']  = sd['user_projection.2.weight'].shape[0]
+    config, state_dict = load_checkpoint(checkpoint_path)
 
     print("Loading features ...")
     fs = load_features(data_dir, version)
