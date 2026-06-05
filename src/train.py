@@ -2,7 +2,13 @@
 Full softmax training loop for the Two-Tower MovieRecommender.
 
 Usage:
-    python main.py train
+    python main.py train                              # Model A (genome content slot)
+    CONTENT_SOURCE=none  python main.py train         # Model C (no content slot, floor baseline)
+    CONTENT_SOURCE=llm   python main.py train         # Model B (LLM content slot)
+
+CONTENT_SOURCE selects the swappable content slot at train time (parallel to the
+CORPUS env var); it tags the checkpoint name so the ablation's A/B/C variants are
+unambiguous on disk. Default 'genome' preserves the historical prod naming.
 """
 import json
 import os
@@ -28,6 +34,14 @@ def get_device() -> torch.device:
 
 
 def get_config() -> dict:
+    # Swappable content slot, selectable at train time via the CONTENT_SOURCE env var
+    # (parallel to CORPUS): 'genome' (default, Model A) | 'llm' (Model B) | 'none' (Model C floor).
+    content_source = os.environ.get('CONTENT_SOURCE', 'genome')
+    if content_source == 'none':
+        content_source = None
+    elif content_source not in ('genome', 'llm'):
+        raise ValueError(f"Unknown CONTENT_SOURCE={content_source!r}; "
+                         f"expected 'genome', 'llm', or 'none'")
     return {
         # Sub-embedding sizes
         'item_movieId_embedding_size':      32,
@@ -39,7 +53,7 @@ def get_config() -> dict:
         'item_genre_embedding_size':        8,
         'user_content_embedding_size':      32,
         # Swappable content slot: 'genome' (prod) | 'llm' | None (ablation Model C).
-        'content_feature_source':           'genome',
+        'content_feature_source':           content_source,
         # Projection MLP
         'proj_hidden':  256,
         'output_dim':   128,
@@ -228,9 +242,14 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
     alpha         = config['popularity_alpha']
     alpha_tag     = str(alpha).replace('.', '') if alpha != int(alpha) else str(int(alpha))
     corpus_sfx    = corpus_suffix()  # '' for the full corpus, '_<corpus>' otherwise
-    print(f"  Corpus: {CORPUS}  (checkpoint suffix: {corpus_sfx!r})")
+    # Content-slot tag: genome keeps the historical (prod) name; llm/nocontent are tagged so the
+    # ablation's A/B/C checkpoints are unambiguous on disk (config is also in the JSON sidecar).
+    content_src   = config['content_feature_source']
+    content_tag   = '' if content_src == 'genome' else f"_{content_src or 'nocontent'}"
+    print(f"  Corpus: {CORPUS}  (checkpoint suffix: {corpus_sfx!r})  "
+          f"content slot: {content_src}  (name tag: {content_tag!r})")
     best_val_loss = float('inf')
-    best_path     = os.path.join(checkpoint_dir, f'best_softmax_v2_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}.pth')
+    best_path     = os.path.join(checkpoint_dir, f'best_softmax_v2{content_tag}_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}.pth')
 
     val_eval_size = min(8_192, n_val)
     rng_val = torch.Generator()
@@ -313,7 +332,7 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
 
             if i > 0 and i % checkpoint_every == 0:
                 periodic = os.path.join(checkpoint_dir,
-                                        f'softmax_v2_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}_step_{i:06d}.pth')
+                                        f'softmax_v2{content_tag}_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}_step_{i:06d}.pth')
                 torch.save(model.state_dict(), periodic)
                 _save_config(config, periodic)
                 print(f"  → periodic checkpoint → {periodic}")
