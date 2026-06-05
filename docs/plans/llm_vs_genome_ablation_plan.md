@@ -146,7 +146,7 @@ These are mapped to schema fields factually (e.g. `oscar_winner`, `criterion`) �
 
 ### Practical guidelines
 - **TMDB-first is the default LLM input.** Structured TMDB fields (overview, tagline, genres, cast, director) are the canonical input to extraction — they keep the prompt small and cost-predictable. Other sources are supplementary.
-- **Truncate Wikipedia hard.** Full Wikipedia plots average 1,500–3,500 words. Feeding them raw blows the token budget (see Cost Budget — output dominates, but uncapped input still ~5×'s the bill). Cap Wikipedia text to the first ~1,000–1,500 characters, OR pre-summarize long plots with a cheap model (e.g. Haiku) before the extraction call. Do NOT feed raw full plots to the extraction model.
+- **Store raw on disk; truncate only at FEED time — never at scrape time.** Scraping is the expensive do-it-once step (rate-limited, network/source dependent), so store as much as each source gives: the *full* Wikipedia plaintext extract (all sections), untruncated, plus the full billed cast and every other field. Capping at scrape time bakes a tunable policy into the durable cache and forces a full re-scrape to change it — a mistake the original draft of this plan made. The token-budget constraint (full Wikipedia plots average 1,500–3,500 words; feeding them raw blows the budget — see Cost Budget, ~$263 vs ~$109, uncapped input ~5×'s the input bill) binds on what you **feed** the extraction model, not what you **store**. Apply the char/section limits (~1,000–1,500 chars, or a cheap-model pre-summary) in Stage 2's prompt assembly (`format_for_prompt`), where they can be tuned or A/B'd in the model bake-off for free. Field *selection* is the same story: keep the full TMDB cast+crew dump on disk, but `format_for_prompt` should feed only the discriminative slice — top-billed cast (~5–10), director, writers, genres, keywords — NOT the ~200-person below-the-line crew (gaffers, PAs, sound), which is ~40% of every cached file and adds tokens without categorization signal. **Do NOT feed raw full plots (or the full crew) to the extraction model — but DO keep them on disk.**
 - Cache aggressively — scrape ONCE per movie, never re-scrape
 - Rate limit conservatively — TMDB is 40 req/10s; respect IMDB's robots.txt
 - Skip movies where scraping fails — 90% coverage is fine
@@ -417,14 +417,20 @@ Same:
 
 ### Quantitative metrics
 
+**Phase 1 — reduced corpus (4,461 movies, > 1,000 raw ratings; α=0; rollback protocol, n=99,846 over 5,000 val users, seed 42). Model B pending extraction.**
+
 | Metric | No content (Model C) | Genome (Model A) | LLM (Model B) | A−C | B−C |
 |---|---|---|---|---|---|
-| Hit@10 | ? | ? | ? | ? | ? |
-| NDCG@10 | ? | ? | ? | ? | ? |
-| MRR | ? | ? | ? | ? | ? |
-| Recall@10 | ? | ? | ? | ? | ? |
+| Hit@10 | 0.2232 | 0.2250 | _pending_ | +0.0018 (+0.8%) | _pending_ |
+| NDCG@10 | 0.1290 | 0.1303 | _pending_ | +0.0013 (+1.0%) | _pending_ |
+| MRR | 0.1150 | 0.1161 | _pending_ | +0.0011 (+1.0%) | _pending_ |
+| Recall@10 | 0.2232 | 0.2250 | _pending_ | +0.0018 (+0.8%) | _pending_ |
+
+(Recall@10 = Hit@10 here: the rollback protocol holds out a single target per example, so the two coincide. Checkpoints: A = `best_softmax_v2_popularity_alpha_0_phase1_20260604_210405.pth`, C = `best_softmax_v2_nocontent_popularity_alpha_0_phase1_20260604_214306.pth`. Recorded 2026-06-05.)
 
 Model C is the floor. The A−C and B−C columns are the content-feature lift — how much genome and LLM each add over no content slot. The headline comparison is still A vs. B, but the lift columns make it interpretable.
+
+**Why the genome lift (A−C ≈ +1%) is small here — and expected.** This is measured on the **reduced Phase 1 corpus**, which keeps only popular head movies (> 1,000 ratings). For those items collaborative filtering already has abundant interaction signal to learn a good item embedding, so the content slot adds little on top — the ID-embedding pools carry most of the weight. Content features earn their keep where interactions are **sparse**: long-tail / cold-start items the model has barely seen, where there is little CF signal to leverage and the content vector is most of what distinguishes the item. Phase 1 structurally removes exactly those items, so the floor (C) sits unusually close to A. The lift is positive and consistent across every K (genome does help), just compressed; the real lift-over-floor story is told on the **full corpus in Phase 2**, where the tail is present.
 
 > **⚠️ Phase 1 selection bias — read before interpreting.** Phase 1 filters to popular movies (100–200+ ratings). Content features deliver their largest lift on long-tail / cold-start items, where collaborative filtering has little interaction data — exactly the items Phase 1 removes. So expect the **A−C and B−C lift columns to be compressed in Phase 1**: the floor (C) will sit unusually close to A and B. **The primary Phase 1 success criterion is whether Model B (LLM) matches or closely approaches Model A (genome) on this popular split — NOT the absolute lift over the floor.** The lift-over-floor story is told properly in Phase 2 on the full corpus, which includes the tail. Do not read a small Phase 1 lift as "content features don't matter."
 
@@ -584,7 +590,7 @@ Worked at Sonnet pricing ($3/MTok in, $15/MTok out):
 | Full raw Wikipedia plots (DO NOT) | ~2,500 | ~150 | $202.50 | $60.75 | **~$263** |
 
 **Even the lean default path (~$109) is already at/over the $100 Phase 1 target.** Two consequences:
-- The Stage 1 input discipline (TMDB-first, truncate Wikipedia) is mandatory, not advisory — the raw-Wikipedia path is ~2.4× over.
+- The feed-time input discipline (TMDB-first, and truncate Wikipedia before the extraction call — Stage 1 stores it raw, Stage 2 caps it in `format_for_prompt`) is mandatory, not advisory — the raw-Wikipedia path is ~2.4× over.
 - Output is the binding constraint and input-truncation alone can't fix it. The real output lever is the **model bake-off** (Stage 2): Haiku 4.5 output is ~$4/MTok vs Sonnet $15/MTok — if Haiku passes the calibration checks, Phase 1 output cost drops from ~$61 to ~$16 and the whole phase lands comfortably under $100. **The numbers above assume Sonnet; re-confirm with measured token counts after the bake-off.**
 
 Note: these are API pay-as-you-go costs, billed against API credits — not a flat monthly subscription cap.
