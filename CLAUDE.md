@@ -75,6 +75,8 @@ The `data/ml-32m/` directory must be present (not in git). Required files:
 
 Only movies with **200+ ratings** are kept (~9,375 movies). Only users with 20–500 ratings are kept.
 
+**Phase 1 reduced corpus (LLM-vs-genome ablation).** `llm_features/filter_corpus.py` applies a higher raw-ratings threshold — **>1,000 ratings → 4,461 movies** (a clean subset of the full corpus) — and writes the list to `data/llm_experiment_movies_phase1.json`. Counting matches `build_corpus()` (raw `ratings.csv` counts, strict `>`), so the threshold is directly comparable to the full corpus's `> 200`. This is the reduced set the Phase 1 pilot scrapes/extracts/trains on; `src/corpus.py` (`CORPUS=phase1`) namespaces the resulting artifacts. See `docs/plans/llm_vs_genome_ablation_plan.md` (Stage 0).
+
 ### Tag data
 
 **User-applied tags (`tags.csv`):** Each movie's tag vector is built by counting how many users applied each tag, then normalizing to sum to 1. Only tags applied 1,000+ times across all movies are kept (306 tags survive).

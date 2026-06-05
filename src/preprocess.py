@@ -5,6 +5,7 @@ Run once on raw CSVs. Outputs data/base_*.parquet.
 Usage:
     python main.py preprocess
 """
+import json
 import os
 import re
 
@@ -19,6 +20,10 @@ MIN_RATINGS_PER_MOVIE = 200
 MIN_RATINGS_PER_USER  = 20
 MAX_RATINGS_PER_USER  = 500
 MIN_NUM_TAGS          = 1_000       # user-applied tags must appear this often across all movies
+
+# Phase 1 ablation: reduced movie list produced by llm_features/filter_corpus.py.
+# Consulted ONLY when CORPUS=='phase1'; the full corpus ignores it (see build_corpus).
+PHASE1_MOVIES_JSON    = 'data/llm_experiment_movies_phase1.json'
 
 
 # ── Loaders ──────────────────────────────────────────────────────────────────
@@ -56,7 +61,11 @@ def load_raw(raw_dir: str) -> dict:
 
 def build_corpus(dfs: dict) -> tuple:
     """
-    Filter to movies with MIN_RATINGS_PER_MOVIE+ ratings.
+    Filter to movies with MIN_RATINGS_PER_MOVIE+ ratings. For CORPUS=='phase1',
+    additionally intersect with the reduced movie list (PHASE1_MOVIES_JSON), so
+    the LLM-vs-genome ablation trains on the same ~4-5k-movie subset its features
+    were scraped/extracted for. MIN_RATINGS_PER_MOVIE itself is unchanged — the
+    reduction is a pure subset of the full corpus.
     Returns (top_movies: list[int], movies_df: DataFrame).
     movies_df columns: movieId, title, year, genres (list[str]).
     """
@@ -69,6 +78,13 @@ def build_corpus(dfs: dict) -> tuple:
 
     print(f"Total movies in corpus: {len(counts)}")
     print(f"Movies with {MIN_RATINGS_PER_MOVIE}+ ratings: {len(top_movie_ids)}")
+
+    if CORPUS == 'phase1':
+        with open(PHASE1_MOVIES_JSON) as f:
+            phase1_ids = set(json.load(f)['movie_ids'])
+        top_movie_ids &= phase1_ids
+        print(f"CORPUS=phase1: reduced to {len(top_movie_ids)} movies "
+              f"(intersect with {PHASE1_MOVIES_JSON})")
 
     rows = []
     for _, row in df_movies.iterrows():
