@@ -206,12 +206,12 @@ def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
         tag_embs    = model.item_tag_tower(tag_t)
         combined    = model.item_embedding(emb_idx)
 
-        # Genome content embedding — only when the content slot is genome (absent for Model C).
-        genome_embs = None
+        # Content embedding (genome or LLM) — only when the content slot is filled (absent for
+        # Model C). Source from the model's own content buffer so the feature width matches the
+        # tower (1128 genome / 132 LLM); recomputing from fs.genome would break the LLM slot.
+        content_embs = None
         if model.content_feature_source is not None:
-            genome_t    = torch.tensor([fs.movieId_to_genome_tag_context[m] for m in all_mids],
-                                       dtype=torch.float32).to(device)
-            genome_embs = model.item_content_tower(genome_t)
+            content_embs = model.item_content_tower(model.content_context_buffer[emb_idx])
 
     movieId_to_embedding = {}
     for i, mid in enumerate(all_mids):
@@ -220,8 +220,8 @@ def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
             'MOVIE_TAG_EMBEDDING':      tag_embs[i:i+1],
             'MOVIE_EMBEDDING_COMBINED': combined[i:i+1],
         }
-        if genome_embs is not None:
-            entry['MOVIE_GENOME_TAG_EMBEDDING'] = genome_embs[i:i+1]
+        if content_embs is not None:
+            entry['MOVIE_GENOME_TAG_EMBEDDING'] = content_embs[i:i+1]
         movieId_to_embedding[mid] = entry
     return movieId_to_embedding
 

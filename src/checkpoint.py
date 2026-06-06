@@ -16,6 +16,9 @@ Two responsibilities:
 Note: get_config() (the training hyperparameter defaults) lives in src/train.py; this module
 only reshapes those defaults to match a specific checkpoint.
 """
+import json
+import os
+
 import torch
 
 from src.train import get_config
@@ -55,9 +58,10 @@ def resolve_config_from_state_dict(state_dict: dict) -> dict:
     cfg['proj_hidden']                      = sd['user_projection.0.weight'].shape[0]
     cfg['output_dim']                       = sd['user_projection.2.weight'].shape[0]
 
-    # Content slot (genome today, LLM later) — optional; the no-content model (Model C) omits the
-    # tower keys. Infer the source from key presence: present → 'genome' (the only content source
-    # any saved checkpoint has); absent → None. Must override get_config()'s 'genome' default.
+    # Content slot — optional; the no-content model (Model C) omits the tower keys. Key presence
+    # tells us the slot is filled; the *source* (genome 1128-dim vs LLM 132-dim) can't be told from
+    # shapes alone (both are Linear(N→32)), so 'genome' here is only the legacy default — load_checkpoint
+    # overrides it from the train-time config sidecar when one exists (the LLM checkpoints have one).
     if 'item_content_tower.0.weight' in sd:
         cfg['content_feature_source']      = 'genome'
         cfg['item_content_embedding_size'] = sd['item_content_tower.0.weight'].shape[0]
@@ -78,4 +82,16 @@ def load_checkpoint(checkpoint_path: str) -> tuple:
     for key in LEGACY_NONPERSISTENT_BUFFERS:
         state_dict.pop(key, None)
     config = resolve_config_from_state_dict(state_dict)
+
+    # Disambiguate the content slot's source (genome vs llm) — shapes can't, so trust the config
+    # sidecar written next to the checkpoint at train time. Legacy checkpoints have no sidecar and
+    # keep the shape-based 'genome' default. Only the source label is overridden; dims stay from shapes.
+    if config.get('content_feature_source') is not None:
+        sidecar_path = os.path.splitext(checkpoint_path)[0] + '_config.json'
+        if os.path.exists(sidecar_path):
+            with open(sidecar_path) as f:
+                saved_source = json.load(f).get('content_feature_source')
+            if saved_source is not None:
+                config['content_feature_source'] = saved_source
+
     return config, state_dict

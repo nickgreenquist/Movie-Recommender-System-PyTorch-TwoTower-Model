@@ -306,6 +306,8 @@ For changes that require retraining to validate (hyperparameters, optimizer, sch
 
 **After any model/training change: always wait for the user to run `python main.py train`, then `python main.py canary`, then `python main.py eval`, and confirm the results are acceptable before committing anything.**
 
+**Full training runs go to the user — never launch `python main.py train` via a Claude-spawned background process or a Workflow.** Claude-launched background jobs run ~10× slower and degrade over the run (observed ~6 it/s and falling, vs a steady ~67 it/s in the user's own terminal). The cause is macOS deprioritizing detached/background-spawned processes (low QoS / App Nap), **not** thermal — a foreground run on the same machine does not throttle. Claude writes and smoke-tests the training code, then hands the exact `CONTENT_SOURCE=… CORPUS=… python main.py train …` command(s) to the user to run themselves. Shorter MPS jobs (`eval`, `canary`, `probe`) are fine to run in the background — it's the long training loop where the slowdown compounds.
+
 ### Behavioral guidelines
 
 These supplement (not replace) the Claude Code system prompt. The standard "don't speculate, don't over-abstract, don't over-comment" rules already live there — what follows is project-specific or worth re-stating because it's bitten us before.

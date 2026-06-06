@@ -76,17 +76,36 @@ def get_config() -> dict:
 def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
     content_feature_source = config.get('content_feature_source', 'genome')
 
-    # Content slot (genome today, LLM later). Built from the genome FeatureStore field for the
-    # 'genome' source; None when the slot is disabled (ablation Model C). The genome field name is
-    # unchanged — genome is the *product feature* that happens to fill the content slot today.
+    # Content slot: 'genome' | 'llm' | None (Model C floor).
+    # Genome: build from the FeatureStore's pre-loaded per-movie dicts (1128-dim).
+    # LLM:    load the pre-built tensor from data/llm_features_<tag>_v1<sfx>.pt (132-dim).
+    #         LLM_MODEL_TAG selects which extraction run to use (default 'claude-code-sonnet').
+    # None:   no content slot — content towers and buffer are omitted entirely.
     content_context_buffer = None
-    if content_feature_source is not None:
+    content_feature_len    = None   # set below; passed as genome_tags_len to MovieRecommender
+    if content_feature_source == 'genome':
         content_matrix = np.array(
             [fs.movieId_to_genome_tag_context[mid] for mid in fs.top_movies],
             dtype=np.float32,
         )
         pad_row = np.zeros((1, content_matrix.shape[1]), dtype=np.float32)
         content_context_buffer = torch.from_numpy(np.vstack([content_matrix, pad_row]))
+        content_feature_len = content_matrix.shape[1]   # 1128
+    elif content_feature_source == 'llm':
+        sfx = corpus_suffix()
+        llm_tag = os.environ.get('LLM_MODEL_TAG', 'claude-code-sonnet')
+        llm_path = os.path.join('data', f'llm_features_{llm_tag}_v1{sfx}.pt')
+        if not os.path.exists(llm_path):
+            raise FileNotFoundError(
+                f"LLM feature tensor not found: {llm_path}\n"
+                f"  Run: CORPUS={CORPUS} python -m llm_features.build_features {llm_tag}"
+            )
+        content_context_buffer = torch.load(llm_path, map_location='cpu', weights_only=True)
+        content_feature_len = content_context_buffer.shape[1]   # 132
+        print(f"  LLM features: {llm_path}  ({content_feature_len}-dim, "
+              f"{content_context_buffer.shape[0]-1} movies)")
+    else:
+        content_feature_len = len(fs.genome_tag_ids)   # unused (no towers), but keep valid
 
     genre_matrix = np.array(
         [fs.movieId_to_genre_context[mid] for mid in fs.top_movies], dtype=np.float32)
@@ -104,7 +123,7 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
     return MovieRecommender(
         genres_len=len(fs.genres_ordered),
         tags_len=len(fs.tags_ordered),
-        genome_tags_len=len(fs.genome_tag_ids),
+        genome_tags_len=content_feature_len,
         top_movies_len=len(fs.top_movies),
         all_years_len=len(fs.years_ordered),
         timestamp_num_bins=fs.timestamp_num_bins,
@@ -186,6 +205,19 @@ def load_config_for_checkpoint(checkpoint_path: str) -> dict:
     return cfg
 
 
+def _val_ranking_metrics(raw_scores: torch.Tensor, targets: torch.Tensor) -> tuple:
+    """Reciprocal-rank sum and Hit@10 count of each target vs all items, on the *raw* scores.
+
+    Ranking is done on raw dot products (no temperature, no popularity adjustment) so the
+    selection metric matches offline inference, which ranks on raw scores — the Menon popularity
+    correction is training-only. The strict-greater tie convention mirrors src/offline_eval.py.
+    Returns (sum_of_reciprocal_ranks, num_hits_at_10) for the batch; caller accumulates."""
+    rows         = torch.arange(raw_scores.shape[0], device=raw_scores.device)
+    target_score = raw_scores[rows, targets].unsqueeze(1)
+    ranks        = (raw_scores > target_score).sum(dim=1) + 1
+    return (1.0 / ranks.float()).sum().item(), int((ranks <= 10).sum().item())
+
+
 # ── Training loop ─────────────────────────────────────────────────────────────
 
 def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
@@ -248,7 +280,7 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
     content_tag   = '' if content_src == 'genome' else f"_{content_src or 'nocontent'}"
     print(f"  Corpus: {CORPUS}  (checkpoint suffix: {corpus_sfx!r})  "
           f"content slot: {content_src}  (name tag: {content_tag!r})")
-    best_val_loss = float('inf')
+    best_val_mrr  = float('-inf')   # best_path is selected on val-MRR (the reported metric), not val CE
     best_path     = os.path.join(checkpoint_dir, f'best_softmax_v2{content_tag}_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}.pth')
 
     val_eval_size = min(8_192, n_val)
@@ -298,7 +330,13 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
                           f"std={scaled.std():.4f}")
                     print(f"  [step 0 logits] random-baseline loss = {np.log(V_all.shape[0]):.4f}")
 
+                # Val loss is the training objective (CE on temp-scaled, popularity-adjusted
+                # logits); val MRR/Hit@10 are computed on the raw scores (matching inference) over
+                # the same subset. best_path is selected on val-MRR — see _val_ranking_metrics.
                 val_losses = []
+                val_rr_sum = 0.0
+                val_hits10 = 0
+                val_n      = 0
                 for vs in range(0, val_eval_size, minibatch_size):
                     ve   = min(vs + minibatch_size, val_eval_size)
                     vidx = val_eval_idx[vs:ve]
@@ -310,25 +348,33 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
                         X_hist_ratings_val[vidx].to(device),
                         timestamp_val[vidx],
                     )
-                    logits = (U @ V_all.T) / temperature
-                    scores = logits + popularity_bias
-                    val_losses.append(F.cross_entropy(scores, target_movieId_val[vidx]).item())
-                val_loss = float(np.mean(val_losses))
+                    raw_scores = U @ V_all.T
+                    scores     = raw_scores / temperature + popularity_bias
+                    targets    = target_movieId_val[vidx]
+                    val_losses.append(F.cross_entropy(scores, targets).item())
+                    rr, h10     = _val_ranking_metrics(raw_scores, targets)
+                    val_rr_sum += rr
+                    val_hits10 += h10
+                    val_n      += int(targets.shape[0])
+                val_loss  = float(np.mean(val_losses))
+                val_mrr   = val_rr_sum / val_n
+                val_hit10 = val_hits10 / val_n
 
             avg_train     = np.mean(loss_train[i - log_every:i]) if i >= log_every else (loss_train[-1] if loss_train else 0.0)
             avg_grad_norm = np.mean(grad_norms[i - log_every:i]) if i >= log_every else (grad_norms[-1] if grad_norms else 0.0)
             elapsed    = time.time() - start
             start      = time.time()
             current_lr = scheduler.get_last_lr()[0] if i > 0 else config['lr']
-            pbar.set_postfix(train=f"{avg_train:.4f}", val=f"{val_loss:.4f}")
+            pbar.set_postfix(train=f"{avg_train:.4f}", val=f"{val_loss:.4f}", mrr=f"{val_mrr:.4f}")
             print(f"[{i:06d}]  train={avg_train:.4f}  val={val_loss:.4f}  "
+                  f"val_mrr={val_mrr:.4f}  hit@10={val_hit10:.4f}  "
                   f"lr={current_lr:.6f}  grad_norm={avg_grad_norm:.3f}  ({elapsed:.0f}s)")
 
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
+            if val_mrr > best_val_mrr:
+                best_val_mrr = val_mrr
                 torch.save(model.state_dict(), best_path)
                 _save_config(config, best_path)
-                print(f"  → new best {best_val_loss:.4f} → {best_path}")
+                print(f"  → new best val_mrr={best_val_mrr:.4f} → {best_path}")
 
             if i > 0 and i % checkpoint_every == 0:
                 periodic = os.path.join(checkpoint_dir,
@@ -365,6 +411,9 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
     with torch.no_grad():
         V_all = model.full_item_embedding()
         val_losses = []
+        val_rr_sum = 0.0
+        val_hits10 = 0
+        val_n      = 0
         for vs in range(0, val_eval_size, minibatch_size):
             ve   = min(vs + minibatch_size, val_eval_size)
             vidx = val_eval_idx[vs:ve]
@@ -376,17 +425,25 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
                 X_hist_ratings_val[vidx].to(device),
                 timestamp_val[vidx],
             )
-            logits = (U @ V_all.T) / temperature
-            scores = logits + popularity_bias
-            val_losses.append(F.cross_entropy(scores, target_movieId_val[vidx]).item())
+            raw_scores = U @ V_all.T
+            scores     = raw_scores / temperature + popularity_bias
+            targets    = target_movieId_val[vidx]
+            val_losses.append(F.cross_entropy(scores, targets).item())
+            rr, h10     = _val_ranking_metrics(raw_scores, targets)
+            val_rr_sum += rr
+            val_hits10 += h10
+            val_n      += int(targets.shape[0])
     final_val_loss = float(np.mean(val_losses))
-    print(f"[{training_steps:06d}]  val={final_val_loss:.4f}  (final)")
-    if final_val_loss < best_val_loss:
-        best_val_loss = final_val_loss
+    final_val_mrr  = val_rr_sum / val_n
+    final_val_hit10 = val_hits10 / val_n
+    print(f"[{training_steps:06d}]  val={final_val_loss:.4f}  "
+          f"val_mrr={final_val_mrr:.4f}  hit@10={final_val_hit10:.4f}  (final)")
+    if final_val_mrr > best_val_mrr:
+        best_val_mrr = final_val_mrr
         torch.save(model.state_dict(), best_path)
         _save_config(config, best_path)
-        print(f"  → new best {best_val_loss:.4f} → {best_path}")
+        print(f"  → new best val_mrr={best_val_mrr:.4f} → {best_path}")
 
-    print(f"\nTraining complete. Best val loss: {best_val_loss:.4f}")
+    print(f"\nTraining complete. Best val MRR: {best_val_mrr:.4f}")
     print(f"Best checkpoint: {best_path}")
     return best_path

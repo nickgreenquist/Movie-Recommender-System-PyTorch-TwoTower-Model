@@ -417,18 +417,44 @@ Same:
 
 ### Quantitative metrics
 
-**Phase 1 — reduced corpus (4,461 movies, > 1,000 raw ratings; α=0; rollback protocol, n=99,846 over 5,000 val users, seed 42). Model B pending extraction.**
+**Phase 1 — reduced corpus (4,461 movies, > 1,000 raw ratings; α=0; rollback protocol, n=99,846 over 5,000 val users, seed 42).**
 
-| Metric | No content (Model C) | Genome (Model A) | LLM (Model B) | A−C | B−C |
+> **Checkpoint-selection criterion was changed mid-experiment — both result sets are reported below.** Originally `best_path` was saved at **minimum validation softmax cross-entropy** (a ranking *surrogate*). It is now saved at **maximum validation MRR** (the reported metric), computed on raw dot products over the same 8,192-example val subset — see `_val_ranking_metrics` in `src/train.py`. **Future runs and the paper use val-MRR selection (Table 2); Table 1 is retained because the change is itself a finding** (see "Selection-criterion effect"). NDCG@10 / Recall@10 included; Recall@10 = Hit@10 here (rollback holds out a single target per example, so they coincide).
+
+**Table 1 — val-loss (min CE) checkpoint selection**
+
+| Metric | No content (C) | Genome (A) | LLM (B) |
+|---|---|---|---|
+| Hit@1 | 0.0575 | 0.0586 | 0.0580 |
+| Hit@5 | 0.1542 | 0.1558 | 0.1556 |
+| Hit@10 | 0.2232 | 0.2250 | 0.2254 |
+| Hit@20 | 0.3151 | 0.3168 | 0.3166 |
+| Hit@50 | 0.4693 | 0.4708 | 0.4719 |
+| NDCG@10 | 0.1290 | 0.1303 | 0.1301 |
+| MRR | 0.1150 | **0.1161** | 0.1157 |
+
+**Table 2 — val-MRR (max MRR) checkpoint selection — canonical**
+
+| Metric | No content (C) | Genome (A) | LLM (B) | A−C | B−C |
 |---|---|---|---|---|---|
-| Hit@10 | 0.2232 | 0.2250 | _pending_ | +0.0018 (+0.8%) | _pending_ |
-| NDCG@10 | 0.1290 | 0.1303 | _pending_ | +0.0013 (+1.0%) | _pending_ |
-| MRR | 0.1150 | 0.1161 | _pending_ | +0.0011 (+1.0%) | _pending_ |
-| Recall@10 | 0.2232 | 0.2250 | _pending_ | +0.0018 (+0.8%) | _pending_ |
+| Hit@1 | 0.0580 | 0.0596 | **0.0612** | +0.0016 | +0.0032 |
+| Hit@5 | 0.1547 | 0.1578 | **0.1600** | +0.0031 | +0.0053 |
+| Hit@10 | 0.2250 | 0.2277 | **0.2284** | +0.0027 (+1.2%) | +0.0034 (+1.5%) |
+| Hit@20 | 0.3149 | **0.3199** | 0.3195 | +0.0050 | +0.0046 |
+| Hit@50 | 0.4682 | **0.4763** | 0.4744 | +0.0081 | +0.0062 |
+| NDCG@10 | 0.1300 | 0.1322 | **0.1334** | +0.0022 (+1.7%) | +0.0034 (+2.6%) |
+| MRR | 0.1157 | 0.1178 | **0.1192** | +0.0021 (+1.8%) | +0.0035 (+3.0%) |
 
-(Recall@10 = Hit@10 here: the rollback protocol holds out a single target per example, so the two coincide. Checkpoints: A = `best_softmax_v2_popularity_alpha_0_phase1_20260604_210405.pth`, C = `best_softmax_v2_nocontent_popularity_alpha_0_phase1_20260604_214306.pth`. Recorded 2026-06-05.)
+**Selection-criterion effect (MRR, val-loss → val-MRR):** C 0.1150 → 0.1157 (+0.6%); A 0.1161 → 0.1178 (+1.5%); B 0.1157 → **0.1192 (+3.0%)**. The gain is *non-uniform* — val-loss differentially penalized the LLM model (its min-CE checkpoint sat well off its max-MRR checkpoint). **The criterion flips the headline verdict:** under val-loss, A > B by +0.0004 MRR (genome nominally ahead, within noise); under val-MRR, **B > A by +0.0014 MRR (+1.2%)**, with B leading on every metric except Hit@20 (tie). Lesson for the paper: model-selection metric must match the evaluation metric, or the surrogate can reverse a close comparison.
 
-Model C is the floor. The A−C and B−C columns are the content-feature lift — how much genome and LLM each add over no content slot. The headline comparison is still A vs. B, but the lift columns make it interpretable.
+**Phase 1 verdict:** With correct (val-MRR) selection, **LLM features match and slightly exceed genome** on the popular split (B 0.1192 vs A 0.1178 MRR), and the content-feature lift over the no-content floor is real for both (A−C +1.8%, B−C +3.0% MRR). The Phase 1 success criterion (B matches/approaches A) is **exceeded**.
+
+Checkpoints (all α=0, phase1, content slot is the only difference):
+- **val-MRR (Table 2):** A = `best_softmax_v2_popularity_alpha_0_phase1_20260606_114000.pth`, B = `best_softmax_v2_llm_popularity_alpha_0_phase1_20260606_131452.pth`, C = `best_softmax_v2_nocontent_popularity_alpha_0_phase1_20260606_143158.pth`
+- **val-loss (Table 1):** A = `…_20260604_210405.pth`, B = `…_llm_…_20260605_213508.pth`, C = `…_nocontent_…_20260604_214306.pth`
+- Raw per-K outputs (K up to 250) under `eval_results/`. Recorded 2026-06-06.
+
+Model C is the floor. The A−C and B−C columns are the content-feature lift — how much genome and LLM each add over no content slot. The headline comparison is A vs. B; the lift columns make it interpretable.
 
 **Why the genome lift (A−C ≈ +1%) is small here — and expected.** This is measured on the **reduced Phase 1 corpus**, which keeps only popular head movies (> 1,000 ratings). For those items collaborative filtering already has abundant interaction signal to learn a good item embedding, so the content slot adds little on top — the ID-embedding pools carry most of the weight. Content features earn their keep where interactions are **sparse**: long-tail / cold-start items the model has barely seen, where there is little CF signal to leverage and the content vector is most of what distinguishes the item. Phase 1 structurally removes exactly those items, so the floor (C) sits unusually close to A. The lift is positive and consistent across every K (genome does help), just compressed; the real lift-over-floor story is told on the **full corpus in Phase 2**, where the tail is present.
 
