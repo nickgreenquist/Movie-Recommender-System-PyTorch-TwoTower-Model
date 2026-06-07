@@ -379,9 +379,32 @@ If similarities don't look right, extraction or aggregation is broken. Fix befor
 
 ## Stage 5: Train Three Models
 
-Train three two-tower models with **identical hyperparameters**. The only difference is what fills the content slot: genome (A), LLM (B), or nothing (C).
+Train three two-tower models with **identical hyperparameters** (a 4th arm, D, was added later — see below). The only difference is what fills the content slot: genome (A), LLM (B), nothing (C), or both (D).
 
 > **Phase 1:** Retrain all three models on the reduced ~4-5k corpus. Do NOT compare against the existing full-corpus prod model — that's apples-to-oranges. Models A, B, and C must use identical hyperparameters and the same reduced corpus.
+
+### Canonical model → checkpoint map (authoritative)
+
+All four checkpoints (and their `eval_results/`/`canary_results/` files) were **renamed on 2026-06-07 to the current explicit-tower-families naming scheme** (commit `7e5b34a`), so the filenames below are now self-consistent. A/B/C were originally trained under a legacy scheme (`best_softmax_v2[_llm|_nocontent]_…`); see "History" below. This table is the single source of truth for which checkpoint is which model; the scattered per-table references elsewhere all point here.
+
+**Phase 2 — full corpus, α=0, 150k steps, val-MRR selection, trained 2026-06-07:**
+
+| Model | Content slot | `FEATURE_TOWERS` | Best checkpoint (`saved_models/`) | MRR\* |
+|---|---|---|---|---|
+| **A** | genome tags | `genome` | `best_softmax_genome_tags_popularity_alpha_0_20260607_101027.pth` | 0.1146 |
+| **B** | LLM features | `llm` | `best_softmax_llm_features_popularity_alpha_0_20260607_105646.pth` | 0.1157 |
+| **C** | none (floor) | `none` | `best_softmax_popularity_alpha_0_20260607_112755.pth` | 0.1143 |
+| **D** | genome + LLM | `both` | `best_softmax_genome_tags_llm_features_popularity_alpha_0_20260607_131924.pth` | 0.1154 |
+
+\*Whole-corpus MRR, canonical eval (all 19,134 val users, n=382,138; matches the Stage 6 Phase 2 tables). Per-model `eval_results/` and `canary_results/` files share the same stem.
+
+**Safe-rename notes:** `src/checkpoint.py:load_checkpoint` resolves towers from the *state_dict weight keys*, not the filename, so renaming a `.pth` is safe. The one caveat: A and B are "content-era" checkpoints (generic `item_content_tower` keys) whose genome-vs-llm identity is read from the `_config.json` **sidecar** (legacy `content_feature_source` key) — the sidecar must keep the same stem, so the rename moved `.pth` + `_config.json` together. A/B/C sidecar JSON still contains the legacy `content_feature_source` key internally (only the filenames changed); the loader reads both keys, so this is harmless.
+
+**History (why git/older artifacts show different names):**
+- **Model A's old filename had no "genome".** Pre-rename, genome was the *default* content source and left unmarked (`best_softmax_v2_…`); only non-default arms got a modifier (`_llm`, `_nocontent`). The `_v2` token and the unmarked-genome default are now gone — names compose tower families (`genome_tags`, `llm_features`) like D always did.
+- Old → new: A `best_softmax_v2_…101027` → `best_softmax_genome_tags_…101027`; B `best_softmax_v2_llm_…105646` → `best_softmax_llm_features_…105646`; C `best_softmax_v2_nocontent_…112755` → `best_softmax_…112755`. D (`…_genome_tags_llm_features_…131924`) was already correct.
+
+**Phase 1 — reduced corpus (`_phase1` suffix), α=0:** see the checkpoint list under Stage 6 Phase 1 (separate val-loss vs val-MRR selection sets). Those Phase 1 checkpoints were **not** renamed (still `best_softmax_v2[_llm|_nocontent]_…_phase1_…`).
 
 ### Model A — Genome
 **Always retrained fresh at `alpha=0`, never the prod checkpoint.** **Phase 1:** train on the filtered ~4-5k corpus. **Phase 2:** train on the full 9,375-movie corpus. The existing deployed prod checkpoint was trained with `alpha=0.5`, so reusing it as a baseline would confound the comparison on popularity — the one axis this ablation must hold constant. Cost of retraining is $0 compute.
@@ -478,9 +501,9 @@ Model C is the floor. The A−C and B−C columns are the content-feature lift �
 **Phase 2 whole-corpus verdict:** **B (LLM) leads every metric** — B−A = +0.0011 MRR (+0.97%), B−C = +0.0014 (+1.2%), A−C = +0.0003 (+0.3%). The Phase 1 finding (LLM matches/slightly beats genome) **holds and firms up with the long tail present**: B now leads on *every* metric (Phase 1 had a Hit@20 tie). The aggregate lift-over-floor is small because the rollback target distribution is popularity-skewed (Q4 popular movies are 90% of examples) — the lift lives in the long-tail split below, not the aggregate.
 
 Checkpoints (all α=0, full corpus, content slot is the only difference; trained 2026-06-07):
-- A genome = `best_softmax_v2_popularity_alpha_0_20260607_101027.pth`
-- B llm = `best_softmax_v2_llm_popularity_alpha_0_20260607_105646.pth`
-- C nocontent = `best_softmax_v2_nocontent_popularity_alpha_0_20260607_112755.pth`
+- A genome = `best_softmax_genome_tags_popularity_alpha_0_20260607_101027.pth`
+- B llm = `best_softmax_llm_features_popularity_alpha_0_20260607_105646.pth`
+- C nocontent = `best_softmax_popularity_alpha_0_20260607_112755.pth`
 
 ### Long-tail split (Phase 2)
 
@@ -521,7 +544,7 @@ On the full corpus we report metrics **restricted by the target movie's populari
 
 ### Qualitative comparison via canary users
 
-**Phase 2, full corpus.** Top-10 from genome (A) vs LLM (B) for all ~19 canary personas (`ts_max` bin), saved to `canary_results/best_softmax_v2_popularity_alpha_0_20260607_101027.txt` (A) and `…_llm_…_20260607_105646.txt` (B). The 5 most illustrative disagreements:
+**Phase 2, full corpus.** Top-10 from genome (A) vs LLM (B) for all ~19 canary personas (`ts_max` bin), saved to `canary_results/best_softmax_genome_tags_popularity_alpha_0_20260607_101027.txt` (A) and `…_llm_features_…_20260607_105646.txt` (B). The 5 most illustrative disagreements:
 
 | Persona (liked) | Genome (A) leans | LLM (B) leans |
 |---|---|---|

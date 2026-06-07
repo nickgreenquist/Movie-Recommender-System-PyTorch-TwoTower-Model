@@ -1,5 +1,5 @@
 
-── Offline Evaluation [rollback (≤20/user)]  (n=382,138 rollbacks, saved_models/best_softmax_v2_popularity_alpha_0_20260607_101027.pth) ──────────
+── Offline Evaluation [rollback (≤20/user)]  (n=382,138 rollbacks, saved_models/best_softmax_genome_tags_popularity_alpha_0_20260607_101027.pth) ──────────
 Corpus: 9,375 movies  |  Random Hit Rate@250 baseline: 2.667%
 
 Whole corpus  (n=382,138 rollbacks)

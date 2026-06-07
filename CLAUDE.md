@@ -216,6 +216,45 @@ v3 beats v2 prod by **+31% MRR**. v3 beats MSE prod by **+8.7× MRR**.
 - **Crime, Arthouse, Martial Arts**: all improved
 - **WW2**: no longer recommends Indian films (was a clear failure at early checkpoints; resolved by 105k steps)
 
+## LLM-vs-Genome Ablation: Model → Checkpoint Map
+
+The four ablation arms (A/B/C/D) are identical architecture + hyperparameters (α=0, full corpus,
+150k steps, val-MRR checkpoint selection, trained 2026-06-07); the *only* difference is what fills
+the content slot. **All four checkpoints (and their `eval_results/`/`canary_results/` files) were
+renamed on 2026-06-07 to the current explicit-tower-families naming scheme** (commit `7e5b34a`), so
+the filenames below are now self-consistent — A/B/C originally used a legacy scheme (see "History").
+
+| Model | Content slot | `FEATURE_TOWERS` | Best checkpoint (`saved_models/`) | MRR\* |
+|---|---|---|---|---|
+| **A** | genome tags | `genome` | `best_softmax_genome_tags_popularity_alpha_0_20260607_101027.pth` | 0.1146 |
+| **B** | LLM features | `llm` | `best_softmax_llm_features_popularity_alpha_0_20260607_105646.pth` | 0.1157 |
+| **C** | none (floor) | `none` | `best_softmax_popularity_alpha_0_20260607_112755.pth` | 0.1143 |
+| **D** | genome + LLM | `both` | `best_softmax_genome_tags_llm_features_popularity_alpha_0_20260607_131924.pth` | 0.1154 |
+
+\*Whole-corpus MRR, canonical Phase 2 eval (all 19,134 val users, n=382,138). Per-model
+eval/canary outputs live in `eval_results/` and `canary_results/` under the same stems. (A
+5,000-user `eval` run reads ~1% higher — e.g. A=0.1163, B=0.1173, C=0.1158, D=0.1154 — same
+C < A < B ordering; use the 19,134-user numbers above as canonical.)
+
+**Config resolution does not depend on the filename.** `src/checkpoint.py:load_checkpoint`
+resolves each model's towers from the *state_dict weight keys* (`item_genome_tag_tower` /
+`item_llm_feature_tower`), so renaming a `.pth` is safe. The **one exception**: A and B are
+"content-era" checkpoints whose state_dict still uses the generic `item_content_tower` keys — for
+those, genome-vs-llm is read from the `_config.json` sidecar (`content_feature_source`, legacy key).
+So the sidecar **must keep the same stem as its `.pth`**; the rename moved both together.
+
+**History (why git/older artifacts show different names):**
+- A/B/C `.pth` files (and their result txts) used to read `best_softmax_v2_…`,
+  `best_softmax_v2_llm_…`, `best_softmax_v2_nocontent_…`. The `_v2` token and the unmarked-genome
+  default are gone; the names now compose tower families like D always did.
+- A/B/C **sidecar JSON still contains the legacy `content_feature_source` key internally** (only
+  the *filenames* were changed, not the JSON contents). The loader reads both `feature_towers` and
+  the legacy `content_feature_source`, so this is harmless.
+
+**None of these is prod.** Prod remains the genome α=0.5 checkpoint in Current State. Verdict
+(full analysis in `docs/plans/llm_vs_genome_ablation_plan.md` Stage 6): B ≥ A on the popular head,
+A ≈ B on the deep tail, D shows no clear additive benefit over the better single source.
+
 ## Architecture Experiment Log
 
 ### V3: 4-pool user tower (2026-05-05) — PROD
