@@ -25,7 +25,7 @@ can be told apart from new ones.
 from llm_features.schemas import SCHEMA
 
 
-PROMPT_VERSION = 'v1'
+PROMPT_VERSION = 'v2'   # v2: sub-genre granularity (crime split + sci-fi/fantasy/horror)
 
 
 # ── Shared calibration preamble (identical across groups) ────────────────────
@@ -62,9 +62,11 @@ calibration-sensitive (a film can be mildly or intensely "tense"). Avoid
 contradictions: a film is rarely strongly "feel_good" AND strongly "bleak" at once.""",
 
     'setting': """\
-These are factual SETTING & ERA axes — where and when the film takes place. Score a
-setting high only if the film is actually set there or then. Most films touch only
-one or two of these; the rest are 0.0.""",
+These are factual SETTING, ERA & SUB-GENRE axes — where and when the film takes place,
+plus its speculative or genre world (cyberpunk, high fantasy, zombie, vampire, robots,
+…). Score a place/era high only if the film is actually set there or then, and a
+sub-genre high only if the film genuinely is that kind of film. Most films touch only
+a few of these; the rest are 0.0.""",
 
     'provenance': """\
 These are factual PROVENANCE & STRUCTURE axes — the film's origin and narrative form

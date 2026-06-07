@@ -16,10 +16,12 @@ Design notes:
     schema can't bound numbers — see schemas.py). parsed_output is the validated
     model instance.
   • format_for_prompt feeds only the DISCRIMINATIVE slice of the scrape (title, year,
-    genres, MPAA, studio, director, writers, top cast, keywords, tagline, overview,
-    and TRUNCATED Wikipedia plot + reception) — NOT the full below-the-line crew or
-    the raw full_extract. Truncation lives here, at feed time, never in the durable
-    scrape cache (the plan's store-raw / truncate-at-feed rule).
+    genres, MPAA, studio, director, writers, top cast, keywords, production budget,
+    tagline, overview, and TRUNCATED Wikipedia plot + reception + Accolades/awards) —
+    NOT the full below-the-line crew or the raw full_extract. The awards block is
+    sliced out of full_extract here (the reception convenience field is the
+    critical-response subsection only, which omits the award facts). Truncation lives
+    here, at feed time, never in the durable scrape cache (store-raw / truncate-at-feed).
   • thinking is DISABLED: output tokens dominate the bill, and structured float
     extraction needs no chain-of-thought.
   • cache_control is set on the static system prefix, but the per-group prompt is
@@ -41,6 +43,7 @@ import anthropic
 
 from llm_features.prompts import PROMPT_VERSION, SYSTEM_PROMPTS, user_message
 from llm_features.schemas import FEATURE_ORDER, GROUPS
+from llm_features.scrape import find_section, parse_sections
 
 
 # ── Paths ────────────────────────────────────────────────────────────────────
@@ -68,7 +71,8 @@ MAX_TOKENS = 1024   # a 6–28 float JSON object is small; this is generous head
 # ── Feed-time formatting (discriminative slice only) ─────────────────────────
 
 PLOT_CHARS      = 1500   # Wikipedia plot cap — full plots blow the token budget
-RECEPTION_CHARS = 600    # reception cap — enough for the prestige/awards signal
+RECEPTION_CHARS = 600    # critical-response cap — sentiment, not the award facts
+AWARDS_CHARS    = 600    # Accolades/awards-section cap — the discrete prestige facts
 MAX_CAST        = 8      # top-billed only; the long tail adds tokens, not signal
 
 
@@ -88,15 +92,29 @@ def _keywords(details_raw: dict) -> list:
     return [k['name'] for k in kw.get('keywords', kw.get('results', []))]
 
 
-def _box_office(details_raw: dict) -> str:
-    """Budget/revenue as '$Xm budget, $Ym gross' — the only factual basis the
-    reception group's box_office_scale dim has (TMDB revenue, not in the plot)."""
-    parts = []
-    for label, key in (('budget', 'budget'), ('gross', 'revenue')):
-        v = (details_raw or {}).get(key) or 0
-        if v > 0:
-            parts.append(f"${v / 1e6:.0f}M {label}")
-    return ', '.join(parts)
+def _budget(details_raw: dict) -> str:
+    """Production budget as '$Xm' — the factual basis for the reception group's
+    big_budget dim. Gross revenue is deliberately NOT fed: 'big budget' means
+    production scale, not commercial take, and gross is a quasi-popularity signal in
+    tension with the alpha=0 stance (the experiment holds popularity constant)."""
+    v = (details_raw or {}).get('budget') or 0
+    return f"${v / 1e6:.0f}M" if v > 0 else ''
+
+
+def _awards(wiki: dict) -> str:
+    """
+    The Wikipedia Accolades / awards-season section, sliced from the stored
+    full_extract at feed time. The parsed `reception` convenience field is the
+    Critical-response subsection ONLY — the discrete award facts (Oscars, Palme d'Or,
+    Criterion) live in a SEPARATE Accolades section it doesn't capture, so the reception
+    group's prestige dims were unscoreable without this. Reuses scrape.py's section
+    parser (store-raw / slice-at-feed rule → no re-scrape; full_extract is cached).
+    """
+    full = (wiki or {}).get('full_extract') or ''
+    if not full:
+        return ''
+    body = find_section(full, parse_sections(full), ('accolades', 'awards'))
+    return body[:AWARDS_CHARS] + ('…' if len(body) > AWARDS_CHARS else '')
 
 
 def format_for_prompt(record: dict) -> str:
@@ -124,7 +142,7 @@ def format_for_prompt(record: dict) -> str:
     add('Writers',  ', '.join(tmdb.get('writers', [])[:4]))
     add('Cast',     ', '.join(tmdb.get('cast', [])[:MAX_CAST]))
     add('Keywords',   ', '.join(_keywords(details)[:25]))
-    add('Box office', _box_office(details))
+    add('Budget',     _budget(details))
     add('Tagline',  tmdb.get('tagline'))
     add('Overview', tmdb.get('overview'))
 
@@ -132,6 +150,7 @@ def format_for_prompt(record: dict) -> str:
     add('Plot', plot + ('…' if wiki.get('plot', '') and len(wiki['plot']) > PLOT_CHARS else ''))
     recep = (wiki.get('reception') or '')[:RECEPTION_CHARS]
     add('Reception', recep + ('…' if wiki.get('reception', '') and len(wiki['reception']) > RECEPTION_CHARS else ''))
+    add('Awards', _awards(wiki))
 
     return '\n'.join(lines)
 

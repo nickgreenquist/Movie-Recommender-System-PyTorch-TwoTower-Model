@@ -29,10 +29,10 @@ stats, and report three things that keep the judgment honest —
                               falls through)
 
 The six groups mirror the plan's anti-fatigue split (one focused LLM call each):
-THEMES & PLOT, TONE & MOOD, SETTING & ERA, PROVENANCE & STRUCTURE, FACTUAL RECEPTION
-& PRESTIGE, VISUAL MEDIUM (factual-medium descriptors only — subjective aesthetics
-like 'cinematography'/'visually stunning' are dropped, they would be hallucinated
-from a synopsis).
+THEMES & PLOT, TONE & MOOD, SETTING, ERA & SUB-GENRE, PROVENANCE & STRUCTURE, FACTUAL
+RECEPTION & PRESTIGE, VISUAL MEDIUM (factual-medium descriptors only — subjective
+aesthetics like 'cinematography'/'visually stunning' are dropped, they would be
+hallucinated from a synopsis).
 
 Usage (standalone — not part of the main.py pipeline CLI; pure code, no GPU / API):
     python llm_features/derive_schema.py
@@ -61,7 +61,7 @@ PRIMARY_POOL_RANK = 150
 # Scrape-backing tags for group-5 dims (mirrors what scrape.py actually stores vs.
 # what Stage 1 deferred). Surfaced per dim so the "no scrape backing" prestige dims
 # are flagged, not silently trusted — see the plan's Reception/prestige validity note.
-#   tmdb_revenue   — details_raw.budget / .revenue          (box-office scale)
+#   tmdb_budget    — details_raw.budget                      (production-budget scale)
 #   tmdb_vote      — vote_average / vote_count               (quality PROXY only)
 #   wikipedia_text — full_extract / reception (accolades prose, not a structured field)
 #   deferred       — explicit Oscar / Criterion fields were NOT scraped in Stage 1
@@ -76,7 +76,8 @@ PRIMARY_POOL_RANK = 150
 
 # (1) THEMES & PLOT — content-derivable from plot text.
 THEMES_DIMS = [
-    ('murder',           ['murder', 'serial killer']),
+    ('murder',           ['murder']),
+    ('serial_killer',    ['serial killer']),
     ('obsession',        ['obsession']),
     ('loneliness',       ['loneliness', 'solitude']),
     ('revenge',          ['revenge', 'vengeance']),
@@ -92,8 +93,13 @@ THEMES_DIMS = [
     ('friendship',       ['friendship', 'unlikely friendships']),
     ('corruption',       ['corruption']),
     ('greed',            ['greed']),
-    ('crime',            ['crime', 'crime gone awry', 'gangster', 'gangsters',
-                          'heist', 'mafia']),
+    # Crime mega-bucket split into sub-genres (see SETTING note on the granularity
+    # restoration): the old single 'crime' dim folded heist/gangster/mafia together,
+    # making Model B coarser than genome's distinct tags. Each now stands alone.
+    ('crime',            ['crime', 'crime gone awry']),
+    ('heist',            ['heist']),
+    ('gangster',         ['gangster', 'gangsters', 'mafia', 'organized crime']),
+    ('hitman',           ['hitman', 'assassin']),
     ('conspiracy',       ['conspiracy', 'paranoia', 'surveillance']),
     ('espionage',        ['espionage', 'spy', 'spying']),
     ('politics',         ['politics', 'political']),
@@ -140,8 +146,20 @@ TONE_DIMS = [
     ('nostalgic',        ['nostalgic']),
 ]
 
-# (3) SETTING & ERA — factually extractable. Mostly deep-sourced (ranks > 150):
-# the era/place axis is highly discriminative but ranks below the sentiment head.
+# (3) SETTING, ERA & SUB-GENRE — factually extractable. Mostly deep-sourced
+# (ranks > 150): the era/place and sub-genre axes are highly discriminative but rank
+# below the sentiment head.
+#
+# GRANULARITY RESTORATION (why the sub-genre block exists): the top-150-by-std_score
+# derivation systematically DROPS sharp sub-genre tags — a tag like 'zombies' (#810)
+# or 'cyberpunk' (#658) is 0.0 for ~99% of films, so its corpus std is low even though
+# it is exactly the axis that drives "recommend more like this". Model A (genome) keeps
+# all 1,128 tags including these; the original 116-dim schema kept none of them, so
+# Model B competed with ~10x fewer, coarser content axes — a confound unrelated to LLM
+# extraction quality. These dims (every one a real genome tag → still "same axes" as A)
+# restore that granularity. NB 'sword and sorcery' is intentionally absent: it is NOT a
+# genome tag, so it cannot be grounded here (it belongs to a future LLM-invents-axes
+# B' arm); its concept is folded into 'high_fantasy'.
 SETTING_DIMS = [
     ('world_war_ii',     ['world war ii', 'wwii', 'nazis', 'holocaust']),
     ('war',              ['war', 'wartime', 'vietnam war']),
@@ -163,6 +181,21 @@ SETTING_DIMS = [
     ('small_town',       ['small town', 'suburbia']),
     ('school',           ['high school', 'college']),
     ('eighties',         ['1980s']),
+    # Sci-fi sub-genres (speculative worlds / devices).
+    ('cyberpunk',              ['cyberpunk']),
+    ('artificial_intelligence', ['artificial intelligence']),
+    ('robots',                 ['robots', 'robot']),
+    ('clones',                 ['clones']),
+    # Fantasy sub-genres ('sword and sorcery' folds in here — not a genome tag).
+    ('high_fantasy',           ['high fantasy', 'fantasy world']),
+    ('dragons',                ['dragons']),
+    ('wizards',                ['wizards']),
+    # Horror sub-genres (creatures / slasher).
+    ('slasher',                ['slasher']),
+    ('zombies',                ['zombies', 'zombie']),
+    ('vampires',               ['vampires', 'vampire']),
+    ('ghosts',                 ['ghosts']),
+    ('monster',                ['monster']),
 ]
 
 # (4) PROVENANCE & STRUCTURE — factually extractable from metadata.
@@ -217,7 +250,7 @@ RECEPTION_DIMS = [
                                'afi 100 (laughs)'],                  'wikipedia_text'),
     ('classic',               ['classic'],                           'wikipedia_text'),
     ('cult_classic',          ['cult classic', 'cult', 'cult film'], 'wikipedia_text'),
-    ('box_office_scale',      ['big budget'],                        'tmdb_revenue'),
+    ('big_budget',            ['big budget'],                        'tmdb_budget'),
 ]
 
 # (6) VISUAL MEDIUM — FACTUAL medium descriptors only. Deliberately small: the most
@@ -235,9 +268,9 @@ VISUAL_DIMS = [
 ]
 
 GROUPS = [
-    ('themes',     'THEMES & PLOT',                25, THEMES_DIMS),
+    ('themes',     'THEMES & PLOT',                32, THEMES_DIMS),
     ('tone',       'TONE & MOOD',                  25, TONE_DIMS),
-    ('setting',    'SETTING & ERA',                20, SETTING_DIMS),
+    ('setting',    'SETTING, ERA & SUB-GENRE',     32, SETTING_DIMS),
     ('provenance', 'PROVENANCE & STRUCTURE',       25, PROVENANCE_DIMS),
     ('reception',  'FACTUAL RECEPTION & PRESTIGE', 20, RECEPTION_DIMS),
     ('visual',     'VISUAL MEDIUM',                12, VISUAL_DIMS),
@@ -463,8 +496,8 @@ def print_summary(schema: dict, ranking: dict) -> None:
         elif backing == 'tmdb_vote':
             note = '  ⚠ PROXY only (vote_average, not the IMDb list)'
             weak.append(d['name'])
-        elif backing == 'tmdb_revenue':
-            note = '  ⚠ quasi-popularity signal (alpha=0 leakage caution)'
+        elif backing == 'tmdb_budget':
+            note = '  ⚠ production-budget signal (mild popularity correlate; gross NOT fed)'
         print(f"   {d['name']:<22} {backing:<24}{note}")
     print(f"   → {len(weak)} dim(s) lack a direct scraped signal: {', '.join(weak)}")
 

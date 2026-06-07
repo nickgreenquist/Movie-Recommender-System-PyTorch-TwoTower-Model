@@ -2,10 +2,12 @@
 Stage 1 — Per-Movie Web Scraping  (LLM-vs-genome ablation)
 
 Collects the raw web content the LLM will later reason over (Stage 2), one JSON
-file per movie cached to llm_features/cache/scraped/{movieId}.json. Operates on
-the Phase 1 reduced corpus (data/llm_experiment_movies_phase1.json, 4,461
-movies) so the pipeline can be validated cheaply before the full-corpus run. See
-docs/plans/llm_vs_genome_ablation_plan.md (Stage 1).
+file per movie cached to llm_features/cache/scraped/{movieId}.json. The CORPUS env
+selects the movie list — 'full' (default; the whole >200-ratings corpus from
+data/base_movies.parquet, ~9,375 movies) or 'phase1' (the reduced >1000 list,
+data/llm_experiment_movies_phase1.json, 4,461 movies). The cache is movieId-keyed
+and shared across corpora, so a 'full' run scrapes only what phase1 hasn't already
+cached. See docs/plans/llm_vs_genome_ablation_plan.md (Stage 1).
 
 Source stack is deliberately lean — TMDB + Wikipedia, no OMDb / IMDB-page
 scraping / prestige indicators (those are deferred to before the full run):
@@ -37,9 +39,10 @@ Caching is aggressive — a movie with an existing cache file is skipped (pass
 permanent, not transient.
 
 Usage (standalone — not part of the main.py pipeline CLI):
-    TMDB_API_KEY=your_key python llm_features/scrape.py             # full Phase 1 set
-    TMDB_API_KEY=your_key python llm_features/scrape.py 10          # first 10 (test)
-    TMDB_API_KEY=your_key python llm_features/scrape.py 10 --force  # re-scrape, ignore cache
+    CORPUS=full   TMDB_API_KEY=your_key python llm_features/scrape.py   # whole corpus (default)
+    CORPUS=phase1 TMDB_API_KEY=your_key python llm_features/scrape.py   # reduced phase1 set
+    TMDB_API_KEY=your_key python llm_features/scrape.py 10              # first 10 (test)
+    TMDB_API_KEY=your_key python llm_features/scrape.py 10 --force      # re-scrape, ignore cache
 
 The optional integer arg scrapes only the first N movies; --force (-f) re-scrapes
 even already-cached movies — use it when the cache schema changes mid-iteration.
@@ -59,10 +62,11 @@ import requests
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 
-REPO_ROOT  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PHASE1     = os.path.join(REPO_ROOT, 'data', 'llm_experiment_movies_phase1.json')
-LINKS      = os.path.join(REPO_ROOT, 'data', 'ml-32m', 'links.csv')
-CACHE_DIR  = os.path.join(REPO_ROOT, 'llm_features', 'cache', 'scraped')
+REPO_ROOT   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PHASE1      = os.path.join(REPO_ROOT, 'data', 'llm_experiment_movies_phase1.json')
+FULL_MOVIES = os.path.join(REPO_ROOT, 'data', 'base_movies.parquet')
+LINKS       = os.path.join(REPO_ROOT, 'data', 'ml-32m', 'links.csv')
+CACHE_DIR   = os.path.join(REPO_ROOT, 'llm_features', 'cache', 'scraped')
 
 
 # ── Endpoints / client ───────────────────────────────────────────────────────
@@ -388,8 +392,19 @@ def run(limit=None, force=False) -> None:
         print("  Get a free key at: https://www.themoviedb.org/settings/api")
         return
 
-    with open(PHASE1) as f:
-        movie_ids = json.load(f)['movie_ids']
+    # Corpus selects the movie list (mirrors src/corpus.py): 'full' (default) = the whole
+    # >200-ratings corpus from base_movies.parquet; 'phase1' = the reduced >1000 list. The scrape
+    # cache is movieId-keyed and shared across corpora, so a 'full' run skips everything already
+    # cached under phase1 and scrapes only the remaining tail.
+    corpus = os.environ.get('CORPUS', 'full')
+    if corpus not in ('full', 'phase1'):
+        raise ValueError(f"Unknown CORPUS={corpus!r}; expected 'full' or 'phase1'")
+    if corpus == 'phase1':
+        with open(PHASE1) as f:
+            movie_ids = json.load(f)['movie_ids']
+    else:
+        movie_ids = pd.read_parquet(FULL_MOVIES)['movieId'].astype(int).tolist()
+    print(f"Corpus: {corpus}  ({len(movie_ids):,} movies in list)")
 
     links = pd.read_csv(LINKS, dtype={'tmdbId': 'Int64'})
     tmdb_map = {int(r.movieId): int(r.tmdbId)
