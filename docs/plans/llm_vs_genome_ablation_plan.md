@@ -520,10 +520,40 @@ On the full corpus we report metrics **restricted by the target movie's populari
 **Phase 2 verdict (paper headline):** LLM-extracted features **match human-curated genome on the long tail and slightly beat it overall**; genome retains only a marginal mid-tail (Q3) advantage. The "expensive human curation can be replaced by LLM extraction" thesis holds — including under the long-tail stress test Phase 1 structurally could not run. Caveat for the writeup: even at n=382,138 the deep-tail tiers are small (Q1 n=3,260; TAIL n=12,652) because the rollback target distribution is popularity-skewed (Q4 = 90% of examples), so deep-tail A-vs-B differences ≤ 0.0001 MRR should be read as ties, not rankings.
 
 ### Qualitative comparison via canary users
-3-5 canary user profiles. For each, top-10 from both models side by side. The interesting cases are where they disagree.
+
+**Phase 2, full corpus.** Top-10 from genome (A) vs LLM (B) for all ~19 canary personas (`ts_max` bin), saved to `canary_results/best_softmax_v2_popularity_alpha_0_20260607_101027.txt` (A) and `…_llm_…_20260607_105646.txt` (B). The 5 most illustrative disagreements:
+
+| Persona (liked) | Genome (A) leans | LLM (B) leans |
+|---|---|---|
+| **Sci-Fi** (2001, Solaris, Contact) | cerebral/arthouse SF — Brazil, Gattaca, Forbidden Planet, A.I. | popcorn/blockbuster SF — Fifth Element, T2, Total Recall, Jurassic Park |
+| **Crime** (Sicario, Narc, Am. Gangster) | drifts to finance/thriller — Big Short, Margin Call, Fight Club | **nails modern gritty crime** — Sicario: Day of the Soldado, Hell or High Water, End of Watch |
+| **Western** (True Grit, spaghetti westerns) | **tight western canon** — Searchers, Liberty Valance, Rio Bravo, Outlaw Josey Wales | drifts to war epics + off-genre — Patton, Dirty Dozen, Braveheart, Batman, Silence of the Lambs |
+| **Arthouse** (The Lobster, Antichrist) | **pure slow-burn/world arthouse** — Stalker, In the Mood for Love, Chungking Express, Blue Velvet | popular "smart prestige" — Fight Club, Usual Suspects, American Beauty, Spirited Away |
+| **Horror** (TCM '03, Wrong Turn, Emily Rose) | 90s Scream-era slashers — Scream 2/3, Ring, Saw, Ghost Ship | **era-faithful 2000s gore** — Saw II/IV/V/VI, House of Wax, TCM: The Beginning |
+
+**Finding — the two content sources give the model different "personalities":**
+- **Genome (A) → niche sub-genre / canon purity.** Cleaner Western, Arthouse, cerebral Sci-Fi, Anime (B leaks *Dark Knight*/*Usual Suspects* into Anime), and the eclectic "Nick's" taste (A surfaces Hot Fuzz / Shaun of the Dead / Children of Men; B defaults to Harry Potter / Star Wars).
+- **LLM (B) → era- and modern-subgenre matching** (2000s-gore Horror, 2010s gritty Crime) but **drifts to popular blockbusters more readily** on niche genres (Godfather II/III into Action; war epics into Western).
+
+This complements the quantitative result: B's edge is on the popular/modern head (era-matching pays off there), genome holds the niche tail-canon better — consistent with B winning overall but genome keeping a mid-tail edge. Both show the expected **α=0 popularity drift** on the hardest drift-test personas (WW2, Fantasy); B also re-surfaces an Indian film (*Rang De Basanti*) for WW2 — the documented early-checkpoint failure mode.
 
 ### Feature-level analysis
-For 10 random movies, compare LLM feature vector to genome feature vector. Document where they agree and diverge.
+
+Because the LLM schema was derived from the top-discriminability genome tags, every LLM dim records its source genome tag(s) (`data/llm_schema_dimensions.json`) — so the two spaces line up on the *same axes*. Reproducible via `llm_features/feature_level_analysis.py`.
+
+**Corpus-level shared-axis agreement.** For each of the 132 LLM dims, Pearson correlation across all 9,375 movies between the LLM score and its mapped genome tag score(s):
+
+- **mean r = 0.598, median 0.608; 99/132 dims at r ≥ 0.5, none below 0.1.** Strong evidence the LLM and genome measure the same axes — validating the design intent.
+- **By group:** visual **0.70**, setting **0.68**, provenance **0.64** agree highest; themes 0.56, tone 0.56; **reception lowest at 0.42.**
+- **Best axes (factual/objective):** vampires 0.94, documentary 0.89, animated 0.88, anime 0.88, western_frontier 0.86, world_war_ii 0.86, time_travel 0.85, sequel, musical, aliens, biographical, based_on_true_story.
+- **Worst axes (subjective / crowd-sentiment):** imdb_top_250 **0.16**, criterion **0.18**, palme_dor 0.27, oscar_technical 0.33 (all reception/prestige), plus subjective tone — weird 0.36, enigmatic 0.42, nostalgic 0.38 — and abstract themes — redemption 0.38, greed 0.38, social_commentary 0.38, nonlinear 0.40.
+
+**Per-movie (10 spot-checks).** Genome and LLM **agree strongly on each film's core identity** — e.g. *Godfather* (both: gangster/crime/mafia + oscar/imdb-top-250), *Saw* (both: horror/serial-killer/twist-ending/gory), *Schindler's List* (both: holocaust/WWII/based-on-true-story/oscar), *Spirited Away* (both: anime/animated/japan/fairy-tale), *Sicario* (both: tense/crime/violent/dark). They **diverge** in three consistent ways:
+1. **Genome carries crowd-prestige & auteur signal the LLM structurally lacks** — "masterpiece", "imdb top 250", and director/composer names (lynch, miyazaki, coppola, ennio morricone). The LLM proxies prestige with its own oscar_winner/classic/afi_recognized dims, but those agree only weakly with genome's crowd versions (imdb_top_250 r=0.16, criterion 0.18).
+2. **Genome has finer niche sub-genre granularity** — *Good, the Bad and the Ugly*: genome "spaghetti western" + "ennio morricone" + "civil war" vs the LLM's coarser "western_frontier". This finer aesthetic vocabulary is exactly why genome nails the Western / Arthouse canon in the canary.
+3. **LLM contributes clean plot-derived facts** genome buries or omits — *2001* "artificial_intelligence"/"existentialism", *Die Hard* "based_on_book"/"eighties", *Sicario* "hitman"/"conspiracy"/"corruption".
+
+**Synthesis (ties the experiment together).** The spaces are strongly aligned on factual/genre axes (mean r 0.60) → both place a movie in the right broad genre, which is why B matches A on the bulk metrics. Genome's advantage is concentrated in the **low-agreement axes** — subjective aesthetics, niche sub-genre granularity, and crowd-prestige — precisely where it wins the niche-canon canary personas and holds its mid-tail edge. The LLM, in turn, adds accurate plot facts and excels at era / modern-subgenre matching. This is the mechanistic explanation for the headline result: **LLM extraction reproduces nearly all of genome's content signal on the axes an LLM can reach from text, and the residual genome-only advantage is the crowd-sentiment / fine-aesthetic slice the plan flagged as the validity threat** (Stage 2 reception note, Stage 8 Limitations).
 
 ---
 
