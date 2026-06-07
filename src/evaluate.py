@@ -198,24 +198,30 @@ def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
     all_mids = [int(m) for m in fs.top_movies]
 
     with torch.no_grad():
-        emb_idx  = torch.tensor([fs.item_emb_movieId_to_i[m]         for m in all_mids], dtype=torch.long).to(device)
-        genre_t  = torch.tensor([fs.movieId_to_genre_context[m]      for m in all_mids], dtype=torch.float32).to(device)
-        tag_t    = torch.tensor([fs.movieId_to_tag_context[m]        for m in all_mids], dtype=torch.float32).to(device)
-        genome_t = torch.tensor([fs.movieId_to_genome_tag_context[m] for m in all_mids], dtype=torch.float32).to(device)
+        emb_idx  = torch.tensor([fs.item_emb_movieId_to_i[m]    for m in all_mids], dtype=torch.long).to(device)
+        genre_t  = torch.tensor([fs.movieId_to_genre_context[m] for m in all_mids], dtype=torch.float32).to(device)
+        tag_t    = torch.tensor([fs.movieId_to_tag_context[m]   for m in all_mids], dtype=torch.float32).to(device)
 
         genre_embs  = model.item_genre_tower(genre_t)
         tag_embs    = model.item_tag_tower(tag_t)
-        genome_embs = model.item_genome_tag_tower(genome_t)
         combined    = model.item_embedding(emb_idx)
+
+        # Genome embedding — only when the genome tower is on (absent for Model C and the
+        # llm-only Model B). This feeds the genome product probes; it stays genome-specific.
+        content_embs = None
+        if model.has_genome:
+            content_embs = model.item_genome_tag_tower(model.genome_context_buffer[emb_idx])
 
     movieId_to_embedding = {}
     for i, mid in enumerate(all_mids):
-        movieId_to_embedding[mid] = {
-            'MOVIE_GENRE_EMBEDDING':      genre_embs[i:i+1],
-            'MOVIE_TAG_EMBEDDING':        tag_embs[i:i+1],
-            'MOVIE_GENOME_TAG_EMBEDDING': genome_embs[i:i+1],
-            'MOVIE_EMBEDDING_COMBINED':   combined[i:i+1],
+        entry = {
+            'MOVIE_GENRE_EMBEDDING':    genre_embs[i:i+1],
+            'MOVIE_TAG_EMBEDDING':      tag_embs[i:i+1],
+            'MOVIE_EMBEDDING_COMBINED': combined[i:i+1],
         }
+        if content_embs is not None:
+            entry['MOVIE_GENOME_TAG_EMBEDDING'] = content_embs[i:i+1]
+        movieId_to_embedding[mid] = entry
     return movieId_to_embedding
 
 
@@ -516,7 +522,8 @@ def _setup(data_dir: str, checkpoint_path: str, version: str = FEATURES_VERSION)
     top_movies_len    = m.item_embedding_lookup.num_embeddings - 1
     genres_len        = m.item_genre_tower[0].in_features
     tags_len          = m.item_tag_tower[0].in_features
-    genome_tags_len   = m.item_genome_tag_tower[0].in_features
+    # Genome tower is absent for a no-genome model (Model C, and the llm-only Model B).
+    genome_tags_len   = m.item_genome_tag_tower[0].in_features if m.has_genome else None
     all_years_len     = m.year_embedding_lookup.num_embeddings
     ts_num_bins       = m.timestamp_embedding_lookup.num_embeddings
     user_ctx_size     = m.user_genre_tower[0].in_features
@@ -539,13 +546,16 @@ def _setup(data_dir: str, checkpoint_path: str, version: str = FEATURES_VERSION)
     all_embs        = torch.cat([movie_embeddings[m]['MOVIE_EMBEDDING_COMBINED']   for m in all_ids], dim=0)
     all_genre_embs  = torch.cat([movie_embeddings[m]['MOVIE_GENRE_EMBEDDING']      for m in all_ids], dim=0)
     all_tag_embs    = torch.cat([movie_embeddings[m]['MOVIE_TAG_EMBEDDING']        for m in all_ids], dim=0)
-    all_genome_embs = torch.cat([movie_embeddings[m]['MOVIE_GENOME_TAG_EMBEDDING'] for m in all_ids], dim=0)
+    # Genome matrix is absent when the genome tower is off (Model C, llm-only Model B); genome probes
+    # are then N/A.
+    all_genome_embs = (torch.cat([movie_embeddings[m]['MOVIE_GENOME_TAG_EMBEDDING'] for m in all_ids], dim=0)
+                       if model.has_genome else None)
 
     device = next(model.parameters()).device
     all_norm        = F.normalize(all_embs,        dim=1).to(device)
     all_norm_genre  = F.normalize(all_genre_embs,  dim=1).to(device)
     all_norm_tag    = F.normalize(all_tag_embs,    dim=1).to(device)
-    all_norm_genome = F.normalize(all_genome_embs, dim=1).to(device)
+    all_norm_genome = F.normalize(all_genome_embs, dim=1).to(device) if all_genome_embs is not None else None
 
     return (model, fs, movie_embeddings, all_ids, all_embs,
             all_norm, all_norm_genre, all_norm_tag, all_norm_genome,

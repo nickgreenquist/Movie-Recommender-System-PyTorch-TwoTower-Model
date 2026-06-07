@@ -13,18 +13,21 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from src.corpus import CORPUS, corpus_suffix
+
 
 FEATURES_VERSION = 'v1'
 
 # ── Loaders ───────────────────────────────────────────────────────────────────
 
 def load_base(data_dir: str) -> dict:
+    sfx = corpus_suffix()
     files = [
-        ('movies',       'base_movies.parquet'),
-        ('vocab',        'base_vocab.parquet'),
-        ('timestamps',   'base_timestamps.parquet'),
-        ('movie_tags',   'base_movie_tags.parquet'),
-        ('movie_genome', 'base_movie_genome.parquet'),
+        ('movies',       f'base_movies{sfx}.parquet'),
+        ('vocab',        f'base_vocab{sfx}.parquet'),
+        ('timestamps',   f'base_timestamps{sfx}.parquet'),
+        ('movie_tags',   f'base_movie_tags{sfx}.parquet'),
+        ('movie_genome', f'base_movie_genome{sfx}.parquet'),
     ]
     result = {}
     for key, filename in files:
@@ -143,6 +146,8 @@ def _write_list_parquet(df: pd.DataFrame, path: str) -> None:
 # ── Orchestrator ──────────────────────────────────────────────────────────────
 
 def run(data_dir: str = 'data', version: str = FEATURES_VERSION) -> None:
+    sfx = corpus_suffix()
+    print(f"Corpus: {CORPUS}  (artifact suffix: {sfx!r})")
     print(f"Loading base parquets from {data_dir}/ ...")
     base  = load_base(data_dir)
     vocab = parse_vocab(base['vocab'])
@@ -150,8 +155,8 @@ def run(data_dir: str = 'data', version: str = FEATURES_VERSION) -> None:
     print("\n── Building movie features ──")
     movie_df = build_movie_features(base, vocab)
 
-    movie_out = os.path.join(data_dir, f'features_movies_{version}.parquet')
+    movie_out = os.path.join(data_dir, f'features_movies_{version}{sfx}.parquet')
     print(f"\nWriting {movie_out} ...")
     _write_list_parquet(movie_df, movie_out)
 
-    print(f"\n✓ features_movies_{version}.parquet → {data_dir}/")
+    print(f"\n✓ features_movies_{version}{sfx}.parquet → {data_dir}/")

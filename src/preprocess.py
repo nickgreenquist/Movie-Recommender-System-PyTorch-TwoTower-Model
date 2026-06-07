@@ -5,10 +5,13 @@ Run once on raw CSVs. Outputs data/base_*.parquet.
 Usage:
     python main.py preprocess
 """
+import json
 import os
 import re
 
 import pandas as pd
+
+from src.corpus import CORPUS, corpus_suffix
 
 
 # ── Constants ────────────────────────────────────────────────────────────────
@@ -17,6 +20,10 @@ MIN_RATINGS_PER_MOVIE = 200
 MIN_RATINGS_PER_USER  = 20
 MAX_RATINGS_PER_USER  = 500
 MIN_NUM_TAGS          = 1_000       # user-applied tags must appear this often across all movies
+
+# Phase 1 ablation: reduced movie list produced by llm_features/filter_corpus.py.
+# Consulted ONLY when CORPUS=='phase1'; the full corpus ignores it (see build_corpus).
+PHASE1_MOVIES_JSON    = 'data/llm_experiment_movies_phase1.json'
 
 
 # ── Loaders ──────────────────────────────────────────────────────────────────
@@ -54,7 +61,11 @@ def load_raw(raw_dir: str) -> dict:
 
 def build_corpus(dfs: dict) -> tuple:
     """
-    Filter to movies with MIN_RATINGS_PER_MOVIE+ ratings.
+    Filter to movies with MIN_RATINGS_PER_MOVIE+ ratings. For CORPUS=='phase1',
+    additionally intersect with the reduced movie list (PHASE1_MOVIES_JSON), so
+    the LLM-vs-genome ablation trains on the same ~4-5k-movie subset its features
+    were scraped/extracted for. MIN_RATINGS_PER_MOVIE itself is unchanged — the
+    reduction is a pure subset of the full corpus.
     Returns (top_movies: list[int], movies_df: DataFrame).
     movies_df columns: movieId, title, year, genres (list[str]).
     """
@@ -67,6 +78,13 @@ def build_corpus(dfs: dict) -> tuple:
 
     print(f"Total movies in corpus: {len(counts)}")
     print(f"Movies with {MIN_RATINGS_PER_MOVIE}+ ratings: {len(top_movie_ids)}")
+
+    if CORPUS == 'phase1':
+        with open(PHASE1_MOVIES_JSON) as f:
+            phase1_ids = set(json.load(f)['movie_ids'])
+        top_movie_ids &= phase1_ids
+        print(f"CORPUS=phase1: reduced to {len(top_movie_ids)} movies "
+              f"(intersect with {PHASE1_MOVIES_JSON})")
 
     rows = []
     for _, row in df_movies.iterrows():
@@ -233,6 +251,8 @@ def _build_movie_genome_scores(dfs: dict, top_movies: list) -> pd.DataFrame:
 
 def run(raw_dir: str = 'data/ml-32m', out_dir: str = 'data') -> None:
     os.makedirs(out_dir, exist_ok=True)
+    sfx = corpus_suffix()
+    print(f"Corpus: {CORPUS}  (artifact suffix: {sfx!r})")
 
     dfs = load_raw(raw_dir)
 
@@ -245,23 +265,23 @@ def run(raw_dir: str = 'data/ml-32m', out_dir: str = 'data') -> None:
     print("\n── Filtering user ratings ──")
     ratings_df = filter_user_ratings(dfs, top_movies)
 
-    # Write parquets
-    movies_df.to_parquet(os.path.join(out_dir, 'base_movies.parquet'), index=False)
-    vocab_df.to_parquet(os.path.join(out_dir, 'base_vocab.parquet'), index=False)
-    ratings_df.to_parquet(os.path.join(out_dir, 'base_ratings.parquet'), index=False)
+    # Write parquets (corpus-namespaced; sfx == '' for the full corpus)
+    movies_df.to_parquet(os.path.join(out_dir, f'base_movies{sfx}.parquet'), index=False)
+    vocab_df.to_parquet(os.path.join(out_dir, f'base_vocab{sfx}.parquet'), index=False)
+    ratings_df.to_parquet(os.path.join(out_dir, f'base_ratings{sfx}.parquet'), index=False)
 
     # Per-movie tag counts (for features.py tag context vectors)
     movie_tags_df = _build_movie_tag_counts(dfs, top_movies, vocab_df)
-    movie_tags_df.to_parquet(os.path.join(out_dir, 'base_movie_tags.parquet'), index=False)
+    movie_tags_df.to_parquet(os.path.join(out_dir, f'base_movie_tags{sfx}.parquet'), index=False)
 
     # Per-movie genome scores (for features.py genome tag context vectors)
     movie_genome_df = _build_movie_genome_scores(dfs, top_movies)
-    movie_genome_df.to_parquet(os.path.join(out_dir, 'base_movie_genome.parquet'), index=False)
+    movie_genome_df.to_parquet(os.path.join(out_dir, f'base_movie_genome{sfx}.parquet'), index=False)
 
     # Global min/max timestamp for bucketizing (needed by dataset.py)
     ts_df = pd.DataFrame({'ts_min': [int(dfs['ratings']['timestamp'].min())],
                           'ts_max': [int(dfs['ratings']['timestamp'].max())]})
-    ts_df.to_parquet(os.path.join(out_dir, 'base_timestamps.parquet'), index=False)
+    ts_df.to_parquet(os.path.join(out_dir, f'base_timestamps{sfx}.parquet'), index=False)
 
-    print(f"\n✓ Wrote base_movies, base_vocab, base_ratings, "
-          f"base_movie_tags, base_movie_genome, base_timestamps  →  {out_dir}/")
+    print(f"\n✓ Wrote base_movies{sfx}, base_vocab{sfx}, base_ratings{sfx}, "
+          f"base_movie_tags{sfx}, base_movie_genome{sfx}, base_timestamps{sfx}  →  {out_dir}/")

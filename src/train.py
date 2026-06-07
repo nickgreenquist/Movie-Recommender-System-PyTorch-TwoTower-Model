@@ -2,7 +2,15 @@
 Full softmax training loop for the Two-Tower MovieRecommender.
 
 Usage:
-    python main.py train
+    python main.py train                                # Model A (genome-tag tower)
+    FEATURE_TOWERS=llm   python main.py train           # Model B (LLM-feature tower)
+    FEATURE_TOWERS=none  python main.py train           # Model C (no semantic-feature towers)
+    FEATURE_TOWERS=both  python main.py train           # Model D (genome + LLM towers) — new prod
+
+FEATURE_TOWERS selects which semantic-feature sub-towers the model includes at train time
+(parallel to the CORPUS env var): 'genome' | 'llm' | 'both' | 'none'. It tags the checkpoint
+name so the variants are unambiguous on disk. Default 'genome' preserves the historical prod
+naming. The legacy CONTENT_SOURCE env var is still read as a fallback.
 """
 import json
 import os
@@ -12,6 +20,7 @@ from datetime import datetime
 import numpy as np
 import torch
 import torch.nn.functional as F
+from src.corpus import CORPUS, corpus_suffix
 from src.dataset import FeatureStore
 from src.model import MovieRecommender
 
@@ -27,16 +36,29 @@ def get_device() -> torch.device:
 
 
 def get_config() -> dict:
+    # Which semantic-feature sub-towers to include, selectable at train time via the
+    # FEATURE_TOWERS env var (parallel to CORPUS): 'genome' (default, Model A) | 'llm' (Model B)
+    # | 'both' (Model D) | 'none' (Model C floor). Legacy CONTENT_SOURCE is read as a fallback.
+    feature_towers = os.environ.get('FEATURE_TOWERS', os.environ.get('CONTENT_SOURCE', 'genome'))
+    if feature_towers == 'none':
+        feature_towers = None
+    elif feature_towers not in ('genome', 'llm', 'both'):
+        raise ValueError(f"Unknown FEATURE_TOWERS={feature_towers!r}; "
+                         f"expected 'genome', 'llm', 'both', or 'none'")
     return {
         # Sub-embedding sizes
         'item_movieId_embedding_size':      32,
         'item_year_embedding_size':         8,
         'timestamp_feature_embedding_size': 4,
         'item_tag_embedding_size':          16,
-        'item_genome_tag_embedding_size':   32,
+        'item_genome_embedding_size':       32,
+        'item_llm_embedding_size':          32,
         'user_genre_embedding_size':        32,
         'item_genre_embedding_size':        8,
-        'user_genome_context_embedding_size': 32,
+        'user_genome_embedding_size':       32,
+        'user_llm_embedding_size':          32,
+        # Which semantic-feature towers: 'genome' | 'llm' | 'both' | None (Model C).
+        'feature_towers':                   feature_towers,
         # Projection MLP
         'proj_hidden':  256,
         'output_dim':   128,
@@ -50,19 +72,50 @@ def get_config() -> dict:
         'checkpoint_every': 30_000,
         'checkpoint_dir':   'saved_models',
         'temperature':      0.1,
-        'popularity_alpha': 0.5,
+        'popularity_alpha': 0.0,
     }
 
 
 # ── Model factory ─────────────────────────────────────────────────────────────
 
+def _genome_buffer(fs: FeatureStore):
+    """Per-movie genome scores → (top_movies_len+1, 1128) buffer with a zero padding row."""
+    m = np.array([fs.movieId_to_genome_tag_context[mid] for mid in fs.top_movies], dtype=np.float32)
+    pad = np.zeros((1, m.shape[1]), dtype=np.float32)
+    return torch.from_numpy(np.vstack([m, pad])), m.shape[1]
+
+
+def _llm_buffer():
+    """Load the pre-built LLM feature tensor (already padded). LLM_MODEL_TAG selects the run."""
+    sfx     = corpus_suffix()
+    llm_tag = os.environ.get('LLM_MODEL_TAG', 'claude-code-sonnet')
+    llm_path = os.path.join('data', f'llm_features_{llm_tag}_v1{sfx}.pt')
+    if not os.path.exists(llm_path):
+        raise FileNotFoundError(
+            f"LLM feature tensor not found: {llm_path}\n"
+            f"  Run: CORPUS={CORPUS} python -m llm_features.build_features {llm_tag}"
+        )
+    buf = torch.load(llm_path, map_location='cpu', weights_only=True)
+    return buf, buf.shape[1], llm_path
+
+
 def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
-    genome_matrix = np.array(
-        [fs.movieId_to_genome_tag_context[mid] for mid in fs.top_movies],
-        dtype=np.float32,
-    )
-    pad_row = np.zeros((1, genome_matrix.shape[1]), dtype=np.float32)
-    genome_context_buffer = torch.from_numpy(np.vstack([genome_matrix, pad_row]))
+    feature_towers = config.get('feature_towers', config.get('content_feature_source', 'genome'))
+    has_genome = feature_towers in ('genome', 'both')
+    has_llm    = feature_towers in ('llm', 'both')
+
+    # Semantic-feature buffers — genome from the FeatureStore (1128-dim), LLM from the pre-built
+    # tensor (132-dim). Each is built only if its tower is on; None (Model C) builds neither.
+    genome_context_buffer = None
+    genome_tags_len       = len(fs.genome_tag_ids)   # always valid; used as in_features if has_genome
+    llm_feature_buffer    = None
+    llm_feature_len       = None
+    if has_genome:
+        genome_context_buffer, genome_tags_len = _genome_buffer(fs)
+    if has_llm:
+        llm_feature_buffer, llm_feature_len, llm_path = _llm_buffer()
+        print(f"  LLM features: {llm_path}  ({llm_feature_len}-dim, "
+              f"{llm_feature_buffer.shape[0]-1} movies)")
 
     genre_matrix = np.array(
         [fs.movieId_to_genre_context[mid] for mid in fs.top_movies], dtype=np.float32)
@@ -80,20 +133,25 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
     return MovieRecommender(
         genres_len=len(fs.genres_ordered),
         tags_len=len(fs.tags_ordered),
-        genome_tags_len=len(fs.genome_tag_ids),
+        genome_tags_len=genome_tags_len,
         top_movies_len=len(fs.top_movies),
         all_years_len=len(fs.years_ordered),
         timestamp_num_bins=fs.timestamp_num_bins,
         user_context_size=fs.user_context_size,
+        feature_towers=feature_towers,
         genome_context_buffer=genome_context_buffer,
+        llm_feature_buffer=llm_feature_buffer,
+        llm_feature_len=llm_feature_len,
         item_genre_embedding_size=config['item_genre_embedding_size'],
         item_tag_embedding_size=config['item_tag_embedding_size'],
-        item_genome_tag_embedding_size=config['item_genome_tag_embedding_size'],
+        item_genome_embedding_size=config.get('item_genome_embedding_size', 32),
+        item_llm_embedding_size=config.get('item_llm_embedding_size', 32),
         item_movieId_embedding_size=config['item_movieId_embedding_size'],
         item_year_embedding_size=config['item_year_embedding_size'],
         user_genre_embedding_size=config['user_genre_embedding_size'],
         timestamp_feature_embedding_size=config['timestamp_feature_embedding_size'],
-        user_genome_context_embedding_size=config.get('user_genome_context_embedding_size', 32),
+        user_genome_embedding_size=config.get('user_genome_embedding_size', 32),
+        user_llm_embedding_size=config.get('user_llm_embedding_size', 32),
         genre_context_buffer=genre_context_buffer,
         tag_context_buffer=tag_context_buffer,
         year_context_buffer=year_context_buffer,
@@ -109,30 +167,39 @@ def print_model_summary(model: MovieRecommender) -> None:
             if isinstance(layer, torch.nn.Linear):
                 return layer.out_features
 
-    id_dim           = m.item_embedding_lookup.embedding_dim
-    genome_dim       = _out_dim(m.item_genome_tag_tower)
-    gctx_dim         = _out_dim(m.user_genome_context_tower)
-    genre_dim        = _out_dim(m.user_genre_tower)
-    ts_dim           = m.timestamp_embedding_lookup.embedding_dim
-    item_genre_dim   = _out_dim(m.item_genre_tower)
-    item_tag_dim     = _out_dim(m.item_tag_tower)
-    item_movieId_dim = _out_dim(m.item_embedding_tower)
-    year_dim         = _out_dim(m.year_embedding_tower)
-    item_total       = item_genre_dim + item_tag_dim + genome_dim + item_movieId_dim + year_dim
-    n_params         = sum(p.nelement() for p in model.parameters() if p.requires_grad)
+    # Genome and LLM towers are each present only when switched on (None/Model C has neither).
+    id_dim            = m.item_embedding_lookup.embedding_dim
+    genome_item_dim   = _out_dim(m.item_genome_tag_tower)    if m.has_genome else 0
+    genome_user_dim   = _out_dim(m.user_genome_context_tower) if m.has_genome else 0
+    llm_item_dim      = _out_dim(m.item_llm_feature_tower)   if m.has_llm    else 0
+    llm_user_dim      = _out_dim(m.user_llm_feature_tower)   if m.has_llm    else 0
+    genre_dim         = _out_dim(m.user_genre_tower)
+    ts_dim            = m.timestamp_embedding_lookup.embedding_dim
+    item_genre_dim    = _out_dim(m.item_genre_tower)
+    item_tag_dim      = _out_dim(m.item_tag_tower)
+    item_movieId_dim  = _out_dim(m.item_embedding_tower)
+    year_dim          = _out_dim(m.year_embedding_tower)
+    item_total        = (item_genre_dim + item_tag_dim + genome_item_dim + llm_item_dim
+                         + item_movieId_dim + year_dim)
+    n_params          = sum(p.nelement() for p in model.parameters() if p.requires_grad)
 
     pool_total = 4 * id_dim
-    user_total = pool_total + gctx_dim + genre_dim + ts_dim
-    user_desc  = (f"4×sum_pool_id({id_dim}) + genome_ctx({gctx_dim}) + "
+    user_total = pool_total + genome_user_dim + llm_user_dim + genre_dim + ts_dim
+    genome_user_desc = f"genome_ctx({genome_user_dim}) + " if m.has_genome else ""
+    llm_user_desc    = f"llm_ctx({llm_user_dim}) + "       if m.has_llm    else ""
+    genome_item_desc = f"genome({genome_item_dim}) + "     if m.has_genome else ""
+    llm_item_desc    = f"llm({llm_item_dim}) + "           if m.has_llm    else ""
+    user_desc  = (f"4×sum_pool_id({id_dim}) + {genome_user_desc}{llm_user_desc}"
                   f"genre({genre_dim}) + ts({ts_dim})")
 
     proj_h  = m.user_projection[0].out_features
     out_dim = m.user_projection[2].out_features
 
     print(f"\n── Model dimensions ──")
+    print(f"  Feature towers: {m.feature_towers}")
     print(f"  User side:  {user_desc}  =  {user_total}")
-    print(f"  Item side:  genre({item_genre_dim}) + tag({item_tag_dim}) + genome({genome_dim})"
-          f" + movieId({item_movieId_dim}) + year({year_dim})  =  {item_total}")
+    print(f"  Item side:  genre({item_genre_dim}) + tag({item_tag_dim}) + {genome_item_desc}{llm_item_desc}"
+          f"movieId({item_movieId_dim}) + year({year_dim})  =  {item_total}")
     print(f"  Projection: Linear({proj_h}) → ReLU → Linear({out_dim})  [both towers]")
     print(f"  Parameters: {n_params:,}")
 
@@ -154,6 +221,19 @@ def load_config_for_checkpoint(checkpoint_path: str) -> dict:
     cfg = get_config()
     cfg['popularity_alpha'] = 0.0
     return cfg
+
+
+def _val_ranking_metrics(raw_scores: torch.Tensor, targets: torch.Tensor) -> tuple:
+    """Reciprocal-rank sum and Hit@10 count of each target vs all items, on the *raw* scores.
+
+    Ranking is done on raw dot products (no temperature, no popularity adjustment) so the
+    selection metric matches offline inference, which ranks on raw scores — the Menon popularity
+    correction is training-only. The strict-greater tie convention mirrors src/offline_eval.py.
+    Returns (sum_of_reciprocal_ranks, num_hits_at_10) for the batch; caller accumulates."""
+    rows         = torch.arange(raw_scores.shape[0], device=raw_scores.device)
+    target_score = raw_scores[rows, targets].unsqueeze(1)
+    ranks        = (raw_scores > target_score).sum(dim=1) + 1
+    return (1.0 / ranks.float()).sum().item(), int((ranks <= 10).sum().item())
 
 
 # ── Training loop ─────────────────────────────────────────────────────────────
@@ -211,8 +291,19 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
     run_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     alpha         = config['popularity_alpha']
     alpha_tag     = str(alpha).replace('.', '') if alpha != int(alpha) else str(int(alpha))
-    best_val_loss = float('inf')
-    best_path     = os.path.join(checkpoint_dir, f'best_softmax_v2_popularity_alpha_{alpha_tag}_{run_timestamp}.pth')
+    corpus_sfx    = corpus_suffix()  # '' for the full corpus, '_<corpus>' otherwise
+    # Checkpoint name composes the enabled feature towers (no 'v2'); each model is unambiguous on
+    # disk: best_softmax[_genome_tags][_llm_features]_popularity_alpha_<a>[_<corpus>]_<ts>.pth
+    # (config is also in the JSON sidecar). None (Model C) → best_softmax_popularity_alpha_...
+    feat_towers   = config['feature_towers']
+    tag_parts     = []
+    if feat_towers in ('genome', 'both'): tag_parts.append('genome_tags')
+    if feat_towers in ('llm', 'both'):    tag_parts.append('llm_features')
+    feat_tag      = ('_' + '_'.join(tag_parts)) if tag_parts else ''
+    print(f"  Corpus: {CORPUS}  (checkpoint suffix: {corpus_sfx!r})  "
+          f"feature towers: {feat_towers}  (name tag: {feat_tag!r})")
+    best_val_mrr  = float('-inf')   # best_path is selected on val-MRR (the reported metric), not val CE
+    best_path     = os.path.join(checkpoint_dir, f'best_softmax{feat_tag}_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}.pth')
 
     val_eval_size = min(8_192, n_val)
     rng_val = torch.Generator()
@@ -261,7 +352,13 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
                           f"std={scaled.std():.4f}")
                     print(f"  [step 0 logits] random-baseline loss = {np.log(V_all.shape[0]):.4f}")
 
+                # Val loss is the training objective (CE on temp-scaled, popularity-adjusted
+                # logits); val MRR/Hit@10 are computed on the raw scores (matching inference) over
+                # the same subset. best_path is selected on val-MRR — see _val_ranking_metrics.
                 val_losses = []
+                val_rr_sum = 0.0
+                val_hits10 = 0
+                val_n      = 0
                 for vs in range(0, val_eval_size, minibatch_size):
                     ve   = min(vs + minibatch_size, val_eval_size)
                     vidx = val_eval_idx[vs:ve]
@@ -273,29 +370,37 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
                         X_hist_ratings_val[vidx].to(device),
                         timestamp_val[vidx],
                     )
-                    logits = (U @ V_all.T) / temperature
-                    scores = logits + popularity_bias
-                    val_losses.append(F.cross_entropy(scores, target_movieId_val[vidx]).item())
-                val_loss = float(np.mean(val_losses))
+                    raw_scores = U @ V_all.T
+                    scores     = raw_scores / temperature + popularity_bias
+                    targets    = target_movieId_val[vidx]
+                    val_losses.append(F.cross_entropy(scores, targets).item())
+                    rr, h10     = _val_ranking_metrics(raw_scores, targets)
+                    val_rr_sum += rr
+                    val_hits10 += h10
+                    val_n      += int(targets.shape[0])
+                val_loss  = float(np.mean(val_losses))
+                val_mrr   = val_rr_sum / val_n
+                val_hit10 = val_hits10 / val_n
 
             avg_train     = np.mean(loss_train[i - log_every:i]) if i >= log_every else (loss_train[-1] if loss_train else 0.0)
             avg_grad_norm = np.mean(grad_norms[i - log_every:i]) if i >= log_every else (grad_norms[-1] if grad_norms else 0.0)
             elapsed    = time.time() - start
             start      = time.time()
             current_lr = scheduler.get_last_lr()[0] if i > 0 else config['lr']
-            pbar.set_postfix(train=f"{avg_train:.4f}", val=f"{val_loss:.4f}")
+            pbar.set_postfix(train=f"{avg_train:.4f}", val=f"{val_loss:.4f}", mrr=f"{val_mrr:.4f}")
             print(f"[{i:06d}]  train={avg_train:.4f}  val={val_loss:.4f}  "
+                  f"val_mrr={val_mrr:.4f}  hit@10={val_hit10:.4f}  "
                   f"lr={current_lr:.6f}  grad_norm={avg_grad_norm:.3f}  ({elapsed:.0f}s)")
 
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
+            if val_mrr > best_val_mrr:
+                best_val_mrr = val_mrr
                 torch.save(model.state_dict(), best_path)
                 _save_config(config, best_path)
-                print(f"  → new best {best_val_loss:.4f} → {best_path}")
+                print(f"  → new best val_mrr={best_val_mrr:.4f} → {best_path}")
 
             if i > 0 and i % checkpoint_every == 0:
                 periodic = os.path.join(checkpoint_dir,
-                                        f'softmax_v2_popularity_alpha_{alpha_tag}_{run_timestamp}_step_{i:06d}.pth')
+                                        f'softmax{feat_tag}_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}_step_{i:06d}.pth')
                 torch.save(model.state_dict(), periodic)
                 _save_config(config, periodic)
                 print(f"  → periodic checkpoint → {periodic}")
@@ -328,6 +433,9 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
     with torch.no_grad():
         V_all = model.full_item_embedding()
         val_losses = []
+        val_rr_sum = 0.0
+        val_hits10 = 0
+        val_n      = 0
         for vs in range(0, val_eval_size, minibatch_size):
             ve   = min(vs + minibatch_size, val_eval_size)
             vidx = val_eval_idx[vs:ve]
@@ -339,17 +447,25 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
                 X_hist_ratings_val[vidx].to(device),
                 timestamp_val[vidx],
             )
-            logits = (U @ V_all.T) / temperature
-            scores = logits + popularity_bias
-            val_losses.append(F.cross_entropy(scores, target_movieId_val[vidx]).item())
+            raw_scores = U @ V_all.T
+            scores     = raw_scores / temperature + popularity_bias
+            targets    = target_movieId_val[vidx]
+            val_losses.append(F.cross_entropy(scores, targets).item())
+            rr, h10     = _val_ranking_metrics(raw_scores, targets)
+            val_rr_sum += rr
+            val_hits10 += h10
+            val_n      += int(targets.shape[0])
     final_val_loss = float(np.mean(val_losses))
-    print(f"[{training_steps:06d}]  val={final_val_loss:.4f}  (final)")
-    if final_val_loss < best_val_loss:
-        best_val_loss = final_val_loss
+    final_val_mrr  = val_rr_sum / val_n
+    final_val_hit10 = val_hits10 / val_n
+    print(f"[{training_steps:06d}]  val={final_val_loss:.4f}  "
+          f"val_mrr={final_val_mrr:.4f}  hit@10={final_val_hit10:.4f}  (final)")
+    if final_val_mrr > best_val_mrr:
+        best_val_mrr = final_val_mrr
         torch.save(model.state_dict(), best_path)
         _save_config(config, best_path)
-        print(f"  → new best {best_val_loss:.4f} → {best_path}")
+        print(f"  → new best val_mrr={best_val_mrr:.4f} → {best_path}")
 
-    print(f"\nTraining complete. Best val loss: {best_val_loss:.4f}")
+    print(f"\nTraining complete. Best val MRR: {best_val_mrr:.4f}")
     print(f"Best checkpoint: {best_path}")
     return best_path
