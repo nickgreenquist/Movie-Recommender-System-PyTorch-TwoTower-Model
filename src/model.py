@@ -1,9 +1,8 @@
 """
 Two-Tower MovieRecommender model v3 (4-pool user tower, full softmax, ReLU, L2 norm).
-Serving: user concat dim = 196 (4×32 + 32 + 32 + 4).
 
 User tower:
-  4×sum_pool(item_id_emb, 32) + content_ctx(32) + genre(32) + ts(4) = 196
+  4×sum_pool(item_id_emb, 32) + [genome_ctx(32)] + [llm_ctx(32)] + genre(32) + ts(4)
   → proj MLP → L2-normalize → output_dim
 
   Pools (all raw item_embedding_lookup, each with its own LayerNorm):
@@ -13,10 +12,17 @@ User tower:
     weighted — rating-weighted sum, all history
 
 Item tower:
-  genre(8) + tag(16) + content(32) + id(32) + year(8) = 96 → proj MLP → L2-normalize → output_dim
+  genre(8) + tag(16) + [genome(32)] + [llm(32)] + id(32) + year(8) → proj MLP → L2-norm → output_dim
 
-The "content" slot (genome today, LLM later) is set by content_feature_source; when None it is
-omitted entirely (no towers, no buffer) and the concat dims shrink accordingly (ablation Model C).
+Semantic-feature towers are set by feature_towers — genome tags and LLM features are each their
+own named sub-tower (like genre/tag/year), independently switched on or off:
+  'genome' — genome-tag tower only.                         [Model A / prod-v3]
+  'llm'    — LLM-feature tower only.                         [Model B]
+  None     — neither (towers/buffers omitted, concat shrinks). [Model C floor]
+  'both'   — genome-tag AND LLM-feature towers, both         [Model D / new prod]
+             concatenated in. Each has its own item-side and user-side sub-tower
+             (item_genome_tag_tower/user_genome_context_tower and
+             item_llm_feature_tower/user_llm_feature_tower) over its own buffer.
 
 Dot product of L2-normalized vectors = cosine similarity.
 
@@ -37,16 +43,20 @@ class MovieRecommender(nn.Module):
                  all_years_len,
                  timestamp_num_bins,
                  user_context_size,
-                 content_context_buffer,
-                 content_feature_source='genome',
+                 feature_towers='genome',
+                 genome_context_buffer=None,
+                 llm_feature_buffer=None,
+                 llm_feature_len=None,
                  item_genre_embedding_size=8,
                  item_tag_embedding_size=16,
-                 item_content_embedding_size=32,
+                 item_genome_embedding_size=32,
+                 item_llm_embedding_size=32,
                  item_movieId_embedding_size=32,
                  item_year_embedding_size=8,
                  user_genre_embedding_size=32,
                  timestamp_feature_embedding_size=4,
-                 user_content_embedding_size=32,
+                 user_genome_embedding_size=32,
+                 user_llm_embedding_size=32,
                  genre_context_buffer=None,
                  tag_context_buffer=None,
                  year_context_buffer=None,
@@ -54,12 +64,16 @@ class MovieRecommender(nn.Module):
                  output_dim=128,
                 ):
         """
-        content_feature_source: 'genome' | 'llm' | None. The swappable content slot. When None
-            (ablation Model C) the content towers/buffer are omitted and concat dims shrink.
+        feature_towers: 'genome' | 'llm' | 'both' | None. Which semantic-feature sub-towers the
+            model includes. genome and llm are independent; 'both' (Model D) builds both, None
+            (Model C) builds neither and the concat dims shrink accordingly.
 
-        content_context_buffer: float32 (top_movies_len+1, content_feature_len) [non-persistent].
-            Row i = content scores (genome today) for movie at corpus index i. Last row = zeros
-            (padding). Ignored when content_feature_source is None.
+        genome_context_buffer: float32 (top_movies_len+1, genome_tags_len) [non-persistent].
+            Row i = genome scores for movie at corpus index i. Last row = zeros (padding).
+            Present for 'genome'/'both'.
+        llm_feature_buffer:    float32 (top_movies_len+1, llm_feature_len) [non-persistent].
+            Row i = LLM features for movie at corpus index i. Present for 'llm'/'both'.
+        genome_tags_len / llm_feature_len: in_features of the genome / LLM sub-towers (1128 / 132).
 
         genre_context_buffer:  float32 (top_movies_len+1, genres_len)   [non-persistent]
         tag_context_buffer:    float32 (top_movies_len+1, tags_len)     [non-persistent]
@@ -68,12 +82,16 @@ class MovieRecommender(nn.Module):
         super().__init__()
 
         self.pad_idx = top_movies_len
-        self.content_feature_source = content_feature_source
+        self.feature_towers = feature_towers
+        # genome and llm sub-towers are independent; 'both' enables both, None neither.
+        self.has_genome = feature_towers in ('genome', 'both')
+        self.has_llm    = feature_towers in ('llm', 'both')
 
         # Non-persistent: rebuilt from FeatureStore on every load (saves checkpoint space).
-        # Content slot (genome today, LLM later) — omitted entirely when source is None (Model C).
-        if content_feature_source is not None:
-            self.register_buffer('content_context_buffer', content_context_buffer, persistent=False)
+        if self.has_genome:
+            self.register_buffer('genome_context_buffer', genome_context_buffer, persistent=False)
+        if self.has_llm:
+            self.register_buffer('llm_feature_buffer', llm_feature_buffer, persistent=False)
         self.register_buffer('genre_context_buffer',  genre_context_buffer,  persistent=False)
         self.register_buffer('tag_context_buffer',    tag_context_buffer,    persistent=False)
         self.register_buffer('year_context_buffer',   year_context_buffer,   persistent=False)
@@ -96,9 +114,15 @@ class MovieRecommender(nn.Module):
             nn.Linear(tags_len, item_tag_embedding_size),
             nn.ReLU(),
         )
-        if content_feature_source is not None:
-            self.item_content_tower = nn.Sequential(
-                nn.Linear(genome_tags_len, item_content_embedding_size),
+        # Per-movie semantic-feature towers (genome scores 1128-dim, LLM features 132-dim).
+        if self.has_genome:
+            self.item_genome_tag_tower = nn.Sequential(
+                nn.Linear(genome_tags_len, item_genome_embedding_size),
+                nn.ReLU(),
+            )
+        if self.has_llm:
+            self.item_llm_feature_tower = nn.Sequential(
+                nn.Linear(llm_feature_len, item_llm_embedding_size),
                 nn.ReLU(),
             )
         self.year_embedding_lookup = nn.Embedding(all_years_len, item_year_embedding_size)
@@ -119,11 +143,17 @@ class MovieRecommender(nn.Module):
             nn.Linear(timestamp_feature_embedding_size, timestamp_feature_embedding_size),
             nn.ReLU(),
         )
-        # Separate tower: rating-weighted avg of the raw content feature (genome today, 1128-dim)
-        # → compact vector. Distinct from item_content_tower, which processes per-movie scores.
-        if content_feature_source is not None:
-            self.user_content_tower = nn.Sequential(
-                nn.Linear(genome_tags_len, user_content_embedding_size),
+        # User-side semantic-feature towers: run over the rating-weighted avg of the raw per-movie
+        # feature across history (a compact taste fingerprint). Distinct from the item-side towers,
+        # which process a single movie's scores.
+        if self.has_genome:
+            self.user_genome_context_tower = nn.Sequential(
+                nn.Linear(genome_tags_len, user_genome_embedding_size),
+                nn.ReLU(),
+            )
+        if self.has_llm:
+            self.user_llm_feature_tower = nn.Sequential(
+                nn.Linear(llm_feature_len, user_llm_embedding_size),
                 nn.ReLU(),
             )
 
@@ -134,14 +164,16 @@ class MovieRecommender(nn.Module):
         self.hist_weighted_norm = nn.LayerNorm(item_movieId_embedding_size)
 
         # ── Projection MLPs ───────────────────────────────────────────────────
-        # Content slot contributes 0 to each concat when source is None (Model C).
-        content_user_dim = user_content_embedding_size if content_feature_source is not None else 0
-        content_item_dim = item_content_embedding_size if content_feature_source is not None else 0
+        # Each semantic-feature tower contributes 0 to its concat when switched off.
+        genome_user_dim = user_genome_embedding_size if self.has_genome else 0
+        llm_user_dim    = user_llm_embedding_size    if self.has_llm    else 0
+        genome_item_dim = item_genome_embedding_size if self.has_genome else 0
+        llm_item_dim    = item_llm_embedding_size    if self.has_llm    else 0
         user_concat_dim = (4 * item_movieId_embedding_size
-                           + content_user_dim
+                           + genome_user_dim + llm_user_dim
                            + user_genre_embedding_size + timestamp_feature_embedding_size)
         item_concat_dim = (item_genre_embedding_size + item_tag_embedding_size
-                           + content_item_dim
+                           + genome_item_dim + llm_item_dim
                            + item_movieId_embedding_size + item_year_embedding_size)
         # No activation on the final linear — output is L2-normalized.
         self.user_projection = nn.Sequential(
@@ -180,6 +212,16 @@ class MovieRecommender(nn.Module):
             embs = embs * weights.unsqueeze(-1)
         return norm_layer(embs.sum(dim=1))
 
+    def _watched_context(self, buffer, history, ratings):
+        """Rating-weighted average of a per-movie raw feature buffer over the user's history.
+
+        Shared by the genome and LLM user-side towers — feed it the matching buffer."""
+        pad_mask       = (history != self.pad_idx).float().unsqueeze(-1)
+        rating_weights = ratings.unsqueeze(-1) * pad_mask
+        weight_sum     = rating_weights.abs().sum(dim=1).clamp(min=1e-6)
+        watched        = buffer[history]
+        return (watched * rating_weights).sum(dim=1) / weight_sum
+
     def user_embedding(self, user_genre_contexts, user_watch_history,
                        user_hist_liked, user_hist_disliked,
                        user_watch_history_ratings, timestamps):
@@ -195,14 +237,15 @@ class MovieRecommender(nn.Module):
 
         parts = [pool_full, pool_liked, pool_disliked, pool_weighted]
 
-        if self.content_feature_source is not None:
-            # Rating-weighted avg of the raw content feature (genome today, 1128-dim) → content tower
-            pad_mask        = (user_watch_history != self.pad_idx).float().unsqueeze(-1)
-            rating_weights  = user_watch_history_ratings.unsqueeze(-1) * pad_mask
-            weight_sum      = rating_weights.abs().sum(dim=1).clamp(min=1e-6)
-            watched_content = self.content_context_buffer[user_watch_history]
-            content_ctx_raw = (watched_content * rating_weights).sum(dim=1) / weight_sum
-            parts.append(self.user_content_tower(content_ctx_raw))
+        # Rating-weighted avg of each per-movie raw feature → its user-side tower.
+        if self.has_genome:
+            genome_ctx = self._watched_context(self.genome_context_buffer,
+                                               user_watch_history, user_watch_history_ratings)
+            parts.append(self.user_genome_context_tower(genome_ctx))
+        if self.has_llm:
+            llm_ctx = self._watched_context(self.llm_feature_buffer,
+                                            user_watch_history, user_watch_history_ratings)
+            parts.append(self.user_llm_feature_tower(llm_ctx))
 
         parts.append(self.user_genre_tower(user_genre_contexts))
         parts.append(self.timestamp_embedding_tower(self.timestamp_embedding_lookup(timestamps)))
@@ -219,8 +262,10 @@ class MovieRecommender(nn.Module):
                              self.year_embedding_lookup(self.year_context_buffer[target_movieId]))
 
         parts = [item_genre_emb, item_tag_emb]
-        if self.content_feature_source is not None:
-            parts.append(self.item_content_tower(self.content_context_buffer[target_movieId]))
+        if self.has_genome:
+            parts.append(self.item_genome_tag_tower(self.genome_context_buffer[target_movieId]))
+        if self.has_llm:
+            parts.append(self.item_llm_feature_tower(self.llm_feature_buffer[target_movieId]))
         parts += [item_emb, year_emb]
 
         concat = torch.cat(parts, dim=1)

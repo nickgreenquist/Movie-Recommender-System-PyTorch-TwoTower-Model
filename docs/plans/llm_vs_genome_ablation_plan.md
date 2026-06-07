@@ -555,6 +555,32 @@ Because the LLM schema was derived from the top-discriminability genome tags, ev
 
 **Synthesis (ties the experiment together).** The spaces are strongly aligned on factual/genre axes (mean r 0.60) → both place a movie in the right broad genre, which is why B matches A on the bulk metrics. Genome's advantage is concentrated in the **low-agreement axes** — subjective aesthetics, niche sub-genre granularity, and crowd-prestige — precisely where it wins the niche-canon canary personas and holds its mid-tail edge. The LLM, in turn, adds accurate plot facts and excels at era / modern-subgenre matching. This is the mechanistic explanation for the headline result: **LLM extraction reproduces nearly all of genome's content signal on the axes an LLM can reach from text, and the residual genome-only advantage is the crowd-sentiment / fine-aesthetic slice the plan flagged as the validity threat** (Stage 2 reception note, Stage 8 Limitations).
 
+### Model D — genome + LLM combined (secondary arm; out of core scope)
+
+> Combining both content sources in one model is a **Non-Goal** of the core genome-vs-LLM comparison (it answers a different question — "does *more* help?"). Run here as a 4th arm with the same data so the answer is on record; may be excluded from the writeup. Model D adds the LLM-feature sub-towers *alongside* the genome-tag sub-towers (two parallel families, concatenated pre-projection) — `FEATURE_TOWERS=both`. Checkpoint `best_softmax_genome_tags_llm_features_popularity_alpha_0_20260607_131924.pth` (α=0, full corpus). Same eval protocol (n=382,138, all 19,134 val users); A/B/C re-run with the current code for an apples-to-apples 4-arm set.
+
+**Whole-corpus (n=382,138):**
+
+| Metric | C (none) | A (genome) | B (llm) | **D (genome+llm)** | D−A | D−B |
+|---|---|---|---|---|---|---|
+| Hit@10 | 0.2213 | 0.2229 | 0.2240 | **0.2243** | +0.0014 | +0.0003 |
+| Hit@50 | 0.4611 | 0.4642 | **0.4656** | 0.4655 | +0.0013 | −0.0001 |
+| NDCG@10 | 0.1283 | 0.1288 | **0.1300** | 0.1298 | +0.0010 | −0.0002 |
+| MRR | 0.1143 | 0.1146 | **0.1157** | 0.1154 | +0.0008 | −0.0003 |
+
+**Deep-tail recall (Hit@250) — the only place D adds anything:**
+
+| Tier | C | A | B | **D** | best |
+|---|---|---|---|---|---|
+| Q3 mid | 0.3420 | 0.3608 | 0.3529 | **0.3615** | D |
+| Q2 mid | 0.1442 | 0.1536 | 0.1568 | **0.1577** | D |
+| Q1 rarest | 0.0463 | **0.0604** | 0.0580 | 0.0592 | A |
+| TAIL ≤1k | 0.1243 | 0.1368 | 0.1378 | **0.1390** | D |
+
+**Canary (single-run, qualitative; A/B/D side-by-side in `canary_results/`):** D is *strong* on Sci-Fi (Metropolis, Brazil, Forbidden Planet + Alien, Terminator) and Arthouse (Stalker, Blue Velvet, **Twin Peaks: FWWM**, Solaris), decent on Crime (Scarface, RocknRolla) and Horror (less Saw-sequel spam than B) — but **regresses on Western** (2 westerns + Jaws/Alien/Life of Brian; genome-A had 5). It does not cleanly fuse the two; the second tower can dilute genome's niche pull.
+
+**Finding (does combining help?): no clear additive benefit.** On top-rank metrics D ≈ B (the better single source) and does not beat it — the two sources are largely redundant (consistent with the r=0.60 feature agreement: little independent signal to stack). The lone gain is a small deep-tail recall bump (Hit@250 best in 3/4 tail tiers). At α=0, D is **not** a clear upgrade over B or A, and its Western canary regression is a real demo concern, so D does not enter a prod comparison with a quantitative edge. (Any prod decision would still require α-tuning + a canary sweep vs the current genome α=0.5 prod.)
+
 ---
 
 ## Stage 7: Streamlit Demo Extension

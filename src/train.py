@@ -2,13 +2,15 @@
 Full softmax training loop for the Two-Tower MovieRecommender.
 
 Usage:
-    python main.py train                              # Model A (genome content slot)
-    CONTENT_SOURCE=none  python main.py train         # Model C (no content slot, floor baseline)
-    CONTENT_SOURCE=llm   python main.py train         # Model B (LLM content slot)
+    python main.py train                                # Model A (genome-tag tower)
+    FEATURE_TOWERS=llm   python main.py train           # Model B (LLM-feature tower)
+    FEATURE_TOWERS=none  python main.py train           # Model C (no semantic-feature towers)
+    FEATURE_TOWERS=both  python main.py train           # Model D (genome + LLM towers) — new prod
 
-CONTENT_SOURCE selects the swappable content slot at train time (parallel to the
-CORPUS env var); it tags the checkpoint name so the ablation's A/B/C variants are
-unambiguous on disk. Default 'genome' preserves the historical prod naming.
+FEATURE_TOWERS selects which semantic-feature sub-towers the model includes at train time
+(parallel to the CORPUS env var): 'genome' | 'llm' | 'both' | 'none'. It tags the checkpoint
+name so the variants are unambiguous on disk. Default 'genome' preserves the historical prod
+naming. The legacy CONTENT_SOURCE env var is still read as a fallback.
 """
 import json
 import os
@@ -34,26 +36,29 @@ def get_device() -> torch.device:
 
 
 def get_config() -> dict:
-    # Swappable content slot, selectable at train time via the CONTENT_SOURCE env var
-    # (parallel to CORPUS): 'genome' (default, Model A) | 'llm' (Model B) | 'none' (Model C floor).
-    content_source = os.environ.get('CONTENT_SOURCE', 'genome')
-    if content_source == 'none':
-        content_source = None
-    elif content_source not in ('genome', 'llm'):
-        raise ValueError(f"Unknown CONTENT_SOURCE={content_source!r}; "
-                         f"expected 'genome', 'llm', or 'none'")
+    # Which semantic-feature sub-towers to include, selectable at train time via the
+    # FEATURE_TOWERS env var (parallel to CORPUS): 'genome' (default, Model A) | 'llm' (Model B)
+    # | 'both' (Model D) | 'none' (Model C floor). Legacy CONTENT_SOURCE is read as a fallback.
+    feature_towers = os.environ.get('FEATURE_TOWERS', os.environ.get('CONTENT_SOURCE', 'genome'))
+    if feature_towers == 'none':
+        feature_towers = None
+    elif feature_towers not in ('genome', 'llm', 'both'):
+        raise ValueError(f"Unknown FEATURE_TOWERS={feature_towers!r}; "
+                         f"expected 'genome', 'llm', 'both', or 'none'")
     return {
         # Sub-embedding sizes
         'item_movieId_embedding_size':      32,
         'item_year_embedding_size':         8,
         'timestamp_feature_embedding_size': 4,
         'item_tag_embedding_size':          16,
-        'item_content_embedding_size':      32,
+        'item_genome_embedding_size':       32,
+        'item_llm_embedding_size':          32,
         'user_genre_embedding_size':        32,
         'item_genre_embedding_size':        8,
-        'user_content_embedding_size':      32,
-        # Swappable content slot: 'genome' (prod) | 'llm' | None (ablation Model C).
-        'content_feature_source':           content_source,
+        'user_genome_embedding_size':       32,
+        'user_llm_embedding_size':          32,
+        # Which semantic-feature towers: 'genome' | 'llm' | 'both' | None (Model C).
+        'feature_towers':                   feature_towers,
         # Projection MLP
         'proj_hidden':  256,
         'output_dim':   128,
@@ -73,39 +78,44 @@ def get_config() -> dict:
 
 # ── Model factory ─────────────────────────────────────────────────────────────
 
-def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
-    content_feature_source = config.get('content_feature_source', 'genome')
+def _genome_buffer(fs: FeatureStore):
+    """Per-movie genome scores → (top_movies_len+1, 1128) buffer with a zero padding row."""
+    m = np.array([fs.movieId_to_genome_tag_context[mid] for mid in fs.top_movies], dtype=np.float32)
+    pad = np.zeros((1, m.shape[1]), dtype=np.float32)
+    return torch.from_numpy(np.vstack([m, pad])), m.shape[1]
 
-    # Content slot: 'genome' | 'llm' | None (Model C floor).
-    # Genome: build from the FeatureStore's pre-loaded per-movie dicts (1128-dim).
-    # LLM:    load the pre-built tensor from data/llm_features_<tag>_v1<sfx>.pt (132-dim).
-    #         LLM_MODEL_TAG selects which extraction run to use (default 'claude-code-sonnet').
-    # None:   no content slot — content towers and buffer are omitted entirely.
-    content_context_buffer = None
-    content_feature_len    = None   # set below; passed as genome_tags_len to MovieRecommender
-    if content_feature_source == 'genome':
-        content_matrix = np.array(
-            [fs.movieId_to_genome_tag_context[mid] for mid in fs.top_movies],
-            dtype=np.float32,
+
+def _llm_buffer():
+    """Load the pre-built LLM feature tensor (already padded). LLM_MODEL_TAG selects the run."""
+    sfx     = corpus_suffix()
+    llm_tag = os.environ.get('LLM_MODEL_TAG', 'claude-code-sonnet')
+    llm_path = os.path.join('data', f'llm_features_{llm_tag}_v1{sfx}.pt')
+    if not os.path.exists(llm_path):
+        raise FileNotFoundError(
+            f"LLM feature tensor not found: {llm_path}\n"
+            f"  Run: CORPUS={CORPUS} python -m llm_features.build_features {llm_tag}"
         )
-        pad_row = np.zeros((1, content_matrix.shape[1]), dtype=np.float32)
-        content_context_buffer = torch.from_numpy(np.vstack([content_matrix, pad_row]))
-        content_feature_len = content_matrix.shape[1]   # 1128
-    elif content_feature_source == 'llm':
-        sfx = corpus_suffix()
-        llm_tag = os.environ.get('LLM_MODEL_TAG', 'claude-code-sonnet')
-        llm_path = os.path.join('data', f'llm_features_{llm_tag}_v1{sfx}.pt')
-        if not os.path.exists(llm_path):
-            raise FileNotFoundError(
-                f"LLM feature tensor not found: {llm_path}\n"
-                f"  Run: CORPUS={CORPUS} python -m llm_features.build_features {llm_tag}"
-            )
-        content_context_buffer = torch.load(llm_path, map_location='cpu', weights_only=True)
-        content_feature_len = content_context_buffer.shape[1]   # 132
-        print(f"  LLM features: {llm_path}  ({content_feature_len}-dim, "
-              f"{content_context_buffer.shape[0]-1} movies)")
-    else:
-        content_feature_len = len(fs.genome_tag_ids)   # unused (no towers), but keep valid
+    buf = torch.load(llm_path, map_location='cpu', weights_only=True)
+    return buf, buf.shape[1], llm_path
+
+
+def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
+    feature_towers = config.get('feature_towers', config.get('content_feature_source', 'genome'))
+    has_genome = feature_towers in ('genome', 'both')
+    has_llm    = feature_towers in ('llm', 'both')
+
+    # Semantic-feature buffers — genome from the FeatureStore (1128-dim), LLM from the pre-built
+    # tensor (132-dim). Each is built only if its tower is on; None (Model C) builds neither.
+    genome_context_buffer = None
+    genome_tags_len       = len(fs.genome_tag_ids)   # always valid; used as in_features if has_genome
+    llm_feature_buffer    = None
+    llm_feature_len       = None
+    if has_genome:
+        genome_context_buffer, genome_tags_len = _genome_buffer(fs)
+    if has_llm:
+        llm_feature_buffer, llm_feature_len, llm_path = _llm_buffer()
+        print(f"  LLM features: {llm_path}  ({llm_feature_len}-dim, "
+              f"{llm_feature_buffer.shape[0]-1} movies)")
 
     genre_matrix = np.array(
         [fs.movieId_to_genre_context[mid] for mid in fs.top_movies], dtype=np.float32)
@@ -123,21 +133,25 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
     return MovieRecommender(
         genres_len=len(fs.genres_ordered),
         tags_len=len(fs.tags_ordered),
-        genome_tags_len=content_feature_len,
+        genome_tags_len=genome_tags_len,
         top_movies_len=len(fs.top_movies),
         all_years_len=len(fs.years_ordered),
         timestamp_num_bins=fs.timestamp_num_bins,
         user_context_size=fs.user_context_size,
-        content_context_buffer=content_context_buffer,
-        content_feature_source=content_feature_source,
+        feature_towers=feature_towers,
+        genome_context_buffer=genome_context_buffer,
+        llm_feature_buffer=llm_feature_buffer,
+        llm_feature_len=llm_feature_len,
         item_genre_embedding_size=config['item_genre_embedding_size'],
         item_tag_embedding_size=config['item_tag_embedding_size'],
-        item_content_embedding_size=config['item_content_embedding_size'],
+        item_genome_embedding_size=config.get('item_genome_embedding_size', 32),
+        item_llm_embedding_size=config.get('item_llm_embedding_size', 32),
         item_movieId_embedding_size=config['item_movieId_embedding_size'],
         item_year_embedding_size=config['item_year_embedding_size'],
         user_genre_embedding_size=config['user_genre_embedding_size'],
         timestamp_feature_embedding_size=config['timestamp_feature_embedding_size'],
-        user_content_embedding_size=config.get('user_content_embedding_size', 32),
+        user_genome_embedding_size=config.get('user_genome_embedding_size', 32),
+        user_llm_embedding_size=config.get('user_llm_embedding_size', 32),
         genre_context_buffer=genre_context_buffer,
         tag_context_buffer=tag_context_buffer,
         year_context_buffer=year_context_buffer,
@@ -153,34 +167,38 @@ def print_model_summary(model: MovieRecommender) -> None:
             if isinstance(layer, torch.nn.Linear):
                 return layer.out_features
 
-    # Content slot (genome today, LLM later) is omitted entirely when source is None (Model C).
-    has_content      = m.content_feature_source is not None
-    id_dim           = m.item_embedding_lookup.embedding_dim
-    content_dim      = _out_dim(m.item_content_tower) if has_content else 0
-    cctx_dim         = _out_dim(m.user_content_tower) if has_content else 0
-    genre_dim        = _out_dim(m.user_genre_tower)
-    ts_dim           = m.timestamp_embedding_lookup.embedding_dim
-    item_genre_dim   = _out_dim(m.item_genre_tower)
-    item_tag_dim     = _out_dim(m.item_tag_tower)
-    item_movieId_dim = _out_dim(m.item_embedding_tower)
-    year_dim         = _out_dim(m.year_embedding_tower)
-    item_total       = item_genre_dim + item_tag_dim + content_dim + item_movieId_dim + year_dim
-    n_params         = sum(p.nelement() for p in model.parameters() if p.requires_grad)
+    # Genome and LLM towers are each present only when switched on (None/Model C has neither).
+    id_dim            = m.item_embedding_lookup.embedding_dim
+    genome_item_dim   = _out_dim(m.item_genome_tag_tower)    if m.has_genome else 0
+    genome_user_dim   = _out_dim(m.user_genome_context_tower) if m.has_genome else 0
+    llm_item_dim      = _out_dim(m.item_llm_feature_tower)   if m.has_llm    else 0
+    llm_user_dim      = _out_dim(m.user_llm_feature_tower)   if m.has_llm    else 0
+    genre_dim         = _out_dim(m.user_genre_tower)
+    ts_dim            = m.timestamp_embedding_lookup.embedding_dim
+    item_genre_dim    = _out_dim(m.item_genre_tower)
+    item_tag_dim      = _out_dim(m.item_tag_tower)
+    item_movieId_dim  = _out_dim(m.item_embedding_tower)
+    year_dim          = _out_dim(m.year_embedding_tower)
+    item_total        = (item_genre_dim + item_tag_dim + genome_item_dim + llm_item_dim
+                         + item_movieId_dim + year_dim)
+    n_params          = sum(p.nelement() for p in model.parameters() if p.requires_grad)
 
     pool_total = 4 * id_dim
-    user_total = pool_total + cctx_dim + genre_dim + ts_dim
-    content_user_desc = f"content_ctx({cctx_dim}) + " if has_content else ""
-    content_item_desc = f"content({content_dim}) + " if has_content else ""
-    user_desc  = (f"4×sum_pool_id({id_dim}) + {content_user_desc}"
+    user_total = pool_total + genome_user_dim + llm_user_dim + genre_dim + ts_dim
+    genome_user_desc = f"genome_ctx({genome_user_dim}) + " if m.has_genome else ""
+    llm_user_desc    = f"llm_ctx({llm_user_dim}) + "       if m.has_llm    else ""
+    genome_item_desc = f"genome({genome_item_dim}) + "     if m.has_genome else ""
+    llm_item_desc    = f"llm({llm_item_dim}) + "           if m.has_llm    else ""
+    user_desc  = (f"4×sum_pool_id({id_dim}) + {genome_user_desc}{llm_user_desc}"
                   f"genre({genre_dim}) + ts({ts_dim})")
 
     proj_h  = m.user_projection[0].out_features
     out_dim = m.user_projection[2].out_features
 
     print(f"\n── Model dimensions ──")
-    print(f"  Content slot: {m.content_feature_source}")
+    print(f"  Feature towers: {m.feature_towers}")
     print(f"  User side:  {user_desc}  =  {user_total}")
-    print(f"  Item side:  genre({item_genre_dim}) + tag({item_tag_dim}) + {content_item_desc}"
+    print(f"  Item side:  genre({item_genre_dim}) + tag({item_tag_dim}) + {genome_item_desc}{llm_item_desc}"
           f"movieId({item_movieId_dim}) + year({year_dim})  =  {item_total}")
     print(f"  Projection: Linear({proj_h}) → ReLU → Linear({out_dim})  [both towers]")
     print(f"  Parameters: {n_params:,}")
@@ -274,14 +292,18 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
     alpha         = config['popularity_alpha']
     alpha_tag     = str(alpha).replace('.', '') if alpha != int(alpha) else str(int(alpha))
     corpus_sfx    = corpus_suffix()  # '' for the full corpus, '_<corpus>' otherwise
-    # Content-slot tag: genome keeps the historical (prod) name; llm/nocontent are tagged so the
-    # ablation's A/B/C checkpoints are unambiguous on disk (config is also in the JSON sidecar).
-    content_src   = config['content_feature_source']
-    content_tag   = '' if content_src == 'genome' else f"_{content_src or 'nocontent'}"
+    # Checkpoint name composes the enabled feature towers (no 'v2'); each model is unambiguous on
+    # disk: best_softmax[_genome_tags][_llm_features]_popularity_alpha_<a>[_<corpus>]_<ts>.pth
+    # (config is also in the JSON sidecar). None (Model C) → best_softmax_popularity_alpha_...
+    feat_towers   = config['feature_towers']
+    tag_parts     = []
+    if feat_towers in ('genome', 'both'): tag_parts.append('genome_tags')
+    if feat_towers in ('llm', 'both'):    tag_parts.append('llm_features')
+    feat_tag      = ('_' + '_'.join(tag_parts)) if tag_parts else ''
     print(f"  Corpus: {CORPUS}  (checkpoint suffix: {corpus_sfx!r})  "
-          f"content slot: {content_src}  (name tag: {content_tag!r})")
+          f"feature towers: {feat_towers}  (name tag: {feat_tag!r})")
     best_val_mrr  = float('-inf')   # best_path is selected on val-MRR (the reported metric), not val CE
-    best_path     = os.path.join(checkpoint_dir, f'best_softmax_v2{content_tag}_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}.pth')
+    best_path     = os.path.join(checkpoint_dir, f'best_softmax{feat_tag}_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}.pth')
 
     val_eval_size = min(8_192, n_val)
     rng_val = torch.Generator()
@@ -378,7 +400,7 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
 
             if i > 0 and i % checkpoint_every == 0:
                 periodic = os.path.join(checkpoint_dir,
-                                        f'softmax_v2{content_tag}_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}_step_{i:06d}.pth')
+                                        f'softmax{feat_tag}_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}_step_{i:06d}.pth')
                 torch.save(model.state_dict(), periodic)
                 _save_config(config, periodic)
                 print(f"  → periodic checkpoint → {periodic}")

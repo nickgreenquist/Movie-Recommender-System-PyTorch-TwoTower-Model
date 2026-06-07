@@ -7,10 +7,10 @@ into a single (n_corpus + 1, 132) float32 tensor that fills the model's swappabl
 content slot EXACTLY the way the genome buffer does in src/train.build_model:
   • row i           = the movie at corpus index i (fs.top_movies order)
   • final row       = the zero pad row (pad_idx = len(top_movies))
-This mirrors `np.vstack([content_matrix, pad_row])` there, so Model B can load it into
-content_context_buffer with content_feature_source='llm' (the 'llm' branch in build_model
-is the remaining bridge — it must point the item_content_tower input at THIS tensor's
-width, 132, instead of the genome 1128).
+This mirrors `np.vstack([content_matrix, pad_row])` there, so build_model can load it into
+the model's llm_feature_buffer when FEATURE_TOWERS includes 'llm' (Model B) or 'both' (Model
+D) — the item_llm_feature_tower / user_llm_feature_tower take THIS tensor's width (132) as
+their input dim.
 
 Corpus order is read from base_movies<corpus>.parquet (movieId column) — IDENTICAL to
 src/dataset.load_features' `top_movies = movies_df['movieId'].tolist()` — so tensor rows

@@ -206,12 +206,11 @@ def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
         tag_embs    = model.item_tag_tower(tag_t)
         combined    = model.item_embedding(emb_idx)
 
-        # Content embedding (genome or LLM) — only when the content slot is filled (absent for
-        # Model C). Source from the model's own content buffer so the feature width matches the
-        # tower (1128 genome / 132 LLM); recomputing from fs.genome would break the LLM slot.
+        # Genome embedding — only when the genome tower is on (absent for Model C and the
+        # llm-only Model B). This feeds the genome product probes; it stays genome-specific.
         content_embs = None
-        if model.content_feature_source is not None:
-            content_embs = model.item_content_tower(model.content_context_buffer[emb_idx])
+        if model.has_genome:
+            content_embs = model.item_genome_tag_tower(model.genome_context_buffer[emb_idx])
 
     movieId_to_embedding = {}
     for i, mid in enumerate(all_mids):
@@ -523,8 +522,8 @@ def _setup(data_dir: str, checkpoint_path: str, version: str = FEATURES_VERSION)
     top_movies_len    = m.item_embedding_lookup.num_embeddings - 1
     genres_len        = m.item_genre_tower[0].in_features
     tags_len          = m.item_tag_tower[0].in_features
-    # Genome content tower is absent for a no-content model (Model C).
-    genome_tags_len   = m.item_content_tower[0].in_features if m.content_feature_source is not None else None
+    # Genome tower is absent for a no-genome model (Model C, and the llm-only Model B).
+    genome_tags_len   = m.item_genome_tag_tower[0].in_features if m.has_genome else None
     all_years_len     = m.year_embedding_lookup.num_embeddings
     ts_num_bins       = m.timestamp_embedding_lookup.num_embeddings
     user_ctx_size     = m.user_genre_tower[0].in_features
@@ -547,9 +546,10 @@ def _setup(data_dir: str, checkpoint_path: str, version: str = FEATURES_VERSION)
     all_embs        = torch.cat([movie_embeddings[m]['MOVIE_EMBEDDING_COMBINED']   for m in all_ids], dim=0)
     all_genre_embs  = torch.cat([movie_embeddings[m]['MOVIE_GENRE_EMBEDDING']      for m in all_ids], dim=0)
     all_tag_embs    = torch.cat([movie_embeddings[m]['MOVIE_TAG_EMBEDDING']        for m in all_ids], dim=0)
-    # Genome content matrix is absent for a no-content model (Model C); genome probes are then N/A.
+    # Genome matrix is absent when the genome tower is off (Model C, llm-only Model B); genome probes
+    # are then N/A.
     all_genome_embs = (torch.cat([movie_embeddings[m]['MOVIE_GENOME_TAG_EMBEDDING'] for m in all_ids], dim=0)
-                       if model.content_feature_source is not None else None)
+                       if model.has_genome else None)
 
     device = next(model.parameters()).device
     all_norm        = F.normalize(all_embs,        dim=1).to(device)
