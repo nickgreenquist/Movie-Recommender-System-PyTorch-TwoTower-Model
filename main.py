@@ -16,6 +16,7 @@ Usage:
     python main.py export <path>       # Export using specific checkpoint
     python main.py posters             # Fetch movie poster URLs from TMDB → serving/posters.json
 """
+import os
 import sys
 
 DATA_DIR = 'data'
@@ -74,7 +75,12 @@ def cmd_eval(checkpoint_path=None):
     result = _setup(data_dir=DATA_DIR, checkpoint_path=checkpoint_path)
     model, fs = result[0], result[1]
     checkpoint_path = result[-1]
-    run_offline_eval(model, fs, checkpoint_path=checkpoint_path or '', data_dir=DATA_DIR)
+    # EVAL_N_USERS overrides the val-user sample size (default 5,000). Raising it
+    # gives the long-tail tiers more examples — the tail is ~3% of targets, so the
+    # whole-corpus numbers barely move but the tail comparison gets far more signal.
+    n_users = int(os.environ['EVAL_N_USERS']) if 'EVAL_N_USERS' in os.environ else 5_000
+    run_offline_eval(model, fs, checkpoint_path=checkpoint_path or '', data_dir=DATA_DIR,
+                     n_users=n_users)
 
 
 def cmd_export(checkpoint_path=None):

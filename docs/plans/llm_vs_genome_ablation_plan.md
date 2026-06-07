@@ -460,8 +460,63 @@ Model C is the floor. The A−C and B−C columns are the content-feature lift �
 
 > **⚠️ Phase 1 selection bias — read before interpreting.** Phase 1 filters to popular movies (100–200+ ratings). Content features deliver their largest lift on long-tail / cold-start items, where collaborative filtering has little interaction data — exactly the items Phase 1 removes. So expect the **A−C and B−C lift columns to be compressed in Phase 1**: the floor (C) will sit unusually close to A and B. **The primary Phase 1 success criterion is whether Model B (LLM) matches or closely approaches Model A (genome) on this popular split — NOT the absolute lift over the floor.** The lift-over-floor story is told properly in Phase 2 on the full corpus, which includes the tail. Do not read a small Phase 1 lift as "content features don't matter."
 
+**Phase 2 — full corpus (9,375 movies; α=0; rollback protocol; val-MRR checkpoint selection). Recorded 2026-06-07.**
+
+> **Eval methodology (Phase 2).** The canonical run uses **all 19,134 val users** (`EVAL_N_USERS=19134`, vs the default 5,000) → **n=382,138** rollback examples, giving the long-tail tiers ~3.8× more signal. Whole-corpus numbers are ~1% lower than a 5,000-user run but the C < A < B ordering is identical. Popularity tiers below are by the *target* movie's **raw `ratings.csv` count** — the same basis that defines the corpus (`> 200`) and the Phase 1 threshold (`> 1000`); counts cached at `data/corpus_raw_rating_counts.npy`. The **HEAD** tier (`> 1000`) is byte-for-byte the Phase 1 corpus (4,461 movies; verified zero symmetric difference vs `data/llm_experiment_movies_phase1.json`), so **TAIL** (`≤ 1000`) is exactly the long tail Phase 1 excluded. **Q1–Q4** are equal-movie-count population quartiles (Q1 rarest → Q4 most popular). Implemented in `src/offline_eval.py` (`_build_tiers`, `_corpus_raw_rating_counts`); full per-K outputs for every tier under `eval_results/`.
+
+| Metric | No content (C) | Genome (A) | LLM (B) | A−C | B−C |
+|---|---|---|---|---|---|
+| Hit@1 | 0.0577 | 0.0576 | **0.0585** | −0.0001 | +0.0008 |
+| Hit@5 | 0.1536 | 0.1538 | **0.1552** | +0.0002 | +0.0016 |
+| Hit@10 | 0.2213 | 0.2229 | **0.2240** | +0.0016 | +0.0027 |
+| Hit@20 | 0.3101 | 0.3131 | **0.3140** | +0.0030 | +0.0039 |
+| Hit@50 | 0.4611 | 0.4642 | **0.4656** | +0.0031 | +0.0045 |
+| NDCG@10 | 0.1283 | 0.1288 | **0.1300** | +0.0005 | +0.0017 |
+| MRR | 0.1143 | 0.1146 | **0.1157** | +0.0003 | +0.0014 |
+
+**Phase 2 whole-corpus verdict:** **B (LLM) leads every metric** — B−A = +0.0011 MRR (+0.97%), B−C = +0.0014 (+1.2%), A−C = +0.0003 (+0.3%). The Phase 1 finding (LLM matches/slightly beats genome) **holds and firms up with the long tail present**: B now leads on *every* metric (Phase 1 had a Hit@20 tie). The aggregate lift-over-floor is small because the rollback target distribution is popularity-skewed (Q4 popular movies are 90% of examples) — the lift lives in the long-tail split below, not the aggregate.
+
+Checkpoints (all α=0, full corpus, content slot is the only difference; trained 2026-06-07):
+- A genome = `best_softmax_v2_popularity_alpha_0_20260607_101027.pth`
+- B llm = `best_softmax_v2_llm_popularity_alpha_0_20260607_105646.pth`
+- C nocontent = `best_softmax_v2_nocontent_popularity_alpha_0_20260607_112755.pth`
+
 ### Long-tail split (Phase 2)
-On the full corpus, additionally report metrics **restricted to long-tail movies** (low rating count). This is where content features are expected to matter most and where the genome-vs-LLM question is most consequential. Call it out explicitly — a model that ties on the head but wins on the tail is the interesting outcome.
+
+On the full corpus we report metrics **restricted by the target movie's popularity tier** — this is where content features matter most and where the genome-vs-LLM question is most consequential.
+
+**MRR by tier** (example count in parens; all three models share the same examples):
+
+| Tier (n) | C | A | B | A−C | B−C | B−A |
+|---|---|---|---|---|---|---|
+| Whole corpus (382,138) | 0.1143 | 0.1146 | **0.1157** | +0.0003 | +0.0014 | +0.0011 |
+| HEAD > 1k (369,486) | 0.1181 | 0.1184 | **0.1195** | +0.0003 | +0.0014 | +0.0011 |
+| Q4 popular (343,906) | 0.1259 | 0.1260 | **0.1273** | +0.0001 | +0.0014 | +0.0013 |
+| Q3 mid (26,923) | 0.0129 | **0.0148** | 0.0144 | +0.0019 | +0.0015 | −0.0004 |
+| Q2 mid (8,049) | 0.0032 | **0.0038** | 0.0037 | +0.0006 | +0.0005 | −0.0001 |
+| Q1 rarest (3,260) | 0.0012 | 0.0014 | 0.0014 | +0.0002 | +0.0002 | ±0.0000 |
+| **TAIL ≤ 1k (12,652)** | 0.0028 | **0.0033** | 0.0032 | +0.0005 | +0.0004 | −0.0001 |
+
+**Tail-tier recall** (Hit@50 and Hit@250 — tail tiers have few top-rank hits, so deeper-K recall carries more signal than MRR there):
+
+| Tier | C@50 | A@50 | B@50 | C@250 | A@250 | B@250 |
+|---|---|---|---|---|---|---|
+| Q3 mid | 0.1134 | **0.1251** | 0.1223 | 0.3420 | **0.3608** | 0.3529 |
+| Q2 mid | 0.0226 | 0.0287 | **0.0297** | 0.1442 | 0.1536 | **0.1568** |
+| Q1 rarest | 0.0034 | **0.0061** | 0.0052 | 0.0463 | **0.0604** | 0.0580 |
+| TAIL ≤ 1k | 0.0192 | **0.0249** | 0.0241 | 0.1243 | 0.1368 | **0.1378** |
+
+**Findings:**
+
+1. **Lift-over-floor thesis — confirmed on solid n.** Content's advantage over the no-content floor is ~0% on the popular head and grows steeply toward the tail. Hit@250 A−C: Q4 +0.0010 → Q3 +0.0188 → Q1 +0.0141 → TAIL +0.0125; relative MRR lift on TAIL ≈ +18% (A−C) / +14% (B−C) vs ~0.1% on Q4. Both content sources earn their keep exactly where collaborative signal is sparse — the story Phase 1 structurally could not tell.
+
+2. **B beats A overall, driven entirely by the popular head.** Q4 (90% of examples) carries B−A ≈ +0.0013 MRR, stable across K. The whole-corpus and HEAD numbers are essentially the Q4 result.
+
+3. **The key tail result: LLM does NOT collapse on rare movies — it matches genome.** On the deep tail (Q1, TAIL) A and B are statistically tied (MRR gaps ≤ 0.0001; Hit@250 splits favor each once: TAIL → B, Q1 → A). Even where content matters most, LLM features hold even with human-curated genome. This is the consequential, positive result for "can LLMs replace human curation," and it is the question Phase 1 could not answer.
+
+4. **Genome keeps a small, consistent edge in the *mid*-tail (Q3, n=26,923).** Genome leads B on MRR (0.0148 vs 0.0144), Hit@50 (0.1251 vs 0.1223) and Hit@250 (0.3608 vs 0.3529) — ~2–5% relative, the one place the A > B gap is consistent across K rather than noise. Q3 spans 907–2,857 ratings (straddling the Phase 1 boundary), i.e. "moderately popular," not cold-start.
+
+**Phase 2 verdict (paper headline):** LLM-extracted features **match human-curated genome on the long tail and slightly beat it overall**; genome retains only a marginal mid-tail (Q3) advantage. The "expensive human curation can be replaced by LLM extraction" thesis holds — including under the long-tail stress test Phase 1 structurally could not run. Caveat for the writeup: even at n=382,138 the deep-tail tiers are small (Q1 n=3,260; TAIL n=12,652) because the rollback target distribution is popularity-skewed (Q4 = 90% of examples), so deep-tail A-vs-B differences ≤ 0.0001 MRR should be read as ties, not rankings.
 
 ### Qualitative comparison via canary users
 3-5 canary user profiles. For each, top-10 from both models side by side. The interesting cases are where they disagree.
