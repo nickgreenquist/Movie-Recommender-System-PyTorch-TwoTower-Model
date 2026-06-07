@@ -32,7 +32,7 @@ Either outcome is a defensible portfolio finding. The experimental design is wha
 - Do NOT ask the LLM for subjective aesthetics (`visually stunning`, `cinematography`, `neon_aesthetic`) from a plot synopsis — it will hallucinate; visual dims are factual-medium-only unless backed by a scraped critic quote (Stage 2 group 6)
 - Do NOT use freeform LLM completion — structured output / JSON mode is non-negotiable
 - Do NOT scrape web content without rate limiting, caching, and respect for source terms of service
-- Do NOT spend more than $200 total on LLM inference costs — hard upper bound
+- Do NOT spend more than $200 total on metered LLM inference — hard upper bound (moot as run: extraction went through a flat-rate Claude Code subscription at ~$0 marginal; the cap binds only on a metered-API reproduction)
 
 ---
 
@@ -146,7 +146,7 @@ These are mapped to schema fields factually (e.g. `oscar_winner`, `criterion`) �
 
 ### Practical guidelines
 - **TMDB-first is the default LLM input.** Structured TMDB fields (overview, tagline, genres, cast, director) are the canonical input to extraction — they keep the prompt small and cost-predictable. Other sources are supplementary.
-- **Store raw on disk; truncate only at FEED time — never at scrape time.** Scraping is the expensive do-it-once step (rate-limited, network/source dependent), so store as much as each source gives: the *full* Wikipedia plaintext extract (all sections), untruncated, plus the full billed cast and every other field. Capping at scrape time bakes a tunable policy into the durable cache and forces a full re-scrape to change it — a mistake the original draft of this plan made. The token-budget constraint (full Wikipedia plots average 1,500–3,500 words; feeding them raw blows the budget — see Cost Budget, ~$263 vs ~$109, uncapped input ~5×'s the input bill) binds on what you **feed** the extraction model, not what you **store**. Apply the char/section limits (~1,000–1,500 chars, or a cheap-model pre-summary) in Stage 2's prompt assembly (`format_for_prompt`), where they can be tuned or A/B'd in the model bake-off for free. Field *selection* is the same story: keep the full TMDB cast+crew dump on disk, but `format_for_prompt` should feed only the discriminative slice — top-billed cast (~5–10), director, writers, genres, keywords — NOT the ~200-person below-the-line crew (gaffers, PAs, sound), which is ~40% of every cached file and adds tokens without categorization signal. **Do NOT feed raw full plots (or the full crew) to the extraction model — but DO keep them on disk.**
+- **Store raw on disk; truncate only at FEED time — never at scrape time.** Scraping is the expensive do-it-once step (rate-limited, network/source dependent), so store as much as each source gives: the *full* Wikipedia plaintext extract (all sections), untruncated, plus the full billed cast and every other field. Capping at scrape time bakes a tunable policy into the durable cache and forces a full re-scrape to change it — a mistake the original draft of this plan made. The token-budget constraint (full Wikipedia plots average 1,500–3,500 words; feeding them raw blows the budget — see Cost Budget, ~$263 vs ~$109, uncapped input ~5×'s the input bill) binds on what you **feed** the extraction model, not what you **store**. Apply the char/section limits (~1,000–1,500 chars, or a cheap-model pre-summary) in Stage 2's prompt assembly (`format_for_prompt`), where they can be tuned for free. Field *selection* is the same story: keep the full TMDB cast+crew dump on disk, but `format_for_prompt` should feed only the discriminative slice — top-billed cast (~5–10), director, writers, genres, keywords — NOT the ~200-person below-the-line crew (gaffers, PAs, sound), which is ~40% of every cached file and adds tokens without categorization signal. **Do NOT feed raw full plots (or the full crew) to the extraction model — but DO keep them on disk.**
 - Cache aggressively — scrape ONCE per movie, never re-scrape
 - Rate limit conservatively — TMDB is 40 req/10s; respect IMDB's robots.txt
 - Skip movies where scraping fails — 90% coverage is fine
@@ -159,7 +159,7 @@ Zero cost. Phase 1: ~1-2 hours for the filtered ~4-5k movies if rate-limited pro
 
 ## Stage 2: LLM Feature Extraction (Grouped + Structured)
 
-> **Phase 1:** Run extraction only on the filtered ~4-5k movies (~27k calls). See the Cost Budget for the full input/output breakdown — output tokens dominate. Even the lean TMDB-only path lands near the **$100 Phase 1 cap**, so the input-discipline (Stage 1) and model-choice test (below) are not optional.
+> **Phase 1:** Run extraction only on the filtered ~4-5k movies (~27k calls). See the Cost Budget for the full input/output breakdown — output tokens dominate. The input-discipline (Stage 1) keeps the metered-API reproduction estimate sane. (As actually run, extraction used Sonnet via Claude Code at ~$0 marginal cost; the model-choice bake-off was dropped — see "LLM choice" below.)
 
 ### Critical design decision: grouped prompts with structured output
 
@@ -270,10 +270,10 @@ def extract_features(movie_id, scraped_content):
         save_to_cache(cache_path, validated)
 ```
 
-### LLM choice — test, don't assume
-The prior assumption was "use Claude Sonnet, the cost difference vs a small model is negligible." **That is wrong here, because output dominates the bill** (structured float extraction is output-heavy, and Sonnet output is $15/MTok vs Haiku ~$4/MTok). So model choice is a real cost lever, not a rounding error.
+### LLM choice — Sonnet via Claude Code (bake-off dropped)
+**Decision (2026-06): extraction was run with Claude Sonnet through Claude Code, on a flat-rate Max subscription — marginal API cost ~$0.** The originally-planned Sonnet-vs-Haiku bake-off is **dropped.** Its entire rationale was pay-as-you-go cost control (output dominates the bill — Sonnet output $15/MTok vs Haiku ~$4/MTok — so a cheaper model that passed calibration would have cut the bill ~4×). That premise no longer holds: the features were generated under a subscription already in hand, at no marginal API cost, so there is nothing to optimize by switching models. Running the bake-off would *itself* cost $100+ in API credits to answer a **secondary** question ("could a smaller model also do it?") that the core LLM-vs-genome comparison does not need.
 
-**Decide it empirically in the validation pass below:** run the same 20 spot-check movies through both Claude Sonnet and Haiku 4.5, compare calibration/quality, and pick the cheapest model that passes the sanity checks. Do NOT lock Sonnet in by default.
+**Consequence for the writeup (Limitations).** This is a **single-LLM** study — Claude Sonnet via Claude Code → `data/llm_features_claude-code-sonnet_v1.pt`. The paper can claim *Sonnet-class extraction matches genome*; it **cannot** claim a smaller/cheaper model would. State the cost honestly as "amortized under an existing flat-rate coding subscription, ~$0 marginal," **not** as a per-call API figure. The pay-as-you-go pricing analysis is retained in the Cost Budget only as a *reproduction estimate* for anyone without such a subscription.
 
 **Prompt caching:** the 6 group prompts are static except the per-movie content block. Caching the static prefix cuts *input* cost if movies are batched by group within the 5-min cache TTL. Worth doing — but note it does not touch the dominant *output* cost, so it can't rescue the budget on its own.
 
@@ -290,7 +290,8 @@ Before running on all 9,375 movies, spot-check 20 random movies:
 - Do values match intuition (Mad Max should score high on "gritty" and "action_heavy")?
 - Do similar movies produce similar features (Toy Story 1 and 2)?
 - Do cross-group features avoid contradiction (not 0.9 "uplifting" AND 0.9 "devastating")?
-- **Model bake-off:** run the 20 movies through both Sonnet and Haiku 4.5. If Haiku passes the calibration/intuition checks, use it — it cuts output cost ~4×. Record the decision and the per-call token counts (measured, not estimated) so the Cost Budget can be re-confirmed before scaling.
+
+(The Sonnet-vs-Haiku bake-off step was dropped — see "LLM choice" above.)
 
 If quality is poor, revise prompts/schemas **before** spending the full LLM budget.
 
@@ -550,7 +551,7 @@ Structure:
 2. **Setup** — Same architecture, same training, only content feature source differs; LLM schema derived from the top-discriminability genome tags so both measure the same axes
 3. **Results** — Quantitative table + qualitative comparisons; **report eval with and without the factual-prestige group (5)** so its contribution is isolable
 4. **Findings** — Honest interpretation
-5. **Limitations** — Single dataset, single LLM, possible training-data contamination, **residual reception asymmetry** (pure-sentiment genome tags like `masterpiece` / `great acting` / `predictable` cannot be made objective and remain a genome-only advantage), **prestige-as-popularity leakage** (scraped box-office / IMDb-rating in group 5 are quasi-popularity signals that blur the content-vs-collaborative line, in tension with the `alpha=0` stance), and **Phase 1 popular-movie selection bias** (content lift is structurally suppressed on the popular split)
+5. **Limitations** — Single dataset, **single LLM** (Claude Sonnet via Claude Code; *no* smaller/cheaper-model bake-off — so "Sonnet-class extraction matches genome" is supported, but "a cheaper model would too" is untested; cost is ~$0 marginal amortized under a flat-rate subscription, not a per-call API figure), possible training-data contamination, **residual reception asymmetry** (pure-sentiment genome tags like `masterpiece` / `great acting` / `predictable` cannot be made objective and remain a genome-only advantage), **prestige-as-popularity leakage** (scraped box-office / IMDb-rating in group 5 are quasi-popularity signals that blur the content-vs-collaborative line, in tension with the `alpha=0` stance), and **Phase 1 popular-movie selection bias** (content lift is structurally suppressed on the popular split)
 6. **What this means for production** — Where this pattern fits in real systems
 
 2000-3000 words. Second-most-important deliverable after the code.
@@ -594,8 +595,8 @@ The user decides whether the Phase 1 results justify the additional Phase 2 cost
 
 ### Phase 2 cost
 
-- Incremental LLM extraction for the additional ~4-5k movies: **~$60-110 (Sonnet) / ~$35-65 (Haiku)** — model-dependent, see the consolidated Cost Budget.
-- Total experiment cost (Phase 1 + Phase 2): **~$125-220 (Sonnet) / ~$75-130 (Haiku)**.
+- Incremental LLM extraction for the additional ~4-5k movies: **~$0 marginal as run** (Sonnet via Claude Code subscription); ~$60-110 if reproduced via the metered API — see the consolidated Cost Budget.
+- Total experiment cost (Phase 1 + Phase 2): **~$0 marginal as run**; ~$170-220 via metered API.
 
 ---
 
@@ -629,7 +630,7 @@ See [results/llm_vs_genome_ablation.md](results/llm_vs_genome_ablation.md).
 3. **Verify Stage 1** — Inspect 10 movies' content quality
 4. **Stage 1 (Phase 1)** — Scrape the filtered ~4-5k movies (incl. objective prestige indicators)
 5. **Stage 2 schema** — Derive the dimension list from `top_genome_tags_by_discriminability.csv` (top ~150, dedup synonyms, bucket into 6 groups); define 6 Pydantic schemas, draft 6 prompts
-6. **Stage 2 (test)** — Run grouped extraction on 5 movies; **Sonnet-vs-Haiku bake-off**
+6. **Stage 2 (test)** — Run grouped extraction on 5 movies (Sonnet via Claude Code; bake-off dropped — see Stage 2 "LLM choice")
 7. **Verify Stage 2** — Calibration check, similarity check, no defaulting to 0.5
 8. **Stage 2 (Phase 1)** — Run grouped extraction on the filtered ~4-5k movies
 9. **Stage 3** — Merge groups, run cross-group consistency validation
@@ -659,7 +660,17 @@ Do not move to stage N+1 until stage N is verified. Do not cross the Decision Ga
 
 ## Cost Budget
 
-**Output tokens dominate.** Structured float extraction produces output-heavy calls, and at Claude Sonnet pricing output is $15/MTok vs $3/MTok input (5×). Input and output must be budgeted separately — a blended "~600 tokens/call" estimate hides the binding constraint.
+**Actual cost (as run): ~$0 marginal.** Extraction was performed with Claude Sonnet through Claude Code on a flat-rate Max subscription, so full-corpus feature generation (`data/llm_features_claude-code-sonnet_v1.pt`) incurred **no marginal API charges** — it was amortized under a subscription already in hand. Web scraping and training compute are $0 too. The pay-as-you-go analysis below is retained only as a **reproduction estimate** for anyone extracting via the metered API instead (and as the original justification for the now-dropped model bake-off). Report the cost in the writeup as subscription-amortized / ~$0 marginal — *not* as a per-call API figure.
+
+**Compute actually consumed (subscription — rough estimate).** The extraction ran in the **first week of June 2026** and used **~84% of the weekly Sonnet quota on a Claude Max 5× plan**. Converting that to tokens is approximate, with wide bounds:
+- Max 5× baseline ≈ **140–280 Sonnet-hours/week**; with the early-June "50% more usage" promo active, ≈ **210–420 hours**. At 84% consumed → **~176–353 active Sonnet-hours**.
+- At a typical coding-session rate of **~50k–100k tokens/active-hour**, that is **≈ 9–35M Sonnet tokens** consumed (order-of-magnitude only).
+
+Caveats for the writeup: the bounds are wide (the hour→token conversion is a heuristic), and the 84% weekly quota also covered *other* development that week, so 9–35M is an **upper bound** on extraction-specific tokens, not a measured count. It is also not directly comparable to the metered-API line items below — those count only extraction prompt+completion tokens, whereas the subscription meter also absorbs Claude Code's agent overhead (tool calls, file reads) and benefits from prompt caching. The marginal **dollar** cost was still ~$0 (flat-rate); treat 9–35M as the order-of-magnitude **compute footprint** for an efficiency framing.
+
+---
+
+**Reproduction estimate (metered API).** **Output tokens dominate.** Structured float extraction produces output-heavy calls, and at Claude Sonnet pricing output is $15/MTok vs $3/MTok input (5×). Input and output must be budgeted separately — a blended "~600 tokens/call" estimate hides the binding constraint.
 
 ### Phase 1 — reduced corpus (~4,500 movies × 6 groups = ~27,000 calls)
 
@@ -670,23 +681,19 @@ Worked at Sonnet pricing ($3/MTok in, $15/MTok out):
 | **TMDB-only / truncated (default)** | ~600 | ~150 | $48.60 | $60.75 | **~$109** |
 | Full raw Wikipedia plots (DO NOT) | ~2,500 | ~150 | $202.50 | $60.75 | **~$263** |
 
-**Even the lean default path (~$109) is already at/over the $100 Phase 1 target.** Two consequences:
-- The feed-time input discipline (TMDB-first, and truncate Wikipedia before the extraction call — Stage 1 stores it raw, Stage 2 caps it in `format_for_prompt`) is mandatory, not advisory — the raw-Wikipedia path is ~2.4× over.
-- Output is the binding constraint and input-truncation alone can't fix it. The real output lever is the **model bake-off** (Stage 2): Haiku 4.5 output is ~$4/MTok vs Sonnet $15/MTok — if Haiku passes the calibration checks, Phase 1 output cost drops from ~$61 to ~$16 and the whole phase lands comfortably under $100. **The numbers above assume Sonnet; re-confirm with measured token counts after the bake-off.**
+For the metered path the feed-time input discipline (TMDB-first, and truncate Wikipedia before the extraction call — Stage 1 stores it raw, Stage 2 caps it in `format_for_prompt`) is mandatory, not advisory — the raw-Wikipedia path is ~2.4× over.
 
-Note: these are API pay-as-you-go costs, billed against API credits — not a flat monthly subscription cap.
-
-### Full budget
+### Full budget (metered-API reproduction only)
 
 | Item | Estimated Cost |
 |---|---|
 | Web scraping (both phases) | $0 |
-| LLM extraction — Phase 1 (~27k calls, Sonnet, lean input) | ~$109 (or ~$64 on Haiku) |
-| LLM extraction — Phase 2 (incremental, remaining ~4-5k movies) | ~$60-110 (model-dependent) |
+| LLM extraction — Phase 1 (~27k calls, Sonnet, lean input) | ~$109 |
+| LLM extraction — Phase 2 (incremental, remaining ~4-5k movies) | ~$60-110 |
 | Training compute (all models, both phases) | $0 |
-| **Total (Phase 1 + Phase 2)** | **~$125-220 (Sonnet) / ~$75-130 (Haiku)** |
+| **Total (Phase 1 + Phase 2), metered API** | **~$170-220** |
 
-**Phase 1 hard cap: $100** — meeting it likely requires Haiku (confirmed via bake-off) and/or tighter input. Overall hard upper bound: $200. If approaching $175 across both phases mid-extraction, stop and revise.
+**As actually run (Claude Code subscription), marginal API cost was ~$0.** The metered figures above only bind if you reproduce this without a flat-rate subscription.
 
 ---
 
