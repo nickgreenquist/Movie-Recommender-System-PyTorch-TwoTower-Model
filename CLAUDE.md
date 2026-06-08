@@ -4,15 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Current State
 
-**Prod checkpoint:** `best_softmax_v2_popularity_alpha_05_20260505_182728.pth` (v3 — full softmax, L2 norm, Menon α=0.5, 4-pool user tower, 128-dim output). Do not replace without a clearly better eval result.
+**Prod checkpoint:** `best_softmax_genome_tags_llm_features_popularity_alpha_05_20260607_195227.pth` (Model D — full softmax, L2 norm, Menon α=0.5, 4-pool user tower, 128-dim output; `feature_towers='both'` — **genome + LLM** content towers fused). Do not replace without a clearly better eval result.
 
-Promoted 2026-05-05. Beats MSE prod by **+8.7× MRR** (0.1153 vs 0.0133). Beats previous softmax prod (v2) by **+31% MRR** (0.1153 vs 0.0878) via the 4-pool user tower upgrade.
+Promoted 2026-06-07, replacing the genome-only v3 prod (`best_softmax_v2_popularity_alpha_05_20260505_182728.pth`, now demoted). **Deliberate, portfolio-motivated lateral swap:** one deployed model that fuses the dataset's curated genome tags with my own web-scraped + LLM-extracted features. On par with the old prod — MRR 0.1123 vs 0.1144 (−1.8%) at the canonical n=382,138 protocol, identical deep-tail MRR (0.0159), canary on par across personas (comparison table under Offline Evaluation). Trades a negligible aggregate-MRR cost for the fused-feature story — not a metrics upgrade, intended.
 
 To re-export serving artifacts from prod checkpoint:
 
 ```bash
-python main.py export saved_models/best_softmax_v2_popularity_alpha_05_20260505_182728.pth
+python main.py export saved_models/best_softmax_genome_tags_llm_features_popularity_alpha_05_20260607_195227.pth
 ```
+
+Export bakes the LLM feature buffer into `serving/feature_store.pt` (the `data/llm_features_*.pt` tensor is gitignored and absent on Streamlit Cloud), so the deployed app reconstructs the genome + LLM user tower from serving artifacts alone — `streamlit_app.py` does not read `data/`.
 
 ## Project Overview
 
@@ -183,6 +185,34 @@ Note: rollback eval is the harder protocol — compare only within the same prot
 
 v3 beats v2 prod by **+31% MRR**. v3 beats MSE prod by **+8.7× MRR**.
 
+### Prod swap: genome-only → genome+LLM (Model D) at α=0.5 — canonical protocol
+
+2026-06-07 the genome-only v3 prod was swapped for the **Model D** (genome + LLM, `feature_towers='both'`)
+α=0.5 checkpoint. Deliberate, portfolio-motivated lateral swap — one deployed model fusing the
+dataset's curated genome tags with my own web-scraped + LLM-extracted features — verified on par with
+the old prod, not a metrics upgrade. **Different protocol from the legacy table above** (this is the
+canonical rollback eval, all 19,134 val users, n=382,138), so it is a separate table, not an edit of
+those numbers.
+
+| Metric        | OLD prod genome α0.5 | NEW prod D α0.5 (genome+LLM) |
+|---|---|---|
+| Hit Rate@1    | 0.0592 | 0.0573 |
+| Hit Rate@5    | 0.1538 | 0.1513 |
+| Hit Rate@10   | 0.2191 | 0.2173 |
+| Hit Rate@20   | 0.3020 | 0.3009 |
+| Hit Rate@50   | 0.4425 | 0.4413 |
+| TAIL ≤1k MRR  | 0.0159 | 0.0159 |
+| **MRR**       | **0.1144** | **0.1123** |
+
+Aggregate MRR −1.8%; deep-tail (≤1k ratings) MRR identical (0.0159). Eval files:
+`eval_results/best_softmax_v2_popularity_alpha_05_20260505_182728.txt` (old) and
+`eval_results/best_softmax_genome_tags_llm_features_popularity_alpha_05_20260607_195227.txt` (new).
+
+**Canary (vs old prod):** on par across personas — clean Horror / Sci-Fi / Comedy / Romance /
+Children's / Anime; strong Arthouse / Superhero / Western; D **beats** old prod on WW2. Fantasy and
+Heist are washes (both drift — Fantasy to sci-fi / low-quality, Heist to spy-action). Net: a lateral,
+portfolio-motivated swap with negligible quality cost.
+
 ## Embedding Probes (`python main.py probe`)
 
 **`probe_genre(genre)`** — one-hot → `item_genre_tower` → cosine vs all genre embeddings.
@@ -251,7 +281,9 @@ So the sidecar **must keep the same stem as its `.pth`**; the rename moved both 
   the *filenames* were changed, not the JSON contents). The loader reads both `feature_towers` and
   the legacy `content_feature_source`, so this is harmless.
 
-**None of these is prod.** Prod remains the genome α=0.5 checkpoint in Current State. Verdict
+**None of these four α=0 arms is itself prod.** Prod is now a separate deployment fine-tune of the
+**D architecture** (genome + LLM, `feature_towers='both'`) at α=0.5 — see Current State; the swap was
+portfolio-motivated, not driven by these metrics. Verdict
 (full analysis in `docs/plans/llm_vs_genome_ablation_plan.md` Stage 6): B ≥ A on the popular head,
 A ≈ B on the deep tail, D shows no clear additive benefit over the better single source.
 
