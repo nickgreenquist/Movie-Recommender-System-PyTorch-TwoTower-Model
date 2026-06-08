@@ -49,44 +49,77 @@ _TOTAL_RESULTS = 60     # total movies to fetch (3 pages)
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 
+def _build_serving_model(fs, cfg):
+    """Reconstruct the serving MovieRecommender from the self-contained serving/ artifacts.
+
+    Mirrors src.train.build_model's MovieRecommender call, but sources every non-persistent
+    buffer from serving/ rather than the (gitignored, Streamlit-Cloud-absent) data/ dir: the
+    genome buffer is restacked from movieId_to_genome_tag_context, and the LLM buffer is read
+    from llm_feature_buffer baked into feature_store.pt at export time. We can't call build_model
+    directly here precisely because it loads data/llm_features_*.pt. feature_towers
+    ('genome' | 'llm' | 'both' | None) — from the exported model_config — selects which
+    semantic-feature towers are built.
+    """
+    feature_towers = cfg.get('feature_towers', cfg.get('content_feature_source', 'genome'))
+    has_genome = feature_towers in ('genome', 'both')
+    has_llm    = feature_towers in ('llm', 'both')
+
+    top_movies = fs['top_movies']
+
+    genome_context_buffer = None
+    genome_tags_len       = len(fs['genome_tag_ids'])
+    if has_genome:
+        genome_matrix = np.array(
+            [fs['movieId_to_genome_tag_context'][mid] for mid in top_movies], dtype=np.float32)
+        pad_row = np.zeros((1, genome_matrix.shape[1]), dtype=np.float32)
+        genome_context_buffer = torch.from_numpy(np.vstack([genome_matrix, pad_row]))
+        genome_tags_len = genome_matrix.shape[1]
+
+    llm_feature_buffer = None
+    llm_feature_len    = None
+    if has_llm:
+        llm_feature_buffer = fs['llm_feature_buffer']
+        llm_feature_len    = llm_feature_buffer.shape[1]
+
+    return MovieRecommender(
+        genres_len=len(fs['genres_ordered']),
+        tags_len=len(fs['tags_ordered']),
+        genome_tags_len=genome_tags_len,
+        top_movies_len=len(top_movies),
+        all_years_len=len(fs['years_ordered']),
+        timestamp_num_bins=fs['timestamp_num_bins'],
+        user_context_size=fs['user_context_size'],
+        feature_towers=feature_towers,
+        genome_context_buffer=genome_context_buffer,
+        llm_feature_buffer=llm_feature_buffer,
+        llm_feature_len=llm_feature_len,
+        item_genre_embedding_size=cfg['item_genre_embedding_size'],
+        item_tag_embedding_size=cfg['item_tag_embedding_size'],
+        item_genome_embedding_size=cfg.get('item_genome_embedding_size', 32),
+        item_llm_embedding_size=cfg.get('item_llm_embedding_size', 32),
+        item_movieId_embedding_size=cfg['item_movieId_embedding_size'],
+        item_year_embedding_size=cfg['item_year_embedding_size'],
+        user_genre_embedding_size=cfg['user_genre_embedding_size'],
+        timestamp_feature_embedding_size=cfg['timestamp_feature_embedding_size'],
+        user_genome_embedding_size=cfg.get('user_genome_embedding_size', 32),
+        user_llm_embedding_size=cfg.get('user_llm_embedding_size', 32),
+        proj_hidden=cfg.get('proj_hidden', 256),
+        output_dim=cfg.get('output_dim', 128),
+    )
+
+
 @st.cache_resource
 def load_artifacts():
     fs  = torch.load('serving/feature_store.pt', weights_only=False)
     me  = torch.load('serving/movie_embeddings.pt', weights_only=False)
     cfg = fs['model_config']
 
-    top_movies = fs['top_movies']
-    genome_matrix = np.array(
-        [fs['movieId_to_genome_tag_context'][mid] for mid in top_movies],
-        dtype=np.float32,
-    )
-    pad_row = np.zeros((1, genome_matrix.shape[1]), dtype=np.float32)
-    genome_context_buffer = torch.from_numpy(np.vstack([genome_matrix, pad_row]))
-
-    model = MovieRecommender(
-        genres_len=len(fs['genres_ordered']),
-        tags_len=len(fs['tags_ordered']),
-        genome_tags_len=len(fs['genome_tag_ids']),
-        top_movies_len=len(top_movies),
-        all_years_len=len(fs['years_ordered']),
-        timestamp_num_bins=fs['timestamp_num_bins'],
-        user_context_size=fs['user_context_size'],
-        genome_context_buffer=genome_context_buffer,
-        item_genre_embedding_size=cfg['item_genre_embedding_size'],
-        item_tag_embedding_size=cfg['item_tag_embedding_size'],
-        item_genome_tag_embedding_size=cfg['item_genome_tag_embedding_size'],
-        item_movieId_embedding_size=cfg['item_movieId_embedding_size'],
-        item_year_embedding_size=cfg['item_year_embedding_size'],
-        user_genre_embedding_size=cfg['user_genre_embedding_size'],
-        timestamp_feature_embedding_size=cfg['timestamp_feature_embedding_size'],
-        user_genome_context_embedding_size=cfg.get('user_genome_context_embedding_size', 32),
-        proj_hidden=cfg.get('proj_hidden', None),
-        output_dim=cfg.get('output_dim', 128),
-    )
+    model = _build_serving_model(fs, cfg)
     state_dict = torch.load('serving/model.pth', weights_only=True)
-    # genome_context_buffer is non-persistent (rebuilt above); drop it if an older
-    # serving/model.pth still carries it, so strict load works on old and new artifacts.
-    state_dict.pop('genome_context_buffer', None)
+    # The semantic-feature/context buffers are non-persistent (rebuilt in _build_serving_model);
+    # drop any an older serving/model.pth still carries so strict load works on old and new artifacts.
+    for buf in ('genome_context_buffer', 'content_context_buffer', 'llm_feature_buffer'):
+        state_dict.pop(buf, None)
     model.load_state_dict(state_dict)
     model.eval()
 

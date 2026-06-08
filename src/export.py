@@ -132,6 +132,17 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
         # Model config — needed to reconstruct the model in the Streamlit app
         'model_config':         config,
     }
+
+    # ── Self-contained LLM feature buffer ────────────────────────────────────
+    # The 'llm'/'both' models' user tower reads llm_feature_buffer at inference. build_model
+    # sources it from data/llm_features_*.pt — gitignored, and absent on Streamlit Cloud — so
+    # bake the (already-padded, top_movies-ordered) buffer into serving here. Genome needs no
+    # equivalent: its buffer is rebuilt in the app from movieId_to_genome_tag_context above.
+    if getattr(model, 'has_llm', False):
+        feature_store['llm_feature_buffer'] = model.llm_feature_buffer.cpu()
+        feature_store['llm_feature_len']    = int(model.llm_feature_buffer.shape[1])
+        print(f"  + llm_feature_buffer {tuple(model.llm_feature_buffer.shape)} baked into feature_store")
+
     fs_path = os.path.join(SERVING_DIR, 'feature_store.pt')
     torch.save(feature_store, fs_path)
     print(f"Saved {fs_path}  ({os.path.getsize(fs_path) / 1e6:.1f} MB)")
