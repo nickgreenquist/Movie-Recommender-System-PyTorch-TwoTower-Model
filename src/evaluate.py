@@ -33,7 +33,12 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'Blair Witch Project, The (1999)',
         'Texas Chainsaw Massacre, The (2003)',
         'Exorcism of Emily Rose, The (2005)',
-        'Wrong Turn (2003)'
+        'Wrong Turn (2003)',
+        '28 Days Later (2002)',
+        'Descent, The (2005)',
+        'Dawn of the Dead (2004)',
+        'Session 9 (2001)',
+        '[REC] (2007)'
     ],
     'Sci-Fi Lover': [
         'Contact (1997)',
