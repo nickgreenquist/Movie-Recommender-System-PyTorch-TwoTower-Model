@@ -255,7 +255,8 @@ def _show_results(result_key: str, posters, fs) -> None:
 def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters):
     st.caption(
         "Select movies you love and optionally refine with genome tags. "
-        "The model builds your taste embedding from the movies' content and scores every movie in the corpus. "
+        "The model builds your taste embedding from the movies' content — curated genome tags plus "
+        "web-scraped, LLM-extracted features — and scores every movie in the corpus. "
         "To learn how the model works, see the About tab."
     )
     all_titles = fs['popularity_ordered_titles']
@@ -442,9 +443,9 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters):
 def tab_similar(me, fs, all_ids, all_norm, posters):
     st.caption(
         "Each movie is represented by a single combined embedding — the concatenation of "
-        "its genre tower, tag tower, genome tag tower, movieId embedding, and year embedding. "
-        "This tab finds the movies whose combined embedding is most similar (by cosine similarity) "
-        "to the selected seed movie."
+        "its genre tower, tag tower, genome tag tower, LLM-feature tower, movieId embedding, and "
+        "year embedding. This tab finds the movies whose combined embedding is most similar "
+        "(by cosine similarity) to the selected seed movie."
     )
     all_titles  = fs['popularity_ordered_titles']
     selections = st.multiselect("Movie", all_titles, key='sim_title')
@@ -626,6 +627,14 @@ def tab_about():
             "popular movies get a log-count boost during training so their embeddings don't dominate inference. "
             "At inference, raw dot products are used with no post-hoc correction."
         )
+        st.markdown(
+            "Each movie carries **two independent content fingerprints**, fused in the item tower: the "
+            "dataset's curated **genome tags** (1,128 ML-derived relevance scores) and a set of **132 "
+            "features I produced myself** — scraped from TMDB + Wikipedia, then scored 0–1 by an LLM across "
+            "themes, tone, setting/era, provenance, prestige, and visual medium. The deployed model uses "
+            "**both** (`feature_towers='both'`); each source gets its own item-side and user-side sub-tower. "
+            "See *The LLM Content Features* below."
+        )
 
         st.subheader("The core design choice: no user ID")
         st.markdown("Most recommender systems embed a unique ID for every user in the training set.")
@@ -649,17 +658,19 @@ User Tower (4-pool):
   sum_pool(item_embedding_lookup[disliked_history])        →  pool_disliked  (32)  [LayerNorm]
   rating_weighted_sum(item_embedding_lookup[full_history]) →  pool_weighted  (32)  [LayerNorm]
   user_genome_context_tower(rating_weighted_avg(genome[history]))  →  genome_ctx  (32)
+  user_llm_feature_tower(rating_weighted_avg(llm[history]))         →  llm_ctx     (32)
   user_genre_tower([avg_rating_per_genre | watch_frac])    →  genre_emb      (32)
   timestamp_embedding_tower(watch_month)                   →  ts_emb          (4)
-  concat (196) → Linear(256) → ReLU → Linear(128) → L2-normalize → user_emb (128)
+  concat (228) → Linear(256) → ReLU → Linear(128) → L2-normalize → user_emb (128)
 
 Item Tower:
   item_embedding_tower(movie_id)        →  item_id_emb      (32)  [shared lookup with all 4 user pools]
   item_genome_tag_tower(genome_scores)  →  item_genome_emb  (32)
+  item_llm_feature_tower(llm_features)  →  item_llm_emb     (32)
   item_genre_tower(genre_onehot)        →  item_genre_emb    (8)
   item_tag_tower(tag_vector)            →  item_tag_emb     (16)
   year_embedding_tower(release_year)    →  year_emb          (8)
-  concat (96) → Linear(256) → ReLU → Linear(128) → L2-normalize → item_emb (128)
+  concat (128) → Linear(256) → ReLU → Linear(128) → L2-normalize → item_emb (128)
 
 Prediction: dot_product(user_emb, item_emb) = cosine similarity (both L2-normalized)
 """, language=None)
@@ -669,7 +680,7 @@ Prediction: dot_product(user_emb, item_emb) = cosine similarity (both L2-normali
         st.header("User Tower")
         st.markdown(
             "Each component encodes a different aspect of taste into a fixed-size vector. "
-            "All seven outputs are concatenated into a 196-dim vector, then passed through a "
+            "All eight outputs are concatenated into a 228-dim vector, then passed through a "
             "projection MLP (Linear 256 → ReLU → Linear 128) to produce the final 128-dim user embedding."
         )
         st.markdown("""
@@ -682,24 +693,26 @@ Prediction: dot_product(user_emb, item_emb) = cosine similarity (both L2-normali
 | user_genre_tower | 32-dim | Avg rating per genre + watch fraction per genre | Genre affinity — how strongly you lean toward<br>or away from each of the 20 broad genre categories |
 | timestamp_embedding_tower | 4-dim | Month bin of most recent watch activity | Temporal context —<br>captures era-based taste shifts |
 | Genome Context Tower | 32-dim | Rating-weighted avg of raw 1,128-dim genome scores<br>across all watched movies | Overall content taste fingerprint — a dense summary<br>of which genome tags define your taste profile |
-| **Projection MLP** | **128-dim** | concat(196) → Linear(256) → ReLU → Linear(128) | Cross-feature interactions — learns how history,<br>content, genre, timing, and genome taste combine |
+| LLM Feature Context Tower | 32-dim | Rating-weighted avg of the 132-dim LLM feature vector<br>across all watched movies | Self-built content fingerprint — themes, tone, setting,<br>prestige & medium distilled by an LLM from scraped text |
+| **Projection MLP** | **128-dim** | concat(228) → Linear(256) → ReLU → Linear(128) | Cross-feature interactions — learns how history,<br>genre, timing, and genome + LLM content taste combine |
 """, unsafe_allow_html=True)
 
         st.header("Item Tower")
         st.markdown(
-            "Each movie is encoded from five independent signals. "
-            "All five outputs are concatenated into a 96-dim vector, then passed through a "
+            "Each movie is encoded from six independent signals. "
+            "All six outputs are concatenated into a 128-dim vector, then passed through a "
             "projection MLP (Linear 256 → ReLU → Linear 128) to produce the final 128-dim item embedding."
         )
         st.markdown("""
 | Component | Output | Input | What it learns |
 |---|---|---|---|
 | item_embedding_tower | 32-dim | Movie ID (shared lookup with all four user history pools) | Collaborative identity — a learned fingerprint<br>for each movie based on who watches it together |
-| item_genome_tag_tower | 32-dim | 1,128 ML-derived relevance scores | Content texture — the film's vibe, themes,<br>and tone in a dense semantic space |
+| item_genome_tag_tower | 32-dim | 1,128 ML-derived genome relevance scores | Content texture — the film's vibe, themes,<br>and tone in a dense semantic space |
+| item_llm_feature_tower | 32-dim | 132 LLM-extracted features (0–1), scored from<br>scraped TMDB + Wikipedia text | Self-built content texture — themes, tone, setting,<br>era, provenance, prestige & visual medium |
 | item_genre_tower | 8-dim | 20-dim genre one-hot vector | Broad genre positioning |
 | item_tag_tower | 16-dim | 306 user-applied tag counts (normalized) | Crowd-sourced descriptors —<br>how the community collectively labels the film |
 | year_embedding_tower | 8-dim | Release year | Era — captures stylistic and<br>cultural shifts across decades |
-| **Projection MLP** | **128-dim** | concat(96) → Linear(256) → ReLU → Linear(128) | Cross-feature interactions — learns how identity,<br>content, genre, tags, and era combine |
+| **Projection MLP** | **128-dim** | concat(128) → Linear(256) → ReLU → Linear(128) | Cross-feature interactions — learns how identity,<br>genome + LLM content, genre, tags, and era combine |
 """, unsafe_allow_html=True)
 
         st.header("Shared Embeddings")
@@ -715,10 +728,28 @@ space: a movie you liked pulls your user embedding directly toward that movie's 
 while a disliked movie pushes it away.
 """)
 
+        st.header("The LLM Content Features")
+        st.markdown(
+            "The genome tags ship with MovieLens. The second content source is **mine**: for every movie "
+            "in the corpus I scraped TMDB + Wikipedia, then had an LLM score **132 features** in [0, 1] "
+            "across six groups — **themes & plot** (32), **tone & mood** (26), **setting / era / sub-genre** "
+            "(32), **provenance & structure** (24), **reception & prestige** (11), and **visual medium** (7). "
+            "Each movie becomes a 132-dim dense vector that feeds its own item-side and user-side sub-tower, "
+            "exactly parallel to the genome towers."
+        )
+        st.markdown(
+            "The deployed model fuses **both** sources (`feature_towers='both'`) — a deliberate, "
+            "portfolio-motivated choice: one model combining the dataset's curated tags with content "
+            "signals I built end-to-end. On the held-out rollback eval it lands **on par** with the "
+            "genome-only model — MRR 0.1123 vs 0.1144 over 382,138 rollbacks, with identical deep-tail "
+            "MRR (0.0159) — trading a negligible aggregate cost for the fused-feature story."
+        )
+
         st.header("Training")
         st.markdown("""
 - **Dataset:** MovieLens 32M — ~33M ratings from ~200K users across ~86K movies
 - **Corpus:** filtered to movies with 200+ ratings (~9,375 movies) and users with 20–500 ratings
+- **Content features:** two per-movie semantic sources fused in the item tower — 1,128 curated genome relevance scores and 132 self-produced LLM features (scraped from TMDB + Wikipedia, scored 0–1 by an LLM)
 - **Loss:** Full softmax cross-entropy over all ~9,375 corpus items, with **Menon et al. (2021) logit-adjusted loss (α=0.5)** for popularity bias correction
 - **Optimizer:** Adam, lr=0.001, batch size 512, temperature=0.1
 - **Steps:** 150,000
@@ -751,7 +782,7 @@ while a disliked movie pushes it away.
 | 1.0 | Over-corrected — suppresses popular items so hard that obscure/low-quality content surfaces |
 """)
         st.markdown("""
-| Metric | MSE baseline | **v3 Softmax α=0.5 (this model)** |
+| Metric | MSE baseline | **v3 Softmax α=0.5 (4-pool, genome)** |
 |---|---|---|
 | Hit Rate@1 | 0.43% | **5.99%** |
 | Hit Rate@5 | 1.68% | **15.49%** |
@@ -774,7 +805,7 @@ while a disliked movie pushes it away.
             "rating-weighted average raw genome vector through Linear(1128→32)) was kept."
         )
         st.markdown("""
-| Metric | Previous (avg pool + genome pool) | **This model (4-pool)** |
+| Metric | Previous (avg pool + genome pool) | **v3 4-pool (genome)** |
 |---|---|---|
 | Hit Rate@1 | 4.14% | **5.99%** |
 | Hit Rate@5 | 11.73% | **15.49%** |
@@ -798,6 +829,7 @@ while a disliked movie pushes it away.
 - 9,375-movie corpus — films with fewer than 200 ratings are not included
 - War genre can drift toward prestige drama due to genome overlap with the "acclaimed serious film" cluster
 - The timestamp tower is a weak signal in the app — all users receive the most recent timestamp bin
+- The LLM content features are estimated by an LLM from scraped text — thinly-documented films get weaker (or all-zero) feature vectors
 """)
 
 
