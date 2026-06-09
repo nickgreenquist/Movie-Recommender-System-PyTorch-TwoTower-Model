@@ -8,6 +8,10 @@
 
 Every recommender needs a dense content vector per item — and the gold-standard source, MovieLens's hand-curated **tag genome**, rests on fifteen years of community folksonomy. The feasible alternative — scrape each item's own text and **extract structured features with an LLM** — covered all **\~9,375 corpus movies** (MovieLens's 200+-rating slice) in **a single day**, at near-zero marginal cost. In a matched three-arm ablation (same model, same training, only the content tags change — **MovieLens genome tags vs LLM feature tags vs no content tags**), the cheap LLM features come out **statistically tied with the gold-standard genome** — and on genome's *own* taxonomy, a deliberate handicap — at MRR 0.1157 vs 0.1146. The claim isn't "better," it's *as good as*.
 
+![The deployed two-tower recommender building a taste vector from genome and LLM content features](figures/demo-recommend.png)
+
+*The deployed recommender these features power. A user's taste vector is built entirely from movie content — the curated genome tags plus the web-scraped, LLM-extracted features this post compares — with no user-ID embedding.*
+
 ## 1. The content-feature problem, and the two ways to solve it
 
 A two-tower recommender represents each item as an embedding. Collaborative signal — who watched what — carries most of the weight for popular items, but it runs dry exactly where you need help: the long tail, and brand-new items nobody has interacted with yet. That's what a **content vector** is for — a dense, per-item descriptor of what the item *is*, independent of who has touched it. The question is where it comes from.
