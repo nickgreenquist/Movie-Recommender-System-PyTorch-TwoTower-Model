@@ -8,7 +8,7 @@
 
 Every recommender needs a dense content vector per item — and the gold-standard source, MovieLens's hand-curated **tag genome**, rests on fifteen years of community folksonomy. The feasible alternative — scrape each item's own text and **extract structured features with an LLM** — covered all **\~9,375 corpus movies** (MovieLens's 200+-rating slice) in **a single day**, at near-zero marginal cost. In a matched three-arm ablation (same model, same training, only the content tags change — **MovieLens genome tags vs LLM feature tags vs no content tags**), the cheap LLM features come out **statistically tied with the gold-standard genome** — and on genome's *own* taxonomy, a deliberate handicap — at MRR 0.1157 vs 0.1146. The claim isn't "better," it's *as good as*.
 
-![The deployed two-tower recommender building a taste vector from genome and LLM content features](figures/demo-recommend.png)
+![Recommendations from the deployed app for a 'pixar animation' genome-tag query](figures/pixar_movies.jpeg)
 
 *The deployed recommender these features power. A user's taste vector is built entirely from movie content — the curated genome tags plus the web-scraped, LLM-extracted features this post compares — with no user-ID embedding.*
 
