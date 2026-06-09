@@ -1,188 +1,198 @@
-# MovieLens Tag Genome: Construction, Manpower, and Feasibility
+# The MovieLens Tag Genome: How It Was Built, and What It Would Take a Company to Replicate
 
-## Overview
-
-The MovieLens Tag Genome is a **dense, fully-populated relevance matrix** of size $M \times T$, where $M \approx 10{,}000$ movies and $T = 1{,}128$ tags. Every cell contains a continuous relevance score $y_{m,t} \in [0.0,\ 1.0]$ expressing how strongly movie $m$ exhibits the property described by tag $t$.
-
-This is fundamentally different from raw user-contributed tags, which are sparse and noisy — a blockbuster like *Inception* might accumulate hundreds of organic tags from the community, while a lesser-known film might have one or two. The Genome eliminates that disparity entirely: every movie in the dataset has a score for every one of the 1,128 tags, with no gaps.
-
-The underlying methodology was developed by GroupLens researchers Jesse Vig, Shilad Sen, and John Riedl in their foundational 2012 paper, **"The Tag Genome: Encoding Community Knowledge to Support Novel Interaction."**
-
----
-
-## Part 1: How the Genome Was Built
-
-Construction is a three-phase process: collect a sparse but high-quality ground-truth dataset from real users, engineer rich behavioral and textual features from the existing community data, then train supervised regression models to predict the relevance score for every remaining movie-tag pair.
-
-### Phase 1 — Ground-Truth Data Collection
-
-Because asking every user to evaluate every possible movie-tag combination is intractable (10,000 movies × 1,128 tags = ~11.3 million permutations), GroupLens gathered a representative training set of **approximately 212,000 explicit movie-tag evaluations** via a custom survey interface built directly into the MovieLens platform.
-
-The experience worked as follows:
-- A user who had previously **rated** movie $m$ was shown that movie's title alongside a candidate tag (e.g., *"atmospheric"*, *"surreal"*, *"chase scene"*).
-- They rated how strongly that movie exhibited the tag property on a **1–5 Likert scale**, from *"Not at all"* to *"Strongly."*
-- Responses were crowd-sourced from the active MovieLens community — a self-selected academic audience motivated by altruism and a desire for better recommendations.
-
-This produced a sparse but semantically high-quality dataset of $(m, t, y)$ triplets that served as the regression training labels.
+> **Sourcing note (read first).** Every *construction* figure in this document is quoted from the
+> primary source — the GroupLens technical report **"Computing the Tag Genome"** (Jesse Vig, Shilad
+> Sen, John Riedl; Minneapolis, Sept 2010), published as **Vig, Sen & Riedl, "The Tag Genome:
+> Encoding Community Knowledge to Support Novel Interaction," *ACM TiiS* 2(3), 2012** — or from the
+> [GroupLens tag-genome dataset README](https://files.grouplens.org/datasets/tag-genome/README.html).
+> Section numbers (§) refer to the 2010 report unless tagged **TiiS** (the expanded 2012 journal).
+> **The papers report no dollar cost and no labor-hour figures** (verified by an exhaustive keyword
+> sweep across both papers + README + release blog). Every cost/effort number for *replicating* the
+> approach is therefore explicitly labeled an **estimate**, never presented as fact. Earlier drafts
+> cited unsourced figures (~212k judgments, ~294 hours, ~$10.6k labels, ~$50–150k engineering,
+> "Ridge + SVD") that did not survive a check against the paper; they have been removed. The dollar
+> **anchors** that now appear (e.g. ~$10k to buy the survey, ~$85–210k for hand-curation) are
+> *replication estimates* derived from present-day crowd-labor rates (MTurk/Prolific 2026) and
+> published Pandora hand-curation figures — labeled as estimates, and distinct from the genome
+> papers' own (still absent) cost reporting.
 
 ---
 
-### Phase 2 — Feature Engineering from the Folksonomy
+## What the Tag Genome is
 
-Because human labels cover only a tiny fraction of the full matrix, the researchers trained ML models to predict all remaining cells. To make those models work, they engineered three classes of input features from the existing community data (the **folksonomy** — the organic, unstructured web of user-applied tags and rating histories).
+The Tag Genome is a dense matrix of **tag relevance** scores. For each (movie, tag) pair it gives a
+continuous value `rel(i, t) ∈ [0, 1]` — how strongly movie *i* exhibits the property named by tag
+*t*. The paper's own examples (§2): `rel(Reservoir Dogs, violent) = 0.98`,
+`rel(The Usual Suspects, violent) = 0.65`, `rel(A Cinderella Story, violent) = 0.03`.
 
-#### A. Tag-Based Features (TF-IDF Vector Spaces)
-
-Organic community tagging is sparse and redundant, but it carries implicit density signals. Two feature constructions were used:
-
-**Item Tag Vector (TF-IDF):** For each movie $m$ and candidate tag $t$, a standard text-mining metric measured how uniquely a tag belonged to a movie relative to the full catalog:
-
-$$\text{TF-IDF}(m, t) = \frac{\text{count}(m, t)}{\sum_{t'} \text{count}(m, t')} \times \log \left( \frac{|M|}{\left|\{m' \in M : \text{count}(m', t) > 0\}\right|} \right)$$
-
-**Tag Co-occurrence Matrix:** The system tracked how frequently two tags appeared on the same movies. If tag *"mind-bending"* reliably co-occurred with tag *"surreal"*, then a movie with high implicit density for *"mind-bending"* received a predictive feature boost for *"surreal"* as well.
-
-#### B. Rating-Based Features (Collaborative Filtering Projections)
-
-The core insight is that **user rating patterns encode semantic preference**, even when the user never types a word. Two constructions were used:
-
-**Tag-Preference Profiles:** For each user $u$, a preference vector over all 1,128 tags was synthesized by aggregating the community tags of movies they had rated highly.
-
-**Rating Correlation Feature:** If a movie $m$ is consistently highly rated by a cluster of users who historically gravitated toward films tagged *"steampunk"*, that collaborative filtering signal serves as a strong continuous feature for predicting $m$'s *"steampunk"* genome score — even if no one ever explicitly tagged that movie.
-
-#### C. External Metadata and Reviews
-
-To prevent models from producing completely uninformative predictions for cold items with zero organic tags or ratings, text from external metadata sources (synopses, plot summaries, user review streams) was tokenized. Semantic matches and close synonyms of the 1,128 target tags were computed to produce a baseline textual frequency vector.
+The original 2014 standalone dataset spans **1,128 tags × 9,734 movies** ≈ **11 million relevance
+scores**, every cell populated ([README](https://files.grouplens.org/datasets/tag-genome/README.html));
+the genome **shipped with the larger MovieLens ratings datasets covers more** — **16,376 movies ×
+1,128 tags ≈ 18.5M scores** in this project's MovieLens-32M data. But note the ceiling: **GroupLens
+never scored the whole catalog.** That 16,376 is **only ~19% of MovieLens-32M's 87,585 titles** — the
+other ~71k are too sparsely tagged/rated for their model to reach (the cold-start wall, below), so the
+genome *does not exist* for them. (This is GroupLens's own coverage limit, baked into the dataset you
+download — not a downstream filtering step on your end.) The genome is dense *within* its coverage but
+covers only the well-tagged head. That density is the whole point: unlike raw user tags — which are
+sparse, binary, and uneven — every *covered* movie has a calibrated score for every tag.
 
 ---
 
-### Phase 3 — Supervised Regression to Complete the Matrix
+## How it was actually built (and how it was *not*)
 
-With the engineered features as inputs and the 212,000 survey responses as training labels, several supervised regression models were evaluated to fill all remaining cells:
+~11M cells makes exhaustive human labeling a non-starter, and **GroupLens did not hand-label it.**
+They labeled a tiny, high-quality slice and propagated the rest with machine learning.
 
-- **Ridge Regression (L2-Regularized Linear Regression):** One independent regressor was trained per tag, using item-to-item and user-interaction vectors as features. L2 regularization prevented overfitting on the sparse, noisy folksonomy inputs.
-- **Matrix Factorization (SVD Variants):** The user-item-tag interaction tensor was decomposed into a joint latent space, directly mapping collaborative behavior patterns onto tag attributes.
+**1 — A small gold-standard survey.** An in-platform survey asked MovieLens users to rate tag-movie
+relevance on a **1 ("does not apply at all") to 5 ("applies very strongly")** scale. Tags had to be
+applied by ≥10 users; movies had to have ≥100 ratings; each round showed a user 8 pages of one tag ×
+6 movies (§4.1). A separate **85-user / 3,304-rating pilot** (50 tags) trained the stratified-sampling
+model first. The entire human-labeled ground truth was:
 
-**Final Scaling:** Once the regression models produced a raw prediction score for every movie-tag pair, outputs were min-max scaled onto a unified continuous range of $[0.0,\ 1.0]$, producing the final genome matrix.
+> **676 users · 50,203 (item, tag) relevance ratings** (§4.1), linearly rescaled to 0–1.
 
-The full construction pipeline looks like this:
+That is **~0.46% of the 11M-cell matrix** — on the order of a couple of hours of effort per
+volunteer (≈74 ratings each, *estimate*). The "expensive human curation" story is **not** a
+giant-labeling story; the labeling was small.
 
-```
-[ messy, sparse user tags  ] ──> [ feature engineering ] ──┐
-                                                             ▼
-[ text-mined review items  ] ──> [ feature engineering ] ──> [ Supervised Regressor ] ──> Dense Matrix [0, 1]
-                                                             ▲
-[ collaborative histories  ] ──> [ feature engineering ] ──┘
-```
+**2 — Features mined from the existing community.** The other ~99.5% of cells were *predicted* by
+regression, from features that are all reductions of content the MovieLens community had **already**
+produced (§4.2):
+- **Tag signals** — `tag-count`, `tag-applied`, and `tag-lsi-sim` (latent semantic indexing — an SVD
+  over the item×tag matrix — to capture related tags).
+- **Rating signals** — `avg-rating` and `rating-sim` (affinity between a tag and an item's rating
+  pattern).
+- **Text-review signals** — `text-freq` and `text-lsi-sim`, computed from **user-written movie
+  reviews crawled from IMDb** (TiiS §4.2; ~35k words/movie on average).
 
----
+**3 — Regression to fill the matrix.** Six regression models were compared (3 linear, 3
+generalized-linear, in hierarchical/per-tag/single variants), 10-fold cross-validated in R. The
+**generalized-linear hierarchical model (`glmer`) won, MAE 0.211** (2010 report Table 1 — the TiiS
+2012 journal reports this only in a figure). `tag-count` and `tag-share` were dropped in feature
+selection (no lift over `tag-applied`). That model scores all ~11M pairs.
 
-## Part 2: Manpower, Cost, and Hours
+**The prerequisite that's easy to miss.** Every input feature is a *reduction of a pre-existing
+folksonomy*. At the time the genome was computed, MovieLens had (2010 report §3): **operation since
+1997, 186,000 users, 17 million ratings, and 5,375 users who had applied 31,325 distinct tags across
+246,000 tag applications** — plus crawled IMDb reviews. (The expanded TiiS 2012 journal, a build ~2
+years later, reports the larger 198,000 users / 18M ratings / 6,166 taggers / 29,581 tags / 273,000
+applications.) No folksonomy → no features → no genome.
 
-### The Label Math
-
-| Quantity | Value |
-|---|---|
-| Unique Tags ($T$) | 1,128 |
-| Target Movies ($M$) | ~10,000 |
-| Total Possible Permutations | ~11.3 million |
-| Actual Labels Collected | ~212,000 |
-| Coverage | ~1.9% of the full matrix |
-
-### Human Hours Estimate
-
-At an average of **5 seconds per evaluation** (read the movie title, process the candidate tag from memory, decide on a 1–5 score, click submit):
-
-$$\text{Total Annotation Time} = 212{,}000 \times 5\text{ sec} = 1{,}060{,}000\text{ sec} \approx \mathbf{294 \text{ human hours}}$$
-
-This raw figure sounds manageable, but it understates the true effort substantially. GroupLens could only achieve these 294 hours because of unique non-commercial advantages:
-
-- **A pre-existing engaged community:** MovieLens users were academically motivated volunteers. They tagged out of genuine interest, not payment.
-- **Platform integration:** The survey interface was embedded directly into the MovieLens website — users encountered it organically during normal browsing, removing the friction of recruiting external participants.
-- **Quality management:** Even with a self-selected, high-quality population, filtering spam inputs, balancing label distributions across rare and common tags, and ensuring coverage across the long tail of obscure movies required dedicated engineering attention.
-
-### Commercial Equivalent Cost
-
-In a production setting without a built-in volunteer community, this annotation campaign would require professional crowd-sourced labeling (e.g., Amazon Mechanical Turk or equivalent). At a conservative rate of **$0.05 per validated evaluation**:
-
-$$\text{Direct Label Cost} = 212{,}000 \times \$0.05 = \mathbf{\$10{,}600}$$
-
-This covers raw annotation only. Total project cost would add:
-
-- **1 Data Engineer + 1 ML Engineer** for a **60–90 day** cycle to:
-  - Design, test, and deploy the survey interface into a production logging system
-  - Ingest, deduplicate, and sanitize annotator inputs
-  - Balance label distributions and handle long-tail movie coverage
-  - Train, tune, and validate the ridge regression and matrix factorization models
-  - Min-max scale outputs and quality-check the final dense matrix
-
-**Realistic all-in cost for a commercial team: $50,000–$150,000+**, once engineering salaries are accounted for.
+**Who built it.** An NSF-funded academic research group (grants IIS 03-24851, 05-34420, 09-64695,
+09-64697; §5) — i.e., specialist researcher-time, not a data-entry job. GroupLens has since updated
+the *predictor* — the 2021 tag-genome dataset swaps the `glmer` regression for **TagDL**, a PyTorch
+MLP ([Kotkov, Maslov & Neovius, SIGIR '21](https://doi.org/10.1145/3404835.3463019)) — for a ~2.6%
+MAE gain that changed **none** of the data prerequisites: same tag applications, same ratings, same
+crawled reviews, same human survey as training ground truth. "Newer/neural genome" ≠ "cheaper
+genome." The **recipe is unchanged** — small human survey + features mined from a large folksonomy +
+ML propagation — and so is its dependence on pre-existing community data.
 
 ---
 
-## Part 3: Why This Approach Fails for Cold-Start Problems
+## The framing that matters: you need content features for a recommender — which path is open to you?
 
-If your platform suffers from **item cold start** (new inventory added daily) or **user cold start** (new users with no interaction history), duplicating the MovieLens Tag Genome approach is structurally infeasible.
+Drop the "it cost $100k" mythology: the paper reports no cost, and the labeling itself was tiny
+(~50k volunteer judgments). The decision a real team faces is **build-vs-build** — to get a dense,
+genome-style content vector for *every* item, which path can you actually take?
 
-### The Folksonomy Paradox
+### Path A — Replicate the GroupLens genome
 
-The entire genome engineering pipeline depends on extracting features from an **existing folksonomy** — historical user rating events, organic community tag applications, and review streams. The regression models use these behavioral signals as the primary input features to predict relevance scores.
+*What you must already have or build (all figures **estimates**; the paper gives none):*
+- **A mature interaction corpus** — hundreds of thousands of users, millions of ratings, hundreds of
+  thousands of tag applications. GroupLens had 15 years of MovieLens. **A growing company does not**,
+  and this cannot be bought quickly — it is the binding constraint.
+- **Crawled per-item web reviews** for the text features.
+- **A relevance survey** — ~50k+ judgments. GroupLens got them *free* from a passionate volunteer
+  research community; a company without one must pay for them. *Estimate to buy the same 50,203
+  judgments as crowd labor today:* **~$5k–$23k** (central **~$10k**) — single 1–5 Likert ratings are
+  among the cheapest microtasks (~$0.10–$0.45 per usable judgment after 3–5× redundancy + gold
+  checks, at MTurk/Prolific 2026 rates). Small, by design — it was a *seed* for ML, not exhaustive
+  labeling.
+- **Specialist ML engineering** — feature construction (LSI/SVD, rating-affinity, text mining) plus
+  fitting and cross-validating the regression. Weeks-to-months of skilled time.
+- **Ongoing maintenance** — re-crawl, re-survey, and re-train as the catalog grows; **a new domain
+  means redoing the whole exercise** (the [book genome](https://grouplens.org/datasets/book-genome/)
+  needed a fresh Goodreads folksonomy + a new 986-user / 145,825-rating MTurk survey).
 
-A brand-new item has **zero interaction history**. Consequently:
-- Its TF-IDF item tag vector is all zeros (no one has ever tagged it).
-- Its rating correlation feature vector is all zeros (no one has rated it yet).
-- Its metadata text features are the only non-zero signal — a very thin basis for confident 1,128-dimensional predictions.
+*Realistic effort (estimate):* dominated by specialist engineering time (weeks-to-months → readily
+tens of thousands of dollars of skilled labor) **and gated on already owning a large folksonomy.**
+And it has a hard floor: for a **brand-new item, or a new company with no interaction history, the
+input features are all zero — so it produces nothing usable** (the cold-start wall, below). *If you
+have no folksonomy at all,* the only genome-style route is brute-force expert hand-curation
+(Pandora-style, ~$9–$22/item *estimate*) — **~$85k–$210k just to tag this repo's ~9,375-movie corpus
+once**, the very model the genome was designed to avoid.
 
-The model degrades to producing uncalibrated baseline averages, which are effectively useless for cold-start ranking.
+### Path B — Scrape + LLM extraction (this repo's approach)
 
-### Speed-to-Market Latency
+*What you need:*
+- **The item's own text** — title and synopsis — which you always have, even for an item added one
+  minute ago.
+- **A scraper** for public metadata (TMDB / Wikipedia): a few engineer-days.
+- **An LLM with structured (JSON-schema) output** to score the item against a fixed tag taxonomy.
 
-Even if the folksonomy paradox could be solved, the human survey loop introduces an operational delay incompatible with fast-moving catalogs. Streaming platforms add new titles daily; e-commerce platforms add new SKUs hourly. Waiting for crowd-sourced annotators to converge on stable relevance scores before an item can be served to users is not a viable production workflow.
+*Realistic cost (grounded in this repo's actual run — see
+[`docs/plans/llm_vs_genome_ablation_plan.md`](plans/llm_vs_genome_ablation_plan.md), Cost Budget):*
+scraping is free; extraction for the full ~9.4k-movie corpus is **low-hundreds-of-dollars** of
+metered LLM inference (and **~$0 marginal** when amortized under a flat-rate subscription — as it was
+actually run, it consumed ~84% of one week's Sonnet quota on a Claude Max 5× plan, June 2026); the
+core pipeline is **a few engineer-days**. It runs **on day one, for every item, including brand-new
+ones.**
+
+### The verdict
+
+For a growing company, Path B isn't merely cheaper — **Path A is frequently *infeasible*,** because
+its inputs (a large, mature folksonomy) don't exist yet. Path B needs only what you always have: the
+item's own text. That reframes the whole comparison from a price tag to a **feasibility** question —
+and it is the entire motivation for the experiment in this repo: *given that the LLM path is the one
+most teams can actually take, how close is its content quality to the gold-standard human-curated
+genome?*
 
 ---
 
-## Part 4: The Modern Alternative — Automated LLM-Driven Genomes
+## The cold-start wall (why Path A can't be rescued by money)
 
-Modern production systems achieve the same architectural benefit (a dense, fully-populated content vector for every item) by replacing the entire human annotation loop with **Large Language Models (LLMs) operating as zero-shot feature annotators**.
+Even with unlimited budget, Path A fails for the items a growing catalog cares about most: brand-new
+ones. Every genome input feature is a reduction of interaction history, so for a brand-new item:
+- `tag-count` / `tag-applied` = 0 (no one has tagged it),
+- rating features = 0 (no one has rated it),
+- text-review features ≈ 0 (few or no reviews yet).
 
-### Pipeline
+With all-zero inputs the regression can only emit an uninformative prior — useless for ranking. The
+genome is **structurally a warm-catalog asset.** The LLM path, operating on the item's own text, is
+genuinely zero-shot: a complete content vector the moment the item exists.
 
-```
-[ Raw Item Metadata  ] ──> [ LLM Structured Extraction ] ──> [ 1,128-Dim Continuous Vector ]
-  (Title, Synopsis,           (Instructor / JSON schema)         (Feeds Item Tower directly)
-   Reviews, Specs)
-```
+**The genome authors say so themselves.** Extending the recipe to Amazon, GroupLens' own 2026
+cross-domain paper ([Kotkov et al., CHIIR '26](https://doi.org/10.1145/3786304.3787950)) hit exactly
+this wall — *"the absence of … item-tag ratings and tag applications"* — and had to transfer old
+survey labels onto matched items, drop the folksonomy features, and accept a **measured accuracy
+hit** on the sparser data. The strongest evidence that the prerequisite is binding comes from the
+people who built the genome.
 
-1. **Define a fixed taxonomy:** Lock down an explicit vocabulary of categorical properties tailored to your domain (e.g., 1,128 micro-genre and style tags for film, 500 attributes for clothing, 1,000 descriptors for video games).
-2. **Ingest raw metadata:** At item creation time, collect whatever textual metadata is available — title, synopsis, reviews, technical specs, manufacturer notes.
-3. **Structured inference:** Route the text through a capable LLM with a structured output constraint (e.g., Pydantic schema via Instructor, or native JSON mode):
-
-```text
-You are an expert content annotator. Given the following item description:
-"{ITEM_DESCRIPTION}"
-
-Evaluate the relevance of each tag in the taxonomy below on a continuous scale
-from 0.0 (completely irrelevant) to 1.0 (highly descriptive).
-Output a dense JSON array of scores indexed to match the global taxonomy.
-```
-
-4. **Direct integration:** The output is an immediate 1,128-dimensional vector, fed directly into the Item Tower of a Two-Tower retrieval model or passed as a wide feature array to a deep ranker (DCN-V2, DeepFM).
-
-### Why the LLM Genome Wins
-
-- **True zero cold-start:** The moment an item is listed, it receives a complete semantic profile — no user clicks, views, or purchases required.
-- **Negligible cost and speed:** Processing 10,000 items through a batched LLM API takes **minutes**, not months. Processing 1,000,000 items scales horizontally via parallel API threads with no additional headcount.
-- **Taxonomy flexibility:** Expanding or revising the tag vocabulary requires only a prompt update and an offline backfill pass — no new user survey campaigns.
+*Caveat carried into the writeup:* the item still needs a model training pass to earn its
+collaborative ID embedding before it can be served well — what's instant is the **content vector**,
+which a new genome row cannot provide *at all*. Retraining is required either way, so it does not
+separate the two approaches; *availability of a content vector* does.
 
 ---
 
-## Part 5: Human-Curated vs. LLM-Generated — Trade-Off Summary
+## Build-vs-build summary
 
-| Attribute | Human-Curated Tag Genome (MovieLens) | Automated LLM Extraction |
+| | **Genome (GroupLens recipe)** | **LLM extraction (this repo)** |
 |---|---|---|
-| **Semantic Fidelity** | High — grounded in verified real-world user perception | High — consistent, but subject to model hallucination or prompt drift |
-| **Serving Latency** | None — static assets retrieved from offline store | None — extraction runs offline; zero impact on live serving |
-| **Cold-Start Capability** | ❌ Infeasible — requires interaction history for input features | ✅ Excellent — operates on raw text only, true zero-shot |
-| **Catalog Scalability** | ❌ Poor — requires new labeling campaigns as catalog grows | ✅ Excellent — scales horizontally via API parallelism |
-| **Taxonomy Mutability** | ❌ Rigid — new tags require full new survey loops | ✅ Flexible — prompt update + offline backfill pass |
-| **Upfront Cost** | ~$10,600 labels + $50K–$150K engineering | Pennies per item in API compute |
-| **Time to First Vector** | Weeks to months | Seconds |
+| **Core input** | A large pre-existing folksonomy (tags, ratings, reviews) | The item's own text (title, synopsis) |
+| **Works for a new company?** | No — needs years of community data first | Yes — needs only item text |
+| **Works for a brand-new item (cold start)?** | No — all input features are zero | Yes — zero-shot from text |
+| **Human labeling** | One-time gold standard: 50,203 ratings / 676 users (§4.1); ~$10k to buy today *(est)* | None |
+| **Specialist effort** *(estimate)* | Weeks–months: feature engineering + regression + crawl | A few engineer-days |
+| **Direct cost** *(estimate)* | ~$10k survey + tens of $k skilled labor, gated on owning a folksonomy; ~$85–210k to hand-curate this corpus without one | *Actual:* low-hundreds-$ metered (≈$0 marginal under subscription) |
+| **Scales with catalog?** | Re-crawl + re-survey + re-train; bounded by folksonomy growth | Parallel API calls per new item |
+| **New domain (e.g. books)?** | Redo everything — new folksonomy + new survey | Same pipeline, different text |
+| **Time to first vector, new item** | Effectively never (until it accrues interactions) | Sub-hour |
+
+*Construction figures: Vig, Sen & Riedl, "Computing the Tag Genome" (GroupLens tech report, 2010;
+ACM TiiS 2012) and the [tag-genome dataset README](https://files.grouplens.org/datasets/tag-genome/README.html).
+Predictor lineage: [TagDL (SIGIR '21)](https://doi.org/10.1145/3404835.3463019),
+[book genome (CHIIR '22)](https://doi.org/10.1145/3498366.3505833),
+[cross-domain (CHIIR '26)](https://doi.org/10.1145/3786304.3787950). Replication cost/effort entries
+are labeled estimates — the genome papers report none; dollar anchors derive from 2026 MTurk/Prolific
+microtask rates and published Pandora hand-curation figures. LLM-path costs are this repo's own run.*

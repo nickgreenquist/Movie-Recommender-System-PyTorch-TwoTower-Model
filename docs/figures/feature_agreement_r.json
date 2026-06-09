@@ -1,0 +1,662 @@
+[
+  {
+    "name": "murder",
+    "group": "themes",
+    "r": 0.6947441747401849
+  },
+  {
+    "name": "serial_killer",
+    "group": "themes",
+    "r": 0.6520078827646681
+  },
+  {
+    "name": "obsession",
+    "group": "themes",
+    "r": 0.5236242802254529
+  },
+  {
+    "name": "loneliness",
+    "group": "themes",
+    "r": 0.53093360856531
+  },
+  {
+    "name": "revenge",
+    "group": "themes",
+    "r": 0.5187396832619192
+  },
+  {
+    "name": "relationships",
+    "group": "themes",
+    "r": 0.5468247621444828
+  },
+  {
+    "name": "romance",
+    "group": "themes",
+    "r": 0.6878599390459109
+  },
+  {
+    "name": "betrayal",
+    "group": "themes",
+    "r": 0.45356211053995005
+  },
+  {
+    "name": "survival",
+    "group": "themes",
+    "r": 0.5641661913765039
+  },
+  {
+    "name": "redemption",
+    "group": "themes",
+    "r": 0.38130710236713244
+  },
+  {
+    "name": "coming_of_age",
+    "group": "themes",
+    "r": 0.6669644237654541
+  },
+  {
+    "name": "family",
+    "group": "themes",
+    "r": 0.5317445479538485
+  },
+  {
+    "name": "friendship",
+    "group": "themes",
+    "r": 0.5198337107390971
+  },
+  {
+    "name": "corruption",
+    "group": "themes",
+    "r": 0.5221865376098731
+  },
+  {
+    "name": "greed",
+    "group": "themes",
+    "r": 0.3747412786258043
+  },
+  {
+    "name": "crime",
+    "group": "themes",
+    "r": 0.6051657153551915
+  },
+  {
+    "name": "heist",
+    "group": "themes",
+    "r": 0.6748956990003467
+  },
+  {
+    "name": "gangster",
+    "group": "themes",
+    "r": 0.7251926810378315
+  },
+  {
+    "name": "hitman",
+    "group": "themes",
+    "r": 0.5632630734751237
+  },
+  {
+    "name": "conspiracy",
+    "group": "themes",
+    "r": 0.5882313365240313
+  },
+  {
+    "name": "espionage",
+    "group": "themes",
+    "r": 0.7216475002911112
+  },
+  {
+    "name": "politics",
+    "group": "themes",
+    "r": 0.6783979106798079
+  },
+  {
+    "name": "social_commentary",
+    "group": "themes",
+    "r": 0.38356745877658943
+  },
+  {
+    "name": "existentialism",
+    "group": "themes",
+    "r": 0.5582282677733997
+  },
+  {
+    "name": "insanity",
+    "group": "themes",
+    "r": 0.5503948285370909
+  },
+  {
+    "name": "supernatural",
+    "group": "themes",
+    "r": 0.7046119453336147
+  },
+  {
+    "name": "mystery",
+    "group": "themes",
+    "r": 0.644489458755041
+  },
+  {
+    "name": "secrets",
+    "group": "themes",
+    "r": 0.4007695585222489
+  },
+  {
+    "name": "destiny",
+    "group": "themes",
+    "r": 0.4238969584401287
+  },
+  {
+    "name": "sacrifice",
+    "group": "themes",
+    "r": 0.5281982308598342
+  },
+  {
+    "name": "mortality",
+    "group": "themes",
+    "r": 0.5539442873114109
+  },
+  {
+    "name": "addiction",
+    "group": "themes",
+    "r": 0.49000808994711204
+  },
+  {
+    "name": "tense",
+    "group": "tone",
+    "r": 0.6230737704222116
+  },
+  {
+    "name": "dark",
+    "group": "tone",
+    "r": 0.5228195802347994
+  },
+  {
+    "name": "bleak",
+    "group": "tone",
+    "r": 0.46509832940876566
+  },
+  {
+    "name": "melancholic",
+    "group": "tone",
+    "r": 0.583445888714628
+  },
+  {
+    "name": "emotional",
+    "group": "tone",
+    "r": 0.6520879436116104
+  },
+  {
+    "name": "feel_good",
+    "group": "tone",
+    "r": 0.5650288897589639
+  },
+  {
+    "name": "comedic",
+    "group": "tone",
+    "r": 0.7412277681659029
+  },
+  {
+    "name": "dark_humor",
+    "group": "tone",
+    "r": 0.5176748453237114
+  },
+  {
+    "name": "satirical",
+    "group": "tone",
+    "r": 0.7206161003836236
+  },
+  {
+    "name": "quirky",
+    "group": "tone",
+    "r": 0.43353014104393583
+  },
+  {
+    "name": "absurd",
+    "group": "tone",
+    "r": 0.4440407504455471
+  },
+  {
+    "name": "weird",
+    "group": "tone",
+    "r": 0.35565999962383094
+  },
+  {
+    "name": "surreal",
+    "group": "tone",
+    "r": 0.6202142727074732
+  },
+  {
+    "name": "cerebral",
+    "group": "tone",
+    "r": 0.623212208714989
+  },
+  {
+    "name": "enigmatic",
+    "group": "tone",
+    "r": 0.41623830738510337
+  },
+  {
+    "name": "intimate",
+    "group": "tone",
+    "r": 0.4686558231712974
+  },
+  {
+    "name": "atmospheric",
+    "group": "tone",
+    "r": 0.5299200774642048
+  },
+  {
+    "name": "creepy",
+    "group": "tone",
+    "r": 0.6094135660647082
+  },
+  {
+    "name": "scary",
+    "group": "tone",
+    "r": 0.7445662294746158
+  },
+  {
+    "name": "violent",
+    "group": "tone",
+    "r": 0.6428375472014103
+  },
+  {
+    "name": "gory",
+    "group": "tone",
+    "r": 0.6727207565600782
+  },
+  {
+    "name": "disturbing",
+    "group": "tone",
+    "r": 0.6071686714169181
+  },
+  {
+    "name": "fast_paced",
+    "group": "tone",
+    "r": 0.6488555532231437
+  },
+  {
+    "name": "stylish",
+    "group": "tone",
+    "r": 0.4585665679543844
+  },
+  {
+    "name": "reflective",
+    "group": "tone",
+    "r": 0.5632290667579858
+  },
+  {
+    "name": "nostalgic",
+    "group": "tone",
+    "r": 0.38376947822450586
+  },
+  {
+    "name": "world_war_ii",
+    "group": "setting",
+    "r": 0.861683394948299
+  },
+  {
+    "name": "war",
+    "group": "setting",
+    "r": 0.7459369221775788
+  },
+  {
+    "name": "cold_war",
+    "group": "setting",
+    "r": 0.6585334672284548
+  },
+  {
+    "name": "space",
+    "group": "setting",
+    "r": 0.7214123538556534
+  },
+  {
+    "name": "aliens",
+    "group": "setting",
+    "r": 0.7994883660133206
+  },
+  {
+    "name": "future",
+    "group": "setting",
+    "r": 0.72431252039018
+  },
+  {
+    "name": "dystopia",
+    "group": "setting",
+    "r": 0.7187784941838634
+  },
+  {
+    "name": "post_apocalyptic",
+    "group": "setting",
+    "r": 0.5436460211454456
+  },
+  {
+    "name": "time_travel",
+    "group": "setting",
+    "r": 0.8505659604120458
+  },
+  {
+    "name": "medieval",
+    "group": "setting",
+    "r": 0.6485355933712283
+  },
+  {
+    "name": "western_frontier",
+    "group": "setting",
+    "r": 0.8632190612354388
+  },
+  {
+    "name": "historical",
+    "group": "setting",
+    "r": 0.651788047556291
+  },
+  {
+    "name": "new_york",
+    "group": "setting",
+    "r": 0.7227994594018882
+  },
+  {
+    "name": "los_angeles",
+    "group": "setting",
+    "r": 0.7009553072052326
+  },
+  {
+    "name": "britain",
+    "group": "setting",
+    "r": 0.7038100009737371
+  },
+  {
+    "name": "france",
+    "group": "setting",
+    "r": 0.7881062502865983
+  },
+  {
+    "name": "japan",
+    "group": "setting",
+    "r": 0.7596466199888391
+  },
+  {
+    "name": "small_town",
+    "group": "setting",
+    "r": 0.5483344572844108
+  },
+  {
+    "name": "school",
+    "group": "setting",
+    "r": 0.6935205138715705
+  },
+  {
+    "name": "eighties",
+    "group": "setting",
+    "r": 0.48408454105265897
+  },
+  {
+    "name": "cyberpunk",
+    "group": "setting",
+    "r": 0.4947885767379566
+  },
+  {
+    "name": "artificial_intelligence",
+    "group": "setting",
+    "r": 0.5728557521195092
+  },
+  {
+    "name": "robots",
+    "group": "setting",
+    "r": 0.6351844196381405
+  },
+  {
+    "name": "clones",
+    "group": "setting",
+    "r": 0.3343084464439689
+  },
+  {
+    "name": "high_fantasy",
+    "group": "setting",
+    "r": 0.5829773137132834
+  },
+  {
+    "name": "dragons",
+    "group": "setting",
+    "r": 0.43938789676419343
+  },
+  {
+    "name": "wizards",
+    "group": "setting",
+    "r": 0.623142146778108
+  },
+  {
+    "name": "slasher",
+    "group": "setting",
+    "r": 0.7585327569933616
+  },
+  {
+    "name": "zombies",
+    "group": "setting",
+    "r": 0.7445593481019861
+  },
+  {
+    "name": "vampires",
+    "group": "setting",
+    "r": 0.9418622502638804
+  },
+  {
+    "name": "ghosts",
+    "group": "setting",
+    "r": 0.7397095998749169
+  },
+  {
+    "name": "monster",
+    "group": "setting",
+    "r": 0.5544542410971574
+  },
+  {
+    "name": "based_on_book",
+    "group": "provenance",
+    "r": 0.6689533634568751
+  },
+  {
+    "name": "based_on_play",
+    "group": "provenance",
+    "r": 0.6212856837975811
+  },
+  {
+    "name": "based_on_comic",
+    "group": "provenance",
+    "r": 0.7704071367104728
+  },
+  {
+    "name": "based_on_tv_show",
+    "group": "provenance",
+    "r": 0.6497596991440013
+  },
+  {
+    "name": "based_on_video_game",
+    "group": "provenance",
+    "r": 0.6405623630592843
+  },
+  {
+    "name": "based_on_true_story",
+    "group": "provenance",
+    "r": 0.762236796187485
+  },
+  {
+    "name": "biographical",
+    "group": "provenance",
+    "r": 0.7714855255250782
+  },
+  {
+    "name": "sequel",
+    "group": "provenance",
+    "r": 0.804767672090295
+  },
+  {
+    "name": "prequel",
+    "group": "provenance",
+    "r": 0.4776439223029739
+  },
+  {
+    "name": "remake",
+    "group": "provenance",
+    "r": 0.664798805639805
+  },
+  {
+    "name": "franchise",
+    "group": "provenance",
+    "r": 0.7372962694444312
+  },
+  {
+    "name": "nonlinear",
+    "group": "provenance",
+    "r": 0.403780151820581
+  },
+  {
+    "name": "twist_ending",
+    "group": "provenance",
+    "r": 0.4466889351634773
+  },
+  {
+    "name": "multiple_storylines",
+    "group": "provenance",
+    "r": 0.43130803842563464
+  },
+  {
+    "name": "narration",
+    "group": "provenance",
+    "r": 0.2766394597426524
+  },
+  {
+    "name": "character_study",
+    "group": "provenance",
+    "r": 0.5520694436136677
+  },
+  {
+    "name": "independent_film",
+    "group": "provenance",
+    "r": 0.5843629337773486
+  },
+  {
+    "name": "art_house",
+    "group": "provenance",
+    "r": 0.6867696118877
+  },
+  {
+    "name": "foreign_language",
+    "group": "provenance",
+    "r": 0.7453862894718536
+  },
+  {
+    "name": "documentary",
+    "group": "provenance",
+    "r": 0.8866713274659281
+  },
+  {
+    "name": "mockumentary",
+    "group": "provenance",
+    "r": 0.7302440600665665
+  },
+  {
+    "name": "superhero",
+    "group": "provenance",
+    "r": 0.7031195994210503
+  },
+  {
+    "name": "musical",
+    "group": "provenance",
+    "r": 0.7995771861771058
+  },
+  {
+    "name": "fairy_tale",
+    "group": "provenance",
+    "r": 0.4813298097369994
+  },
+  {
+    "name": "oscar_winner",
+    "group": "reception",
+    "r": 0.4994606382279233
+  },
+  {
+    "name": "oscar_nominated",
+    "group": "reception",
+    "r": 0.5165503190031805
+  },
+  {
+    "name": "oscar_foreign_language",
+    "group": "reception",
+    "r": 0.4192922947222407
+  },
+  {
+    "name": "oscar_technical",
+    "group": "reception",
+    "r": 0.33078896062012864
+  },
+  {
+    "name": "criterion",
+    "group": "reception",
+    "r": 0.17957106225604583
+  },
+  {
+    "name": "palme_dor",
+    "group": "reception",
+    "r": 0.27061331892588714
+  },
+  {
+    "name": "imdb_top_250",
+    "group": "reception",
+    "r": 0.16000262304655205
+  },
+  {
+    "name": "afi_recognized",
+    "group": "reception",
+    "r": 0.4614317728212309
+  },
+  {
+    "name": "classic",
+    "group": "reception",
+    "r": 0.6221495408174456
+  },
+  {
+    "name": "cult_classic",
+    "group": "reception",
+    "r": 0.5190256987989241
+  },
+  {
+    "name": "big_budget",
+    "group": "reception",
+    "r": 0.5911273054622459
+  },
+  {
+    "name": "animated",
+    "group": "visual",
+    "r": 0.8800533156561154
+  },
+  {
+    "name": "computer_animation",
+    "group": "visual",
+    "r": 0.7058456175281704
+  },
+  {
+    "name": "stop_motion",
+    "group": "visual",
+    "r": 0.6622060602205224
+  },
+  {
+    "name": "anime",
+    "group": "visual",
+    "r": 0.8787780698072055
+  },
+  {
+    "name": "black_and_white",
+    "group": "visual",
+    "r": 0.7493630259278927
+  },
+  {
+    "name": "cgi_heavy",
+    "group": "visual",
+    "r": 0.5549137114364253
+  },
+  {
+    "name": "three_d",
+    "group": "visual",
+    "r": 0.45319231919331665
+  }
+]
