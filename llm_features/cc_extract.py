@@ -68,6 +68,48 @@ def user_prompt_for(feed: str) -> str:
     return user_message(feed)
 
 
+# ── Genre-consistency guard (save-time mismatch detector) ─────────────────────
+
+# Maps a TMDB genre to the LLM features a correctly-extracted film of that genre must
+# score > 0 on at least once. A misaligned save — one movie's scores filed under another
+# movie's id (see the 2026-06 audit: The Matrix extracted as a romance) — zeroes the real
+# genre's signature, so this catches the gross cross-genre swaps at write time instead of
+# letting them silently corrupt the feature tensor. STRICT genres have a near-1:1 signature
+# (an animated film with no animation dim, a documentary with no documentary dim) where a
+# zero is almost always a mismatch, so a violation RAISES. The rest only WARN: their genre
+# tag is looser (a 'Science Fiction'-tagged superhero film legitimately has no space/robots),
+# so an all-zero there is often a true negative, not a swap.
+GENRE_SIGNATURES = {
+    'Animation':       ['animated', 'computer_animation', 'stop_motion', 'anime'],
+    'Documentary':     ['documentary'],
+    'Horror':          ['scary', 'creepy', 'disturbing', 'gory', 'slasher', 'zombies',
+                        'vampires', 'ghosts', 'monster', 'supernatural', 'dark', 'violent'],
+    'War':             ['war', 'world_war_ii', 'cold_war'],
+    'Western':         ['western_frontier'],
+    'Music':           ['musical'],
+    'Science Fiction': ['space', 'aliens', 'future', 'dystopia', 'post_apocalyptic',
+                        'time_travel', 'cyberpunk', 'artificial_intelligence', 'robots', 'clones'],
+    'Crime':           ['crime', 'heist', 'gangster', 'hitman', 'murder', 'corruption'],
+}
+GENRE_GUARD_STRICT = ('Animation', 'Documentary')   # violation → raise; all other genres → warn
+
+
+def _genre_violations(movie_id: int, merged: dict) -> tuple:
+    """
+    TMDB genres the scrape asserts but for which the merged extraction has ALL signature
+    features at 0. Returns (strict, warn) lists of genre names — empty when the scrape isn't
+    cached (no ground truth to check against). The scrape's TMDB genres are the same ones the
+    extractor saw in its feed, so a contradiction here means the SCORES, not the genres, are wrong.
+    """
+    rec    = load_record(movie_id)
+    genres = set((rec.get('tmdb') or {}).get('genres', [])) if rec else set()
+    strict, warn = [], []
+    for g in genres & set(GENRE_SIGNATURES):
+        if not any(merged.get(f, 0) > 0 for f in GENRE_SIGNATURES[g]):
+            (strict if g in GENRE_GUARD_STRICT else warn).append(g)
+    return strict, warn
+
+
 # ── Validate + cache (tag-aware; mirrors the API path's writer) ───────────────
 
 def ingest(movie_id: int, scores: dict, model_tag: str = MODEL_TAG) -> dict:
@@ -75,8 +117,9 @@ def ingest(movie_id: int, scores: dict, model_tag: str = MODEL_TAG) -> dict:
     Validate a flat {feature: score} dict against the six group Pydantic models, default
     any unscored dim to 0.0, and write per-group cache files identical in shape to the API
     path. Raises on an unknown field or an out-of-range score, so a malformed extraction
-    fails LOUDLY rather than silently corrupting the feature tensor. Returns the merged
-    132-dim dict.
+    fails LOUDLY rather than silently corrupting the feature tensor. Also genre-checks the
+    result against the scrape (see _genre_violations) to catch movieId/scores misalignment —
+    a STRICT-genre contradiction raises; a looser one warns. Returns the merged 132-dim dict.
     """
     unknown = set(scores) - set(FEATURE_ORDER)
     if unknown:
@@ -86,7 +129,21 @@ def ingest(movie_id: int, scores: dict, model_tag: str = MODEL_TAG) -> dict:
     for g in GROUPS:
         subset    = {name: float(scores.get(name, 0.0)) for name in g['dim_names']}
         validated = g['model'](**subset).model_dump()   # raises on range / shape error
+        merged.update(validated)
 
+    # Mismatch guard — verify the scores actually describe THIS movie before writing them.
+    strict, warn = _genre_violations(movie_id, merged)
+    if warn:
+        print(f"⚠️  movie {movie_id}: extraction shows no signal for genre(s) {warn} — "
+              f"possible movieId/scores misalignment; verify.", file=sys.stderr)
+    if strict:
+        raise ValueError(
+            f"movie {movie_id}: extraction contradicts scrape genre(s) {strict} (all signature "
+            f"features 0) — almost certainly a misaligned save. Re-check the movieId↔scores "
+            f"pairing; pass the correct scores for this movie.")
+
+    for g in GROUPS:
+        validated = {name: merged[name] for name in g['dim_names']}
         path = cache_path(g['key'], model_tag, movie_id)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'w') as f:
@@ -98,7 +155,6 @@ def ingest(movie_id: int, scores: dict, model_tag: str = MODEL_TAG) -> dict:
                 'features':       validated,
                 'usage':          {},   # no tokens — Claude-Code path, not the API
             }, f, indent=2)
-        merged.update(validated)
     return merged
 
 
