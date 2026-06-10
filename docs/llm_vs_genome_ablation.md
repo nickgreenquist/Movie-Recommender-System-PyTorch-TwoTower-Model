@@ -58,48 +58,48 @@ Honest design calls are baked in. Structured output is non-negotiable — free-f
     <th width="130">Feature Group</th>
     <th width="200"><img src="figures/alien_1979_poster.jpg" alt="Alien (1979) theatrical poster — the egg with green glow and the 'ALIEN' wordmark" width="140"><br>Alien (1979)</th>
     <th width="200"><img src="figures/toy_story_1995_poster.jpg" alt="Toy Story (1995) theatrical poster — Woody, Buzz Lightyear and the toys" width="140"><br>Toy Story (1995)</th>
-    <th width="200"><img src="figures/sunset_boulevard_1950_poster.jpg" alt="Sunset Boulevard (1950) theatrical poster — Gloria Swanson and the film-strip motif" width="140"><br>Sunset Boulevard (1950)</th>
+    <th width="200"><img src="figures/before_sunrise_1995_poster.jpg" alt="Before Sunrise (1995) theatrical poster — Julie Delpy and Ethan Hawke" width="140"><br>Before Sunrise (1995)</th>
   </tr>
   <tr>
     <td>Themes &amp; plot</td>
     <td><code>survival</code> 1.0, <code>betrayal</code> 0.7, <code>mortality</code> 0.7</td>
     <td><code>friendship</code> 0.9, <code>family</code> 0.7</td>
-    <td><code>obsession</code> 0.9, <code>insanity</code> 0.8, <code>loneliness</code> 0.7</td>
+    <td><code>romance</code> 1.0, <code>relationships</code> 0.9, <code>existentialism</code> 0.6</td>
   </tr>
   <tr>
     <td>Tone &amp; mood</td>
     <td><code>tense</code> 1.0, <code>dark</code> 0.9, <code>atmospheric</code> 0.9, <code>creepy</code> 0.9</td>
     <td><code>feel_good</code> 0.9, <code>comedic</code> 0.8, <code>emotional</code> 0.6</td>
-    <td><code>dark</code> 0.9, <code>atmospheric</code> 0.9, <code>melancholic</code> 0.8</td>
+    <td><code>intimate</code> 0.9, <code>reflective</code> 0.8, <code>emotional</code> 0.7</td>
   </tr>
   <tr>
     <td>Setting, era &amp; sub-genre</td>
     <td><code>space</code> 1.0, <code>aliens</code> 1.0, <code>monster</code> 0.9, <code>future</code> 0.7</td>
     <td><code>small_town</code> 0.4</td>
-    <td><code>los_angeles</code> 1.0, <code>historical</code> 0.6</td>
+    <td>—</td>
   </tr>
   <tr>
     <td>Provenance &amp; structure</td>
     <td><code>franchise</code> 0.8, <code>twist_ending</code> 0.7</td>
     <td><code>franchise</code> 0.9</td>
-    <td><code>narration</code> 1.0, <code>character_study</code> 0.9</td>
+    <td><code>character_study</code> 0.6, <code>independent_film</code> 0.5</td>
   </tr>
   <tr>
     <td>Factual reception &amp; prestige</td>
     <td><code>oscar_technical</code> 1.0, <code>classic</code> 0.9, <code>cult_classic</code> 0.6</td>
     <td><code>oscar_nominated</code> 0.9, <code>classic</code> 0.8</td>
-    <td><code>oscar_nominated</code> 1.0, <code>classic</code> 1.0</td>
+    <td>—</td>
   </tr>
   <tr>
     <td>Visual medium</td>
     <td><code>cgi_heavy</code> 0.3</td>
     <td><code>animated</code> 1.0, <code>computer_animation</code> 1.0</td>
-    <td><code>black_and_white</code> 1.0</td>
+    <td>—</td>
   </tr>
 </table>
 </div>
 
-Every score reads right — and the factual *visual medium* group alone tells it three ways: *Alien* is `cgi_heavy` 0.3 (its effects are practical), *Toy Story* is `animated` / `computer_animation` 1.0 (Pixar's first all-CG feature), and *Sunset Boulevard* is `black_and_white` 1.0. Three different real production facts, each read off the film's own text. The rest holds up too — `feel_good` / `comedic` where Alien runs `tense` / `dark`, `narration` 1.0 for *Sunset Boulevard* (it's literally narrated by a dead man) — and the mid-tier 1950 classic earns as clean a fingerprint as the two blockbusters. Same six calls, three very different films, all from nothing but public text.
+Every score reads right, and each fingerprint scales to its film. *Alien* fills every group (`cgi_heavy` just 0.3 — practical effects, not CG); *Toy Story* pegs `animated` / `computer_animation` at 1.0 and runs `feel_good` / `comedic` where Alien runs `tense` / `dark`; and *Before Sunrise* — two strangers talking through one night — is honestly spare: a perfect `romance` 1.0 and an `intimate`, `reflective` tone, with little for the genre, visual-medium, or prestige groups to surface (it even half-catches Europe at `france` 0.2, just under the bar). The extractor reports what's in the text and nothing more — same six calls, three very different films, from public text alone.
 
 ## 4. Does it work? — the universal setting
 
