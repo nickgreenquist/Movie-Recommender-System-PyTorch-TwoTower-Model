@@ -32,7 +32,7 @@ The payoff: the same frozen model serves recommendations for *anyone* — includ
 - 🏗️ **Two-tower architecture** — separate user & item towers project into a shared 128-dim space; recommendation = cosine similarity. Item embeddings are precomputed once, so scoring the whole catalog is a single matrix multiply.
 - 🧮 **Full-softmax training** with **logit-adjusted popularity correction** ([Menon et al., ICLR 2021](https://arxiv.org/abs/2007.07314)) — **8.7× higher MRR** than the MSE baseline, with popular blockbusters surfacing *only when relevant*.
 - 🧬 **Two content fingerprints per movie, fused in the item tower:** the dataset's **1,128 curated genome tags** *and* **132 features I built myself** — web-scraped from TMDB + Wikipedia and scored 0–1 by an LLM.
-- 💰 **A cost lesson, measured**: self-built features from scraped web text + an LLM (**~half a day, no annotators**) **match** MovieLens's expensive human-curated genome tags head-to-head — so a company can bootstrap content features instead of waiting on a tagging pipeline. ([see the ablation](#-results))
+- 💰 **A cost lesson, in a side experiment**: I also put those self-built LLM features head-to-head against MovieLens's premium hand-curated genome tags — a one-day, ~$0 pipeline vs. fifteen years of community data. ([see the deep-dive →](#-200-vs-200k-item-content-features-with-an-llm-instead-of-hand-labeled-tagging))
 - 🚀 **Live, interactive Streamlit app** with poster grids, pre-built taste personas, "similar movies," and an embedding-space explorer.
 - 🍏 **Apple Silicon (MPS) accelerated** training/eval (~145 it/s), with device-agnostic CPU export for cloud serving.
 
@@ -72,7 +72,7 @@ SCORE = dot(user_emb, item_emb)   # = cosine similarity (both unit-norm)
 
 ### Content fingerprints: curated *and* self-built
 
-The item tower describes each movie from several content signals. Two are **rich, dense semantic fingerprints** — and they're the swappable slot the [ablation](#-results) studies:
+The item tower describes each movie from several content signals. Two are **rich, dense semantic fingerprints**:
 
 | Source | Dims | Origin |
 |---|---|---|
@@ -81,7 +81,7 @@ The item tower describes each movie from several content signals. Two are **rich
 
 The item tower also folds in three lighter content signals: **genre** (20-way one-hot), **user-applied tags** (306 community tags — present, but far sparser and noisier than the genome scores), and **release year**.
 
-The deployed model includes **both** rich towers (`FEATURE_TOWERS=both`) for maximum feature robustness — though, as the [ablation](#-results) shows, *either source alone matches the other*. The self-built LLM pipeline (scrape → LLM-extract → tensor) lives in [`llm_features/`](llm_features/).
+The deployed model fuses **both** rich fingerprints (`FEATURE_TOWERS=both`) for maximum feature robustness. The self-built LLM pipeline (scrape → LLM-extract → tensor) lives in [`llm_features/`](llm_features/) — and is put head-to-head against the curated genome in [a dedicated experiment](#-200-vs-200k-item-content-features-with-an-llm-instead-of-hand-labeled-tagging) below.
 
 ### Popularity-bias correction (Menon et al., 2021)
 
@@ -117,21 +117,6 @@ Full softmax has a structural bias: popular movies appear in *every* batch as ha
 | **MRR** | 0.0133 | **0.1153** |
 
 <sub>Held-out *rollback* eval: for each held-out user, context = prior watches, target = next watch.</sub>
-
-**The ablation — the result I actually care about: cheap, self-built features _match_ expensive curated ones.** MovieLens's genome tags are a premium asset — 1,128 relevance scores per movie, reverse-engineered by GroupLens from **~212,000 human tag-survey ratings plus years of platform-scale community tagging**, run through a dedicated ML pipeline. A new company has none of that. So I asked the practical question: **can you bootstrap comparable content features from nothing but public web text + an LLM, in an afternoon?**
-
-I scraped TMDB + Wikipedia for every movie, had an LLM extract 132 features, and trained four otherwise-identical models (same architecture, hyperparameters, α=0, full corpus) that differ *only* in what fills the content slot — evaluated over **382,138 rollbacks** (all 19,134 val users):
-
-| Content signal | `FEATURE_TOWERS` | How it's produced | MRR |
-|---|---|---|---|
-| **LLM features (self-built)** | `llm` | scraped web text + an LLM · **~half a day** | **0.1165** |
-| Genome tags (MovieLens) | `genome` | 212K human survey ratings + years of community tagging + an ML pipeline | 0.1146 |
-| Genome + LLM | `both` | both content sources fused | 0.1154 |
-| None (floor) | `none` | no content tower | 0.1143 |
-
-**The takeaway: the self-built LLM features land in a dead heat with the expensive curated genome tags** — 0.1165 vs. 0.1146, a tie within noise, and fusing both adds nothing. The goal was never to *beat* genome tags; it was to show you can reach the same modeling power **without** the human annotators, the active-community folksonomy, or the years of data behind them. For a company that's the headline: **don't wait on a tagging pipeline or hire labelers — bootstrap content features from web text + an LLM and unlock the same lift in an afternoon.**
-
-> *Why the live demo runs the `both` model:* fusing the two sources gave no measurable lift in the ablation, but I wanted the most feature-robust model behind the public demo, so the deployed checkpoint carries both towers. The finding stands on the single-source arms. Full write-up: [`docs/plans/llm_vs_genome_ablation_plan.md`](docs/plans/llm_vs_genome_ablation_plan.md).
 
 ---
 
@@ -179,7 +164,7 @@ python main.py export       # write serving/ artifacts for the app
 ```
 
 <details>
-<summary><strong>CLI reference & the content-source ablation</strong></summary>
+<summary><strong>CLI reference</strong></summary>
 
 ```bash
 # Most commands accept an optional checkpoint path (defaults to the most recent):
@@ -192,17 +177,55 @@ python main.py export saved_models/<checkpoint>.pth
 TMDB_API_KEY=your_key python main.py posters
 ```
 
-The four ablation arms are selected with the `FEATURE_TOWERS` env var (identical model, only the content slot differs):
-
-```bash
-FEATURE_TOWERS=genome python main.py train   # Model A — curated genome tags
-FEATURE_TOWERS=llm    python main.py train   # Model B — self-built LLM features
-FEATURE_TOWERS=none   python main.py train   # Model C — no content tower (floor)
-FEATURE_TOWERS=both   python main.py train   # Model D — both, fused (deployed)
-```
-
 The self-built LLM-feature pipeline (scrape → schema → extract → merge → tensor) lives in [`llm_features/`](llm_features/).
 </details>
+
+---
+
+## 🔬 $200 vs $200k: Item Content Features With an LLM Instead of Hand-Labeled Tagging
+
+*A controlled experiment, layered on top of the deployed model: can an LLM replace a premium hand-curated feature set — one built in a day instead of accreted over fifteen years?*
+
+Every recommender wants a dense **content vector** per item — a descriptor of what each movie *is*, independent of who watched it (it's what carries the long tail and brand-new items). MovieLens ships a gold-standard one: the **genome tags**, 1,128 relevance scores per movie, reverse-engineered by GroupLens from a volunteer tag survey on top of a **fifteen-year, platform-scale community folksonomy**, run through a dedicated ML pipeline. A new company has none of that — so I asked the practical question: **can you bootstrap a comparable content vector from nothing but an item's public web text + an LLM, in about a day?**
+
+**The cheap pipeline.** For every movie I scraped TMDB (overview, cast, director, keywords) and the Wikipedia plot, then ran **six grouped structured-output LLM calls** — themes, tone, setting/era, provenance, factual reception, visual medium — each enforced by a JSON schema. The whole ~9,375-movie corpus was scraped and extracted in **about a day**, fanned out in parallel at near-zero marginal cost. (Pipeline: [`llm_features/`](llm_features/).)
+
+**The setup.** I dropped those 132 LLM features into the content slot of otherwise-identical models — deliberately scored on genome's *own* tag axes, to handicap the LLM, not flatter it — and compared three arms: genome (**A**), LLM (**B**), and a no-content floor (**C**), all at α=0, over **382,138 rollbacks** (all 19,134 val users), replicated on a second corpus. The catch is *where* you run it.
+
+### The setting that matters: a new team's day-one model
+
+Strip the model down to what most real (implicit-feedback) recommenders actually have — a single watch-history pool + the content slot, and *none* of MovieLens's curated genre, 306 user tags, or release year. There, a content vector earns a real lift over collaborative filtering alone, and the self-built LLM features edge the gold-standard genome — on genome's *own* axes:
+
+| Content slot (stripped, day-one model) | How it's produced | MRR |
+|---|---|---|
+| **LLM features (self-built)** | scraped web text + an LLM · **~a day, no annotators** | **0.1155** |
+| Genome tags (MovieLens) | volunteer survey + 15-yr community folksonomy + ML pipeline | 0.1148 |
+| None — pure collaborative-filtering floor | no content tower | 0.1121 |
+
+Both sources clear the floor (genome **+2.4%** MRR, LLM **+3.0%**), and the LLM noses ahead of fifteen years of curated community data. The ordering replicates on a second 4,461-movie corpus.
+
+### The follow-up: add MovieLens's curated metadata back
+
+Restore the curated genre + 306 user tags + year + the rating-derived history pools, and the content lift *vanishes* for both: floor **0.1174** / genome **0.1144** / LLM **0.1176**. Genome even dips *below* the floor — which now carries the curated genre, tags, and year — because it's a **redundant second copy** of metadata the model already has. The tell is what each source loses when you strip that metadata away again: genome loses *nothing* (it just rebuilds the curated genre/tags from its own vectors), the LLM loses a little, the floor loses the most — so **the LLM features are the *less* redundant of the two, the more genuinely additive signal.**
+
+**The takeaway:** in the bare setting most teams actually deploy from, the cheap LLM features match — and slightly edge — the premium genome you'd need a fifteen-year community to build; where you already own a rich curated-metadata stack, an extra content vector is redundant either way. For a new company that's the headline: **don't wait on a tagging pipeline or hire labelers — bootstrap content features from web text + an LLM.**
+
+> *Why the live demo runs the `both` model:* the deployed checkpoint fuses genome + LLM (`FEATURE_TOWERS=both`) for maximum feature robustness — a portfolio-motivated choice, since fusing gave no measurable lift over either source alone. The finding stands on the single-source arms.
+
+**Reproduce it** — the content slot is one env var (identical model otherwise); the stripped "day-one" model adds `BASE_TOWERS=idonly`:
+
+```bash
+# rich model (default BASE_TOWERS=all) — A / B / C / deployed D:
+FEATURE_TOWERS=genome python main.py train   # A — curated genome tags
+FEATURE_TOWERS=llm    python main.py train   # B — self-built LLM features
+FEATURE_TOWERS=none   python main.py train   # C — no content tower (floor)
+FEATURE_TOWERS=both   python main.py train   # D — both fused (deployed)
+
+# stripped "day-one" model — single history pool, no curated genre/tags/year:
+BASE_TOWERS=idonly FEATURE_TOWERS=llm python main.py train   # B′
+```
+
+Full write-up — pipeline, mechanism (*why* it works), cost breakdown, and limitations: [**`docs/llm_vs_genome_ablation.md`**](docs/llm_vs_genome_ablation.md).
 
 ---
 
@@ -225,7 +248,7 @@ The self-built LLM-feature pipeline (scrape → schema → extract → merge →
 │   └── checkpoint.py       # config-from-state_dict loader (no separate config file needed)
 ├── llm_features/           # self-built content pipeline: scrape → LLM-extract → tensor
 ├── serving/                # exported artifacts the app loads (model, embeddings, feature store, posters)
-├── docs/plans/             # the LLM-vs-genome ablation write-up
+├── docs/                   # write-ups — the LLM-vs-genome experiment (+ plans/)
 └── tests/                  # model shape tests
 ```
 
