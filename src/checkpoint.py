@@ -9,7 +9,9 @@ one spot.
 Two responsibilities:
   - resolve_config_from_state_dict: infer model dims from weight shapes. The semantic-feature
     towers (genome tags, LLM features) are each OPTIONAL — a checkpoint may have genome, llm,
-    both, or neither, so the resolver guards those reads instead of KeyError-ing.
+    both, or neither, so the resolver guards those reads instead of KeyError-ing. The base
+    towers (genre/tag/year) are likewise optional: the stripped 'idonly' CF-base ablation
+    checkpoints drop all three as a block (base_towers resolved from key presence).
   - load_checkpoint: torch.load + remap legacy tower keys + drop legacy non-persistent buffers
     + resolve config.
 
@@ -75,13 +77,27 @@ def resolve_config_from_state_dict(state_dict: dict) -> dict:
     cfg = get_config()
 
     cfg['item_movieId_embedding_size']      = sd['item_embedding_lookup.weight'].shape[1]
-    cfg['user_genre_embedding_size']        = sd['user_genre_tower.0.weight'].shape[0]
-    cfg['timestamp_feature_embedding_size'] = sd['timestamp_embedding_lookup.weight'].shape[1]
-    cfg['item_genre_embedding_size']        = sd['item_genre_tower.0.weight'].shape[0]
-    cfg['item_tag_embedding_size']          = sd['item_tag_tower.0.weight'].shape[0]
-    cfg['item_year_embedding_size']         = sd['year_embedding_lookup.weight'].shape[1]
     cfg['proj_hidden']                      = sd['user_projection.0.weight'].shape[0]
     cfg['output_dim']                       = sd['user_projection.2.weight'].shape[0]
+    if 'timestamp_embedding_lookup.weight' in sd:   # absent in the stripped 'idonly' arms
+        cfg['timestamp_feature_embedding_size'] = sd['timestamp_embedding_lookup.weight'].shape[1]
+
+    # Base towers (genre/tag/year/timestamp) — always-on except in the stripped 'idonly' CF-base
+    # ablation checkpoints, which drop them as a block (plus the liked/disliked/weighted user
+    # pools; the model derives that from base_towers, so no extra keys to read here). Guard each
+    # read (mirrors the semantic-feature guards below) so a stripped model rebuilds from weights
+    # alone.
+    has_genre = 'item_genre_tower.0.weight'    in sd
+    has_tag   = 'item_tag_tower.0.weight'      in sd
+    has_year  = 'year_embedding_lookup.weight' in sd
+    if has_genre:
+        cfg['user_genre_embedding_size'] = sd['user_genre_tower.0.weight'].shape[0]
+        cfg['item_genre_embedding_size'] = sd['item_genre_tower.0.weight'].shape[0]
+    if has_tag:
+        cfg['item_tag_embedding_size']   = sd['item_tag_tower.0.weight'].shape[0]
+    if has_year:
+        cfg['item_year_embedding_size']  = sd['year_embedding_lookup.weight'].shape[1]
+    cfg['base_towers'] = 'all' if (has_genre or has_tag or has_year) else 'idonly'
 
     # Semantic-feature towers — each optional. Presence of the tower keys tells us which are on;
     # the in_features (genome 1128 / llm 132) come from the rebuilt buffers in build_model, not here.

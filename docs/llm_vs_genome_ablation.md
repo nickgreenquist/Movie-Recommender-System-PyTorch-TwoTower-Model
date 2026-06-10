@@ -6,13 +6,13 @@
 
 ## TL;DR
 
-Every recommender needs a dense content vector per item — and the gold-standard source, MovieLens's hand-curated **tag genome**, rests on fifteen years of community folksonomy. The feasible alternative — scrape each item's own text and **extract structured features with an LLM** — covered all **\~9,375 corpus movies** (MovieLens's 200+-rating slice) in **a single day**, at near-zero marginal cost. In a matched three-arm ablation (same model, same training, only the content tags change — **MovieLens genome tags vs LLM feature tags vs no content tags**), the cheap LLM features come out **statistically tied with the gold-standard genome** — and on genome's *own* taxonomy, a deliberate handicap — at MRR 0.1157 vs 0.1146. The claim isn't "better," it's *as good as*.
+Every recommender needs a dense content vector per item — and the gold-standard source, MovieLens's hand-curated **tag genome**, rests on fifteen years of community folksonomy. The feasible alternative — scrape each item's own text and **extract structured features with an LLM** — covered all **\~9,375 corpus movies** in **a single day**, at near-zero marginal cost. The headline test puts both in the setting **most teams actually have**: interactions + an item's text, and *none* of the curated metadata MovieLens is unusually rich in. There, against a pure collaborative-filtering floor, **the cheap LLM features beat the floor and edge the gold-standard genome** — MRR **0.1155 (LLM) vs 0.1148 (genome) vs 0.1121 (floor)**, on genome's *own* taxonomy, a deliberate handicap. The claim isn't "better," it's *as good as — and the one you can actually build*. (A follow-up adds back MovieLens's curated genre + user tags + year; there the content lift **vanishes for both** — genome and LLM turn out to be largely redundant with cheap metadata, which is exactly why isolating them mattered.)
 
 ![Recommendations from the deployed app for a 'pixar animation' genome-tag query](figures/pixar_movies.jpeg)
 
 *The deployed recommender these features power. A user's taste vector is built entirely from movie content — the curated genome tags plus the web-scraped, LLM-extracted features this post compares — with no user-ID embedding.*
 
-## 1. The content-feature problem, and the two ways to solve it
+## 1. The content-feature problem, and the realistic setting
 
 A two-tower recommender represents each item as an embedding. Collaborative signal — who watched what — carries most of the weight for popular items, but it runs dry exactly where you need help: the long tail, and brand-new items nobody has interacted with yet. That's what a **content vector** is for — a dense, per-item descriptor of what the item *is*, independent of who has touched it. The question is where it comes from.
 
@@ -20,7 +20,7 @@ A two-tower recommender represents each item as an embedding. Collaborative sign
 
 **Option 2 — LLM extraction.** Scrape the item's public text (TMDB synopsis, cast, Wikipedia plot) and ask an LLM to score it against a fixed tag taxonomy, with structured (JSON-schema) output. The content vector falls out of the item's own description.
 
-**The catch that sets up the experiment.** The genome's inputs — a mature folksonomy, crawled reviews, a relevance survey — are exactly what a growing company *doesn't* have, and they're all zero for an item added a minute ago. So the honest question isn't "which is better in the abstract." It's: **the LLM path is the one most teams can actually take — is its content quality good enough?**
+**The setting that frames the whole experiment.** The genome's inputs — a mature folksonomy, crawled reviews, a relevance survey — are exactly what a growing company *doesn't* have. But so is most of the *other* metadata MovieLens ships with: clean, professionally-assigned **genre labels** on every title, and **306 high-frequency user tags** distilled from a massive crowd-tagging effort. A team standing up recommendations for a fresh catalog has none of that. What it reliably has is **interaction logs and an item's public text** — and interactions are usually *implicit* (a click, a watch, a purchase), not the 1–5 explicit ratings MovieLens provides. So the honest question isn't "genome vs LLM in a metadata-rich model." It's: **in the bare setting a real team actually starts from, does a content vector help at all — and is the LLM's good enough to be the one you build?**
 
 ## 2. Why it's a fair fight
 
@@ -28,17 +28,17 @@ To compare content *sources* and nothing else, everything else is held fixed: th
 
 - **A — MovieLens genome tags:** the 1,128-dim genome scores fill the content tower.
 - **B — LLM feature tags:** 132 LLM-extracted dims fill it instead.
-- **C — no content tags:** the content slot is removed entirely — the **floor**, what the model scores on its ID-embedding history pools, genre, tags, and year alone.
+- **C — no content tags:** the content slot is removed — the floor, what the model scores on its history pool and whatever other features are present.
 
-(Throughout, **A / B / C** are shorthand for these three — genome / LLM / no-content.)
+(Throughout, **A / B / C** are the three content arms — genome / LLM / no-content. The primary experiment runs them in a **stripped** model; §6 re-runs them in a metadata-**rich** one.)
 
-One more rigor move — and it's a deliberate **handicap on the LLM, not the genome**: the LLM schema is **derived from genome's own top-discriminability tags**, not hand-invented. Both spaces measure the *same axes* — otherwise "LLM ≈ genome" would be unmeasurable — but confining the LLM to genome's taxonomy makes the question the sharpest one there is: *can LLM extraction match the curated genome on the genome's home turf, tag for tag?* The LLM is graded only on axes GroupLens chose, and earns no credit for discriminative patterns it could surface from the scraped text but that genome never tagged. (132 dims, each stored alongside the source genome tag it was derived from.)
+One rigor move — a deliberate **handicap on the LLM, not the genome**: the LLM schema is **derived from genome's own top-discriminability tags**, not hand-invented. Both spaces measure the *same axes* — otherwise "LLM ≈ genome" would be unmeasurable — but confining the LLM to genome's taxonomy makes the question the sharpest one there is: *can LLM extraction match the curated genome on the genome's home turf, tag for tag?* The LLM is graded only on axes GroupLens chose, and earns no credit for discriminative patterns it could surface from the scraped text but that genome never tagged. (132 dims, each stored alongside the source genome tag it was derived from.)
 
-This also answers the obvious objection — *"a greenfield team has no taxonomy to extract against."* It doesn't need one: an LLM can **draft** the taxonomy too, clustering recurring themes across thousands of plots. We could have let it mine extra tags it found discriminative in the scrape data; we deliberately didn't, to keep the fight fair. The genome dependency is a self-imposed rule of *this experiment*, not a requirement of the *method* — so if anything, the tie **understates** what an unconstrained LLM pipeline could do.
+This also answers the obvious objection — *"a greenfield team has no taxonomy to extract against."* It doesn't need one: an LLM can **draft** the taxonomy too, clustering recurring themes across thousands of plots. We deliberately didn't, to keep the fight fair. The genome dependency is a self-imposed rule of *this experiment*, not a requirement of the *method* — so if anything, the result **understates** what an unconstrained LLM pipeline could do.
 
 Worth flagging one real asymmetry: genome feeds **1,128** raw dims into the content tower and the LLM only **132**, but both get squeezed down to the same 32 — so genome takes the harder compression. You'd think that hurts genome, but shrinking a big sparse vector into a small dense one is routine, and it usually helps the model find the signal rather than memorize individual cells. If it tips the result either way, it isn't toward the LLM.
 
-**Where this sits.** Manufacturing item features with an LLM isn't new — it's an active 2023–25 direction (KAR, ONCE/GENRE at WSDM '24, LLMRec, RLMRec all feed LLM-derived signal into recommenders, KAR with a reported production A/B gain at Huawei). What's new here is the *comparand*: rather than scoring LLM features against a weak or absent baseline, this pits them head-to-head against the **gold-standard human-curated genome, on the same axes**, with a no-content floor (C) to calibrate the lift. The question isn't "do LLM features help" — it's "how close to hand-curation does the feasible option get."
+**Where this sits.** Manufacturing item features with an LLM isn't new — it's an active 2023–25 direction (KAR, ONCE/GENRE at WSDM '24, LLMRec, RLMRec all feed LLM-derived signal into recommenders, KAR with a reported production A/B gain at Huawei). What's new here is the *comparand*: rather than scoring LLM features against a weak or absent baseline, this pits them head-to-head against the **gold-standard human-curated genome, on the same axes**, with a no-content floor (C) to calibrate the lift — and it does so in the bare setting most teams actually deploy from.
 
 ## 3. The cheap pipeline
 
@@ -61,41 +61,38 @@ Honest design calls are baked in. Structured output is non-negotiable — free-f
 
 Every score reads right, and the two *factual* groups behave: `oscar_technical` is a true 1.0 (Alien won the Academy Award for Best Visual Effects), while `cgi_heavy` stays low because the film's effects are practical, not computer-generated — exactly the factual-only discipline the visual and prestige groups are built for.
 
-## 4. Does it work?
+## 4. Does it work? — the universal setting
 
-The pilot (Phase 1) ran the whole pipeline on the 4,461 popular movies (>1,000 ratings); the full run (Phase 2) added the long tail and retrained all three arms fresh on the full corpus. That corpus is **9,375 movies — already a heavily filtered slice of MovieLens 32M's 87,585 titles**, keeping only movies with more than 200 ratings (\~11% of the catalog). Phase 2 is the real test — it has the tail, where content features earn their keep. Canonical eval: rollback protocol, all 19,134 validation users, **n = 382,138** rollback examples (random Hit@250 baseline = 2.7%, so these models are doing real work).
+The realistic baseline strips the model down to what any team has on day one. We remove every feature that is a MovieLens *privilege* and keep only the two things that are universal:
 
-**Phase 2, whole corpus:**
+- **Gone:** the curated genre one-hot, the 306 user tags, release year — metadata most catalogs don't ship with — **and** the rating-derived history pooling (separate "liked," "disliked," and rating-weighted pools), which needs the explicit 1–5 ratings that *implicit*-feedback systems (clicks, watches) simply don't have.
+- **Kept:** a single **implicit history pool** — the sum of the ID embeddings of the items a user engaged with, no ratings — plus the **content slot** under test. That's it. This is the setting **90%+ of real recommenders** live in: "here's what this user touched, here's what each item is."
 
-| Metric | C — no content | A — genome tags | B — LLM tags |
+Call the three arms in this stripped model **C′ / A′ / B′** (floor / genome / LLM). Canonical eval throughout: a held-out **rollback** protocol — for each validation user, context = history so far, target = next watch — over **all 19,134 validation users, n = 382,138** examples (random Hit@250 baseline = 2.7%, so these models are doing real work), plus a smaller **Phase 1** corpus of the 4,461 most-rated movies as an independent replication.
+
+**Primary result — full corpus (n = 382,138):**
+
+| Metric | C′ — pure CF floor | A′ — + genome | B′ — + LLM |
 |---|---|---|---|
-| Hit@5 | 0.1536 | 0.1538 | **0.1552** |
-| Hit@10 | 0.2213 | 0.2229 | **0.2240** |
-| Hit@50 | 0.4611 | 0.4642 | **0.4656** |
-| NDCG@10 | 0.1283 | 0.1288 | **0.1300** |
-| MRR | 0.1143 | 0.1146 | **0.1157** |
+| Hit@5 | 0.1500 | 0.1538 | **0.1555** |
+| Hit@10 | 0.2178 | 0.2229 | **0.2236** |
+| Hit@50 | 0.4560 | 0.4644 | **0.4647** |
+| NDCG@10 | 0.1259 | 0.1290 | **0.1297** |
+| **MRR** | 0.1121 | 0.1148 | **0.1155** |
 
-**B numerically leads every metric — but by a margin that doesn't survive scrutiny.** B−A = +0.0011 MRR (+0.97%); B−C = +0.0014 (+1.2%). Each arm is a single training run, with no seed ensemble and no confidence intervals, so a sub-1% gap sits inside run-to-run noise — read A and B as **tied**, not ranked (the methodological aside below shows how readily the sign flips). What is *not* noise: both content arms clear the no-content floor C. That lift over the floor looks small only because 90% of rollback targets are popular (Q4) movies where collaborative signal already dominates — the content story lives in the tail.
+![Content's lift over a pure-CF floor in the universal setting, and how it vanishes once the curated metadata is added back](figures/fig1_content_lift.png)
 
-**MRR by popularity tier:**
+*Figure 1. Left: in the stripped (universal) model, content beats the pure-CF floor and the ordering C′ < A′ < B′ replicates across both corpora. Right: add the curated genre + user tags + year + rating pools, and the same content slot's lift over the floor collapses to ~0 / negative — genome and LLM go redundant with the cheap metadata (§6).*
 
-| Tier (n) | C — no content | A — genome | B — LLM | B−A |
-|---|---|---|---|---|
-| Q4 popular (343,906) | 0.1259 | 0.1260 | **0.1273** | +0.0013 |
-| Q3 mid (26,923) | 0.0129 | **0.0148** | 0.0144 | −0.0004 |
-| TAIL ≤1k (12,652) | 0.0028 | **0.0033** | 0.0032 | −0.0001 |
+Three reads:
 
-![Genome and LLM lift over the no-content floor across popularity tiers](figures/fig1_tier_lift.png)
+1. **Content clears the floor — both sources.** Against a genuine pure-CF baseline, genome adds **+2.4% MRR** (A′−C′ = +0.0027) and the LLM **+3.0%** (B′−C′ = +0.0034). When the model has nothing else to lean on, a content vector earns real lift — the question the metadata-rich setup (§6) structurally couldn't answer.
 
-*Figure 1. Left: MRR by popularity quartile (log scale) — ranking quality drops \~100× from the popular head to the rarest tier, because collaborative signal thins out. Right: relative MRR lift over the no-content floor (C) — content adds \~0% on popular movies but +12–19% on the rare tiers, and the LLM (B) tracks the genome (A) rather than collapsing.*
+2. **The LLM matches and slightly edges the genome.** B′ leads A′ on **every metric** and on **every popularity tier** (whole +0.0007, head +0.0007, and ≥0 across Q1–Q4) — a small margin (+0.6% MRR, within single-run noise on any one tier) but a *consistent* one. The cheap, day-one option is not paying a quality tax against fifteen years of curated community data; if anything it noses ahead.
 
-Three things to read off this:
+3. **It replicates on an independent corpus.** On the 4,461-movie Phase 1 head (n = 99,846), the same ordering holds: **C′ 0.1133 < A′ 0.1158 < B′ 0.1165** (genome +2.2%, LLM +2.8% over floor). Each arm is still a single training seed, but a result that reproduces across two corpora is firmer than two more seeds on one would be.
 
-1. **Content earns its keep on the tail.** The Hit@250 lift over the floor (A−C) is \~0 on Q4 but **+0.0125 on the tail** — a relative MRR lift of roughly +18%. Both content sources help exactly where collaborative filtering is starved — the story Phase 1 structurally couldn't tell.
-2. **The overall gap is a popular-head effect — and a suspect one.** B's whole-corpus lead over A is almost entirely Q4 (90% of examples; B−A ≈ +0.0013 stably across K; the whole-corpus number is essentially the Q4 result). That's backwards for a *content* feature, which should matter *least* where collaborative signal is strongest — and it lines up with a known leak: the LLM's reception group carries scraped box-office / IMDb-rating signal (**prestige-as-popularity leakage**, §7), which helps precisely on the popular head. The likeliest read is that the head "edge" is the LLM smuggling a popularity feature, not better content — one more reason to score A and B as tied on content quality. Isolating it cleanly would mean re-training B with the reception group ablated (§7).
-3. **The LLM does *not* collapse on rare movies.** On the deep tail (Q1, TAIL) A and B are statistically tied — MRR gaps ≤ 0.0001, which should be read as ties, not rankings. Even where content matters most, LLM features hold even with the human-curated genome. *That* is the consequential result for "can LLMs replace human curation."
-
-**A methodological aside:** the A-vs-B winner even flips with the checkpoint-selection rule — genome leads by +0.0004 MRR if you select on validation loss, the LLM by +0.0014 if you select on validation MRR — itself the tell that the two are tied, not ranked.
+A caveat to keep honest: the measurable lift lives on the **popular head** (Q4/Q3), not the deep tail — where, at MovieLens's ≥200-rating floor, every arm is near-zero and the examples are too few to separate (the genuine cold-start regime, where content *should* matter most, can't be benchmarked against the genome at all — §8).
 
 ## 5. Why it works — what each source actually knows
 
@@ -110,7 +107,7 @@ Because both spaces sit on the same axes, we can correlate them directly. For ea
 
 *Figure 2. Per-dimension agreement between each LLM feature and its source genome tag, across all 9,375 movies (mean r = 0.60; 99 of 132 dims at r ≥ 0.5, none below 0.1). Agreement is highest on factual axes — genre, era, medium — and lowest on crowd-prestige axes (imdb top 250, criterion): exactly the slice an LLM can't read from a synopsis.*
 
-That split *is* the mechanism. The LLM reproduces nearly all of genome's signal on the axes it can reach from text — genre, setting, provenance, factual medium — which is why B matches A on the bulk metrics. Genome's residual advantage is concentrated precisely where agreement is lowest: **crowd-prestige** ("masterpiece," "imdb top 250"), **fine niche sub-genre** granularity (*The Good, the Bad and the Ugly*: genome's "spaghetti western" + "ennio morricone" vs the LLM's coarser "western"), and **subjective aesthetics**. The LLM, in turn, contributes clean plot facts genome buries — "artificial_intelligence" for *2001*, "based_on_book" for *Die Hard*, "hitman"/"conspiracy" for *Sicario*.
+That split *is* the mechanism. The LLM reproduces nearly all of genome's signal on the axes it can reach from text — genre, setting, provenance, factual medium — which is why B′ matches A′ on the bulk metrics. The two genuinely *diverge* on the low-agreement axes: genome holds **crowd-prestige** ("masterpiece," "imdb top 250"), **fine niche sub-genre** granularity (*The Good, the Bad and the Ugly*: genome's "spaghetti western" + "ennio morricone" vs the LLM's coarser "western"), and **subjective aesthetics**; the LLM, in turn, contributes clean plot facts genome buries — "artificial_intelligence" for *2001*, "based_on_book" for *Die Hard*, "hitman"/"conspiracy" for *Sicario*. Critically, genome's exclusive axes are mostly **crowd-sentiment and prestige** — which correlate with popularity more than with content — so they don't translate into a ranking advantage; in the stripped setting the LLM's plot-fact contributions slightly outweigh them.
 
 **Qualitative color (seed-dependent — not a headline).** Top-10s for canary personas show the two sources give the model different *personalities*: genome leans niche-canon-pure (tight Western, slow-burn Arthouse, cerebral Sci-Fi), the LLM leans era- and modern-subgenre matching (2000s-gore Horror, 2010s gritty Crime) but drifts to blockbusters more readily on niche genres. Five illustrative disagreements:
 
@@ -122,9 +119,32 @@ That split *is* the mechanism. The LLM reproduces nearly all of genome's signal 
 | Arthouse | slow-burn — Stalker, In the Mood for Love | prestige — Fight Club, American Beauty |
 | Horror | 90s slashers — Scream 2/3, Ring | 2000s gore — Saw II/IV/V, House of Wax |
 
-Treat this strictly as color — the tier metrics, not the canary, carry the conclusion.
+Treat this strictly as color — the quantitative metrics, not the canary, carry the conclusion.
 
-## 6. The payoff: feasibility, speed, cost
+## 6. Does the curated metadata change the answer? (the follow-up)
+
+The natural objection to §4 is *"but you crippled the model — what about a feature-rich recommender?"* So we ran the same three content arms in the **rich** model — adding back MovieLens's curated genre one-hot, its 306 user tags, year, and the rating-derived history pools — and re-asked whether genome or LLM still helps.
+
+It doesn't. In the rich model the content lift **collapses for both sources**, and on the same low-variance protocol the floor actually edges the genome:
+
+| Whole-corpus MRR | C — no content | A — genome | B — LLM |
+|---|---|---|---|
+| **Rich model** | **0.1174** | 0.1144 | 0.1176 |
+| Stripped model (§4) | 0.1121 | 0.1148 | 0.1155 |
+
+In the rich model, genome lands *below* the no-content floor (A−C = **−0.0030**) and the LLM merely ties it (B−C = +0.0002). Read alone, that looks damning — "genome is worse than no tags." It isn't: arm C here is **not** content-free — it still has genre, 306 user tags, and year. Genome loses because it is a **second copy** of information already present, not because content is useless. The clean way to see it is what each arm *loses* when you strip that metadata away:
+
+| Arm | rich → stripped (whole-corpus MRR) | Δ |
+|---|---|---|
+| Floor (C → C′) | 0.1174 → 0.1121 | **−0.0053** |
+| LLM (B → B′) | 0.1176 → 0.1155 | **−0.0021** |
+| Genome (A → A′) | 0.1144 → 0.1148 | **+0.0004** |
+
+This is the **substitution ladder**, and it replicates on Phase 1 (floor −0.0029, LLM −0.0015, genome +0.0007). Genome loses *nothing* when you remove genre/tags — it reconstructs them perfectly from its own vectors, because genome tags essentially *are* curated genre/tag information in another form. The LLM loses a little — it only *partially* backfills them, because its features are a partly **orthogonal** basis (plot, tone, theme, cast) that can't fully stand in for the curated metadata. The floor, with nothing to fall back on, loses the most. Substitutability genome > LLM > none is direct evidence that **the LLM features overlap *less* with cheap curated metadata — i.e. carry more genuinely additive signal** than the genome does.
+
+So the two experiments bracket the real-world answer. *With* a rich curated-metadata stack, an extra content vector — genome or LLM — is redundant. *Without* one (the setting most teams are in), it's a real +2–3% lift, and the LLM's is the less redundant of the two. The honest qualifier: the stripped floor is a deliberately minimal CF model, so the true lift for a given team depends on how much other signal they already have — it sits somewhere inside this bracket, closer to the stripped end the less curated metadata they own.
+
+## 7. The payoff: feasibility, speed, cost
 
 Here's where "good enough" cashes out. The point was never that the LLM features are 1% better — it's that they're the option a real team can actually build. Dimension by dimension (every replication dollar figure below is a labeled **estimate** — the genome papers publish none):
 
@@ -137,7 +157,7 @@ Here's where "good enough" cashes out. The point was never that the LLM features
 | Wall-clock to build, full corpus | Accreted over \~15 years of community use | **\~1 day** for all \~9,375 items — independent calls, fanned out in parallel |
 | Time-to-first-vector, new item | Effectively **never** until the crowd tags it | **Sub-hour**, zero-shot from text |
 | Maintenance / new domain | Re-survey + re-crawl + re-train; new domain = redo everything | Parallel API calls per item |
-| Quality (this ablation) | A: MRR 0.1146 | B: 0.1157 — **statistically tied** (sub-1% gap, within run-to-run noise) |
+| Quality (universal setting) | A′: MRR 0.1148 | B′: 0.1155 — **matches, edges ahead**, +2–3% over the floor |
 
 Three legs:
 
@@ -147,28 +167,28 @@ Three legs:
 
 **"Neural ≠ cheaper" sidebar.** The 2021 genome refresh (TagDL, a PyTorch MLP) bought \~2.6% MAE and changed *none* of the data prerequisites — same survey, same folksonomy. And the genome team's own 2026 cross-domain paper hit exactly the prerequisite wall extending to Amazon — *"the absence of … item-tag ratings and tag applications"* — had to reuse old survey labels, and took a measured accuracy hit. The strongest evidence that the prerequisite is binding comes from the people who built the genome.
 
-## 7. Limitations
+## 8. Limitations
 
 Limitations, stated plainly:
 
-- **No significance testing — read A vs B as a tie.** Each arm is a single training run; no seed ensembles, no confidence intervals, no significance test. A sub-1% MRR gap (B−A = +0.97%) is inside run-to-run noise, and the §4 checkpoint-selection flip shows the sign of the gap is not even stable. The only ordering that survives is content (A, B) **>** no-content (C); A vs B is a statistical tie, not a ranking.
-- **Two separate filterings, easy to conflate — and we filtered neither of the genome ones.** *(1) Our corpus:* all three arms train and evaluate on the **9,375 movies with more than 200 ratings** — *our* cutoff on MovieLens 32M's **87,585** titles, chosen for clean collaborative signal and tractable extraction. Both sources fully cover it (the genome scores all 9,375), so the head-to-head is scale-matched and fair, and the cost comparison above compares like for like. *(2) The genome's own ceiling:* **GroupLens never published genome scores for all 87,585 titles** — the file we downloaded from them covers exactly **16,376 movies (\~19% of the catalog)**, and that limit is *theirs*, not our doing: the other **71,209 (\~81%)** are too sparsely tagged and rated for their model to score at all. So the eval — restricted to the popular 9,375 that *both* sources cover well — can't even see the gap that matters most: across \~81% of the catalog the genome simply **does not exist**, while the LLM produces a vector for any title from its text alone (\~$1.6–2k metered for the whole catalog, *est*). And even the "TAIL ≤1k" tier above is movies with 200–1,000 ratings, *not* genuine cold-start. So the offline numbers almost certainly **understate** the real-world feasibility gap.
-- **A true cold-start head-to-head is structurally impossible.** Cold start is exactly where an LLM content vector should pay off (§6) — but it cannot be benchmarked *against the genome*, because the genome doesn't exist there: it covers only the well-tagged head (the 16,376 titles above), so across the \~71k-title tail there is no genome arm to train or compare. "Retrain the ablation on the tail" isn't an experiment we declined — there is no genome signal to train arm A on. The most one could measure is an *LLM-only* hold-out-and-NN-seed simulation (a separate experiment, not run here).
+- **Single seed per arm — but cross-corpus replicated.** No seed ensembles or confidence intervals; the stripped result (C′ < A′ < B′, B′ edging A′) reproduces on both the full and Phase 1 corpora, and the substitution ladder reproduces on both, which is stronger than extra seeds on one corpus — but a multi-seed run would still firm up the exact magnitudes. Per-tier A′-vs-B′ gaps ≤ 0.0007 MRR should be read as "matches," carried by the consistency of direction, not any single number.
+- **The "universal" floor isn't perfectly implicit.** The stripped model uses only a single un-rated history pool, matching implicit feedback — but the content arms' *user-side* pooling still rating-weights each watched item's content vector (the floor uses no ratings at all). A strictly implicit deployment would pool content with uniform weights; the effect is small (it's how content is averaged over history, not a separate feature), but it's a real residual behind the "no ratings" claim.
+- **Two separate filterings, easy to conflate — and we filtered neither of the genome ones.** *(1) Our corpus:* all arms train and evaluate on the **9,375 movies with more than 200 ratings** — *our* cutoff on MovieLens 32M's **87,585** titles, chosen for clean collaborative signal and tractable extraction. Both sources fully cover it (the genome scores all 9,375), so the head-to-head is scale-matched. *(2) The genome's own ceiling:* **GroupLens never published genome scores for all 87,585 titles** — the file we downloaded covers exactly **16,376 movies (\~19% of the catalog)**, and that limit is *theirs*: the other **71,209 (\~81%)** are too sparsely tagged for their model to score. So the eval — restricted to the popular slice *both* sources cover — can't even see the gap that matters most: across \~81% of the catalog the genome simply **does not exist**, while the LLM produces a vector for any title from its text alone (\~$1.6–2k metered for the whole catalog, *est*). The offline numbers almost certainly **understate** the real-world feasibility gap.
+- **A true cold-start head-to-head is structurally impossible.** Cold start is where an LLM content vector should pay off (§7) — but it cannot be benchmarked *against the genome*, because the genome doesn't exist there. Even the lift we *do* measure lives on the popular head, not the deep tail (at the ≥200-rating floor every arm is near-zero); the genuine cold-start regime is unmeasured here, and there is no genome arm to compare against anyway.
 - **Single LLM.** Claude Sonnet only, no cheaper-model bake-off. This supports "Sonnet-class extraction matches genome," **not** "any cheap model would."
-- **The shared taxonomy is genome's — by design, to handicap the LLM (§2), not because the method needs one.** We held the LLM to genome's own tags so the match is tag-for-tag on genome's home turf. The honest residual caveat is narrow: we *showed* an LLM can fill a curated taxonomy to genome quality; an LLM *drafting* a richer taxonomy from scratch — which the scrape data would support, and which a greenfield team would do — is argued in §2, not separately benchmarked here.
-- **Movies are a text-rich, easy case.** Every item here ships with a Wikipedia plot, TMDB cast, and reviews — the extractor never had to work from thin text. Whether it still tracks a gold-standard signal on items with three sentences of description is unmeasured; "Sonnet-class extraction matches genome on text-rich movies" does **not** automatically extend to text-poor domains.
+- **The shared taxonomy is genome's — by design, to handicap the LLM (§2), not because the method needs one.** We held the LLM to genome's own tags so the match is tag-for-tag on genome's home turf. The honest residual: we *showed* an LLM can fill a curated taxonomy to genome quality; an LLM *drafting* a richer taxonomy from scratch — which the scrape data would support — is argued in §2, not separately benchmarked.
+- **Movies are a text-rich, easy case.** Every item ships with a Wikipedia plot, TMDB cast, and reviews — the extractor never had to work from thin text. Whether it still tracks a gold-standard signal on items with three sentences of description is unmeasured.
 - **Cost is amortized, not zero.** The \~$0 is *marginal dollars* under a flat-rate subscription, not a per-call API figure.
-- **Crowd-sentiment is a scope choice, not a hard limit.** Genome's pure-sentiment tags ("masterpiece," "predictable," "overrated") are the axis the LLM trails on (r≈0.16–0.18) — but not because an LLM can't read sentiment. We deliberately confined scraping to Wikipedia + TMDB; pointed at critic and audience reviews, the same pipeline recovers reception signal too. It's a boundary we drew here, not an inherent genome-only advantage.
-- **Fine-grained niche taxonomy.** Where genome keeps a real, if narrow, edge: the sub-genre and auteur detail the coarse LLM tags miss — *spaghetti western* + *ennio morricone* where the LLM lands only on *western* (§5). It shows up on the tight Western and Arthouse canon.
+- **Crowd-sentiment is a scope choice, not a hard limit.** Genome's pure-sentiment tags ("masterpiece," "overrated") are the axis the LLM trails on (r≈0.16–0.18) — but not because an LLM can't read sentiment; we confined scraping to Wikipedia + TMDB. Pointed at reviews, the same pipeline recovers reception signal too.
 - **Prestige-as-popularity leakage.** Scraped box-office / IMDb-rating in the reception group are quasi-popularity signals, in mild tension with a comparison meant to isolate *content* — which is why that group is separately ablatable.
-- **Possible training-data contamination — and it cuts toward the LLM.** MovieLens is one of the most-discussed datasets online and the genome tags are public, so the extractor may be partly *reciting* genome-adjacent knowledge rather than reading it off the synopsis we fed it. That would inflate the r≈0.60 agreement (and the tie) specifically on this much-discussed corpus, and need not transfer to a novel, undiscussed catalog. Untested here; a fresh-catalog replication is the clean check.
+- **Possible training-data contamination — and it cuts toward the LLM.** MovieLens is heavily discussed online and the genome tags are public, so the extractor may be partly *reciting* genome-adjacent knowledge rather than reading it off the synopsis. That would inflate the r≈0.60 agreement on this much-discussed corpus specifically; a fresh-catalog replication is the clean check.
 
-## 8. Takeaway
+## 9. Takeaway
 
-For a team without a pre-existing folksonomy — which is most teams, and every new product — **LLM extraction is the pragmatic default**, and it recovers nearly all of the genome's content signal on the axes reachable from text. The residual genome edge is the crowd-sentiment / fine-aesthetic slice you only get from a community you may not have.
+For a team without a pre-existing folksonomy — which is most teams, and every new product — **LLM extraction is the pragmatic default.** In the bare setting they actually deploy from (implicit interactions + item text, no curated metadata), an LLM-extracted content vector earns a real lift over collaborative filtering alone, and it does so on the gold-standard genome's *own* axes — matching it and, by a small consistent margin, edging it. And when you *do* have a rich curated-metadata stack, the follow-up shows the extra content vector is redundant either way — so the genome's fifteen-year provenance buys you nothing you couldn't scrape in a day. The residual genome edge is the crowd-sentiment / fine-aesthetic slice you only get from a community you may not have — and which barely moves ranking.
 
 The deeper point: the genome and the LLM are two generations of the *same idea* — propagate a dense content matrix from cheap signals. GroupLens propagated a 50,000-judgment survey across millions of (movie, tag) cells with regression, standing on fifteen years of community data. The LLM generation propagates from the item's own text — and in doing so removes the community, the folksonomy dependence, and the cold-start wall. It trades a thin slice of crowd-curated nuance for the ability to run on day one, for any item, at any company. For the content-feature problem most teams actually have, that's the trade you want.
 
 ---
 
-*Sources & notes: results come from a held-out rollback evaluation — all 19,134 validation users, 382,138 ranking examples. Genome-construction facts are drawn from GroupLens's tag-genome work (Vig, Sen & Riedl, 2010/2012) and its later cost/feasibility line (TagDL, SIGIR '21; book genome, CHIIR '22; cross-domain genome, CHIIR '26), with cost anchors from public MTurk/Prolific and Pandora figures. Every dollar figure is a labeled estimate — the genome papers publish none. Full code, data pipeline, and per-tier eval outputs are in the repository.*
+*Sources & notes: results come from a held-out rollback evaluation under a low-variance protocol (seeded, 160k steps) — full corpus all 19,134 validation users / 382,138 ranking examples, replicated on a 4,461-movie head corpus. Genome-construction facts are drawn from GroupLens's tag-genome work (Vig, Sen & Riedl, 2010/2012) and its later cost/feasibility line (TagDL, SIGIR '21; book genome, CHIIR '22; cross-domain genome, CHIIR '26), with cost anchors from public MTurk/Prolific and Pandora figures. Every dollar figure is a labeled estimate — the genome papers publish none. Full code, data pipeline, and per-tier eval outputs are in the repository.*

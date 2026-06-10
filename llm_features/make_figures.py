@@ -3,18 +3,19 @@ Stage 6 — Figures for the LLM-vs-genome writeup (results/llm_vs_genome_ablatio
 
 Generates two publication-quality PNGs into results/figures/:
 
-  fig1_tier_lift.png       — content's lift over the no-content floor by popularity
-                             tier. Left: absolute MRR by tier (log) — ranking quality
-                             collapses on the tail. Right: relative MRR lift over the
-                             floor (%) for genome (A) and LLM (B) — content earns its
-                             keep exactly where collaborative signal is sparse, and the
-                             LLM tracks genome rather than collapsing.
+  fig1_content_lift.png    — content's value in the universal vs the MovieLens-rich
+                             setting. Left: pure-CF floor vs +genome vs +LLM (stripped
+                             model, both corpora) — content beats the floor and C′<A′<B′
+                             replicates. Right: the same content slot added to the rich
+                             model (genre + user tags + year + rating pools) — the lift
+                             collapses to ~0/negative as content goes redundant with the
+                             curated metadata.
   fig2_agreement_hist.png  — distribution of the 132 per-dimension genome-vs-LLM
                              Pearson correlations (shared-axis agreement).
 
-Figure 1 uses the recorded Phase 2 tier metrics (n=382,138, alpha=0; see the ablation
-plan Stage 6 / eval_results). Figure 2 recomputes the 132 correlations with the same
-logic as feature_level_analysis.py and caches them to
+Figure 1 uses the low-variance (seeded, 160k-step) stripped + rich whole-corpus MRR
+(α=0; see the ablation plan "Phase B" section / eval_results). Figure 2 recomputes the
+132 correlations with the same logic as feature_level_analysis.py and caches them to
 results/figures/feature_agreement_r.json (so re-runs skip the slow features load).
 
 Usage (from repo root):
@@ -50,59 +51,79 @@ def set_theme():
     })
 
 
-# ── Figure 1: tier lift ──────────────────────────────────────────────────────
+# ── Figure 1: content lift — stripped (universal) vs rich (MovieLens) ─────────
 def figure1():
-    # Phase 2 MRR by equal-count popularity quartile (n=382,138, alpha=0).
-    tiers = ['Q4 · popular\nn=343,906', 'Q3\nn=26,923', 'Q2\nn=8,049', 'Q1 · rarest\nn=3,260']
-    C = np.array([0.1259, 0.0129, 0.0032, 0.0012])
-    A = np.array([0.1260, 0.0148, 0.0038, 0.0014])
-    B = np.array([0.1273, 0.0144, 0.0037, 0.0014])
-    x = np.arange(len(tiers))
+    """Two panels, whole-corpus MRR, α=0, low-variance protocol (seeded, 160k steps).
+
+    Left  — the primary experiment: a pure-CF floor (single implicit history pool + item ID)
+            vs the same model + genome / + LLM content, on both corpora. Content beats the
+            floor and the ordering C′ < A′ < B′ replicates.
+    Right — the same content slot added to the *rich* model (genome-era genre + user tags +
+            year + rating pools): the lift collapses to ~0 / negative — content goes redundant
+            with the curated metadata. The two regimes bracket the real-world answer.
+    """
+    os.makedirs(FIG_DIR, exist_ok=True)
+
+    # Left — stripped (universal-setting) MRR, both corpora.
+    corpora = ['Full corpus\nn = 382,138', 'Phase 1 (head)\nn = 99,846']
+    Cs = np.array([0.1121, 0.1133])   # C′ floor (ID pool only)
+    As = np.array([0.1148, 0.1158])   # A′ + genome
+    Bs = np.array([0.1155, 0.1165])   # B′ + LLM
+    x = np.arange(len(corpora))
     w = 0.26
 
     fig, (axL, axR) = plt.subplots(1, 2, figsize=(12, 4.8))
 
-    # Left — absolute MRR by tier (log)
-    for i, (vals, col, lab) in enumerate([(C, C_COLOR, 'No content (C)'),
-                                          (A, A_COLOR, 'Genome (A)'),
-                                          (B, B_COLOR, 'LLM (B)')]):
-        axL.bar(x + (i - 1) * w, vals, w, color=col, label=lab, edgecolor='white', linewidth=0.6)
-    axL.set_yscale('log')
-    axL.set_ylim(8e-4, 0.25)
-    axL.set_ylabel('MRR  (log scale)')
-    axL.set_title('Ranking quality collapses on the tail', color=INK)
-    axL.set_xticks(x)
-    axL.set_xticklabels(tiers, fontsize=9.5)
-    axL.grid(axis='x', visible=False)
-    axL.legend(fontsize=9, loc='upper right')
-
-    # Right — relative lift over the no-content floor (%)
-    liftA = (A - C) / C * 100
-    liftB = (B - C) / C * 100
-    bA = axR.bar(x - w / 2, liftA, w, color=A_COLOR, label='Genome  (A − C)', edgecolor='white', linewidth=0.6)
-    bB = axR.bar(x + w / 2, liftB, w, color=B_COLOR, label='LLM  (B − C)', edgecolor='white', linewidth=0.6)
-    axR.axhline(0, color='#444444', lw=0.9)
-    axR.set_ylabel('MRR lift over no-content floor (%)')
-    axR.set_title('Content earns its keep on the tail', color=INK)
-    axR.set_xticks(x)
-    axR.set_xticklabels(tiers, fontsize=9.5)
-    axR.grid(axis='x', visible=False)
-    axR.set_ylim(-2, max(liftA.max(), liftB.max()) * 1.18)
-    axR.legend(fontsize=9, loc='upper left')
-    for bars, vals, col in [(bA, liftA, A_COLOR), (bB, liftB, B_COLOR)]:
+    for i, (vals, col, lab) in enumerate([(Cs, C_COLOR, 'Pure CF floor (C′)'),
+                                          (As, A_COLOR, '+ genome (A′)'),
+                                          (Bs, B_COLOR, '+ LLM (B′)')]):
+        bars = axL.bar(x + (i - 1) * w, vals, w, color=col, label=lab,
+                       edgecolor='white', linewidth=0.6)
         for rect, v in zip(bars, vals):
-            axR.annotate(f'{v:+.0f}%', (rect.get_x() + rect.get_width() / 2, v),
+            axL.annotate(f'{v:.4f}', (rect.get_x() + rect.get_width() / 2, v),
                          textcoords='offset points', xytext=(0, 3), ha='center',
-                         fontsize=8.5, fontweight='bold', color=col)
+                         fontsize=8, color=MUTED)
+    axL.set_ylim(0.108, 0.119)
+    axL.set_ylabel('MRR')
+    axL.set_title('Content beats pure CF — and it replicates', color=INK)
+    axL.set_xticks(x)
+    axL.set_xticklabels(corpora, fontsize=9.5)
+    axL.grid(axis='x', visible=False)
+    axL.legend(fontsize=9, loc='lower center', ncol=3, columnspacing=1.0, handletextpad=0.4)
 
-    fig.suptitle('Content features matter where collaborative signal is sparse',
+    # Right — lift over the floor (%), stripped vs rich (full corpus, low-variance).
+    regimes = ['Stripped\n(what most teams have)', 'Rich metadata\n(MovieLens only)']
+    # stripped: A′−C′, B′−C′ over C′=0.1121 ; rich (low-var): A−C, B−C over C=0.1174
+    liftA = np.array([(0.1148 - 0.1121) / 0.1121, (0.1144 - 0.1174) / 0.1174]) * 100
+    liftB = np.array([(0.1155 - 0.1121) / 0.1121, (0.1176 - 0.1174) / 0.1174]) * 100
+    xr = np.arange(len(regimes))
+    bA = axR.bar(xr - w / 2, liftA, w, color=A_COLOR, label='genome lift  (A − C)',
+                 edgecolor='white', linewidth=0.6)
+    bB = axR.bar(xr + w / 2, liftB, w, color=B_COLOR, label='LLM lift  (B − C)',
+                 edgecolor='white', linewidth=0.6)
+    axR.axhline(0, color='#444444', lw=0.9)
+    axR.set_ylabel('MRR lift over the floor (%)')
+    axR.set_title('…but it vanishes once you have the metadata', color=INK)
+    axR.set_xticks(xr)
+    axR.set_xticklabels(regimes, fontsize=9.5)
+    axR.grid(axis='x', visible=False)
+    axR.set_ylim(min(liftA.min(), liftB.min()) - 1.3, max(liftA.max(), liftB.max()) * 1.25)
+    axR.legend(fontsize=9, loc='upper right')
+    for bars, vals in [(bA, liftA), (bB, liftB)]:
+        for rect, v in zip(bars, vals):
+            axR.annotate(f'{v:+.1f}%', (rect.get_x() + rect.get_width() / 2, v),
+                         textcoords='offset points', xytext=(0, 3 if v >= 0 else -11),
+                         ha='center', fontsize=8.5, fontweight='bold', color=INK)
+
+    fig.suptitle('Content features earn their keep in the setting most teams are actually in',
                  fontsize=15, fontweight='bold', y=1.03)
     fig.text(0.5, -0.06,
-             'MovieLens 32M · Phase 2 rollback eval (n = 382,138, α = 0) · '
-             'tiers by target-movie rating count · same examples across arms',
+             'MovieLens 32M · rollback eval, α = 0, low-variance protocol · '
+             "'stripped' = single implicit history pool + item ID; "
+             "'rich' adds curated genre + user tags + year + rating pools",
              ha='center', fontsize=8.5, color=MUTED)
     fig.tight_layout()
-    out = os.path.join(FIG_DIR, 'fig1_tier_lift.png')
+    out = os.path.join(FIG_DIR, 'fig1_content_lift.png')
     fig.savefig(out)
     plt.close(fig)
     print(f'wrote {out}')

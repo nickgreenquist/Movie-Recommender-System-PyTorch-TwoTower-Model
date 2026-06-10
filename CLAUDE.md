@@ -248,44 +248,61 @@ portfolio-motivated swap with negligible quality cost.
 
 ## LLM-vs-Genome Ablation: Model → Checkpoint Map
 
-The four ablation arms (A/B/C/D) are identical architecture + hyperparameters (α=0, full corpus,
-150k steps, val-MRR checkpoint selection, trained 2026-06-07); the *only* difference is what fills
-the content slot. **All four checkpoints (and their `eval_results/`/`canary_results/` files) were
-renamed on 2026-06-07 to the current explicit-tower-families naming scheme** (commit `7e5b34a`), so
-the filenames below are now self-consistent — A/B/C originally used a legacy scheme (see "History").
+Two experiments, same question — *does an item content vector help, genome vs LLM-extracted, on
+genome's own 132 axes?* — run in two model settings. **The stripped experiment is primary; the
+rich one is the follow-up.** (Narrative: `docs/llm_vs_genome_ablation.md`; full record:
+`docs/plans/llm_vs_genome_ablation_plan.md`.) All arms α=0, low-variance protocol (seeded, 160k
+steps, 100k-example val subset); within an experiment the *only* difference is the content slot
+(`FEATURE_TOWERS`). Whole-corpus MRR, canonical eval (all 19,134 val users, n=382,138).
 
-| Model | Content slot | `FEATURE_TOWERS` | Best checkpoint (`saved_models/`) | MRR\* |
+**Experiment 1 (primary) — stripped "CF-base" models** (`BASE_TOWERS=idonly`): single implicit
+history pool + content slot only — no genre/tag/year/timestamp towers, no liked/disliked/
+rating-weighted pools. The universal setting most (implicit-feedback) systems start from.
+
+| Model | Content slot | Checkpoint (`saved_models/`) | MRR |
+|---|---|---|---|
+| **C′** | none (CF floor) | `best_softmax_idonly_popularity_alpha_0_20260610_081552.pth` | 0.1121 |
+| **A′** | genome | `best_softmax_idonly_genome_tags_popularity_alpha_0_20260610_091949.pth` | 0.1148 |
+| **B′** | LLM | `best_softmax_idonly_llm_features_popularity_alpha_0_20260610_095940.pth` | **0.1155** |
+
+Content beats the floor (genome +2.4%, LLM +3.0%); **C′ < A′ < B′ on every tier**, replicated on
+phase1 (`…_idonly_…_phase1_2026061{0}_…`: 0.1133 / 0.1158 / 0.1165).
+
+**Experiment 2 (follow-up) — rich feature models** (default `BASE_TOWERS=all`): adds back the
+curated genre + 306 user tags + year + the 4-pool history. (B trained on the data-fix-corrected
+LLM tensor — see plan doc.)
+
+| Model | Content slot | `FEATURE_TOWERS` | Checkpoint (`saved_models/`) | MRR |
 |---|---|---|---|---|
-| **A** | genome tags | `genome` | `best_softmax_genome_tags_popularity_alpha_0_20260607_101027.pth` | 0.1146 |
-| **B** | LLM features | `llm` | `best_softmax_llm_features_popularity_alpha_0_20260607_105646.pth` | 0.1157 |
-| **C** | none (floor) | `none` | `best_softmax_popularity_alpha_0_20260607_112755.pth` | 0.1143 |
-| **D** | genome + LLM | `both` | `best_softmax_genome_tags_llm_features_popularity_alpha_0_20260607_131924.pth` | 0.1154 |
+| **C** | none | `none` | `best_softmax_popularity_alpha_0_20260609_212446.pth` | 0.1174 |
+| **A** | genome | `genome` | `best_softmax_genome_tags_popularity_alpha_0_20260609_195854.pth` | 0.1144 |
+| **B** | LLM | `llm` | `best_softmax_llm_features_popularity_alpha_0_20260609_204904.pth` | **0.1176** |
 
-\*Whole-corpus MRR, canonical Phase 2 eval (all 19,134 val users, n=382,138). Per-model
-eval/canary outputs live in `eval_results/` and `canary_results/` under the same stems. (A
-5,000-user `eval` run reads ~1% higher — e.g. A=0.1163, B=0.1173, C=0.1158, D=0.1154 — same
-C < A < B ordering; use the 19,134-user numbers above as canonical.)
+In the rich model the content lift **vanishes**: genome lands *below* the floor (A−C = −0.0030),
+LLM ties it (B−C = +0.0002) — content is redundant with the curated genre/tags. (phase1: C 0.1162,
+A 0.1151, B 0.1180.)
 
-**Config resolution does not depend on the filename.** `src/checkpoint.py:load_checkpoint`
-resolves each model's towers from the *state_dict weight keys* (`item_genome_tag_tower` /
-`item_llm_feature_tower`), so renaming a `.pth` is safe. The **one exception**: A and B are
-"content-era" checkpoints whose state_dict still uses the generic `item_content_tower` keys — for
-those, genome-vs-llm is read from the `_config.json` sidecar (`content_feature_source`, legacy key).
-So the sidecar **must keep the same stem as its `.pth`**; the rename moved both together.
+**Verdict.** Substitution ladder (drop from rich → stripped, whole MRR): floor −0.0053, LLM
+−0.0021, genome +0.0004 — genome fully reconstructs genre/tags (≈ same information), LLM is partly
+orthogonal (carries extra), floor has no fallback. So **LLM features are less redundant with cheap
+curated metadata than genome — i.e. more genuinely additive**; and LLM ≥ genome on every tier of
+both corpora and both experiments (margins within single-seed noise, but consistent and
+cross-corpus replicated). The old high-variance "content earns its keep on the tail" finding does
+**not** survive: under low-variance the rich-base tail is a dead heat (all arms ~0.0031 MRR) — the
+measurable content lift is on the head, in the stripped setting.
 
-**History (why git/older artifacts show different names):**
-- A/B/C `.pth` files (and their result txts) used to read `best_softmax_v2_…`,
-  `best_softmax_v2_llm_…`, `best_softmax_v2_nocontent_…`. The `_v2` token and the unmarked-genome
-  default are gone; the names now compose tower families like D always did.
-- A/B/C **sidecar JSON still contains the legacy `content_feature_source` key internally** (only
-  the *filenames* were changed, not the JSON contents). The loader reads both `feature_towers` and
-  the legacy `content_feature_source`, so this is harmless.
+**Model D (genome + LLM, `FEATURE_TOWERS=both`) — secondary, out of core scope.** "Does combining
+help?" → no clear additive benefit (D ≈ the better single source). Only the old high-variance
+checkpoint exists (`best_softmax_genome_tags_llm_features_popularity_alpha_0_20260607_131924.pth`,
+0.1154); not re-run under the low-variance protocol. **Prod is a separate α=0.5 deployment fine-tune
+of the D architecture** (portfolio-motivated; see Current State), not driven by these metrics.
 
-**None of these four α=0 arms is itself prod.** Prod is now a separate deployment fine-tune of the
-**D architecture** (genome + LLM, `feature_towers='both'`) at α=0.5 — see Current State; the swap was
-portfolio-motivated, not driven by these metrics. Verdict
-(full analysis in `docs/plans/llm_vs_genome_ablation_plan.md` Stage 6): B ≥ A on the popular head,
-A ≈ B on the deep tail, D shows no clear additive benefit over the better single source.
+**Config resolution does not depend on the filename.** `src/checkpoint.py:load_checkpoint` resolves
+the content towers *and* `base_towers` from the *state_dict weight keys*, so renaming a `.pth` is
+safe and a stripped model rebuilds from weights alone. (Legacy "content-era" checkpoints — the old
+06-07 A/B/D — use generic `item_content_tower` keys disambiguated by the `_config.json` sidecar,
+which must keep the same stem; the low-variance and stripped checkpoints use the explicit
+`item_genome_tag_tower` / `item_llm_feature_tower` keys natively.)
 
 ## Architecture Experiment Log
 

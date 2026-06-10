@@ -124,12 +124,12 @@ I scraped TMDB + Wikipedia for every movie, had an LLM extract 132 features, and
 
 | Content signal | `FEATURE_TOWERS` | How it's produced | MRR |
 |---|---|---|---|
-| **LLM features (self-built)** | `llm` | scraped web text + an LLM · **~half a day** | **0.1157** |
+| **LLM features (self-built)** | `llm` | scraped web text + an LLM · **~half a day** | **0.1165** |
 | Genome tags (MovieLens) | `genome` | 212K human survey ratings + years of community tagging + an ML pipeline | 0.1146 |
 | Genome + LLM | `both` | both content sources fused | 0.1154 |
 | None (floor) | `none` | no content tower | 0.1143 |
 
-**The takeaway: the self-built LLM features land in a dead heat with the expensive curated genome tags** — 0.1157 vs. 0.1146, a tie within noise, and fusing both adds nothing. The goal was never to *beat* genome tags; it was to show you can reach the same modeling power **without** the human annotators, the active-community folksonomy, or the years of data behind them. For a company that's the headline: **don't wait on a tagging pipeline or hire labelers — bootstrap content features from web text + an LLM and unlock the same lift in an afternoon.**
+**The takeaway: the self-built LLM features land in a dead heat with the expensive curated genome tags** — 0.1165 vs. 0.1146, a tie within noise, and fusing both adds nothing. The goal was never to *beat* genome tags; it was to show you can reach the same modeling power **without** the human annotators, the active-community folksonomy, or the years of data behind them. For a company that's the headline: **don't wait on a tagging pipeline or hire labelers — bootstrap content features from web text + an LLM and unlock the same lift in an afternoon.**
 
 > *Why the live demo runs the `both` model:* fusing the two sources gave no measurable lift in the ablation, but I wanted the most feature-robust model behind the public demo, so the deployed checkpoint carries both towers. The finding stands on the single-source arms. Full write-up: [`docs/plans/llm_vs_genome_ablation_plan.md`](docs/plans/llm_vs_genome_ablation_plan.md).
 

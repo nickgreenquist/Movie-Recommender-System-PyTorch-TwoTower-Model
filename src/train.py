@@ -11,6 +11,15 @@ FEATURE_TOWERS selects which semantic-feature sub-towers the model includes at t
 (parallel to the CORPUS env var): 'genome' | 'llm' | 'both' | 'none'. It tags the checkpoint
 name so the variants are unambiguous on disk. Default 'genome' preserves the historical prod
 naming. The legacy CONTENT_SOURCE env var is still read as a fallback.
+
+BASE_TOWERS selects the always-on base towers: 'all' (default — every model so far) | 'idonly'
+(the stripped CF-base ablation: genre/tag/year/timestamp towers off AND the user tower collapsed
+to the single full-history ID sum-pool — no liked/disliked/rating-weighted pools. The ONLY thing
+left besides the ID embeddings is the semantic-feature slot). 'idonly' tags the checkpoint name:
+
+    BASE_TOWERS=idonly FEATURE_TOWERS=none   python main.py train    # C′ pure CF floor
+    BASE_TOWERS=idonly FEATURE_TOWERS=genome python main.py train    # A′ ID + genome
+    BASE_TOWERS=idonly FEATURE_TOWERS=llm    python main.py train    # B′ ID + LLM
 """
 import json
 import os
@@ -45,6 +54,12 @@ def get_config() -> dict:
     elif feature_towers not in ('genome', 'llm', 'both'):
         raise ValueError(f"Unknown FEATURE_TOWERS={feature_towers!r}; "
                          f"expected 'genome', 'llm', 'both', or 'none'")
+    # Which always-on base towers to include, via the BASE_TOWERS env var: 'all' (default) |
+    # 'idonly' (stripped CF-base ablation — genre/tag/year/timestamp towers off, user tower
+    # collapsed to the single full-history sum pool).
+    base_towers = os.environ.get('BASE_TOWERS', 'all')
+    if base_towers not in ('all', 'idonly'):
+        raise ValueError(f"Unknown BASE_TOWERS={base_towers!r}; expected 'all' or 'idonly'")
     return {
         # Sub-embedding sizes
         'item_movieId_embedding_size':      32,
@@ -59,6 +74,8 @@ def get_config() -> dict:
         'user_llm_embedding_size':          32,
         # Which semantic-feature towers: 'genome' | 'llm' | 'both' | None (Model C).
         'feature_towers':                   feature_towers,
+        # Which base towers: 'all' | 'idonly' (stripped CF-base ablation).
+        'base_towers':                      base_towers,
         # Projection MLP
         'proj_hidden':  256,
         'output_dim':   128,
@@ -67,8 +84,8 @@ def get_config() -> dict:
         'weight_decay':     0.0,
         'adam_eps':         1e-6,
         'minibatch_size':   512,
-        'training_steps':   150_000,
-        'log_every':        5_000,
+        'training_steps':   160_000,
+        'log_every':        10_000,
         'checkpoint_every': 30_000,
         'checkpoint_dir':   'saved_models',
         'temperature':      0.1,
@@ -103,6 +120,8 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
     feature_towers = config.get('feature_towers', config.get('content_feature_source', 'genome'))
     has_genome = feature_towers in ('genome', 'both')
     has_llm    = feature_towers in ('llm', 'both')
+    base_towers = config.get('base_towers', 'all')
+    has_base    = base_towers != 'idonly'   # genre/tag/year towers stripped as a block
 
     # Semantic-feature buffers — genome from the FeatureStore (1128-dim), LLM from the pre-built
     # tensor (132-dim). Each is built only if its tower is on; None (Model C) builds neither.
@@ -117,18 +136,23 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
         print(f"  LLM features: {llm_path}  ({llm_feature_len}-dim, "
               f"{llm_feature_buffer.shape[0]-1} movies)")
 
-    genre_matrix = np.array(
-        [fs.movieId_to_genre_context[mid] for mid in fs.top_movies], dtype=np.float32)
-    tag_matrix = np.array(
-        [fs.movieId_to_tag_context[mid] for mid in fs.top_movies], dtype=np.float32)
-    year_array = np.array(
-        [fs.year_to_i[fs.movieId_to_year[mid]] for mid in fs.top_movies], dtype=np.int64)
-    genre_context_buffer = torch.from_numpy(
-        np.vstack([genre_matrix, np.zeros((1, genre_matrix.shape[1]), dtype=np.float32)]))
-    tag_context_buffer = torch.from_numpy(
-        np.vstack([tag_matrix, np.zeros((1, tag_matrix.shape[1]), dtype=np.float32)]))
-    year_context_buffer = torch.from_numpy(
-        np.concatenate([year_array, np.zeros((1,), dtype=np.int64)]))
+    # Base-tower buffers — built only when the base towers are on ('idonly' strips them).
+    genre_context_buffer = None
+    tag_context_buffer   = None
+    year_context_buffer  = None
+    if has_base:
+        genre_matrix = np.array(
+            [fs.movieId_to_genre_context[mid] for mid in fs.top_movies], dtype=np.float32)
+        tag_matrix = np.array(
+            [fs.movieId_to_tag_context[mid] for mid in fs.top_movies], dtype=np.float32)
+        year_array = np.array(
+            [fs.year_to_i[fs.movieId_to_year[mid]] for mid in fs.top_movies], dtype=np.int64)
+        genre_context_buffer = torch.from_numpy(
+            np.vstack([genre_matrix, np.zeros((1, genre_matrix.shape[1]), dtype=np.float32)]))
+        tag_context_buffer = torch.from_numpy(
+            np.vstack([tag_matrix, np.zeros((1, tag_matrix.shape[1]), dtype=np.float32)]))
+        year_context_buffer = torch.from_numpy(
+            np.concatenate([year_array, np.zeros((1,), dtype=np.int64)]))
 
     return MovieRecommender(
         genres_len=len(fs.genres_ordered),
@@ -139,6 +163,7 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
         timestamp_num_bins=fs.timestamp_num_bins,
         user_context_size=fs.user_context_size,
         feature_towers=feature_towers,
+        base_towers=base_towers,
         genome_context_buffer=genome_context_buffer,
         llm_feature_buffer=llm_feature_buffer,
         llm_feature_len=llm_feature_len,
@@ -167,39 +192,45 @@ def print_model_summary(model: MovieRecommender) -> None:
             if isinstance(layer, torch.nn.Linear):
                 return layer.out_features
 
-    # Genome and LLM towers are each present only when switched on (None/Model C has neither).
+    # Gated towers (semantic-feature AND base) are each present only when switched on.
     id_dim            = m.item_embedding_lookup.embedding_dim
     genome_item_dim   = _out_dim(m.item_genome_tag_tower)    if m.has_genome else 0
     genome_user_dim   = _out_dim(m.user_genome_context_tower) if m.has_genome else 0
     llm_item_dim      = _out_dim(m.item_llm_feature_tower)   if m.has_llm    else 0
     llm_user_dim      = _out_dim(m.user_llm_feature_tower)   if m.has_llm    else 0
-    genre_dim         = _out_dim(m.user_genre_tower)
-    ts_dim            = m.timestamp_embedding_lookup.embedding_dim
-    item_genre_dim    = _out_dim(m.item_genre_tower)
-    item_tag_dim      = _out_dim(m.item_tag_tower)
+    genre_dim         = _out_dim(m.user_genre_tower)         if m.has_genre  else 0
+    ts_dim            = m.timestamp_embedding_lookup.embedding_dim if m.has_timestamp else 0
+    item_genre_dim    = _out_dim(m.item_genre_tower)         if m.has_genre  else 0
+    item_tag_dim      = _out_dim(m.item_tag_tower)           if m.has_tag    else 0
     item_movieId_dim  = _out_dim(m.item_embedding_tower)
-    year_dim          = _out_dim(m.year_embedding_tower)
+    year_dim          = _out_dim(m.year_embedding_tower)     if m.has_year   else 0
     item_total        = (item_genre_dim + item_tag_dim + genome_item_dim + llm_item_dim
                          + item_movieId_dim + year_dim)
     n_params          = sum(p.nelement() for p in model.parameters() if p.requires_grad)
 
-    pool_total = 4 * id_dim
+    n_pools    = 4 if m.has_rating_pools else 1
+    pool_total = n_pools * id_dim
     user_total = pool_total + genome_user_dim + llm_user_dim + genre_dim + ts_dim
-    genome_user_desc = f"genome_ctx({genome_user_dim}) + " if m.has_genome else ""
-    llm_user_desc    = f"llm_ctx({llm_user_dim}) + "       if m.has_llm    else ""
     genome_item_desc = f"genome({genome_item_dim}) + "     if m.has_genome else ""
     llm_item_desc    = f"llm({llm_item_dim}) + "           if m.has_llm    else ""
-    user_desc  = (f"4×sum_pool_id({id_dim}) + {genome_user_desc}{llm_user_desc}"
-                  f"genre({genre_dim}) + ts({ts_dim})")
+    genre_item_desc  = f"genre({item_genre_dim}) + "       if m.has_genre  else ""
+    tag_item_desc    = f"tag({item_tag_dim}) + "           if m.has_tag    else ""
+    year_item_desc   = f" + year({year_dim})"              if m.has_year   else ""
+    user_parts = [f"{n_pools}×sum_pool_id({id_dim})"]
+    if m.has_genome:    user_parts.append(f"genome_ctx({genome_user_dim})")
+    if m.has_llm:       user_parts.append(f"llm_ctx({llm_user_dim})")
+    if m.has_genre:     user_parts.append(f"genre({genre_dim})")
+    if m.has_timestamp: user_parts.append(f"ts({ts_dim})")
+    user_desc  = " + ".join(user_parts)
 
     proj_h  = m.user_projection[0].out_features
     out_dim = m.user_projection[2].out_features
 
     print(f"\n── Model dimensions ──")
-    print(f"  Feature towers: {m.feature_towers}")
+    print(f"  Feature towers: {m.feature_towers}  |  Base towers: {m.base_towers}")
     print(f"  User side:  {user_desc}  =  {user_total}")
-    print(f"  Item side:  genre({item_genre_dim}) + tag({item_tag_dim}) + {genome_item_desc}{llm_item_desc}"
-          f"movieId({item_movieId_dim}) + year({year_dim})  =  {item_total}")
+    print(f"  Item side:  {genre_item_desc}{tag_item_desc}{genome_item_desc}{llm_item_desc}"
+          f"movieId({item_movieId_dim}){year_item_desc}  =  {item_total}")
     print(f"  Projection: Linear({proj_h}) → ReLU → Linear({out_dim})  [both towers]")
     print(f"  Parameters: {n_params:,}")
 
@@ -292,20 +323,29 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
     alpha         = config['popularity_alpha']
     alpha_tag     = str(alpha).replace('.', '') if alpha != int(alpha) else str(int(alpha))
     corpus_sfx    = corpus_suffix()  # '' for the full corpus, '_<corpus>' otherwise
-    # Checkpoint name composes the enabled feature towers (no 'v2'); each model is unambiguous on
-    # disk: best_softmax[_genome_tags][_llm_features]_popularity_alpha_<a>[_<corpus>]_<ts>.pth
-    # (config is also in the JSON sidecar). None (Model C) → best_softmax_popularity_alpha_...
+    # Checkpoint name composes the enabled towers (no 'v2'); each model is unambiguous on disk:
+    # best_softmax[_idonly][_genome_tags][_llm_features]_popularity_alpha_<a>[_<corpus>]_<ts>.pth
+    # (config is also in the JSON sidecar). None (Model C) → best_softmax_popularity_alpha_...;
+    # the stripped CF-base arms (BASE_TOWERS=idonly) lead with '_idonly'.
     feat_towers   = config['feature_towers']
+    base_towers   = config.get('base_towers', 'all')
     tag_parts     = []
+    if base_towers == 'idonly':           tag_parts.append('idonly')
     if feat_towers in ('genome', 'both'): tag_parts.append('genome_tags')
     if feat_towers in ('llm', 'both'):    tag_parts.append('llm_features')
     feat_tag      = ('_' + '_'.join(tag_parts)) if tag_parts else ''
     print(f"  Corpus: {CORPUS}  (checkpoint suffix: {corpus_sfx!r})  "
-          f"feature towers: {feat_towers}  (name tag: {feat_tag!r})")
+          f"feature towers: {feat_towers}  base towers: {base_towers}  (name tag: {feat_tag!r})")
     best_val_mrr  = float('-inf')   # best_path is selected on val-MRR (the reported metric), not val CE
     best_path     = os.path.join(checkpoint_dir, f'best_softmax{feat_tag}_popularity_alpha_{alpha_tag}{corpus_sfx}_{run_timestamp}.pth')
 
-    val_eval_size = min(8_192, n_val)
+    # Bigger fixed val subset drives both the reported val-MRR and best-checkpoint selection.
+    # The old 8,192-example subset made selection high-variance (±0.003-0.004 run-to-run MRR
+    # noise, enough to flip the genome-vs-LLM ordering); the MRR estimate's SE ~ 1/sqrt(N), so
+    # 100,000 cuts that ~3.5x (to ±~0.001) and for the smaller phase1 corpus likely uses all of
+    # n_val (no subsampling at all). val-eval is forward-only and runs every 10k steps, so even
+    # at 100k it's ~1s per eval — a negligible fraction of the 160k-step training loop.
+    val_eval_size = min(100_000, n_val)
     rng_val = torch.Generator()
     rng_val.manual_seed(0)
     val_eval_idx = torch.randperm(n_val, generator=rng_val)[:val_eval_size].tolist()

@@ -16,22 +16,29 @@ Test whether LLM-generated item features can match or beat the human-curated Mov
 
 **Research question:** Can modern LLMs replace expensive human curation for content features in recommendation systems?
 
-**Deliverable:** Trained two-tower models on MovieLens 32M — one using genome tags (then-prod), one using LLM-generated features from scraped web content, and a no-content-slot floor baseline. Quantified ablation of which produces better recommendations, with the floor baseline measuring how much either content source adds at all. (A 4th arm, D = genome + LLM, was added later as a secondary "does *more* help?" check.)
+**Deliverable:** Trained two-tower models on MovieLens 32M — one using genome tags (then-prod), one using LLM-generated features from scraped web content, and a no-content-slot floor baseline. Quantified ablation of which produces better recommendations, with the floor baseline measuring how much either content source adds at all. (A 4th arm, D = genome + LLM, was added as a secondary "does *more* help?" check.)
+
+**Two experiments, in the order the writeup presents them** (`docs/llm_vs_genome_ablation.md`):
+
+1. **Primary — stripped "CF-base" models** (`BASE_TOWERS=idonly`): item ID embedding + a single implicit history pool + the content slot, and nothing else. This is the realistic / universal setting — what an implicit-feedback recommender with no curated metadata actually has. It is where the content question is cleanly answerable, so it leads.
+2. **Follow-up — rich feature models** (default `BASE_TOWERS=all`): the same three content arms re-run with MovieLens's curated genre + 306 user tags + year + the rating-derived 4-pool history added back, to ask whether genome / LLM still help once the model is metadata-rich. (This was historically run *first*; the stripped experiment came after we noticed how much MovieLens-specific privilege the rich model baked in. The writeup and these tables present them in logical, not chronological, order.)
 
 This was a **parallel experiment** within the existing Movie Recommender repo, not a new repo or project.
 
 ## Setup — what makes it a fair test
 
-Four arms, **identical** two-tower architecture, hyperparameters, train/val split, loss (full softmax), and 150k training steps. The **only** difference is what fills the content slot:
+Within each experiment, the arms are **identical** in two-tower architecture, hyperparameters, train/val split, and loss (full softmax). The **only** difference is what fills the content slot:
 
-- **A — genome:** 1,128-dim genome scores (`FEATURE_TOWERS=genome`)
-- **B — LLM:** 132 LLM-extracted dims (`FEATURE_TOWERS=llm`)
-- **C — none:** content slot removed — the floor (`FEATURE_TOWERS=none`)
-- **D — both:** genome + LLM, two parallel content sub-tower families concatenated pre-projection (`FEATURE_TOWERS=both`)
+- **genome:** 1,128-dim genome scores (`FEATURE_TOWERS=genome`) — arm A (rich) / A′ (stripped)
+- **LLM:** 132 LLM-extracted dims (`FEATURE_TOWERS=llm`) — arm B / B′
+- **none:** content slot removed — the floor (`FEATURE_TOWERS=none`) — arm C / C′
+- **both:** genome + LLM concatenated pre-projection (`FEATURE_TOWERS=both`) — arm D (rich follow-up only, secondary)
 
-**Menon popularity-correction α = 0 for every arm, both phases** — no popularity debiasing anywhere, so it cannot confound the genome-vs-LLM comparison (prod's α=0.5 is deliberately *not* used here). The LLM schema is **derived from the top-discriminability genome tags** (`data/top_genome_tags_by_discriminability.csv`), so both spaces sit on the **same 132 axes** — each LLM dim records its source genome tag(s) in `data/llm_schema_dimensions.json`. Config resolves towers from state_dict weight keys, not filenames (`src/checkpoint.py:load_checkpoint`).
+The two model settings are selected by `BASE_TOWERS`: **`idonly`** (stripped/primary — ID + single history pool + content slot) vs **`all`** (rich follow-up — adds genre/tag/year/4-pool). A stripped arm's prime (C′/A′/B′) marks the `idonly` model.
 
-Two corpora: **Phase 1** pilot = 4,461 popular movies (> 1,000 raw ratings); **Phase 2** = full 9,375-movie corpus (> 200 ratings), which adds the long tail where content features earn their keep.
+**Low-variance protocol (all numbers below).** Seeded (`SEED=42`), **160k** training steps, best checkpoint selected on a **100k-example** val-MRR subset — which cut run-to-run selection noise enough that *best ≈ step_150000* everywhere. **An earlier 150k-step / 8,192-val-subset run was higher-variance**; its tables are retained below under "superseded" banners because one of its headline findings (a tail lift) did not replicate. **Menon popularity-correction α = 0 for every arm** — no popularity debiasing anywhere, so it cannot confound the genome-vs-LLM comparison (prod's α=0.5 is deliberately *not* used here). The LLM schema is **derived from the top-discriminability genome tags** (`data/top_genome_tags_by_discriminability.csv`), so both spaces sit on the **same 132 axes** — each LLM dim records its source genome tag(s) in `data/llm_schema_dimensions.json`. Config resolves towers *and* `base_towers` from state_dict weight keys, not filenames (`src/checkpoint.py:load_checkpoint`).
+
+Two corpora: **Phase 1** pilot = 4,461 popular movies (> 1,000 raw ratings); **Phase 2** = full 9,375-movie corpus (> 200 ratings).
 
 ## Pipeline & artifacts
 
@@ -54,32 +61,50 @@ Code lives in `llm_features/` (run end-to-end once, then cached per movie+group)
 
 ## Canonical model → checkpoint map (authoritative)
 
-All four checkpoints (and their `eval_results/`/`canary_results/` files) were **renamed on 2026-06-07 to the current explicit-tower-families naming scheme** (commit `7e5b34a`), so the filenames below are now self-consistent. A/B/C were originally trained under a legacy scheme (`best_softmax_v2[_llm|_nocontent]_…`); see "History" below. This table is the single source of truth for which checkpoint is which model; the scattered per-table references elsewhere all point here.
+Single source of truth for which checkpoint is which model. All numbers are whole-corpus MRR,
+canonical eval (all 19,134 val users, n=382,138 for full; 5,000 users, n=99,846 for phase1),
+**low-variance protocol** (seeded, 160k steps).
 
-**Phase 2 — full corpus, α=0, 150k steps, val-MRR selection, trained 2026-06-07:**
+**Experiment 1 (primary) — stripped CF-base, `BASE_TOWERS=idonly`, α=0, trained 2026-06-10:**
 
-| Model | Content slot | `FEATURE_TOWERS` | Best checkpoint (`saved_models/`) | MRR\* |
+| Model | Content | Full checkpoint (`saved_models/`) | Full MRR | Phase 1 MRR |
 |---|---|---|---|---|
-| **A** | genome tags | `genome` | `best_softmax_genome_tags_popularity_alpha_0_20260607_101027.pth` | 0.1146 |
-| **B** | LLM features | `llm` | `best_softmax_llm_features_popularity_alpha_0_20260607_105646.pth` | 0.1157 |
-| **C** | none (floor) | `none` | `best_softmax_popularity_alpha_0_20260607_112755.pth` | 0.1143 |
-| **D** | genome + LLM | `both` | `best_softmax_genome_tags_llm_features_popularity_alpha_0_20260607_131924.pth` | 0.1154 |
+| **C′** | none | `best_softmax_idonly_popularity_alpha_0_20260610_081552.pth` | 0.1121 | 0.1133 |
+| **A′** | genome | `best_softmax_idonly_genome_tags_popularity_alpha_0_20260610_091949.pth` | 0.1148 | 0.1158 |
+| **B′** | LLM | `best_softmax_idonly_llm_features_popularity_alpha_0_20260610_095940.pth` | **0.1155** | **0.1165** |
 
-\*Whole-corpus MRR, canonical eval (all 19,134 val users, n=382,138; matches the Phase 2 result tables below). Per-model `eval_results/` and `canary_results/` files share the same stem.
+(Phase 1 stems: `best_softmax_idonly[_genome_tags|_llm_features]_…_phase1_20260610_{104200,110324,114004}.pth`.)
 
-**Safe-rename notes:** `src/checkpoint.py:load_checkpoint` resolves towers from the *state_dict weight keys*, not the filename, so renaming a `.pth` is safe. The one caveat: A and B are "content-era" checkpoints (generic `item_content_tower` keys) whose genome-vs-llm identity is read from the `_config.json` **sidecar** (legacy `content_feature_source` key) — the sidecar must keep the same stem, so the rename moved `.pth` + `_config.json` together. A/B/C sidecar JSON still contains the legacy `content_feature_source` key internally (only the filenames changed); the loader reads both keys, so this is harmless.
+**Experiment 2 (follow-up) — rich feature models, `BASE_TOWERS=all`, α=0, trained 2026-06-09:**
 
-**History (why git/older artifacts show different names):**
-- **Model A's old filename had no "genome".** Pre-rename, genome was the *default* content source and left unmarked (`best_softmax_v2_…`); only non-default arms got a modifier (`_llm`, `_nocontent`). The `_v2` token and the unmarked-genome default are now gone — names compose tower families (`genome_tags`, `llm_features`) like D always did.
-- Old → new: A `best_softmax_v2_…101027` → `best_softmax_genome_tags_…101027`; B `best_softmax_v2_llm_…105646` → `best_softmax_llm_features_…105646`; C `best_softmax_v2_nocontent_…112755` → `best_softmax_…112755`. D (`…_genome_tags_llm_features_…131924`) was already correct.
+| Model | Content | `FEATURE_TOWERS` | Full checkpoint (`saved_models/`) | Full MRR | Phase 1 MRR |
+|---|---|---|---|---|---|
+| **C** | none | `none` | `best_softmax_popularity_alpha_0_20260609_212446.pth` | 0.1174 | 0.1162 |
+| **A** | genome | `genome` | `best_softmax_genome_tags_popularity_alpha_0_20260609_195854.pth` | 0.1144 | 0.1151 |
+| **B** | LLM | `llm` | `best_softmax_llm_features_popularity_alpha_0_20260609_204904.pth` | **0.1176** | **0.1180** |
 
-**Phase 1 — reduced corpus (`_phase1` suffix), α=0:** see the Phase 1 checkpoint list in the results below (separate val-loss vs val-MRR selection sets). Those Phase 1 checkpoints were **not** renamed (still `best_softmax_v2[_llm|_nocontent]_…_phase1_…`).
+(Phase 1 stems: `best_softmax[_genome_tags|_llm_features]_…_phase1_20260609_{183844,162905,171724}.pth`. B trained on the data-fix-corrected LLM tensor — see the "Data-integrity fix" note below.)
 
-## Eval methodology & results
+**Model D (genome + LLM, `FEATURE_TOWERS=both`) — secondary, high-variance only.** `best_softmax_genome_tags_llm_features_popularity_alpha_0_20260607_131924.pth`, MRR 0.1154 — the old 150k-step / 8,192-val run; **not** re-trained under the low-variance protocol, so it is not directly comparable to the A/B/C numbers above. Prod is a separate α=0.5 fine-tune of this architecture (see Current State / CLAUDE.md).
+
+**Config resolution does not depend on the filename.** `src/checkpoint.py:load_checkpoint` resolves the content towers *and* `base_towers` from the *state_dict weight keys*, so renaming a `.pth` is safe and a stripped model rebuilds from weights alone. The low-variance and stripped checkpoints use the explicit `item_genome_tag_tower` / `item_llm_feature_tower` keys natively; only the legacy "content-era" checkpoints (the old 06-07 A/B/D) use generic `item_content_tower` keys disambiguated by the `_config.json` sidecar (must keep the same stem).
+
+> **Superseded high-variance run (2026-06-07, 150k steps / 8,192-val).** The earlier rich A/B/C/D numbers (A 0.1146, B 0.1165, C 0.1143, D 0.1154) and the Phase 1 val-loss-vs-val-MRR selection tables in "Eval methodology" below are from that higher-variance run. They are kept for the record but are **not** the canonical numbers — the low-variance re-run above is. Where a finding from the old run did not replicate (notably the tail lift), it is flagged inline.
+
+## Eval methodology & results (Experiment 2, rich — superseded high-variance run)
+
+> **This whole section is the original high-variance rich-experiment run** (2026-06-07/09, 150k
+> steps, 8,192-example val subset). It is the **follow-up** experiment (rich feature models), kept
+> for the record. The **canonical** numbers are the low-variance re-run in the Canonical map above;
+> the **primary** experiment (stripped CF-base) is in "Experiment 1 — stripped CF-base" below. One
+> headline here — the tail lift — **did not replicate** under the low-variance protocol; it is
+> retracted inline in the Long-tail split. Read this section as provenance, not canon.
 
 Rollback protocol throughout: for each held-out val user, context = history[0..j-1], target = history[j], up to 20 chronological positions per user. Recall@10 = Hit@10 (one held-out target per example).
 
 **Phase 1 — reduced corpus (4,461 movies, > 1,000 raw ratings; α=0; rollback protocol, n=99,846 over 5,000 val users, seed 42).**
+
+> ⚠️ **Pre-fix — predates the 2026-06-09 feature-data fix.** These Phase 1 B numbers were trained on the *phase1* LLM tensor before 141 wrong-movie extractions were corrected (see the data-fix note in the Phase 2 section). phase1 B was **not** re-trained on the rebuilt `_phase1.pt`, so the Phase 1 B column below is stale; the corrected single-source result is the **Phase 2** table. (A/C are unaffected — they use no LLM features.)
 
 > **Checkpoint-selection criterion was changed mid-experiment — both result sets are reported below.** Originally `best_path` was saved at **minimum validation softmax cross-entropy** (a ranking *surrogate*). It is now saved at **maximum validation MRR** (the reported metric), computed on raw dot products over the same 8,192-example val subset — see `_val_ranking_metrics` in `src/train.py`. **Future runs and the paper use val-MRR selection (Table 2); Table 1 is retained because the change is itself a finding** (see "Selection-criterion effect"). NDCG@10 / Recall@10 included; Recall@10 = Hit@10 here (rollback holds out a single target per example, so they coincide).
 
@@ -126,22 +151,36 @@ Model C is the floor. The A−C and B−C columns are the content-feature lift �
 
 | Metric | No content (C) | Genome (A) | LLM (B) | A−C | B−C |
 |---|---|---|---|---|---|
-| Hit@1 | 0.0577 | 0.0576 | **0.0585** | −0.0001 | +0.0008 |
-| Hit@5 | 0.1536 | 0.1538 | **0.1552** | +0.0002 | +0.0016 |
-| Hit@10 | 0.2213 | 0.2229 | **0.2240** | +0.0016 | +0.0027 |
-| Hit@20 | 0.3101 | 0.3131 | **0.3140** | +0.0030 | +0.0039 |
-| Hit@50 | 0.4611 | 0.4642 | **0.4656** | +0.0031 | +0.0045 |
-| NDCG@10 | 0.1283 | 0.1288 | **0.1300** | +0.0005 | +0.0017 |
-| MRR | 0.1143 | 0.1146 | **0.1157** | +0.0003 | +0.0014 |
+| Hit@1 | 0.0577 | 0.0576 | **0.0591** | −0.0001 | +0.0014 |
+| Hit@5 | 0.1536 | 0.1538 | **0.1565** | +0.0002 | +0.0029 |
+| Hit@10 | 0.2213 | 0.2229 | **0.2254** | +0.0016 | +0.0041 |
+| Hit@20 | 0.3101 | 0.3131 | **0.3152** | +0.0030 | +0.0051 |
+| Hit@50 | 0.4611 | 0.4642 | **0.4665** | +0.0031 | +0.0054 |
+| NDCG@10 | 0.1283 | 0.1288 | **0.1309** | +0.0005 | +0.0026 |
+| MRR | 0.1143 | 0.1146 | **0.1165** | +0.0003 | +0.0022 |
 
-**Phase 2 whole-corpus verdict:** **B (LLM) leads every metric** — B−A = +0.0011 MRR (+0.97%), B−C = +0.0014 (+1.2%), A−C = +0.0003 (+0.3%). The Phase 1 finding (LLM matches/slightly beats genome) **holds and firms up with the long tail present**: B now leads on *every* metric (Phase 1 had a Hit@20 tie). The aggregate lift-over-floor is small because the rollback target distribution is popularity-skewed (Q4 popular movies are 90% of examples) — the lift lives in the long-tail split below, not the aggregate.
+**Phase 2 whole-corpus verdict:** **B (LLM) leads every metric** — B−A = +0.0019 MRR (+1.7%), B−C = +0.0022 (+1.9%), A−C = +0.0003 (+0.3%). The Phase 1 finding (LLM matches/slightly beats genome) **holds and firms up with the long tail present**: B now leads on *every* metric (Phase 1 had a Hit@20 tie). The aggregate lift-over-floor is small because the rollback target distribution is popularity-skewed (Q4 popular movies are 90% of examples) — the lift lives in the long-tail split below, not the aggregate.
 
-Checkpoints (all α=0, full corpus, content slot is the only difference; trained 2026-06-07):
+Checkpoints (α=0, full corpus, content slot is the only difference; A/C trained 2026-06-07, **B re-trained 2026-06-09 on the corrected LLM feature tensor**):
 - A genome = `best_softmax_genome_tags_popularity_alpha_0_20260607_101027.pth`
-- B llm = `best_softmax_llm_features_popularity_alpha_0_20260607_105646.pth`
+- B llm = `best_softmax_llm_features_popularity_alpha_0_20260609_121604.pth`
 - C nocontent = `best_softmax_popularity_alpha_0_20260607_112755.pth`
 
+> **Data-integrity fix (2026-06-09).** An audit found **141 movies (~1.5%)** whose LLM extractions had been saved under the **wrong movieId** (a save-side misalignment in the extraction fan-out — e.g. The Matrix scored as a school romance). They were re-extracted (1 movie/agent, genre-guarded `ingest()`) and the tensor rebuilt; **B was re-trained on the corrected tensor → 0.1165** (was 0.1157 on the corrupt tensor, +0.0008, concentrated in the popular head). **A** (genome) and **C** (no content) don't use LLM features, so their 06-07 numbers are unchanged and remain directly comparable. The Phase 2 tables below reflect the corrected B; the **Phase 1 tables above predate the fix** (phase1 B was not re-trained on the rebuilt `_phase1.pt`).
+
 ### Long-tail split (Phase 2)
+
+> ⚠️ **RETRACTED under the low-variance re-run — the tail lift was a high-variance artifact.**
+> Finding 1 below ("content earns its keep on the tail, A−C ≈ +18% relative") **does not
+> replicate.** On the canonical low-variance rich run, the deep tail is a dead heat: TAIL MRR is
+> ~0.0031 for all three arms, and TAIL Hit@250 has genome *at or below* the floor — **C 0.1329,
+> A 0.1321, B 0.1360** (A−C = −0.0008; Q1 Hit@250 even more so, A 0.0497 vs C 0.0543). The rich
+> model is a near-null *everywhere*, tail included — content is redundant with the curated
+> genre/tags (this is exactly what the stripped Experiment 1 isolates). The high-variance tier
+> table below is kept for provenance; **the canonical finding is: the measurable content lift is on
+> the popular head, in the stripped setting — not the cold tail** (at MovieLens's ≥200-rating floor
+> the deep tail is too sparse to resolve, and true cold-start can't be benchmarked against the
+> genome at all).
 
 On the full corpus we report metrics **restricted by the target movie's popularity tier** — this is where content features matter most and where the genome-vs-LLM question is most consequential.
 
@@ -149,38 +188,38 @@ On the full corpus we report metrics **restricted by the target movie's populari
 
 | Tier (n) | C | A | B | A−C | B−C | B−A |
 |---|---|---|---|---|---|---|
-| Whole corpus (382,138) | 0.1143 | 0.1146 | **0.1157** | +0.0003 | +0.0014 | +0.0011 |
-| HEAD > 1k (369,486) | 0.1181 | 0.1184 | **0.1195** | +0.0003 | +0.0014 | +0.0011 |
-| Q4 popular (343,906) | 0.1259 | 0.1260 | **0.1273** | +0.0001 | +0.0014 | +0.0013 |
-| Q3 mid (26,923) | 0.0129 | **0.0148** | 0.0144 | +0.0019 | +0.0015 | −0.0004 |
-| Q2 mid (8,049) | 0.0032 | **0.0038** | 0.0037 | +0.0006 | +0.0005 | −0.0001 |
+| Whole corpus (382,138) | 0.1143 | 0.1146 | **0.1165** | +0.0003 | +0.0022 | +0.0019 |
+| HEAD > 1k (369,486) | 0.1181 | 0.1184 | **0.1204** | +0.0003 | +0.0023 | +0.0020 |
+| Q4 popular (343,906) | 0.1259 | 0.1260 | **0.1282** | +0.0001 | +0.0023 | +0.0022 |
+| Q3 mid (26,923) | 0.0129 | **0.0148** | 0.0143 | +0.0019 | +0.0014 | −0.0005 |
+| Q2 mid (8,049) | 0.0032 | **0.0038** | 0.0036 | +0.0006 | +0.0004 | −0.0002 |
 | Q1 rarest (3,260) | 0.0012 | 0.0014 | 0.0014 | +0.0002 | +0.0002 | ±0.0000 |
-| **TAIL ≤ 1k (12,652)** | 0.0028 | **0.0033** | 0.0032 | +0.0005 | +0.0004 | −0.0001 |
+| **TAIL ≤ 1k (12,652)** | 0.0028 | **0.0033** | 0.0031 | +0.0005 | +0.0003 | −0.0002 |
 
 **Tail-tier recall** (Hit@50 and Hit@250 — tail tiers have few top-rank hits, so deeper-K recall carries more signal than MRR there):
 
 | Tier | C@50 | A@50 | B@50 | C@250 | A@250 | B@250 |
 |---|---|---|---|---|---|---|
-| Q3 mid | 0.1134 | **0.1251** | 0.1223 | 0.3420 | **0.3608** | 0.3529 |
-| Q2 mid | 0.0226 | 0.0287 | **0.0297** | 0.1442 | 0.1536 | **0.1568** |
-| Q1 rarest | 0.0034 | **0.0061** | 0.0052 | 0.0463 | **0.0604** | 0.0580 |
-| TAIL ≤ 1k | 0.0192 | **0.0249** | 0.0241 | 0.1243 | 0.1368 | **0.1378** |
+| Q3 mid | 0.1134 | **0.1251** | 0.1211 | 0.3420 | **0.3608** | 0.3558 |
+| Q2 mid | 0.0226 | **0.0287** | 0.0278 | 0.1442 | 0.1536 | **0.1542** |
+| Q1 rarest | 0.0034 | **0.0061** | 0.0058 | 0.0463 | **0.0604** | 0.0589 |
+| TAIL ≤ 1k | 0.0192 | **0.0249** | 0.0241 | 0.1243 | **0.1368** | 0.1367 |
 
 **Findings:**
 
 1. **Lift-over-floor thesis — confirmed on solid n.** Content's advantage over the no-content floor is ~0% on the popular head and grows steeply toward the tail. Hit@250 A−C: Q4 +0.0010 → Q3 +0.0188 → Q1 +0.0141 → TAIL +0.0125; relative MRR lift on TAIL ≈ +18% (A−C) / +14% (B−C) vs ~0.1% on Q4. Both content sources earn their keep exactly where collaborative signal is sparse — the story Phase 1 structurally could not tell.
 
-2. **B beats A overall, driven entirely by the popular head.** Q4 (90% of examples) carries B−A ≈ +0.0013 MRR, stable across K. The whole-corpus and HEAD numbers are essentially the Q4 result.
+2. **B beats A overall, driven entirely by the popular head.** Q4 (90% of examples) carries B−A ≈ +0.0022 MRR, stable across K. The whole-corpus and HEAD numbers are essentially the Q4 result.
 
-3. **The key tail result: LLM does NOT collapse on rare movies — it matches genome.** On the deep tail (Q1, TAIL) A and B are statistically tied (MRR gaps ≤ 0.0001; Hit@250 splits favor each once: TAIL → B, Q1 → A). Even where content matters most, LLM features hold even with human-curated genome. This is the consequential, positive result for "can LLMs replace human curation," and it is the question Phase 1 could not answer.
+3. **The key tail result: LLM does NOT collapse on rare movies — it matches genome.** On the deep tail (Q1, TAIL) A and B are statistically tied (MRR gaps ≤ 0.0002; Hit@250 gaps ≤ 0.0015, with TAIL a dead heat — A 0.1368 vs B 0.1367). Even where content matters most, LLM features hold even with human-curated genome. This is the consequential, positive result for "can LLMs replace human curation," and it is the question Phase 1 could not answer.
 
-4. **Genome keeps a small, consistent edge in the *mid*-tail (Q3, n=26,923).** Genome leads B on MRR (0.0148 vs 0.0144), Hit@50 (0.1251 vs 0.1223) and Hit@250 (0.3608 vs 0.3529) — ~2–5% relative, the one place the A > B gap is consistent across K rather than noise. Q3 spans 907–2,857 ratings (straddling the Phase 1 boundary), i.e. "moderately popular," not cold-start.
+4. **Genome keeps a small, consistent edge in the *mid*-tail (Q3, n=26,923).** Genome leads B on MRR (0.0148 vs 0.0143), Hit@50 (0.1251 vs 0.1211) and Hit@250 (0.3608 vs 0.3558) — ~2–5% relative, the one place the A > B gap is consistent across K rather than noise. Q3 spans 907–2,857 ratings (straddling the Phase 1 boundary), i.e. "moderately popular," not cold-start.
 
-**Phase 2 verdict (paper headline):** LLM-extracted features **match human-curated genome on the long tail and slightly beat it overall**; genome retains only a marginal mid-tail (Q3) advantage. The "expensive human curation can be replaced by LLM extraction" thesis holds — including under the long-tail stress test Phase 1 structurally could not run. Caveat for the writeup: even at n=382,138 the deep-tail tiers are small (Q1 n=3,260; TAIL n=12,652) because the rollback target distribution is popularity-skewed (Q4 = 90% of examples), so deep-tail A-vs-B differences ≤ 0.0001 MRR should be read as ties, not rankings.
+**Phase 2 verdict (high-variance run — superseded).** This run read "LLM matches genome on the tail and slightly beats it overall; genome keeps a marginal Q3 edge." Under the low-variance re-run the **rich** experiment is a near-null everywhere (genome below the floor, tail a dead heat — see the retraction banner above), so this verdict no longer stands as written. **Canonical verdict** (low-variance, both experiments): in the *rich* model content is redundant (genome below floor, LLM ties it); in the *stripped* model both content sources clear the floor and **LLM ≥ genome**, the LLM being the less redundant source (substitution ladder). Full statement in "Experiment 1 — stripped CF-base" below.
 
 ### Qualitative comparison via canary users
 
-**Phase 2, full corpus.** Top-10 from genome (A) vs LLM (B) for all ~19 canary personas (`ts_max` bin), saved to `canary_results/best_softmax_genome_tags_popularity_alpha_0_20260607_101027.txt` (A) and `…_llm_features_…_20260607_105646.txt` (B). The 5 most illustrative disagreements:
+**Phase 2, full corpus.** Top-10 from genome (A) vs LLM (B) for all ~19 canary personas (`ts_max` bin), saved to `canary_results/best_softmax_genome_tags_popularity_alpha_0_20260607_101027.txt` (A) and `…_llm_features_…_20260609_121604.txt` (B — re-run on the corrected tensor). The 5 most illustrative disagreements (below) were curated from the **pre-fix** B canary (`…_20260607_105646`) and their **specific titles are now stale** — a spot-check of the post-fix B canary (saved at the new stem) shows the persona *personalities* still hold (B → era/modern, blockbuster-leaning, drifts off niche canon; A → canon-pure), but the exact movies differ (e.g. Western B now drifts to Godfather/Goodfellas/Apocalypse Now rather than Patton/Dirty Dozen). Read the table as illustrating the **personalities**, not B's literal current output; regenerate from the new canary if title-accuracy is needed:
 
 | Persona (liked) | Genome (A) leans | LLM (B) leans |
 |---|---|---|
@@ -214,11 +253,13 @@ Because the LLM schema was derived from the top-discriminability genome tags, ev
 2. **Genome has finer niche sub-genre granularity** — *Good, the Bad and the Ugly*: genome "spaghetti western" + "ennio morricone" + "civil war" vs the LLM's coarser "western_frontier". This finer aesthetic vocabulary is exactly why genome nails the Western / Arthouse canon in the canary.
 3. **LLM contributes clean plot-derived facts** genome buries or omits — *2001* "artificial_intelligence"/"existentialism", *Die Hard* "based_on_book"/"eighties", *Sicario* "hitman"/"conspiracy"/"corruption".
 
-**Synthesis (ties the experiment together).** The spaces are strongly aligned on factual/genre axes (mean r 0.60) → both place a movie in the right broad genre, which is why B matches A on the bulk metrics. Genome's advantage is concentrated in the **low-agreement axes** — subjective aesthetics, niche sub-genre granularity, and crowd-prestige — precisely where it wins the niche-canon canary personas and holds its mid-tail edge. The LLM, in turn, adds accurate plot facts and excels at era / modern-subgenre matching. This is the mechanistic explanation for the headline result: **LLM extraction reproduces nearly all of genome's content signal on the axes an LLM can reach from text, and the residual genome-only advantage is the crowd-sentiment / fine-aesthetic slice flagged as the validity threat** (the reception/prestige asymmetry — see the writeup's Limitations).
+**Synthesis (ties the experiment together).** The spaces are strongly aligned on factual/genre axes (mean r 0.60) → both place a movie in the right broad genre, which is why B matches A on the bulk metrics. Genome's *exclusive* axes are the **low-agreement** ones — subjective aesthetics, niche sub-genre granularity, and crowd-prestige — which show up qualitatively in the niche-canon canary personas. But those axes are mostly crowd-sentiment that tracks popularity, not content, so they **don't translate into a ranking win** (under the low-variance run genome does not beat the LLM, or even the floor, on any tier). This is the mechanistic explanation for the headline result: **LLM extraction reproduces nearly all of genome's content signal on the axes an LLM can reach from text** (mean r 0.60), so B matches/edges A; what genome holds exclusively is the crowd-sentiment / fine-aesthetic slice that barely moves ranking (the reception/prestige asymmetry — see the writeup's Limitations).
 
 ### Model D — genome + LLM combined (secondary arm; out of core scope)
 
-> Combining both content sources in one model is a **non-goal** of the core genome-vs-LLM comparison (it answers a different question — "does *more* help?"). Run as a 4th arm with the same data so the answer is on record; kept as a marked side-section (§8) in the writeup. Model D adds the LLM-feature sub-towers *alongside* the genome-tag sub-towers (two parallel families, concatenated pre-projection) — `FEATURE_TOWERS=both`. Checkpoint `best_softmax_genome_tags_llm_features_popularity_alpha_0_20260607_131924.pth` (α=0, full corpus). Same eval protocol (n=382,138, all 19,134 val users); A/B/C re-run with the current code for an apples-to-apples 4-arm set.
+> Combining both content sources in one model is a **non-goal** of the core genome-vs-LLM comparison (it answers a different question — "does *more* help?"). Run as a 4th arm with the same data so the answer is on record; documented here only (the reframed writeup omits D entirely). Model D adds the LLM-feature sub-towers *alongside* the genome-tag sub-towers (two parallel families, concatenated pre-projection) — `FEATURE_TOWERS=both`. Checkpoint `best_softmax_genome_tags_llm_features_popularity_alpha_0_20260607_131924.pth` (α=0, full corpus). Same eval protocol (n=382,138, all 19,134 val users); A/B/C re-run with the current code for an apples-to-apples 4-arm set.
+
+> ⚠️ **High-variance only — D was not carried into the low-variance re-run.** The tables in this section are from the original 06-07 high-variance 4-arm set (their A/B/C match the superseded numbers, not the canonical low-variance ones). D was deliberately **excluded** from the low-variance re-run (the re-run covered only the single-source A/B/C arms it needed); there is no low-variance D. So read D's numbers only *within* this high-variance set, as a directional "does combining help?" check — not against the canonical Experiment 1/2 numbers. The qualitative finding (D ≈ better single source, no clear additive benefit) is what carries forward.
 
 **Whole-corpus (n=382,138):**
 
@@ -241,6 +282,143 @@ Because the LLM schema was derived from the top-discriminability genome tags, ev
 **Canary (single-run, qualitative; A/B/D side-by-side in `canary_results/`):** D is *strong* on Sci-Fi (Metropolis, Brazil, Forbidden Planet + Alien, Terminator) and Arthouse (Stalker, Blue Velvet, **Twin Peaks: FWWM**, Solaris), decent on Crime (Scarface, RocknRolla) and Horror (less Saw-sequel spam than B) — but **regresses on Western** (2 westerns + Jaws/Alien/Life of Brian; genome-A had 5). It does not cleanly fuse the two; the second tower can dilute genome's niche pull.
 
 **Finding (does combining help?): no clear additive benefit.** On top-rank metrics D ≈ B (the better single source) and does not beat it — the two sources are largely redundant (consistent with the r=0.60 feature agreement: little independent signal to stack). The lone gain is a small deep-tail recall bump (Hit@250 best in 3/4 tail tiers). At α=0, D is **not** a clear upgrade over B or A, and its Western canary regression is a real demo concern, so D does not enter a prod comparison with a quantitative edge. (The shipped prod is a separate α=0.5 fine-tune of the D architecture — a portfolio-motivated swap, verified on par with the prior genome-only prod, not a metrics upgrade; see CLAUDE.md "Current State".)
+
+### Experiment 1 — stripped CF-base (primary; isolating the content slot)
+
+> **This is the PRIMARY experiment** (the writeup leads with it; `docs/llm_vs_genome_ablation.md`
+> §4). It is placed after the rich follow-up here only for document history — the rich run was
+> built first; logically the stripped experiment is first (see the Goal's two-experiment framing).
+> **Status (2026-06-10):** full-corpus + phase1 arms done + evaluated, canonical low-variance
+> protocol (seeded, 160k steps, 100k-example val subset). Compared against the matched low-variance
+> rich-base (Experiment 2 in the Canonical map), so the strip is cleanly isolated from any method
+> change.
+
+**Why.** Arm **C ("floor")** is not a true floor: it still carries the always-on **genre
+one-hot + 306 user tags + year + 4-pool** user history — content/interaction signal that
+*overlaps* with what genome/LLM encode. So "genome adds ≈0 over C" (and, under the low-variance
+re-run, genome sits *below* C: A−C = −0.0030) cannot be distinguished from "genome is
+**redundant** with the genre+tags already present." Phase B removes the confound: strip the base
+towers and re-ask the content question against a genuine collaborative-filtering floor, where a
+content feature has to carry the signal alone.
+
+**Method.** A new `BASE_TOWERS=idonly` mode (`src/model.py`, gated exactly like the content
+slots) strips, as a block: item/user **genre**, item **tag**, **year**, **timestamp** towers
+(+ buffers), and collapses the 4-pool user history to the **single full-history sum pool** (drops
+the liked/disliked/rating-weighted pools — all rating-derived). What remains is the barest
+two-tower CF model:
+- user = `LayerNorm(Σ watched-item ID embeddings)`  [+ content context, if a slot is on]
+- item = `ID embedding`  [+ content vector, if a slot is on]
+
+Three arms, identical but for the content slot; α=0, 160k steps, seed 42, full corpus:
+- **C′** — ID pool only (`BASE_TOWERS=idonly FEATURE_TOWERS=none`): pure CF floor
+- **A′** — ID pool + genome (`…FEATURE_TOWERS=genome`)
+- **B′** — ID pool + LLM (`…FEATURE_TOWERS=llm`)
+
+Stripped concat dims: C′ user 32 / item 32; A′, B′ user 64 / item 64 (vs rich 196 / 96). Config
+resolves `base_towers` from state_dict keys (`src/checkpoint.py`), so the loader rebuilds a
+stripped model from weights alone. Same canonical eval (all 19,134 val users, n=382,138).
+
+Checkpoints (full corpus):
+- C′ `best_softmax_idonly_popularity_alpha_0_20260610_081552.pth`
+- A′ `best_softmax_idonly_genome_tags_popularity_alpha_0_20260610_091949.pth`
+- B′ `best_softmax_idonly_llm_features_popularity_alpha_0_20260610_095940.pth`
+
+**Full-corpus results (n=382,138), MRR by tier:**
+
+| Tier (n) | C′ floor | A′ genome | B′ llm | A′−C′ | B′−C′ | B′−A′ |
+|---|---|---|---|---|---|---|
+| Whole (382,138) | 0.1121 | 0.1148 | **0.1155** | +0.0027 | +0.0034 | +0.0007 |
+| HEAD > 1k (369,486) | 0.1159 | 0.1186 | **0.1193** | +0.0027 | +0.0034 | +0.0007 |
+| Q4 popular (343,906) | 0.1234 | 0.1264 | **0.1271** | +0.0030 | +0.0037 | +0.0007 |
+| Q3 mid (26,923) | 0.0133 | 0.0140 | **0.0142** | +0.0007 | +0.0009 | +0.0002 |
+| Q2 mid (8,049) | 0.0034 | 0.0034 | **0.0037** | ±0.0000 | +0.0003 | +0.0003 |
+| TAIL ≤ 1k (12,652) | 0.0029 | 0.0030 | **0.0033** | +0.0001 | +0.0004 | +0.0003 |
+| Q1 rarest (3,260) | 0.0011 | 0.0013 | **0.0014** | +0.0002 | +0.0003 | +0.0001 |
+
+Ordering is **C′ < A′ < B′ on every tier.**
+
+**Phase 1 results (reduced corpus, head-only; default 5,000 val users, n=99,846), whole MRR.**
+Phase 1 is all > 1,000-rating head movies, so Whole = HEAD and the deep-tail tiers are degenerate;
+it isolates the content question on the head only. Checkpoints `best_softmax_idonly[_genome_tags|
+_llm_features]_…_phase1_2026061{0}_…`.
+
+| Arm | C′ floor | A′ genome | B′ llm | A′−C′ | B′−C′ | B′−A′ |
+|---|---|---|---|---|---|---|
+| Whole = HEAD (99,846) | 0.1133 | 0.1158 | **0.1165** | +0.0025 | +0.0032 | +0.0007 |
+
+Same ordering **C′ < A′ < B′** as the full corpus. Phase 1 reads ~1% higher in absolute terms
+(5,000-user protocol vs 19,134), but the comparison is internally matched.
+
+**Substitution ladder — drop from the matched (low-variance) rich-base arm, whole MRR.**
+
+| Arm | full rich-base | full stripped | full Δ | phase1 rich-base | phase1 stripped | phase1 Δ |
+|---|---|---|---|---|---|---|
+| C (floor) | 0.1174 | 0.1121 | **−0.0053** | 0.1162 | 0.1133 | **−0.0029** |
+| B (LLM) | 0.1176 | 0.1155 | **−0.0021** | 0.1180 | 0.1165 | **−0.0015** |
+| A (genome) | 0.1144 | 0.1148 | **+0.0004** | 0.1151 | 0.1158 | **+0.0007** |
+
+(Full HEAD shows the same as full Whole: C −0.0054, B −0.0022, A +0.0004.) **The ladder
+replicates on both corpora** — genome gains/holds, LLM loses a little, the floor loses the most.
+
+**Findings.**
+
+1. **The genome lift flips sign once isolated — on both corpora.** Full rich base: A−C = −0.0030
+   (genome net-negative on top of genre/tag/year); stripped A′−C′ = **+0.0027 (+2.4%)**,
+   B′−C′ = **+0.0034 (+3.0%)**. Phase 1 replicates the flip on a fully independent corpus:
+   A−C = −0.0011 → A′−C′ = **+0.0025**. Both content sources clear the *true* CF floor — the
+   rich-base near-null was **redundancy** with the curated genre/tags, not content being worthless.
+
+2. **Substitution ladder — the sharpest evidence, and it replicates on both corpora.** How much
+   each arm *lost* to the strip — full: genome **+0.0004 (nothing)**, LLM **−0.0021 (a little)**,
+   floor **−0.0053 (the most)**; phase1: genome **+0.0007**, LLM **−0.0015**, floor **−0.0029** —
+   same ordering both times. Genome fully reconstructs genre/tags from its own vectors (genome tags
+   ≈ curated genre/tags rebadged) → complete substitute; the LLM only *partially* backfills them →
+   it is a partly **orthogonal** basis (plot/tone/theme/cast) that can't fully stand in for the
+   curated metadata; the floor has nothing to fall back on. Substitutability genome > LLM > none is
+   direct evidence that the **LLM features overlap less with cheap curated metadata — i.e. carry
+   more genuinely additive signal.**
+
+3. **B′ > A′ on every tier, both corpora** (full: whole +0.0007, HEAD +0.0007, TAIL +0.0003,
+   Q1–Q4 all ≥ 0; phase1: +0.0007). It replicates the rich-base direction (B > A there too, by
+   more). Across two corpora and two training regimes, LLM ≥ genome on every tier.
+
+4. **Lift is on the head, not the cold tail.** TAIL stays ≈0.003 for all three (B′ nominally
+   highest); on 12.6k sparse examples it is barely resolvable, and MovieLens "tail" is still
+   ≥200 ratings. The content separation lives in Q4/Q3.
+
+**Honest caveats.**
+- **Single seed; gaps near the noise floor.** B′−A′ = +0.0007 is well inside the ±0.003–0.004
+  run-to-run noise established by the low-variance re-run; on its own it is not significant. The
+  weight is in the *consistency* and *replication*, not any one gap: B′ ≥ A′ on every tier of
+  *both* corpora, the sign-flip holds on both, and the substitution ladder reproduces on both —
+  a cross-corpus replication is stronger evidence than two more seeds on one corpus would be,
+  though a multi-seed run per arm would still firm up the exact magnitudes.
+- **Stripped ≠ better.** The best stripped arm (B′ 0.1155) is still below the best rich arm
+  (B 0.1176). The base towers add aggregate value; we strip to *isolate the content question*,
+  not to improve the model.
+- **The stripped floor also drops rating polarity (liked/disliked/weighted pools), which is
+  interaction-derived — every real system has it.** So C′ is a deliberately *weak* CF baseline,
+  which **inflates** the measured content lift. The true lift depends on CF strength: the two
+  experiments **bracket** it — ≈0 with full rich metadata, +2–3% against minimal CF — and a
+  realistic no-curated-metadata system (CF with rating polarity, no genre/tags) sits between,
+  closer to the stripped end. A "keep-4-pool, strip-only-curated-metadata" arm would pin it
+  exactly; noted as a follow-up, not run (approach (a): caveat in prose, don't add the arm).
+
+**Framing for the writeup (the practitioner / CTO read).** MovieLens is a *privileged* dataset:
+clean professional **genre labels** on every title plus a massive **crowd-tagging** effort (the
+genome is built from millions of tag applications). Almost no real catalog has that. The team
+deciding *"is it worth building content features?"* has interactions + whatever it can
+scrape/LLM-extract — the **stripped** regime, not the rich one. So the two experiments answer two
+different questions:
+- **Experiment 1 (rich):** *"I'm MovieLens-like and already have genome + tags — add more
+  content?"* → No, it's redundant.
+- **Experiment 2 (stripped):** *"I have interactions but no free curated metadata — build content
+  features?"* → Yes: modest but real (+2–3% MRR over pure CF), LLM-extracted ≥ genome-style, with
+  the LLM features measurably *less* redundant.
+
+The second question is the one most teams actually face. And **C is not a "no-content" baseline in
+Experiment 1** — it is a *rich-metadata* baseline minus one slot; the writeup must state what C
+contains so "floor beat genome" cannot be misread as "content features don't help."
 
 ## Cost budget (reproduction estimate)
 

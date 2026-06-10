@@ -47,6 +47,10 @@ def cmd_dataset():
 
 
 def cmd_train():
+    import random
+
+    import numpy as np
+    import torch
     from src.dataset import DATASET_VERSION, load_features, load_softmax_splits
     from src.train import get_config, build_model, train_softmax
     print("Loading features ...")
@@ -54,6 +58,15 @@ def cmd_train():
     print("\nLoading softmax datasets ...")
     train_data, val_data = load_softmax_splits(DATA_DIR, version=DATASET_VERSION)
     config = get_config()
+    # Seed every RNG BEFORE build_model: weight init draws from the global torch RNG, so the
+    # seed must land before init for a run to be reproducible — and so the only thing that
+    # differs across the ablation arms is the content slot, not the random init. Seeding inside
+    # train_softmax (after the model is built) is too late. SEED env overrides the default.
+    seed = int(os.environ.get('SEED', 42))
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    print(f"Seed: {seed}")
     model  = build_model(config, fs)
     train_softmax(model, train_data, val_data, config, fs)
 
