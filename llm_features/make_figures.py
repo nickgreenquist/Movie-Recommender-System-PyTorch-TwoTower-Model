@@ -4,7 +4,7 @@ Stage 6 — Figures for the LLM-vs-genome writeup (results/llm_vs_genome_ablatio
 Generates two publication-quality PNGs into results/figures/:
 
   fig1_content_lift.png    — content's value in the universal vs the MovieLens-rich
-                             setting. Left: pure-CF floor vs +genome vs +LLM (stripped
+                             setting. Left: pure-CF floor vs +genome vs +LLM (base
                              model, both corpora) — content beats the floor and C′<A′<B′
                              replicates. Right: the same content slot added to the rich
                              model (genre + user tags + year + rating pools) — the lift
@@ -13,7 +13,7 @@ Generates two publication-quality PNGs into results/figures/:
   fig2_agreement_hist.png  — distribution of the 132 per-dimension genome-vs-LLM
                              Pearson correlations (shared-axis agreement).
 
-Figure 1 uses the low-variance (seeded, 160k-step) stripped + rich whole-corpus MRR
+Figure 1 uses the low-variance (seeded, 160k-step) base + rich whole-corpus MRR
 (α=0; see the ablation plan "Phase B" section / eval_results). Figure 2 recomputes the
 132 correlations with the same logic as feature_level_analysis.py and caches them to
 results/figures/feature_agreement_r.json (so re-runs skip the slow features load).
@@ -51,7 +51,7 @@ def set_theme():
     })
 
 
-# ── Figure 1: content lift — stripped (universal) vs rich (MovieLens) ─────────
+# ── Figure 1: content lift — base (universal) vs rich (MovieLens) ─────────
 def figure1():
     """Two panels, whole-corpus MRR, α=0, low-variance protocol (seeded, 160k steps).
 
@@ -64,7 +64,7 @@ def figure1():
     """
     os.makedirs(FIG_DIR, exist_ok=True)
 
-    # Left — stripped (universal-setting) MRR, both corpora.
+    # Left — base (universal-setting) MRR, both corpora.
     corpora = ['Full corpus\nn = 382,138', 'Phase 1 (head)\nn = 99,846']
     Cs = np.array([0.1121, 0.1133])   # C′ floor (ID pool only)
     As = np.array([0.1148, 0.1158])   # A′ + genome
@@ -91,9 +91,9 @@ def figure1():
     axL.grid(axis='x', visible=False)
     axL.legend(fontsize=9, loc='lower center', ncol=3, columnspacing=1.0, handletextpad=0.4)
 
-    # Right — lift over the floor (%), stripped vs rich (full corpus, low-variance).
-    regimes = ['Stripped\n(what most teams have)', 'Rich metadata\n(MovieLens only)']
-    # stripped: A′−C′, B′−C′ over C′=0.1121 ; rich (low-var): A−C, B−C over C=0.1174
+    # Right — lift over the floor (%), base vs rich (full corpus, low-variance).
+    regimes = ['Base model\n(what most teams have)', 'Rich metadata\n(MovieLens only)']
+    # base: A′−C′, B′−C′ over C′=0.1121 ; rich (low-var): A−C, B−C over C=0.1174
     liftA = np.array([(0.1148 - 0.1121) / 0.1121, (0.1144 - 0.1174) / 0.1174]) * 100
     liftB = np.array([(0.1155 - 0.1121) / 0.1121, (0.1176 - 0.1174) / 0.1174]) * 100
     xr = np.arange(len(regimes))
@@ -115,11 +115,11 @@ def figure1():
                          textcoords='offset points', xytext=(0, 3 if v >= 0 else -11),
                          ha='center', fontsize=8.5, fontweight='bold', color=INK)
 
-    fig.suptitle('Content features earn their keep in the setting most teams are actually in',
+    fig.suptitle('In the setting most teams actually start from, content features earn their keep',
                  fontsize=15, fontweight='bold', y=1.03)
     fig.text(0.5, -0.06,
              'MovieLens 32M · rollback eval, α = 0, low-variance protocol · '
-             "'stripped' = single implicit history pool + item ID; "
+             "'base model' = single implicit history pool + item ID; "
              "'rich' adds curated genre + user tags + year + rating pools",
              ha='center', fontsize=8.5, color=MUTED)
     fig.tight_layout()
