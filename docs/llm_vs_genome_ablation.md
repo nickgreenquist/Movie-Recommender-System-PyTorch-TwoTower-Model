@@ -88,6 +88,44 @@ Honest design calls are baked in. Structured output is non-negotiable — free-f
 
 Every score reads right, and the two *factual* groups behave: `oscar_technical` is a true 1.0 (Alien won the Academy Award for Best Visual Effects), while `cgi_heavy` stays low because the film's effects are practical, not computer-generated — exactly the factual-only discipline the visual and prestige groups are built for.
 
+**The opposite end of the catalog.** The same six calls on *Toy Story* (1995) — watch the visual group, which barely registered for Alien's practical effects:
+
+<div align="center">
+<table>
+  <tr>
+    <td rowspan="7" valign="top"><img src="figures/toy_story_1995_poster.jpg" alt="Toy Story (1995) theatrical poster — Woody, Buzz Lightyear and the toys" width="200"></td>
+    <th>Group</th>
+    <th>Top extracted features (score 0–1)</th>
+  </tr>
+  <tr>
+    <td>Themes &amp; plot</td>
+    <td><code>friendship</code> 0.9, <code>family</code> 0.7</td>
+  </tr>
+  <tr>
+    <td>Tone &amp; mood</td>
+    <td><code>feel_good</code> 0.9, <code>comedic</code> 0.8, <code>emotional</code> 0.6</td>
+  </tr>
+  <tr>
+    <td>Setting, era &amp; sub-genre</td>
+    <td><code>small_town</code> 0.4</td>
+  </tr>
+  <tr>
+    <td>Provenance &amp; structure</td>
+    <td><code>franchise</code> 0.9</td>
+  </tr>
+  <tr>
+    <td>Factual reception &amp; prestige</td>
+    <td><code>oscar_nominated</code> 0.9, <code>classic</code> 0.8</td>
+  </tr>
+  <tr>
+    <td>Visual medium</td>
+    <td><code>animated</code> 1.0, <code>computer_animation</code> 1.0</td>
+  </tr>
+</table>
+</div>
+
+The flip is the tell: `animated` and `computer_animation` peg at 1.0 (Pixar's first feature is fully CG), and `feel_good` / `comedic` stand where Alien had `tense` / `scary`. The setting group, by contrast, stays quiet — *Toy Story* has no strong era or sub-genre, and the extractor declines to invent one. Same pipeline, an opposite fingerprint, both read off nothing but the film's public text.
+
 ## 4. Does it work? — the universal setting
 
 The realistic baseline strips the model down to what any team has on day one. We remove every feature that is a MovieLens *privilege* and keep only the two things that are universal:
