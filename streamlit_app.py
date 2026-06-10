@@ -712,8 +712,11 @@ def tab_explore_genome(me, fs, all_ids, all_norm_genome, posters, tmdb_ids):
 # ── Tab: About ───────────────────────────────────────────────────────────────
 
 def tab_about():
-    col, _ = st.columns([1, 1])
-    with col:
+    # Single centered readable-width column. width caps at the parent width on
+    # narrow screens, so this is full-width on mobile and ~75 chars/line on
+    # desktop — unlike the old st.columns([1, 1]) hack, which scaled with
+    # monitor width. The outer container centers the fixed-width inner one.
+    with st.container(horizontal_alignment="center"), st.container(width=760, key="about"):
         st.header("What is this?")
         st.markdown(
             "A **v3 PyTorch two-tower neural network** trained on the MovieLens 32M dataset. "
@@ -749,7 +752,7 @@ def tab_about():
         st.markdown("This means the model can generate recommendations for **any user** as long as you can provide even a small amount of signal: a few movies they liked.")
         st.markdown("No retraining required. No cold-start problem at the user level. The same trained model works in production for users who never existed when the model was trained.")
 
-    st.code("""\
+        st.code("""\
 User Tower (4-pool):
   sum_pool(item_embedding_lookup[full_history])            →  pool_full      (32)  [LayerNorm]
   sum_pool(item_embedding_lookup[liked_history])           →  pool_liked     (32)  [LayerNorm]
@@ -773,8 +776,6 @@ Item Tower:
 Prediction: dot_product(user_emb, item_emb) = cosine similarity (both L2-normalized)
 """, language=None)
 
-    col, _ = st.columns([1, 1])
-    with col:
         st.header("User Tower")
         st.markdown(
             "Each component encodes a different aspect of taste into a fixed-size vector. "
@@ -936,7 +937,11 @@ while a disliked movie pushes it away.
 st.set_page_config(page_title="Movie Recommender", layout="wide")
 st.markdown("""
     <style>
-    div[data-testid="stTabs"] > div:first-child {
+    /* Keep the tab bar on one horizontally-scrollable line on mobile.
+       Scope to the baseweb tab-list only — `stTabs > div:first-child` wraps the
+       tab panels too in newer Streamlit, leaking white-space:nowrap into all
+       tab content (unwrappable paragraphs running off-screen). */
+    div[data-testid="stTabs"] div[data-baseweb="tab-list"] {
         overflow-x: auto;
         white-space: nowrap;
         flex-wrap: nowrap;
@@ -961,6 +966,21 @@ st.markdown("""
     }
     a.cover-link { transition: filter .15s ease, transform .15s ease; cursor: pointer; }
     a.cover-link:hover { filter: brightness(1.12); transform: scale(1.02); }
+    /* About tab: shrink the architecture diagram so its ~96-char lines fit the
+       760px readable column without horizontal scroll (still scrolls on phones) */
+    .st-key-about pre code { font-size: 0.72rem; }
+    /* About tab tables: render as real tables filling the column — the global
+       display:block rule shrink-wraps them, letting the first column hog width
+       while the prose columns crush into tall slivers. On phones, keep a
+       minimum table width and scroll inside the markdown wrapper instead. */
+    .st-key-about div[data-testid="stMarkdownContainer"] { overflow-x: auto; }
+    .st-key-about table { display: table; width: 100%; }
+    @media (max-width: 640px) {
+        .st-key-about table { font-size: 0.8rem; }
+        /* only the wide 4-column tower tables need to scroll — the 2/3-column
+           alpha and metrics tables fit a phone screen as-is */
+        .st-key-about table:has(td:nth-child(4)) { min-width: 560px; }
+    }
     </style>
 """, unsafe_allow_html=True)
 st.title("Movie Recommender")
