@@ -12,6 +12,9 @@ Generate serving/ with: python main.py export
 import importlib
 import json
 import os
+import urllib.parse
+from typing import NamedTuple
+
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -48,6 +51,53 @@ _TOTAL_RESULTS = 60     # total movies to fetch (3 pages)
 
 
 # ── Startup ───────────────────────────────────────────────────────────────────
+
+_REQUIRED_ARTIFACTS = (
+    'serving/feature_store.pt',
+    'serving/movie_embeddings.pt',
+    'serving/model.pth',
+)
+
+_TMDB_IDS_FILE = 'serving/tmdb_ids.json'
+
+
+class Artifacts(NamedTuple):
+    """Everything the tabs need, loaded once and cached. Named fields so the load order
+    can't drift out of sync with the call sites."""
+    model:           MovieRecommender
+    fs:              dict
+    me:              dict
+    all_ids:         list
+    all_embs:        torch.Tensor
+    all_norm:        torch.Tensor
+    all_norm_genre:  torch.Tensor
+    all_norm_genome: torch.Tensor
+    ts_inference:    torch.Tensor
+    posters:         dict
+    tmdb_ids:        dict
+
+
+def _load_tmdb_ids(fs):
+    """movieId → tmdbId map (string keys, like posters.json) for the TMDB card links.
+
+    Reads serving/tmdb_ids.json when present — the committed artifact the deployed app
+    uses. Locally, if the json is missing but data/ml-32m/links.csv exists, builds the
+    corpus subset once and saves it (commit the json to ship links to Streamlit Cloud).
+    Returns {} when neither exists — cards then fall back to a TMDB title search.
+    """
+    if os.path.exists(_TMDB_IDS_FILE):
+        with open(_TMDB_IDS_FILE) as f:
+            return json.load(f)
+    links_path = 'data/ml-32m/links.csv'
+    if os.path.exists(links_path):
+        links = pd.read_csv(links_path, dtype={'tmdbId': 'Int64'}).dropna(subset=['tmdbId'])
+        links = links[links['movieId'].isin(set(fs['top_movies']))]
+        tmdb_ids = {str(int(row.movieId)): int(row.tmdbId) for row in links.itertuples()}
+        with open(_TMDB_IDS_FILE, 'w') as f:
+            json.dump(tmdb_ids, f)
+        return tmdb_ids
+    return {}
+
 
 def _build_serving_model(fs, cfg):
     """Reconstruct the serving MovieRecommender from the self-contained serving/ artifacts.
@@ -109,7 +159,16 @@ def _build_serving_model(fs, cfg):
 
 
 @st.cache_resource
-def load_artifacts():
+def load_artifacts() -> Artifacts:
+    missing = [p for p in _REQUIRED_ARTIFACTS if not os.path.exists(p)]
+    if missing:
+        st.error(
+            "Serving artifacts are missing:\n\n"
+            + "\n".join(f"- `{p}`" for p in missing)
+            + "\n\nGenerate them with `python main.py export`."
+        )
+        st.stop()
+
     fs  = torch.load('serving/feature_store.pt', weights_only=False)
     me  = torch.load('serving/movie_embeddings.pt', weights_only=False)
     cfg = fs['model_config']
@@ -127,6 +186,13 @@ def load_artifacts():
     all_embs = torch.cat([me[m]['MOVIE_EMBEDDING_COMBINED'] for m in all_ids], dim=0)
     all_norm = F.normalize(all_embs, dim=1)
 
+    # Per-sub-tower embedding matrices, normalized once at load so the Genres / Genome
+    # tabs rank the whole corpus with a single matmul instead of a per-movie cosine loop.
+    all_genre_embs  = torch.cat([me[m]['MOVIE_GENRE_EMBEDDING'].view(1, -1) for m in all_ids], dim=0)
+    all_norm_genre  = F.normalize(all_genre_embs, dim=1)
+    all_genome_embs = torch.cat([me[m]['MOVIE_GENOME_TAG_EMBEDDING'].view(1, -1) for m in all_ids], dim=0)
+    all_norm_genome = F.normalize(all_genome_embs, dim=1)
+
     # Most-recent timestamp bin — used for all inference (canary approach)
     ts_inference = torch.bucketize(
         torch.tensor([float(fs['timestamp_bins'][-1].item())]),
@@ -140,7 +206,13 @@ def load_artifacts():
     else:
         posters = {}
 
-    return model, fs, me, all_ids, all_embs, all_norm, ts_inference, posters
+    tmdb_ids = _load_tmdb_ids(fs)
+
+    return Artifacts(
+        model=model, fs=fs, me=me, all_ids=all_ids, all_embs=all_embs,
+        all_norm=all_norm, all_norm_genre=all_norm_genre, all_norm_genome=all_norm_genome,
+        ts_inference=ts_inference, posters=posters, tmdb_ids=tmdb_ids,
+    )
 
 
 
@@ -195,23 +267,69 @@ def _score_movies(user_emb, all_ids, all_embs, fs, exclude_titles, top_n=_TOTAL_
     return pd.DataFrame(rows)
 
 
-# ── Paginated results grid ────────────────────────────────────────────────────
+# ── TMDB links ────────────────────────────────────────────────────────────────
+
+def _tmdb_url(mid, tmdb_ids, title: str) -> str:
+    """TMDB movie page when the id is known; otherwise a TMDB title search — a handful
+    of corpus movies have no (or an invalid) tmdbId in links.csv. Search strips the
+    trailing ' (year)' from the corpus title so TMDB matches on the bare name."""
+    tmdb_id = tmdb_ids.get(str(mid)) if mid else None
+    if tmdb_id:
+        return f"https://www.themoviedb.org/movie/{tmdb_id}"
+    query = urllib.parse.quote_plus(title.rsplit(' (', 1)[0])
+    return f"https://www.themoviedb.org/search?query={query}"
+
+
+def _poster_div(poster_url: str, link_url: str) -> str:
+    """Poster rendered as a background-image div wrapped in an <a> (opens the TMDB page
+    in a new tab), NOT an st.image: Streamlit images can't be made into links, and a
+    background div degrades to the dark 🎬 placeholder tile when the poster is missing
+    instead of a broken-image icon. TMDB w342 posters are 2:3 → fix that aspect ratio so
+    the tile fills the card width. The .cover-link hover cue lives in the global style
+    block at app init."""
+    image       = f"background-image:url(\"{poster_url}\");" if poster_url else ""
+    placeholder = "" if poster_url else "🎬"
+    div = (f"<div style='width:100%;aspect-ratio:2/3;border-radius:6px;"
+           f"background-color:#1e1e1e;background-position:center;background-size:cover;"
+           f"display:flex;align-items:center;justify-content:center;font-size:2rem;{image}'>"
+           f"{placeholder}</div>")
+    return (f"<a class='cover-link' href='{link_url}' target='_blank' rel='noopener' "
+            f"style='display:block'>{div}</a>")
+
+
+# ── Results feed (show-more) ──────────────────────────────────────────────────
 
 def _store_results(df, result_key: str) -> None:
-    """Save a results DataFrame to session state and reset to page 0."""
-    st.session_state[f'{result_key}_df']   = df
-    st.session_state[f'{result_key}_page'] = 0
+    """Save a results DataFrame to session state and reset the feed to the first page."""
+    st.session_state[f'{result_key}_df']    = df
+    st.session_state[f'{result_key}_shown'] = _PAGE_SIZE
 
 
-def _show_results(result_key: str, posters, fs) -> None:
-    """Render the current page of stored results with Prev / Next navigation."""
+def _show_more_button(state_key: str, shown: int, total: int) -> None:
+    """Centered 'Show more' button that reveals the next _PAGE_SIZE results BELOW the ones
+    already on screen (cumulative append, not page replacement). Reads/writes
+    st.session_state[f'{state_key}_shown'] and reruns. Appending — rather than swapping
+    pages — means the browser keeps its scroll position and the new movies slot in just
+    under where the button was, so no scroll-to-top juggling is needed. No-op once
+    everything is shown."""
+    if shown >= total:
+        return
+    _, mid, _ = st.columns([2, 1, 2])
+    if mid.button('Show more', use_container_width=True, key=f'{state_key}_more'):
+        st.session_state[f'{state_key}_shown'] = shown + _PAGE_SIZE
+        st.rerun()
+
+
+def _show_results(result_key: str, posters, fs, tmdb_ids) -> None:
+    """Render stored results as a growing feed: the first _PAGE_SIZE movies plus a
+    'Show more' button that appends _PAGE_SIZE more each click. Posters link to the
+    movie's TMDB page; titles stay plain captions."""
     df = st.session_state.get(f'{result_key}_df')
     if df is None or df.empty:
         return
 
-    page        = st.session_state.get(f'{result_key}_page', 0)
-    total_pages = max(1, (len(df) + _PAGE_SIZE - 1) // _PAGE_SIZE)
-    page_df     = df.iloc[page * _PAGE_SIZE:(page + 1) * _PAGE_SIZE]
+    shown   = st.session_state.get(f'{result_key}_shown', _PAGE_SIZE)
+    page_df = df.iloc[:shown]
 
     if not posters:
         st.dataframe(page_df, use_container_width=True, hide_index=True)
@@ -222,37 +340,19 @@ def _show_results(result_key: str, posters, fs) -> None:
             cols = st.columns(_POSTER_COLS)
             for col, title in zip(cols, row_titles):
                 clean_title = title.replace('  ◀ ANCHOR', '').replace('  ◀ anchor', '')
-                mid = fs['title_to_movieId'].get(clean_title)
-                url = posters.get(str(mid), '') if mid else ''
+                mid  = fs['title_to_movieId'].get(clean_title)
+                url  = (posters.get(str(mid)) or '') if mid else ''
+                link = _tmdb_url(mid, tmdb_ids, clean_title)
                 with col:
-                    if url:
-                        st.image(url, use_container_width=True)
-                    else:
-                        st.markdown(
-                            "<div style='background:#1e1e1e;border-radius:6px;aspect-ratio:2/3;"
-                            "display:flex;align-items:center;justify-content:center;"
-                            "font-size:2rem;'>🎬</div>",
-                            unsafe_allow_html=True,
-                        )
+                    st.html(_poster_div(url, link))
                     st.caption(title)
 
-    if total_pages > 1:
-        _, prev_col, info_col, next_col, _ = st.columns([3, 1, 1, 1, 3])
-        if prev_col.button('← Prev', disabled=(page == 0), key=f'{result_key}_prev'):
-            st.session_state[f'{result_key}_page'] = page - 1
-            st.rerun()
-        info_col.markdown(
-            f"<div style='text-align:center;padding-top:0.4rem'>{page + 1} / {total_pages}</div>",
-            unsafe_allow_html=True,
-        )
-        if next_col.button('Next →', disabled=(page >= total_pages - 1), key=f'{result_key}_next'):
-            st.session_state[f'{result_key}_page'] = page + 1
-            st.rerun()
+    _show_more_button(result_key, shown, len(df))
 
 
 # ── Tab: Recommend ────────────────────────────────────────────────────────────
 
-def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters):
+def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters, tmdb_ids):
     st.caption(
         "Select movies you love and optionally refine with genome tags. "
         "The model builds your taste embedding from the movies' content — curated genome tags plus "
@@ -265,14 +365,11 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters):
     if st.session_state.pop('_clear_rec', False):
         for key in ('rec_liked', 'rec_genome_tags'):
             st.session_state[key] = []
-        for key in ('rec_df', 'rec_page', 'rec_anchor_caption'):
+        for key in ('rec_df', 'rec_shown', 'rec_anchor_caption'):
             st.session_state.pop(key, None)
 
-    profile = st.session_state.pop('_load_profile', None)
-    if profile:
-        st.session_state['rec_liked'] = USER_TYPE_TO_FAVORITE_MOVIES[profile]
-
-    liked_titles = st.multiselect("Favorite Movies", all_titles, key='rec_liked')
+    liked_titles = st.multiselect("Favorite Movies", all_titles, key='rec_liked',
+                                  max_selections=30)
 
     with st.expander("Refine by Genome Tags (optional)"):
         st.caption(
@@ -281,7 +378,8 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters):
             "The 5 most representative movies for these tags will be added as implicit likes."
         )
         genome_tag_names     = sorted(fs['genome_tag_names'][tid] for tid in fs['genome_tag_names'])
-        selected_genome_tags = st.multiselect("Genome tags", genome_tag_names, key='rec_genome_tags')
+        selected_genome_tags = st.multiselect("Genome tags", genome_tag_names, key='rec_genome_tags',
+                                              max_selections=10)
 
     st.markdown("""
         <style>
@@ -350,12 +448,12 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters):
         caption = st.session_state.get('rec_anchor_caption')
         if caption:
             st.caption(caption)
-    _show_results('rec', posters, fs)
+    _show_results('rec', posters, fs, tmdb_ids)
 
 
 # ── Tab: Recommend (Examples) ─────────────────────────────────────────────────
 
-def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters):
+def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters, tmdb_ids):
     st.caption("Select a pre-built user profile to see what the model recommends for that taste.")
     selected_profile = st.selectbox(
         "Profile",
@@ -435,65 +533,66 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters):
     anchor_caption = st.session_state.get('examples_anchor_caption')
     if anchor_caption:
         st.caption(anchor_caption)
-    _show_results('examples', posters, fs)
+    _show_results('examples', posters, fs, tmdb_ids)
 
 
 # ── Tab: Similar ──────────────────────────────────────────────────────────────
 
-def tab_similar(me, fs, all_ids, all_norm, posters):
+def tab_similar(me, fs, all_ids, all_norm, posters, tmdb_ids):
     st.caption(
         "Each movie is represented by a single combined embedding — the concatenation of "
         "its genre tower, tag tower, genome tag tower, LLM-feature tower, movieId embedding, and "
         "year embedding. This tab finds the movies whose combined embedding is most similar "
         "(by cosine similarity) to the selected seed movie."
     )
-    all_titles  = fs['popularity_ordered_titles']
-    selections = st.multiselect("Movie", all_titles, key='sim_title')
+    all_titles = fs['popularity_ordered_titles']
+    selected   = st.selectbox(
+        "Movie to find similar titles for",
+        options=[None] + all_titles,
+        format_func=lambda x: "Choose a movie..." if x is None else x,
+        key='sim_title', label_visibility="collapsed",
+    )
 
-    if st.button("Find Similar Movies"):
-        if not selections:
-            st.warning("Select a movie.")
-        else:
-            for old_title in st.session_state.get('sim_active_titles', []):
-                st.session_state.pop(f'sim_{old_title}_df', None)
-                st.session_state.pop(f'sim_{old_title}_page', None)
-            active_titles = []
-            for title in selections:
-                mid = fs['title_to_movieId'].get(title)
-                if mid not in me:
-                    st.error(f"'{title}' not in corpus.")
-                    continue
+    if not selected:
+        for key in ('sim_seed_title', 'sim_df', 'sim_shown'):
+            st.session_state.pop(key, None)
+        return
 
-                with torch.no_grad():
-                    seed_norm = F.normalize(me[mid]['MOVIE_EMBEDDING_COMBINED'], dim=1)
-                    sims      = (all_norm @ seed_norm.T).squeeze(-1)
+    # Recompute only when the selection changes — results appear immediately on
+    # selection, no button press.
+    if st.session_state.get('sim_seed_title') != selected:
+        mid = fs['title_to_movieId'].get(selected)
+        if mid not in me:
+            st.error(f"'{selected}' not in corpus.")
+            return
 
-                i_to_name = _build_genome_i_to_name(fs)
-                rows = []
-                for idx in sims.argsort(descending=True).tolist():
-                    candidate = all_ids[idx]
-                    if candidate == mid:
-                        continue
-                    rows.append({
-                        'Title':           fs['movieId_to_title'][candidate],
-                        'Genres':          ', '.join(fs['movieId_to_genres'][candidate]),
-                        'Top Genome Tags': _top_genome_tags(candidate, fs, i_to_name),
-                    })
-                    if len(rows) >= _TOTAL_RESULTS:
-                        break
-                _store_results(pd.DataFrame(rows), f'sim_{title}')
-                active_titles.append(title)
-            st.session_state['sim_active_titles'] = active_titles
+        with torch.no_grad():
+            seed_norm = F.normalize(me[mid]['MOVIE_EMBEDDING_COMBINED'], dim=1)
+            sims      = (all_norm @ seed_norm.T).squeeze(-1)
 
-    for title in selections:
-        if f'sim_{title}_df' in st.session_state:
-            st.subheader(f"Similar to: {title}")
-            _show_results(f'sim_{title}', posters, fs)
+        i_to_name = _build_genome_i_to_name(fs)
+        rows = []
+        for idx in sims.argsort(descending=True).tolist():
+            candidate = all_ids[idx]
+            if candidate == mid:
+                continue
+            rows.append({
+                'Title':           fs['movieId_to_title'][candidate],
+                'Genres':          ', '.join(fs['movieId_to_genres'][candidate]),
+                'Top Genome Tags': _top_genome_tags(candidate, fs, i_to_name),
+            })
+            if len(rows) >= _TOTAL_RESULTS:
+                break
+        _store_results(pd.DataFrame(rows), 'sim')
+        st.session_state['sim_seed_title'] = selected
+
+    st.subheader(f"Similar to: {selected}")
+    _show_results('sim', posters, fs, tmdb_ids)
 
 
 # ── Tab: Explore Genres ───────────────────────────────────────────────────────
 
-def tab_explore_genres(model, me, fs, posters):
+def tab_explore_genres(model, fs, all_ids, all_norm_genre, posters, tmdb_ids):
     st.subheader("Explore Genre Item Tower Embeddings")
     st.caption(
         "Queries the item genre embedding space directly — finds movies whose "
@@ -509,106 +608,105 @@ def tab_explore_genres(model, me, fs, posters):
             for g in selected_genres:
                 ctx[fs['genre_to_i'][g]] = 1.0
             with torch.no_grad():
-                query = model.item_genre_tower(torch.tensor([ctx])).view(-1)
-            sims = {
-                mid: F.cosine_similarity(
-                    query.unsqueeze(0),
-                    me[mid]['MOVIE_GENRE_EMBEDDING'].view(-1).unsqueeze(0),
-                ).item()
-                for mid in fs['top_movies']
-            }
+                query      = model.item_genre_tower(torch.tensor([ctx])).view(-1)
+                query_norm = F.normalize(query.unsqueeze(0), dim=1)
+                sims       = (all_norm_genre @ query_norm.T).squeeze(-1)
             i_to_name = _build_genome_i_to_name(fs)
-            rows = [
-                {
+            rows = []
+            for idx in sims.argsort(descending=True).tolist():
+                mid = all_ids[idx]
+                rows.append({
                     'Title':           fs['movieId_to_title'][mid],
                     'Genres':          ', '.join(fs['movieId_to_genres'][mid]),
                     'Top Genome Tags': _top_genome_tags(mid, fs, i_to_name),
-                }
-                for mid, s in sorted(sims.items(), key=lambda x: x[1], reverse=True)[:_TOTAL_RESULTS]
-            ]
+                })
+                if len(rows) >= _TOTAL_RESULTS:
+                    break
             _store_results(pd.DataFrame(rows), 'genres')
 
-    _show_results('genres', posters, fs)
+    _show_results('genres', posters, fs, tmdb_ids)
 
 
 # ── Tab: Explore Genome Tags ──────────────────────────────────────────────────
 
-def tab_explore_genome(model, me, fs, posters):
+def tab_explore_genome(me, fs, all_ids, all_norm_genome, posters, tmdb_ids):
     st.subheader("Explore Genome Tag Item Tower Embeddings")
     st.caption(
-        "Select genome tags to describe what you're looking for — genres, tones, themes, "
-        "settings, time periods, plot elements, or cultural touchstones "
+        "Select a genome tag to describe what you're looking for — a genre, tone, theme, "
+        "setting, time period, plot element, or cultural touchstone "
         "(e.g. 'atmospheric', 'cyberpunk', 'world war ii', 'studio ghibli'). "
-        "The model anchors on the 5 most representative movies for those tags, "
+        f"The model anchors on the {_ANCHORS_PER_TAG} most representative movies for that tag, "
         "then finds similar movies in the genome embedding space."
     )
     genome_tag_names = sorted(fs['genome_tag_names'][tid] for tid in fs['genome_tag_names'])
-    selected_tags    = st.multiselect("Genome tags", genome_tag_names, key='explore_genome')
-    if st.button("Explore", key='btn_genome'):
-        if not selected_tags:
-            st.warning("Select at least one genome tag.")
-        else:
-            name_to_idx = {
-                fs['genome_tag_names'][tid]: fs['genome_tag_to_i'][tid]
-                for tid in fs['genome_tag_to_i']
-            }
-            anchor_tag_title_pairs = []
-            seen_titles = set()
-            for tag in selected_tags:
-                if tag not in name_to_idx:
-                    continue
-                tag_idx     = name_to_idx[tag]
-                sorted_mids = sorted(
-                    fs['top_movies'],
-                    key=lambda mid: float(fs['movieId_to_genome_tag_context'][mid][tag_idx]),
-                    reverse=True,
-                )
-                count = 0
-                for mid in sorted_mids:
-                    if count >= _ANCHORS_PER_TAG:
-                        break
-                    title = fs['movieId_to_title'][mid]
-                    if title not in seen_titles:
-                        anchor_tag_title_pairs.append((tag, mid, title))
-                        seen_titles.add(title)
-                        count += 1
+    selected_tag     = st.selectbox(
+        "Genome tag",
+        options=[None] + genome_tag_names,
+        format_func=lambda x: "Choose a genome tag..." if x is None else x,
+        key='explore_genome', label_visibility="collapsed",
+    )
 
-            if not anchor_tag_title_pairs:
-                st.warning("No genome tags matched the vocabulary.")
-            else:
-                anchor_mids = [mid for _, mid, _ in anchor_tag_title_pairs]
-                anchor_set  = set(anchor_mids)
-                query_emb   = torch.stack([
-                    me[m]['MOVIE_GENOME_TAG_EMBEDDING'].view(-1) for m in anchor_mids
-                ]).mean(dim=0)
+    if not selected_tag:
+        for key in ('genome_active', 'genome_df', 'genome_shown', 'genome_anchor_caption'):
+            st.session_state.pop(key, None)
+        return
 
-                sims = {
-                    mid: F.cosine_similarity(
-                        query_emb.unsqueeze(0),
-                        me[mid]['MOVIE_GENOME_TAG_EMBEDDING'].view(-1).unsqueeze(0),
-                    ).item()
-                    for mid in fs['top_movies']
-                }
-                i_to_name = _build_genome_i_to_name(fs)
-                rows = [
-                    {
-                        'Title':           fs['movieId_to_title'][mid] + ('  ◀ ANCHOR' if mid in anchor_set else ''),
-                        'Genres':          ', '.join(fs['movieId_to_genres'][mid]),
-                        'Top Genome Tags': _top_genome_tags(mid, fs, i_to_name),
-                    }
-                    for mid, s in sorted(sims.items(), key=lambda x: x[1], reverse=True)[:_TOTAL_RESULTS]
-                ]
-                _store_results(pd.DataFrame(rows), 'genome')
-                st.session_state['genome_anchor_caption'] = (
-                    "Genome anchors — "
-                    + " · ".join(f"{tag}: {title}" for tag, _, title in anchor_tag_title_pairs)
-                )
+    # Recompute only when the selection changes — results appear immediately on
+    # selection, no button press.
+    if st.session_state.get('genome_active') != selected_tag:
+        name_to_idx = {
+            fs['genome_tag_names'][tid]: fs['genome_tag_to_i'][tid]
+            for tid in fs['genome_tag_to_i']
+        }
+        if selected_tag not in name_to_idx:
+            st.warning("Genome tag did not match the vocabulary.")
+            return
+        tag_idx     = name_to_idx[selected_tag]
+        sorted_mids = sorted(
+            fs['top_movies'],
+            key=lambda mid: float(fs['movieId_to_genome_tag_context'][mid][tag_idx]),
+            reverse=True,
+        )
+        anchor_tag_title_pairs = []
+        seen_titles = set()
+        for mid in sorted_mids:
+            if len(anchor_tag_title_pairs) >= _ANCHORS_PER_TAG:
+                break
+            title = fs['movieId_to_title'][mid]
+            if title not in seen_titles:
+                anchor_tag_title_pairs.append((selected_tag, mid, title))
+                seen_titles.add(title)
 
-    if 'genome_df' in st.session_state:
-        caption = st.session_state.get('genome_anchor_caption')
-        if caption:
-            st.caption(caption)
-    _show_results('genome', posters, fs)
+        anchor_mids = [mid for _, mid, _ in anchor_tag_title_pairs]
+        anchor_set  = set(anchor_mids)
+        with torch.no_grad():
+            query_emb  = torch.stack([
+                me[m]['MOVIE_GENOME_TAG_EMBEDDING'].view(-1) for m in anchor_mids
+            ]).mean(dim=0)
+            query_norm = F.normalize(query_emb.unsqueeze(0), dim=1)
+            sims       = (all_norm_genome @ query_norm.T).squeeze(-1)
+        i_to_name = _build_genome_i_to_name(fs)
+        rows = []
+        for idx in sims.argsort(descending=True).tolist():
+            mid = all_ids[idx]
+            rows.append({
+                'Title':           fs['movieId_to_title'][mid] + ('  ◀ ANCHOR' if mid in anchor_set else ''),
+                'Genres':          ', '.join(fs['movieId_to_genres'][mid]),
+                'Top Genome Tags': _top_genome_tags(mid, fs, i_to_name),
+            })
+            if len(rows) >= _TOTAL_RESULTS:
+                break
+        _store_results(pd.DataFrame(rows), 'genome')
+        st.session_state['genome_anchor_caption'] = (
+            "Genome anchors — "
+            + " · ".join(f"{tag}: {title}" for tag, _, title in anchor_tag_title_pairs)
+        )
+        st.session_state['genome_active'] = selected_tag
+
+    caption = st.session_state.get('genome_anchor_caption')
+    if caption:
+        st.caption(caption)
+    _show_results('genome', posters, fs, tmdb_ids)
 
 
 # ── Tab: About ───────────────────────────────────────────────────────────────
@@ -861,10 +959,12 @@ st.markdown("""
         word-break: break-word;
         white-space: normal;
     }
+    a.cover-link { transition: filter .15s ease, transform .15s ease; cursor: pointer; }
+    a.cover-link:hover { filter: brightness(1.12); transform: scale(1.02); }
     </style>
 """, unsafe_allow_html=True)
 st.title("Movie Recommender")
-model, fs, me, all_ids, all_embs, all_norm, ts_inference, posters = load_artifacts()
+art = load_artifacts()
 
 st.markdown(
     "<small>Two-Tower neural network · Built with "
@@ -879,19 +979,23 @@ recommend_tab, examples_tab, similar_tab, genres_tab, genome_tab, about_tab = st
 )
 
 with recommend_tab:
-    tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters)
+    tab_recommend(art.model, art.fs, art.all_ids, art.all_embs, art.ts_inference,
+                  art.posters, art.tmdb_ids)
 
 with examples_tab:
-    tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters)
+    tab_recommend_examples(art.model, art.fs, art.all_ids, art.all_embs, art.ts_inference,
+                           art.posters, art.tmdb_ids)
 
 with similar_tab:
-    tab_similar(me, fs, all_ids, all_norm, posters)
+    tab_similar(art.me, art.fs, art.all_ids, art.all_norm, art.posters, art.tmdb_ids)
 
 with genres_tab:
-    tab_explore_genres(model, me, fs, posters)
+    tab_explore_genres(art.model, art.fs, art.all_ids, art.all_norm_genre,
+                       art.posters, art.tmdb_ids)
 
 with genome_tab:
-    tab_explore_genome(model, me, fs, posters)
+    tab_explore_genome(art.me, art.fs, art.all_ids, art.all_norm_genome,
+                       art.posters, art.tmdb_ids)
 
 with about_tab:
     tab_about()
