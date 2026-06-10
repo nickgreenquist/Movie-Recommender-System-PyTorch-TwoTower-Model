@@ -50,81 +50,49 @@ For each of the \~9,375 corpus movies (9,366 scraped successfully): pull TMDB fi
 
 Honest design calls are baked in. Structured output is non-negotiable — free-form silently corrupts the tensor. The visual and prestige groups are **factual-only**: animation, black-and-white, Oscar-winner, yes; "visually stunning" hallucinated from a synopsis, no. Reception/prestige is its own group so it can be ablated separately. The extractor was **Claude Sonnet via Claude Code**.
 
-**What comes out — one movie's fingerprint.** Nothing below is hand-picked or tuned; it's the raw six-call output for *Alien* (1979), top scores per group:
+**What comes out — two fingerprints.** Nothing below is hand-picked or tuned; these are the raw six-call outputs for two very different films, side by side, top scores per group (each 0–1):
 
 <div align="center">
 <table>
   <tr>
-    <td rowspan="7" valign="top"><img src="figures/alien_1979_poster.jpg" alt="Alien (1979) theatrical poster — the egg with green glow and the 'ALIEN' wordmark" width="200"></td>
     <th>Group</th>
-    <th>Top extracted features (score 0–1)</th>
+    <th><img src="figures/alien_1979_poster.jpg" alt="Alien (1979) theatrical poster — the egg with green glow and the 'ALIEN' wordmark" width="150"><br>Alien (1979)</th>
+    <th><img src="figures/toy_story_1995_poster.jpg" alt="Toy Story (1995) theatrical poster — Woody, Buzz Lightyear and the toys" width="150"><br>Toy Story (1995)</th>
   </tr>
   <tr>
     <td>Themes &amp; plot</td>
     <td><code>survival</code> 1.0, <code>betrayal</code> 0.7, <code>mortality</code> 0.7</td>
-  </tr>
-  <tr>
-    <td>Tone &amp; mood</td>
-    <td><code>tense</code> 1.0, <code>dark</code> 0.9, <code>atmospheric</code> 0.9, <code>creepy</code> 0.9, <code>scary</code> 0.9</td>
-  </tr>
-  <tr>
-    <td>Setting, era &amp; sub-genre</td>
-    <td><code>space</code> 1.0, <code>aliens</code> 1.0, <code>monster</code> 0.9, <code>future</code> 0.7</td>
-  </tr>
-  <tr>
-    <td>Provenance &amp; structure</td>
-    <td><code>franchise</code> 0.8, <code>twist_ending</code> 0.7</td>
-  </tr>
-  <tr>
-    <td>Factual reception &amp; prestige</td>
-    <td><code>oscar_technical</code> 1.0, <code>classic</code> 0.9, <code>cult_classic</code> 0.6</td>
-  </tr>
-  <tr>
-    <td>Visual medium</td>
-    <td><code>cgi_heavy</code> 0.3</td>
-  </tr>
-</table>
-</div>
-
-Every score reads right, and the two *factual* groups behave: `oscar_technical` is a true 1.0 (Alien won the Academy Award for Best Visual Effects), while `cgi_heavy` stays low because the film's effects are practical, not computer-generated — exactly the factual-only discipline the visual and prestige groups are built for.
-
-**The opposite end of the catalog.** The same six calls on *Toy Story* (1995) — watch the visual group, which barely registered for Alien's practical effects:
-
-<div align="center">
-<table>
-  <tr>
-    <td rowspan="7" valign="top"><img src="figures/toy_story_1995_poster.jpg" alt="Toy Story (1995) theatrical poster — Woody, Buzz Lightyear and the toys" width="200"></td>
-    <th>Group</th>
-    <th>Top extracted features (score 0–1)</th>
-  </tr>
-  <tr>
-    <td>Themes &amp; plot</td>
     <td><code>friendship</code> 0.9, <code>family</code> 0.7</td>
   </tr>
   <tr>
     <td>Tone &amp; mood</td>
+    <td><code>tense</code> 1.0, <code>dark</code> 0.9, <code>atmospheric</code> 0.9, <code>creepy</code> 0.9, <code>scary</code> 0.9</td>
     <td><code>feel_good</code> 0.9, <code>comedic</code> 0.8, <code>emotional</code> 0.6</td>
   </tr>
   <tr>
     <td>Setting, era &amp; sub-genre</td>
+    <td><code>space</code> 1.0, <code>aliens</code> 1.0, <code>monster</code> 0.9, <code>future</code> 0.7</td>
     <td><code>small_town</code> 0.4</td>
   </tr>
   <tr>
     <td>Provenance &amp; structure</td>
+    <td><code>franchise</code> 0.8, <code>twist_ending</code> 0.7</td>
     <td><code>franchise</code> 0.9</td>
   </tr>
   <tr>
     <td>Factual reception &amp; prestige</td>
+    <td><code>oscar_technical</code> 1.0, <code>classic</code> 0.9, <code>cult_classic</code> 0.6</td>
     <td><code>oscar_nominated</code> 0.9, <code>classic</code> 0.8</td>
   </tr>
   <tr>
     <td>Visual medium</td>
+    <td><code>cgi_heavy</code> 0.3</td>
     <td><code>animated</code> 1.0, <code>computer_animation</code> 1.0</td>
   </tr>
 </table>
 </div>
 
-The flip is the tell: `animated` and `computer_animation` peg at 1.0 (Pixar's first feature is fully CG), and `feel_good` / `comedic` stand where Alien had `tense` / `scary`. The setting group, by contrast, stays quiet — *Toy Story* has no strong era or sub-genre, and the extractor declines to invent one. Same pipeline, an opposite fingerprint, both read off nothing but the film's public text.
+Every score reads right, and the factual groups behave in both directions. `oscar_technical` is a true 1.0 for *Alien* (it won the Visual Effects Oscar), and its `cgi_heavy` sits at just 0.3 — the effects are practical, not computer-generated — while *Toy Story*'s `animated` and `computer_animation` peg at 1.0 (Pixar's first fully-CG feature). `feel_good` / `comedic` stand where Alien has `tense` / `scary`, and *Toy Story*'s setting group stays quiet because it has no strong era or sub-genre and the extractor doesn't invent one. Same six calls, opposite fingerprints — both read off nothing but each film's public text.
 
 ## 4. Does it work? — the universal setting
 
