@@ -6,9 +6,9 @@
 
 ## TL;DR
 
-You're standing up a recommender with two assets: user **interactions**, and each item's public **text**. What you *don't* have is a tagging team — or the curated metadata a research dataset like MovieLens is unusually rich in. So the practical question is two-part: should you build a per-item **content vector** at all, and if so, can you do it cheaply?
+You're building a recommender with user interactions and each item's text — but no tagging team, and little of the curated metadata a dataset like MovieLens is unusually rich in. So: is a per-item **content vector** worth building, and can you build it cheaply?
 
-This is a controlled test of exactly that. The gold-standard content source — MovieLens's hand-curated **tag genome** — took fifteen years of community data to build, so you can't simply buy it. The feasible alternative is to **scrape each item's own text and extract structured features with an LLM**; here that covered all **\~9,375 movies in a single day** at near-zero cost. Drop both into the bare setting you actually start from — interactions + text, nothing curated — and against a pure collaborative-filtering floor, **the cheap LLM features beat the floor and edge the gold-standard genome**: MRR **0.1155 (LLM) / 0.1148 (genome) / 0.1121 (floor)**, scored on the genome's *own* taxonomy as a deliberate handicap. The claim isn't "better" — it's *as good as the option you can't afford, and the one you can actually ship.* (One caveat, unpacked in §6: if you already own a rich curated-metadata stack — genre, user tags, year — an extra content vector goes redundant either way. But that stack is exactly what a new team lacks, which is why this test isolates the content vector on its own.)
+MovieLens's gold-standard **tag genome** took fifteen years of community data. The cheap alternative — scrape each item's text, extract features with an LLM — covered all \~9,375 movies in **a day** at near-zero cost. And in that bare setting it **beats a pure-CF floor and edges the genome** on the genome's *own* axes: MRR **0.1155 (LLM) / 0.1148 (genome) / 0.1121 (floor)**. As good as the option you can't afford, and the one you can actually ship.
 
 ![Recommendations from the deployed app for a 'pixar animation' genome-tag query](figures/pixar_movies.jpeg)
 
