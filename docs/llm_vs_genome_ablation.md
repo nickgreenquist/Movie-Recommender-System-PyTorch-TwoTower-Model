@@ -52,18 +52,39 @@ Honest design calls are baked in. Structured output is non-negotiable — free-f
 
 **What comes out — one movie's fingerprint.** Nothing below is hand-picked or tuned; it's the raw six-call output for *Alien* (1979), top scores per group:
 
-<p align="center">
-  <img src="figures/alien_1979_poster.jpg" alt="Alien (1979) theatrical poster — the egg with green glow and the 'ALIEN' wordmark" width="200">
-</p>
-
-| Group | Top extracted features (score 0–1) |
-|---|---|
-| Themes & plot | `survival` 1.0, `betrayal` 0.7, `mortality` 0.7 |
-| Tone & mood | `tense` 1.0, `dark` 0.9, `atmospheric` 0.9, `creepy` 0.9, `scary` 0.9 |
-| Setting, era & sub-genre | `space` 1.0, `aliens` 1.0, `monster` 0.9, `future` 0.7 |
-| Provenance & structure | `franchise` 0.8, `twist_ending` 0.7 |
-| Factual reception & prestige | `oscar_technical` 1.0, `classic` 0.9, `cult_classic` 0.6 |
-| Visual medium | `cgi_heavy` 0.3 |
+<div align="center">
+<table>
+  <tr>
+    <td rowspan="7" valign="top"><img src="figures/alien_1979_poster.jpg" alt="Alien (1979) theatrical poster — the egg with green glow and the 'ALIEN' wordmark" width="200"></td>
+    <th>Group</th>
+    <th>Top extracted features (score 0–1)</th>
+  </tr>
+  <tr>
+    <td>Themes &amp; plot</td>
+    <td><code>survival</code> 1.0, <code>betrayal</code> 0.7, <code>mortality</code> 0.7</td>
+  </tr>
+  <tr>
+    <td>Tone &amp; mood</td>
+    <td><code>tense</code> 1.0, <code>dark</code> 0.9, <code>atmospheric</code> 0.9, <code>creepy</code> 0.9, <code>scary</code> 0.9</td>
+  </tr>
+  <tr>
+    <td>Setting, era &amp; sub-genre</td>
+    <td><code>space</code> 1.0, <code>aliens</code> 1.0, <code>monster</code> 0.9, <code>future</code> 0.7</td>
+  </tr>
+  <tr>
+    <td>Provenance &amp; structure</td>
+    <td><code>franchise</code> 0.8, <code>twist_ending</code> 0.7</td>
+  </tr>
+  <tr>
+    <td>Factual reception &amp; prestige</td>
+    <td><code>oscar_technical</code> 1.0, <code>classic</code> 0.9, <code>cult_classic</code> 0.6</td>
+  </tr>
+  <tr>
+    <td>Visual medium</td>
+    <td><code>cgi_heavy</code> 0.3</td>
+  </tr>
+</table>
+</div>
 
 Every score reads right, and the two *factual* groups behave: `oscar_technical` is a true 1.0 (Alien won the Academy Award for Best Visual Effects), while `cgi_heavy` stays low because the film's effects are practical, not computer-generated — exactly the factual-only discipline the visual and prestige groups are built for.
 
