@@ -52,6 +52,10 @@ Honest design calls are baked in. Structured output is non-negotiable — free-f
 
 **What comes out — one movie's fingerprint.** Nothing below is hand-picked or tuned; it's the raw six-call output for *Alien* (1979), top scores per group:
 
+<p align="center">
+  <img src="figures/alien_1979_poster.jpg" alt="Alien (1979) theatrical poster — the egg with green glow and the 'ALIEN' wordmark" width="200">
+</p>
+
 | Group | Top extracted features (score 0–1) |
 |---|---|
 | Themes & plot | `survival` 1.0, `betrayal` 0.7, `mortality` 0.7 |
