@@ -10,11 +10,11 @@ A PyTorch Two-Tower neural network recommender trained on the MovieLens 32M data
 
 ## Current State (prod)
 
-**Prod checkpoint:** `best_softmax_genome_tags_llm_features_popularity_alpha_05_20260607_195227.pth` — Model D: full softmax, L2 norm, Menon α=0.5, 4-pool user tower, 128-dim, `feature_towers='both'` (genome + LLM content towers fused). Do not replace without a clearly better eval result.
+**Prod checkpoint:** `PROD_best_softmax_genome_tags_llm_features_popularity_alpha_05_20260612_080719.pth` — Model D: full softmax, L2 norm, Menon α=0.5, 4-pool user tower, 128-dim, `feature_towers='both'` (genome + LLM content towers fused). Trained 250k steps on the **corrected** LLM feature tensor (the 141-movie misalignment fix); whole-corpus rollback MRR 0.1132 (vs 0.1123 for the prior prod). Promoted & deployed 2026-06-12; prior prod is now `OLD_PROD_..._20260607_195227.pth`. Do not replace without a clearly better eval result.
 
 Re-export serving artifacts:
 ```bash
-python main.py export saved_models/best_softmax_genome_tags_llm_features_popularity_alpha_05_20260607_195227.pth
+python main.py export saved_models/PROD_best_softmax_genome_tags_llm_features_popularity_alpha_05_20260612_080719.pth
 ```
 Export bakes the LLM feature buffer into `serving/feature_store.pt` (the `data/llm_features_*.pt` tensor is gitignored / absent on Streamlit Cloud), so the deployed app rebuilds the genome+LLM user tower from `serving/` alone — `streamlit_app.py` never reads `data/`.
 
