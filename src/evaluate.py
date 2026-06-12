@@ -97,17 +97,20 @@ USER_TYPE_TO_FAVORITE_MOVIES = {
         'Inglourious Basterds (2009)',
         'Enemy at the Gates (2001)'
     ],
+    # John Wayne classics — era-tight all-western seeds + 'western' genome anchors give
+    # 9/10 westerns in top-10 (the lone non-western is an Eastwood cop film, genre-adjacent).
+    # Replaced the old drifty seed (True Grit/Cool Hand Luke/90s) that scored 3/10.
     'Western Lover':       [
-        'True Grit (1969)',
-        'High Plains Drifter (1973)',
-        'Cool Hand Luke (1967)',
-        'Wild Bill (1995)',
-        'Wyatt Earp (1994)',
-        'Fistful of Dollars, A (Per un pugno di dollari) (1964)',
-        'Wild Bunch, The (1969)',
-        'For a Few Dollars More (Per qualche dollaro in più) (1965)',
-        "Once Upon a Time in the West (C'era una volta il West) (1968)",
-
+        'Searchers, The (1956)',
+        'Stagecoach (1939)',
+        'Rio Bravo (1959)',
+        'Big Jake (1971)',
+        'Shootist, The (1976)',
+        'El Dorado (1966)',
+        'She Wore a Yellow Ribbon (1949)',
+        'Sons of Katie Elder (1965)',
+        'Red River (1948)',
+        'McLintock! (1963)',
     ],
     'Musical Lover': [
         'Madame Butterfly (1995)',
@@ -178,7 +181,7 @@ USER_TYPE_TO_GENOME_TAGS = {
     'Arthouse Lover':         ['art house', 'slow burn'],
     'Superhero Lover':        ['superhero'],
     'WW2 Lover':              ['wwii'],
-    'Western Lover':          ['spaghetti western'],
+    'Western Lover':          ['western'],
     'Musical Lover':          ['musical'],
     'Anime Lover':            ['studio ghibli'],
     'Martial Arts Lover':     ['kung fu'],
