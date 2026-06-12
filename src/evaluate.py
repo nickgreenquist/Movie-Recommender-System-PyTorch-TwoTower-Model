@@ -172,7 +172,7 @@ USER_TYPE_TO_DISLIKED_MOVIES = {
 USER_TYPE_TO_GENOME_TAGS = {
     "Children's Movie Lover": ['pixar animation'],
     'Fantasy Lover':          ['high fantasy'],
-    'Crime Lover':            ['crime', 'gangs'],
+    'Crime Lover':            ['organized crime', 'mafia'],
     'Heist Lover':            ['heist'],
     'Action Junkie':          ['explosions', 'adrenaline'],
     'Arthouse Lover':         ['art house', 'slow burn'],
