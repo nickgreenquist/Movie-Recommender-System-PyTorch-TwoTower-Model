@@ -28,7 +28,22 @@ SERVING_DIR = 'serving'
 
 
 def run_export(data_dir: str = 'data', checkpoint_path: str = None,
-               version: str = FEATURES_VERSION) -> None:
+               version: str = FEATURES_VERSION, variant: str = None) -> None:
+    # variant=None writes the canonical serving artifacts (model.pth, movie_embeddings.pt,
+    # feature_store.pt). A non-None variant (e.g. 'no_alpha') is a SECONDARY model deployed
+    # alongside prod for an A/B in the app: it writes only its weight-dependent artifacts under
+    # suffixed names (model_<variant>.pth, movie_embeddings_<variant>.pt) and SKIPS the shared
+    # feature_store.pt — the variant has identical architecture, vocabs and feature buffers to
+    # prod (only the trained weights differ, e.g. popularity α), so the app builds BOTH models
+    # from the one feature_store. The variant therefore relies on a prior canonical export having
+    # already written serving/feature_store.pt.
+    suffix     = f'_{variant}' if variant else ''
+    model_name = f'model{suffix}.pth'
+    emb_name   = f'movie_embeddings{suffix}.pt'
+    if variant and not os.path.exists(os.path.join(SERVING_DIR, 'feature_store.pt')):
+        print(f"WARNING: serving/feature_store.pt is absent — the '{variant}' variant shares it "
+              "with prod. Run a canonical `python main.py export <prod_ckpt>` first.")
+
     # Resolve checkpoint
     if checkpoint_path is None:
         cfg = get_config()
@@ -58,14 +73,21 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
     os.makedirs(SERVING_DIR, exist_ok=True)
 
     # ── model.pth ────────────────────────────────────────────────────────────
-    model_path = os.path.join(SERVING_DIR, 'model.pth')
+    model_path = os.path.join(SERVING_DIR, model_name)
     torch.save(state_dict, model_path)
     print(f"Saved {model_path}  ({os.path.getsize(model_path) / 1e6:.1f} MB)")
 
     # ── movie_embeddings.pt ──────────────────────────────────────────────────
-    emb_path = os.path.join(SERVING_DIR, 'movie_embeddings.pt')
+    emb_path = os.path.join(SERVING_DIR, emb_name)
     torch.save(movie_embeddings, emb_path)
     print(f"Saved {emb_path}  ({os.path.getsize(emb_path) / 1e6:.1f} MB)")
+
+    # A variant export stops here — feature_store.pt (vocabs, buffers, config) is shared with the
+    # canonical export, so the app reconstructs the variant model from prod's feature_store.
+    if variant:
+        print(f"\nVariant '{variant}' export complete — wrote {model_name} + {emb_name}, "
+              "reusing the existing serving/feature_store.pt.")
+        return
 
     # ── Popularity ordering (for app dropdowns) ──────────────────────────────
     print("Computing popularity order ...")

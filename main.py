@@ -96,9 +96,9 @@ def cmd_eval(checkpoint_path=None):
                      n_users=n_users)
 
 
-def cmd_export(checkpoint_path=None):
+def cmd_export(checkpoint_path=None, variant=None):
     from src.export import run_export
-    run_export(data_dir=DATA_DIR, checkpoint_path=checkpoint_path)
+    run_export(data_dir=DATA_DIR, checkpoint_path=checkpoint_path, variant=variant)
 
 
 def cmd_posters():
@@ -130,7 +130,17 @@ if __name__ == '__main__':
         cmd_canary()
     elif args[0] in COMMANDS:
         cmd = args[0]
-        if cmd in ('canary', 'probe', 'eval', 'export') and len(args) > 1:
+        if cmd == 'export':
+            # export [<checkpoint>] [--variant <name>] — --variant writes a secondary model
+            # (model_<name>.pth + movie_embeddings_<name>.pt) alongside prod, sharing feature_store.
+            rest    = args[1:]
+            variant = None
+            if '--variant' in rest:
+                i       = rest.index('--variant')
+                variant = rest[i + 1] if i + 1 < len(rest) else None
+                rest    = rest[:i] + rest[i + 2:]
+            cmd_export(checkpoint_path=(rest[0] if rest else None), variant=variant)
+        elif cmd in ('canary', 'probe', 'eval') and len(args) > 1:
             COMMANDS[cmd](checkpoint_path=args[1])
         else:
             COMMANDS[cmd]()

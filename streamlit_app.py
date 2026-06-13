@@ -49,6 +49,15 @@ _POSTER_COLS   = 5      # poster grid columns
 _PAGE_SIZE     = 20     # movies per page
 _TOTAL_RESULTS = 60     # total movies to fetch (3 pages)
 
+# Recommend / Examples popularity-correction A/B — the two separately-trained models the visitor
+# switches between. Prod bakes the Menon α=0.5 logit adjustment into training; the α=0 twin is a
+# distinct model trained with NO correction, surfaced so the visitor can watch popular titles take
+# over once the correction is removed. The correction is train-time only (inference is plain dot
+# products either way), so "Off" loads a different model — it is not a runtime knob. These labels
+# double as the segmented-control options; the first is the default (prod).
+_REC_MODEL_DEFAULT_LABEL  = 'On (α = 0.5)'
+_REC_MODEL_NO_ALPHA_LABEL = 'Off (α = 0)'
+
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 
@@ -64,11 +73,12 @@ _TMDB_IDS_FILE = 'serving/tmdb_ids.json'
 class Artifacts(NamedTuple):
     """Everything the tabs need, loaded once and cached. Named fields so the load order
     can't drift out of sync with the call sites."""
-    model:           MovieRecommender
+    model:           MovieRecommender   # prod (α=0.5) — also powers Genres / Genome / Similar tabs
     fs:              dict
     me:              dict
     all_ids:         list
     all_embs:        torch.Tensor
+    rec_models:      dict          # Recommend/Examples A/B: {label: (model, item-emb matrix)}, prod first
     all_norm_genre:  torch.Tensor
     all_norm_genome: torch.Tensor
     sim_spaces:      dict          # Similar tab's 2x2: {source: {representation: norm_matrix}}
@@ -185,6 +195,27 @@ def load_artifacts() -> Artifacts:
     all_ids  = list(me.keys())
     all_embs = torch.cat([me[m]['MOVIE_EMBEDDING_COMBINED'] for m in all_ids], dim=0)
 
+    # ── Popularity-correction A/B: prod (α=0.5) + optional α=0 twin ──────────────────────────────
+    # Both models share this feature_store/config — identical architecture, vocabs and feature
+    # buffers; only the trained weights differ (α is train-time only). The twin's artifacts
+    # (model_no_alpha.pth + movie_embeddings_no_alpha.pt) are written by
+    # `python main.py export <ckpt> --variant no_alpha`; absent them, only prod loads and the
+    # Recommend/Examples tabs render no toggle. rec_models maps the segmented-control label →
+    # (model, item-embedding matrix); dict insertion order makes prod the default.
+    rec_models = {_REC_MODEL_DEFAULT_LABEL: (model, all_embs)}
+    na_model_path = 'serving/model_no_alpha.pth'
+    na_emb_path   = 'serving/movie_embeddings_no_alpha.pt'
+    if os.path.exists(na_model_path) and os.path.exists(na_emb_path):
+        na_model = _build_serving_model(fs, cfg)
+        na_sd    = torch.load(na_model_path, weights_only=True)
+        for buf in ('genome_context_buffer', 'content_context_buffer', 'llm_feature_buffer'):
+            na_sd.pop(buf, None)
+        na_model.load_state_dict(na_sd)
+        na_model.eval()
+        na_me       = torch.load(na_emb_path, weights_only=False)
+        na_all_embs = torch.cat([na_me[m]['MOVIE_EMBEDDING_COMBINED'] for m in all_ids], dim=0)
+        rec_models[_REC_MODEL_NO_ALPHA_LABEL] = (na_model, na_all_embs)
+
     # Per-sub-tower embedding matrices, normalized once at load so the Genres / Genome /
     # Similar tabs rank the whole corpus with a single matmul instead of a per-movie cosine loop.
     all_genre_embs  = torch.cat([me[m]['MOVIE_GENRE_EMBEDDING'].view(1, -1) for m in all_ids], dim=0)
@@ -229,7 +260,7 @@ def load_artifacts() -> Artifacts:
     tmdb_ids = _load_tmdb_ids(fs)
 
     return Artifacts(
-        model=model, fs=fs, me=me, all_ids=all_ids, all_embs=all_embs,
+        model=model, fs=fs, me=me, all_ids=all_ids, all_embs=all_embs, rec_models=rec_models,
         all_norm_genre=all_norm_genre, all_norm_genome=all_norm_genome, sim_spaces=sim_spaces,
         ts_inference=ts_inference, posters=posters, tmdb_ids=tmdb_ids,
     )
@@ -370,9 +401,49 @@ def _show_results(result_key: str, posters, fs, tmdb_ids) -> None:
     _show_more_button(result_key, shown, len(df))
 
 
+# ── Popularity-correction selector (Recommend + Examples) ─────────────────────
+
+def _active_rec_model(rec_models, key):
+    """Resolve the currently-selected popularity-correction model from session state (default =
+    prod), WITHOUT rendering anything, so the recommend logic has a (model, item-embeddings) pair
+    even on runs where the A/B control isn't drawn (e.g. before any results exist). The control
+    itself is rendered separately by _render_rec_model_toggle and gated to runs that already have
+    results on screen. Returns (variant_label, model, all_embs)."""
+    labels  = list(rec_models)
+    variant = st.session_state.get(key, labels[0])
+    if variant not in rec_models:
+        variant = labels[0]
+    model, all_embs = rec_models[variant]
+    return variant, model, all_embs
+
+
+def _render_rec_model_toggle(rec_models, key):
+    """Draw the popularity-correction A/B control (segmented control matching the Similar tab's
+    toggle aesthetic, plus an explanatory caption when the twin is active). No-op when only prod is
+    loaded. Call sites gate this on results already being on screen, so a toggle with nothing to
+    act on never clutters the empty initial state. Framed as two trained models — the Menon
+    correction is baked into training, so "Off" loads the separately-trained α=0 twin rather than
+    flipping an inference knob; on change Streamlit reruns and _active_rec_model picks up the new
+    selection (the recompute keys it off the variant)."""
+    labels = list(rec_models)
+    if len(labels) == 1:
+        return
+    choice = st.segmented_control(
+        "Popularity correction", labels, default=labels[0], selection_mode="single",
+        required=True, key=key,
+        help=("Two separately-trained models. The Menon α correction is applied during training "
+              "only — inference is plain dot products either way — so this loads a different "
+              "model, not a runtime knob. α=0.5 keeps recommendations on-taste; α=0 lets popular "
+              "titles dominate.")) or labels[0]
+    if choice != labels[0]:
+        st.caption("⚠️ Popularity correction **off** — watch popular blockbusters crowd out niche, "
+                   "on-genre picks. This is a failure mode common in recommender models, where the "
+                   "model learns to 'play it safe' by often recommending popular movies.")
+
+
 # ── Tab: Recommend ────────────────────────────────────────────────────────────
 
-def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters, tmdb_ids):
+def tab_recommend(rec_models, fs, all_ids, ts_inference, posters, tmdb_ids):
     st.caption(
         "Select movies you love and optionally refine with genome tags. "
         "The model builds your taste embedding from the movies' content — curated genome tags plus "
@@ -385,7 +456,8 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters, tmdb_ids)
     if st.session_state.pop('_clear_rec', False):
         for key in ('rec_liked', 'rec_genome_tags'):
             st.session_state[key] = []
-        for key in ('rec_df', 'rec_shown', 'rec_anchor_caption'):
+        for key in ('rec_df', 'rec_shown', 'rec_anchor_caption', 'rec_query', 'rec_seed_key',
+                    'rec_alpha'):
             st.session_state.pop(key, None)
 
     liked_titles = st.multiselect("Favorite Movies", all_titles, key='rec_liked',
@@ -400,6 +472,10 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters, tmdb_ids)
         genome_tag_names     = sorted(fs['genome_tag_names'][tid] for tid in fs['genome_tag_names'])
         selected_genome_tags = st.multiselect("Genome tags", genome_tag_names, key='rec_genome_tags',
                                               max_selections=10)
+
+    # Resolve the active model silently here (needed below to score). The A/B toggle itself is
+    # rendered further down, only once results are on screen — see _render_rec_model_toggle.
+    variant, model, all_embs = _active_rec_model(rec_models, 'rec_alpha')
 
     st.markdown("""
         <style>
@@ -445,26 +521,43 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters, tmdb_ids)
                             anchor_tag_title_pairs.append((tag, title))
                             seen_titles.add(title)
                             count += 1
-            liked_with_weights = (
-                [(t, _LIKED_MOVIE)  for t in liked_titles] +
-                [(t, _ANCHOR_MOVIE) for _, t in anchor_tag_title_pairs]
-            )
+            # Store the model-independent query (likes + anchors). The score block below (re)runs it
+            # against whichever α variant is selected, so flipping the toggle re-ranks the SAME
+            # query immediately — no need to re-press the button.
+            st.session_state['rec_query'] = {
+                'liked_with_weights': (
+                    [(t, _LIKED_MOVIE)  for t in liked_titles] +
+                    [(t, _ANCHOR_MOVIE) for _, t in anchor_tag_title_pairs]
+                ),
+                'exclude_titles': liked_titles,
+                'anchor_caption': (
+                    "Genome anchors — " + " · ".join(
+                        f"{tag}: {title}" for tag, title in anchor_tag_title_pairs)
+                    if anchor_tag_title_pairs else None),
+            }
+
+    # Recompute when the committed query OR the α variant changes (user tower + item embeddings
+    # both differ between the two models, so the whole scoring is redone per variant).
+    query = st.session_state.get('rec_query')
+    if query is not None:
+        cache_key = (tuple(query['liked_with_weights']), variant)
+        if st.session_state.get('rec_seed_key') != cache_key:
             with torch.no_grad():
                 user_emb = _build_user_embedding(
-                    model, fs, liked_with_weights, [],
+                    model, fs, query['liked_with_weights'], [],
                     [], [], ts_inference,
                 )
             df = _score_movies(user_emb, all_ids, all_embs, fs,
-                               exclude_titles=liked_titles)
+                               exclude_titles=query['exclude_titles'])
             _store_results(df, 'rec')
-            if anchor_tag_title_pairs:
-                st.session_state['rec_anchor_caption'] = "Genome anchors — " + " · ".join(
-                    f"{tag}: {title}" for tag, title in anchor_tag_title_pairs
-                )
+            if query['anchor_caption']:
+                st.session_state['rec_anchor_caption'] = query['anchor_caption']
             else:
                 st.session_state.pop('rec_anchor_caption', None)
+            st.session_state['rec_seed_key'] = cache_key
 
     if 'rec_df' in st.session_state:
+        _render_rec_model_toggle(rec_models, 'rec_alpha')
         caption = st.session_state.get('rec_anchor_caption')
         if caption:
             st.caption(caption)
@@ -473,7 +566,7 @@ def tab_recommend(model, fs, all_ids, all_embs, ts_inference, posters, tmdb_ids)
 
 # ── Tab: Recommend (Examples) ─────────────────────────────────────────────────
 
-def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters, tmdb_ids):
+def tab_recommend_examples(rec_models, fs, all_ids, ts_inference, posters, tmdb_ids):
     st.caption("Select a pre-built user profile to see what the model recommends for that taste.")
     selected_profile = st.selectbox(
         "Profile",
@@ -495,7 +588,12 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters, 
     if missing:
         st.warning("⚠️ Not found in corpus (check title format): " + ", ".join(missing))
 
-    if st.session_state.get('examples_profile') != selected_profile:
+    # A profile is selected (results follow below), so the toggle always renders here — its empty
+    # state was never the problem the gating addresses.
+    _render_rec_model_toggle(rec_models, 'examples_alpha')
+    variant, model, all_embs = _active_rec_model(rec_models, 'examples_alpha')
+
+    if st.session_state.get('examples_profile') != (selected_profile, variant):
         # For genome-driven profiles, compute anchor movies from tags
         anchor_tag_title_pairs = []
         if genome_tags:
@@ -543,7 +641,7 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters, 
             )
         else:
             st.session_state.pop('examples_anchor_caption', None)
-        st.session_state['examples_profile'] = selected_profile
+        st.session_state['examples_profile'] = (selected_profile, variant)
 
     st.subheader(f"Recommendations for: {selected_profile}")
     if fav_movies:
@@ -564,13 +662,9 @@ def tab_similar(fs, all_ids, sim_spaces, posters, tmdb_ids):
     # content-cosine baseline on the same seed. sim_spaces (built in load_artifacts) maps
     # {source: {representation: L2-normalized (n_movies, d) matrix}}; each cell ranks with one matmul.
     st.caption(
-        "Find a movie's nearest neighbours by cosine similarity in a chosen content space. "
-        "**Feature source** — curated MovieLens **Genome** tags (1,128 relevance scores) or "
-        "**LLM**-extracted features (132 dims). **Representation** — the **learned** item-tower "
-        "projection (32-dim, trained end-to-end inside the two-tower model) or the **raw** feature "
-        "vectors (direct cosine, a content-based baseline). The learned projection is optimized for "
-        "user→item retrieval, so comparing it against raw shows what the model's embedding captures "
-        "beyond — and trades off against — literal content."
+        "Find a movie's nearest neighbours by cosine similarity. Switch the **feature source** "
+        "(Genome tags vs LLM features) and **representation** (the learned two-tower embedding vs "
+        "raw feature cosine) to compare how each ranks the same movie."
     )
 
     selected = st.selectbox(
@@ -580,9 +674,16 @@ def tab_similar(fs, all_ids, sim_spaces, posters, tmdb_ids):
         key='sim_title', label_visibility="collapsed",
     )
 
+    if not selected:
+        for key in ('sim_seed_key', 'sim_df', 'sim_shown'):
+            st.session_state.pop(key, None)
+        return
+
     # 2×2 toggles, side by side to save vertical space. required + default keep one option always
     # selected (a click switches, never clears). Source shows only when LLM is available;
-    # representation is the same set for every source, so precompute it.
+    # representation is the same set for every source, so precompute it. Rendered only once a movie
+    # is picked (below the seed guard), so the empty initial state isn't cluttered by toggles with
+    # nothing to act on.
     sources  = list(sim_spaces)
     reps     = list(next(iter(sim_spaces.values())))
     src_help = ("Genome Tags — curated 1,128-dim MovieLens genome relevance scores. "
@@ -604,11 +705,6 @@ def tab_similar(fs, all_ids, sim_spaces, posters, tmdb_ids):
             "Representation", reps, default=reps[0], selection_mode="single",
             required=True, key='sim_rep', help=rep_help) or reps[0]
     all_norm = sim_spaces[source][rep]
-
-    if not selected:
-        for key in ('sim_seed_key', 'sim_df', 'sim_shown'):
-            st.session_state.pop(key, None)
-        return
 
     # Recompute when the seed movie or either toggle changes — results appear immediately on
     # change, no button press.
@@ -935,6 +1031,14 @@ while a disliked movie pushes it away.
 | **0.5 (this model)** | **Balanced — genre discrimination sharp, popular items appear only when relevant** |
 | 1.0 | Over-corrected — suppresses popular items so hard that obscure/low-quality content surfaces |
 """)
+        st.markdown(
+            "**Try it live.** Because the correction is baked into *training* (inference is plain dot "
+            "products either way), there is no runtime knob to flip — so the **Recommend** and "
+            "**Examples** tabs carry a *Popularity correction* toggle that swaps in a **separately-"
+            "trained α=0 twin** of this model. Switch it **Off** and watch popular blockbusters crowd "
+            "out the niche, on-genre picks: a *Fantasy* taste collapses toward Star Wars / Star Trek, "
+            "a *Heist* taste toward generic action tentpoles. That is the failure mode α=0.5 fixes."
+        )
         st.markdown("""
 | Metric | MSE baseline | **v3 Softmax α=0.5 (4-pool, genome)** |
 |---|---|---|
@@ -1074,11 +1178,11 @@ recommend_tab, examples_tab, similar_tab, genres_tab, genome_tab, about_tab = st
 )
 
 with recommend_tab:
-    tab_recommend(art.model, art.fs, art.all_ids, art.all_embs, art.ts_inference,
+    tab_recommend(art.rec_models, art.fs, art.all_ids, art.ts_inference,
                   art.posters, art.tmdb_ids)
 
 with examples_tab:
-    tab_recommend_examples(art.model, art.fs, art.all_ids, art.all_embs, art.ts_inference,
+    tab_recommend_examples(art.rec_models, art.fs, art.all_ids, art.ts_inference,
                            art.posters, art.tmdb_ids)
 
 with similar_tab:
