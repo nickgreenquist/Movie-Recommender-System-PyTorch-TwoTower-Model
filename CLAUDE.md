@@ -6,6 +6,8 @@ Guidance for Claude Code when working in this repository.
 
 A PyTorch Two-Tower neural network recommender trained on the MovieLens 32M dataset. Python CLI (`main.py`); canonical code in `src/` (notebooks in `archive/notebooks/` are archived references only).
 
+**Purpose:** this is a portfolio piece to showcase ML/recsys mastery to an ML engineer or CTO (and may be demoed live in ML-engineering interviews) — weigh every feature by whether it sharpens that signal.
+
 **Critical design choice: no user ID embedding.** Users are represented entirely by taste signals — 4-pool watch history (full, liked, disliked, rating-weighted sum of item ID embeddings), genre affinity, genome context, timestamp. Any user can be represented at inference from just a few liked movies — no retraining.
 
 ## Current State (prod)
