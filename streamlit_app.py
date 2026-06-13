@@ -863,11 +863,13 @@ def tab_explore_genome(me, fs, all_ids, all_norm_genome, posters, tmdb_ids):
 # ── Tab: About ───────────────────────────────────────────────────────────────
 
 def tab_about():
-    # Single centered readable-width column. width caps at the parent width on
-    # narrow screens, so this is full-width on mobile and ~75 chars/line on
-    # desktop — unlike the old st.columns([1, 1]) hack, which scaled with
-    # monitor width. The outer container centers the fixed-width inner one.
-    with st.container(horizontal_alignment="center"), st.container(width=760, key="about"):
+    # Left-aligned column that fills the page like the rest of the app, capped at
+    # a readable max-width in CSS (.st-key-about) so prose lines don't run too long
+    # on a wide monitor. width="stretch" fills the parent, so this is full-width on
+    # mobile (where the parent is narrower than the cap, so it never bites) and a
+    # wide, page-aligned column on desktop — no centered offset from the
+    # left-aligned title and tab bar above it.
+    with st.container(width="stretch", key="about"):
         _REPO_URL = "https://github.com/nickgreenquist/Movie-Recommender-System-PyTorch-TwoTower-Model"
 
         st.header("About this demo")
@@ -1050,9 +1052,10 @@ st.markdown("""
     }
     a.cover-link { transition: filter .15s ease, transform .15s ease; cursor: pointer; }
     a.cover-link:hover { filter: brightness(1.12); transform: scale(1.02); }
-    /* About tab: shrink the serving-score code snippet a touch so its commented
-       lines sit comfortably in the 760px readable column (still scrolls on phones) */
-    .st-key-about pre code { font-size: 0.72rem; }
+    /* About tab: a wide, page-aligned column. The container is width="stretch" so it
+       fills the content area; this cap keeps prose lines readable on a wide monitor.
+       On a phone the parent is narrower than the cap, so the column stays full-width. */
+    .st-key-about { max-width: 1040px; }
     /* About tab tables: render as real tables filling the column — the global
        display:block rule shrink-wraps them, letting the first column hog width
        while the prose columns crush into tall slivers. On phones, keep a
@@ -1063,6 +1066,10 @@ st.markdown("""
         /* all About tables are now 2-column (artifacts, tab guide) — they fit a
            phone screen as-is, so just nudge the font down, no min-width scroll */
         .st-key-about table { font-size: 0.8rem; }
+        /* shrink the serving-score code snippet so its commented lines need less
+           horizontal scroll on a phone; on the wide desktop column it fits at the
+           normal code size, so this shrink is mobile-only */
+        .st-key-about pre code { font-size: 0.72rem; }
     }
     </style>
 """, unsafe_allow_html=True)
