@@ -226,6 +226,12 @@ def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
         if model.has_genome:
             content_embs = model.item_genome_tag_tower(model.genome_context_buffer[emb_idx])
 
+        # LLM-feature embedding — only when the LLM tower is on (Model B / Model D). Parallel to
+        # the genome embedding above; feeds the Similar tab's "LLM Features" ranking space.
+        llm_embs = None
+        if model.has_llm:
+            llm_embs = model.item_llm_feature_tower(model.llm_feature_buffer[emb_idx])
+
     movieId_to_embedding = {}
     for i, mid in enumerate(all_mids):
         entry = {
@@ -237,6 +243,8 @@ def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
             entry['MOVIE_TAG_EMBEDDING'] = tag_embs[i:i+1]
         if content_embs is not None:
             entry['MOVIE_GENOME_TAG_EMBEDDING'] = content_embs[i:i+1]
+        if llm_embs is not None:
+            entry['MOVIE_LLM_FEATURE_EMBEDDING'] = llm_embs[i:i+1]
         movieId_to_embedding[mid] = entry
     return movieId_to_embedding
 

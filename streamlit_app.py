@@ -69,9 +69,9 @@ class Artifacts(NamedTuple):
     me:              dict
     all_ids:         list
     all_embs:        torch.Tensor
-    all_norm:        torch.Tensor
     all_norm_genre:  torch.Tensor
     all_norm_genome: torch.Tensor
+    sim_spaces:      dict          # Similar tab's 2x2: {source: {representation: norm_matrix}}
     ts_inference:    torch.Tensor
     posters:         dict
     tmdb_ids:        dict
@@ -184,14 +184,34 @@ def load_artifacts() -> Artifacts:
 
     all_ids  = list(me.keys())
     all_embs = torch.cat([me[m]['MOVIE_EMBEDDING_COMBINED'] for m in all_ids], dim=0)
-    all_norm = F.normalize(all_embs, dim=1)
 
-    # Per-sub-tower embedding matrices, normalized once at load so the Genres / Genome
-    # tabs rank the whole corpus with a single matmul instead of a per-movie cosine loop.
+    # Per-sub-tower embedding matrices, normalized once at load so the Genres / Genome /
+    # Similar tabs rank the whole corpus with a single matmul instead of a per-movie cosine loop.
     all_genre_embs  = torch.cat([me[m]['MOVIE_GENRE_EMBEDDING'].view(1, -1) for m in all_ids], dim=0)
     all_norm_genre  = F.normalize(all_genre_embs, dim=1)
     all_genome_embs = torch.cat([me[m]['MOVIE_GENOME_TAG_EMBEDDING'].view(1, -1) for m in all_ids], dim=0)
     all_norm_genome = F.normalize(all_genome_embs, dim=1)
+
+    # ── Similar-tab content spaces: a 2×2 of {feature source} × {representation} ──────────────
+    # source  = Genome (curated 1,128-dim relevance) | LLM (132-dim extracted features)
+    # rep     = Learned embedding (32-dim item-tower projection, trained end-to-end) |
+    #           Raw features (direct cosine over the un-projected vectors, a content baseline)
+    # Each cell is an L2-normalized (n_movies, d) matrix; the tab ranks with one matmul and reads
+    # the seed row by index. The "raw" matrices need no model — they come straight from the
+    # feature store, so they exist even on artifacts predating the LLM embedding export.
+    all_norm_genome_raw = F.normalize(torch.stack(
+        [torch.tensor(fs['movieId_to_genome_tag_context'][m], dtype=torch.float32) for m in all_ids]), dim=1)
+    sim_spaces = {'Genome Tags': {'Learned embedding': all_norm_genome, 'Raw features': all_norm_genome_raw}}
+
+    # LLM source — only when the learned LLM embedding is in the artifacts (re-exported from a model
+    # with the LLM tower). Its raw matrix is the baked feature buffer, indexed in corpus order.
+    if 'MOVIE_LLM_FEATURE_EMBEDDING' in me[all_ids[0]]:
+        all_norm_llm = F.normalize(
+            torch.cat([me[m]['MOVIE_LLM_FEATURE_EMBEDDING'].view(1, -1) for m in all_ids], dim=0), dim=1)
+        emb_i = fs['item_emb_movieId_to_i']
+        all_norm_llm_raw = F.normalize(torch.stack(
+            [fs['llm_feature_buffer'][emb_i[m]].float() for m in all_ids]), dim=1)
+        sim_spaces['LLM Features'] = {'Learned embedding': all_norm_llm, 'Raw features': all_norm_llm_raw}
 
     # Most-recent timestamp bin — used for all inference (canary approach)
     ts_inference = torch.bucketize(
@@ -210,7 +230,7 @@ def load_artifacts() -> Artifacts:
 
     return Artifacts(
         model=model, fs=fs, me=me, all_ids=all_ids, all_embs=all_embs,
-        all_norm=all_norm, all_norm_genre=all_norm_genre, all_norm_genome=all_norm_genome,
+        all_norm_genre=all_norm_genre, all_norm_genome=all_norm_genome, sim_spaces=sim_spaces,
         ts_inference=ts_inference, posters=posters, tmdb_ids=tmdb_ids,
     )
 
@@ -538,36 +558,71 @@ def tab_recommend_examples(model, fs, all_ids, all_embs, ts_inference, posters, 
 
 # ── Tab: Similar ──────────────────────────────────────────────────────────────
 
-def tab_similar(me, fs, all_ids, all_norm, posters, tmdb_ids):
+def tab_similar(fs, all_ids, sim_spaces, posters, tmdb_ids):
+    # "More like this" exposed as a 2×2 the visitor switches between — feature source ×
+    # representation — so the learned two-tower embedding can be compared directly against a raw
+    # content-cosine baseline on the same seed. sim_spaces (built in load_artifacts) maps
+    # {source: {representation: L2-normalized (n_movies, d) matrix}}; each cell ranks with one matmul.
     st.caption(
-        "Each movie is represented by a single combined embedding — the concatenation of "
-        "its genre tower, tag tower, genome tag tower, LLM-feature tower, movieId embedding, and "
-        "year embedding. This tab finds the movies whose combined embedding is most similar "
-        "(by cosine similarity) to the selected seed movie."
+        "Find a movie's nearest neighbours by cosine similarity in a chosen content space. "
+        "**Feature source** — curated MovieLens **Genome** tags (1,128 relevance scores) or "
+        "**LLM**-extracted features (132 dims). **Representation** — the **learned** item-tower "
+        "projection (32-dim, trained end-to-end inside the two-tower model) or the **raw** feature "
+        "vectors (direct cosine, a content-based baseline). The learned projection is optimized for "
+        "user→item retrieval, so comparing it against raw shows what the model's embedding captures "
+        "beyond — and trades off against — literal content."
     )
-    all_titles = fs['popularity_ordered_titles']
-    selected   = st.selectbox(
+
+    selected = st.selectbox(
         "Movie to find similar titles for",
-        options=[None] + all_titles,
+        options=[None] + fs['popularity_ordered_titles'],
         format_func=lambda x: "Choose a movie..." if x is None else x,
         key='sim_title', label_visibility="collapsed",
     )
 
+    # 2×2 toggles, side by side to save vertical space. required + default keep one option always
+    # selected (a click switches, never clears). Source shows only when LLM is available;
+    # representation is the same set for every source, so precompute it.
+    sources  = list(sim_spaces)
+    reps     = list(next(iter(sim_spaces.values())))
+    src_help = ("Genome Tags — curated 1,128-dim MovieLens genome relevance scores. "
+                "LLM Features — 132 content features extracted from each film by an LLM.")
+    rep_help = ("Learned embedding — the 32-dim item-tower projection trained end-to-end. "
+                "Raw features — direct cosine over the un-projected feature vectors (no learning).")
+
+    # Both controls in one keyed container; CSS (.st-key-sim_toggle_row) flexes them into a single
+    # content-width row, tightly bound with a gap — not st.columns, which splits the full width
+    # (huge desktop gap) and stacks with big margins on mobile.
+    with st.container(key='sim_toggle_row'):
+        if len(sources) > 1:
+            source = st.segmented_control(
+                "Feature source", sources, default=sources[0], selection_mode="single",
+                required=True, key='sim_source', help=src_help) or sources[0]
+        else:
+            source = sources[0]
+        rep = st.segmented_control(
+            "Representation", reps, default=reps[0], selection_mode="single",
+            required=True, key='sim_rep', help=rep_help) or reps[0]
+    all_norm = sim_spaces[source][rep]
+
     if not selected:
-        for key in ('sim_seed_title', 'sim_df', 'sim_shown'):
+        for key in ('sim_seed_key', 'sim_df', 'sim_shown'):
             st.session_state.pop(key, None)
         return
 
-    # Recompute only when the selection changes — results appear immediately on
-    # selection, no button press.
-    if st.session_state.get('sim_seed_title') != selected:
-        mid = fs['title_to_movieId'].get(selected)
-        if mid not in me:
+    # Recompute when the seed movie or either toggle changes — results appear immediately on
+    # change, no button press.
+    cache_key = (selected, source, rep)
+    if st.session_state.get('sim_seed_key') != cache_key:
+        row_of = {m: i for i, m in enumerate(all_ids)}
+        mid    = fs['title_to_movieId'].get(selected)
+        if mid not in row_of:
             st.error(f"'{selected}' not in corpus.")
             return
 
         with torch.no_grad():
-            seed_norm = F.normalize(me[mid]['MOVIE_EMBEDDING_COMBINED'], dim=1)
+            # Seed vector is the corpus row of the chosen matrix (already L2-normalized).
+            seed_norm = all_norm[row_of[mid]:row_of[mid] + 1]
             sims      = (all_norm @ seed_norm.T).squeeze(-1)
 
         i_to_name = _build_genome_i_to_name(fs)
@@ -584,7 +639,7 @@ def tab_similar(me, fs, all_ids, all_norm, posters, tmdb_ids):
             if len(rows) >= _TOTAL_RESULTS:
                 break
         _store_results(pd.DataFrame(rows), 'sim')
-        st.session_state['sim_seed_title'] = selected
+        st.session_state['sim_seed_key'] = cache_key
 
     st.subheader(f"Similar to: {selected}")
     _show_results('sim', posters, fs, tmdb_ids)
@@ -964,6 +1019,26 @@ st.markdown("""
         word-break: break-word;
         white-space: normal;
     }
+    /* Help (?) tooltips: cap the width so a long help string doesn't balloon the
+       popover to ~670px, which the positioner then shoves flush against the
+       viewport's left edge (no breathing room). A compact box re-anchors under
+       the ? icon with normal spacing. */
+    div[data-testid="stTooltipContent"] { max-width: 320px; }
+    /* Similar tab: lay the two segmented-control toggles (Feature source / Representation) in a
+       single content-width row, tightly bound with a gap — instead of st.columns, which splits the
+       full width (huge desktop gap) and stacks with large margins on mobile. flex-wrap lets them
+       drop to a second line on a narrow phone with only a small row-gap (not Streamlit's tall
+       default stack). */
+    .st-key-sim_toggle_row {           /* the keyed class sits on the flex stVerticalBlock itself */
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.4rem 2rem;
+        align-items: flex-end;
+    }
+    .st-key-sim_toggle_row > div[data-testid="stElementContainer"] {
+        width: auto;
+        flex: 0 0 auto;
+    }
     a.cover-link { transition: filter .15s ease, transform .15s ease; cursor: pointer; }
     a.cover-link:hover { filter: brightness(1.12); transform: scale(1.02); }
     /* About tab: shrink the architecture diagram so its ~96-char lines fit the
@@ -1007,7 +1082,7 @@ with examples_tab:
                            art.posters, art.tmdb_ids)
 
 with similar_tab:
-    tab_similar(art.me, art.fs, art.all_ids, art.all_norm, art.posters, art.tmdb_ids)
+    tab_similar(art.fs, art.all_ids, art.sim_spaces, art.posters, art.tmdb_ids)
 
 with genres_tab:
     tab_explore_genres(art.model, art.fs, art.all_ids, art.all_norm_genre,
