@@ -1,0 +1,1011 @@
+[
+  {
+    "name": "The four-quadrant blockbuster fan",
+    "genome_tag": [],
+    "liked": [
+      "Avatar (2009)",
+      "Titanic (1997)",
+      "Jurassic Park (1993)",
+      "Forrest Gump (1994)",
+      "Dark Knight, The (2008)",
+      "Inception (2010)",
+      "Avengers, The (2012)",
+      "Pirates of the Caribbean: The Curse of the Black Pearl (2003)",
+      "Gladiator (2000)",
+      "Matrix, The (1999)",
+      "Lord of the Rings: The Fellowship of the Ring, The (2001)",
+      "Finding Nemo (2003)"
+    ],
+    "disliked": [],
+    "anchors": [],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Lord of the Rings: The Two Towers, The (2002)",
+        "count": 73687
+      },
+      {
+        "title": "Lord of the Rings: The Return of the King, The (2003)",
+        "count": 75512
+      },
+      {
+        "title": "Batman Begins (2005)",
+        "count": 43300
+      },
+      {
+        "title": "Spider-Man (2002)",
+        "count": 39737
+      },
+      {
+        "title": "Minority Report (2002)",
+        "count": 40414
+      },
+      {
+        "title": "Incredibles, The (2004)",
+        "count": 42953
+      },
+      {
+        "title": "Ocean's Eleven (2001)",
+        "count": 42340
+      },
+      {
+        "title": "X-Men (2000)",
+        "count": 42387
+      },
+      {
+        "title": "Bourne Identity, The (2002)",
+        "count": 38896
+      },
+      {
+        "title": "Shrek (2001)",
+        "count": 58529
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Spider-Man (2002)",
+        "count": 39737
+      },
+      {
+        "title": "Batman Begins (2005)",
+        "count": 43300
+      },
+      {
+        "title": "Bourne Identity, The (2002)",
+        "count": 38896
+      },
+      {
+        "title": "Matrix Reloaded, The (2003)",
+        "count": 30788
+      },
+      {
+        "title": "Incredibles, The (2004)",
+        "count": 42953
+      },
+      {
+        "title": "Kill Bill: Vol. 2 (2004)",
+        "count": 38553
+      },
+      {
+        "title": "Minority Report (2002)",
+        "count": 40414
+      },
+      {
+        "title": "Harry Potter and the Prisoner of Azkaban (2004)",
+        "count": 32517
+      },
+      {
+        "title": "Iron Man (2008)",
+        "count": 38308
+      },
+      {
+        "title": "Star Wars: Episode II - Attack of the Clones (2002)",
+        "count": 28418
+      }
+    ],
+    "median_alpha0": 42670,
+    "median_alpha05": 38724,
+    "pop_drop_x": 1.1
+  },
+  {
+    "name": "The modern popcorn-blockbuster fan",
+    "genome_tag": [],
+    "liked": [
+      "Avengers, The (2012)",
+      "Iron Man (2008)",
+      "Inception (2010)",
+      "Interstellar (2014)",
+      "Guardians of the Galaxy (2014)",
+      "Mad Max: Fury Road (2015)",
+      "Dark Knight, The (2008)",
+      "Django Unchained (2012)",
+      "Avatar (2009)",
+      "Skyfall (2012)",
+      "Dark Knight Rises, The (2012)",
+      "Gladiator (2000)",
+      "Deadpool (2016)",
+      "Avengers: Infinity War - Part I (2018)"
+    ],
+    "disliked": [],
+    "anchors": [],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Captain America: The Winter Soldier (2014)",
+        "count": 14167
+      },
+      {
+        "title": "X-Men: Days of Future Past (2014)",
+        "count": 13550
+      },
+      {
+        "title": "X-Men: First Class (2011)",
+        "count": 15907
+      },
+      {
+        "title": "Avengers: Age of Ultron (2015)",
+        "count": 12390
+      },
+      {
+        "title": "Edge of Tomorrow (2014)",
+        "count": 20421
+      },
+      {
+        "title": "Kingsman: The Secret Service (2015)",
+        "count": 15795
+      },
+      {
+        "title": "Iron Man 3 (2013)",
+        "count": 12980
+      },
+      {
+        "title": "Iron Man 2 (2010)",
+        "count": 17696
+      },
+      {
+        "title": "Captain America: The First Avenger (2011)",
+        "count": 14256
+      },
+      {
+        "title": "John Wick (2014)",
+        "count": 13200
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Captain America: The Winter Soldier (2014)",
+        "count": 14167
+      },
+      {
+        "title": "X-Men: Days of Future Past (2014)",
+        "count": 13550
+      },
+      {
+        "title": "Edge of Tomorrow (2014)",
+        "count": 20421
+      },
+      {
+        "title": "X-Men: First Class (2011)",
+        "count": 15907
+      },
+      {
+        "title": "Avengers: Age of Ultron (2015)",
+        "count": 12390
+      },
+      {
+        "title": "Iron Man 3 (2013)",
+        "count": 12980
+      },
+      {
+        "title": "Iron Man 2 (2010)",
+        "count": 17696
+      },
+      {
+        "title": "Kingsman: The Secret Service (2015)",
+        "count": 15795
+      },
+      {
+        "title": "Star Trek Into Darkness (2013)",
+        "count": 10687
+      },
+      {
+        "title": "Ant-Man (2015)",
+        "count": 10748
+      }
+    ],
+    "median_alpha0": 14211,
+    "median_alpha05": 13858,
+    "pop_drop_x": 1.0
+  },
+  {
+    "name": "The all-time crowd-pleaser fan",
+    "genome_tag": [],
+    "liked": [
+      "Shawshank Redemption, The (1994)",
+      "Pulp Fiction (1994)",
+      "Fight Club (1999)",
+      "Matrix, The (1999)",
+      "Forrest Gump (1994)",
+      "Seven (a.k.a. Se7en) (1995)",
+      "Silence of the Lambs, The (1991)",
+      "Gladiator (2000)",
+      "Departed, The (2006)",
+      "Prestige, The (2006)",
+      "Memento (2000)"
+    ],
+    "disliked": [],
+    "anchors": [],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Sixth Sense, The (1999)",
+        "count": 60439
+      },
+      {
+        "title": "Eternal Sunshine of the Spotless Mind (2004)",
+        "count": 46292
+      },
+      {
+        "title": "Kill Bill: Vol. 1 (2003)",
+        "count": 46973
+      },
+      {
+        "title": "Ocean's Eleven (2001)",
+        "count": 42340
+      },
+      {
+        "title": "Lord of the Rings: The Two Towers, The (2002)",
+        "count": 73687
+      },
+      {
+        "title": "Lord of the Rings: The Return of the King, The (2003)",
+        "count": 75512
+      },
+      {
+        "title": "American Beauty (1999)",
+        "count": 69902
+      },
+      {
+        "title": "Braveheart (1995)",
+        "count": 75514
+      },
+      {
+        "title": "Lord of the Rings: The Fellowship of the Ring, The (2001)",
+        "count": 79940
+      },
+      {
+        "title": "Beautiful Mind, A (2001)",
+        "count": 43013
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Kill Bill: Vol. 1 (2003)",
+        "count": 46973
+      },
+      {
+        "title": "Kill Bill: Vol. 2 (2004)",
+        "count": 38553
+      },
+      {
+        "title": "Fargo (1996)",
+        "count": 61977
+      },
+      {
+        "title": "American Beauty (1999)",
+        "count": 69902
+      },
+      {
+        "title": "Independence Day (a.k.a. ID4) (1996)",
+        "count": 63687
+      },
+      {
+        "title": "Saving Private Ryan (1998)",
+        "count": 64235
+      },
+      {
+        "title": "Beautiful Mind, A (2001)",
+        "count": 43013
+      },
+      {
+        "title": "Eternal Sunshine of the Spotless Mind (2004)",
+        "count": 46292
+      },
+      {
+        "title": "Sixth Sense, The (1999)",
+        "count": 60439
+      },
+      {
+        "title": "Lord of the Rings: The Two Towers, The (2002)",
+        "count": 73687
+      }
+    ],
+    "median_alpha0": 65170,
+    "median_alpha05": 61208,
+    "pop_drop_x": 1.1
+  },
+  {
+    "name": "The modern hard-sci-fi fan",
+    "genome_tag": [
+      "artificial intelligence"
+    ],
+    "liked": [
+      "Inception (2010)",
+      "Interstellar (2014)",
+      "District 9 (2009)",
+      "Ex Machina (2015)",
+      "Arrival (2016)",
+      "Edge of Tomorrow (2014)",
+      "Looper (2012)",
+      "Moon (2009)",
+      "Children of Men (2006)",
+      "Source Code (2011)",
+      "Annihilation (2018)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Aut\u00f3mata (Automata) (2014)",
+      "I, Robot (2004)",
+      "Chappie (2015)",
+      "Bicentennial Man (1999)",
+      "A.I. Artificial Intelligence (2001)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Oblivion (2013)",
+        "count": 8707
+      },
+      {
+        "title": "Gravity (2013)",
+        "count": 18613
+      },
+      {
+        "title": "Her (2013)",
+        "count": 17603
+      },
+      {
+        "title": "Predestination (2014)",
+        "count": 6241
+      },
+      {
+        "title": "Prometheus (2012)",
+        "count": 11473
+      },
+      {
+        "title": "Equilibrium (2002)",
+        "count": 13859
+      },
+      {
+        "title": "Limitless (2011)",
+        "count": 16350
+      },
+      {
+        "title": "Elysium (2013)",
+        "count": 7598
+      },
+      {
+        "title": "Gattaca (1997)",
+        "count": 28512
+      },
+      {
+        "title": "The Martian (2015)",
+        "count": 30091
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Oblivion (2013)",
+        "count": 8707
+      },
+      {
+        "title": "Prometheus (2012)",
+        "count": 11473
+      },
+      {
+        "title": "Elysium (2013)",
+        "count": 7598
+      },
+      {
+        "title": "Primer (2004)",
+        "count": 6270
+      },
+      {
+        "title": "Europa Report (2013)",
+        "count": 1327
+      },
+      {
+        "title": "Gravity (2013)",
+        "count": 18613
+      },
+      {
+        "title": "Sunshine (2007)",
+        "count": 6657
+      },
+      {
+        "title": "Predestination (2014)",
+        "count": 6241
+      },
+      {
+        "title": "Transcendence (2014)",
+        "count": 3354
+      },
+      {
+        "title": "Coherence (2013)",
+        "count": 3422
+      }
+    ],
+    "median_alpha0": 15104,
+    "median_alpha05": 6463,
+    "pop_drop_x": 2.3
+  },
+  {
+    "name": "The modern horror fan",
+    "genome_tag": [
+      "supernatural"
+    ],
+    "liked": [
+      "Get Out (2017)",
+      "Hereditary (2018)",
+      "Conjuring, The (2013)",
+      "It Follows (2014)",
+      "Sinister (2012)",
+      "A Quiet Place (2018)",
+      "Insidious (2010)",
+      "The Witch (2015)",
+      "Cabin in the Woods, The (2012)",
+      "It (2017)",
+      "Us (2019)",
+      "Descent, The (2005)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Awakening, The (2011)",
+      "Mama (2013)",
+      "Before I Wake (2016)",
+      "6 Souls (Shelter) (2010)",
+      "Ouija: Origin of Evil (2016)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Don't Breathe (2016)",
+        "count": 2492
+      },
+      {
+        "title": "The Conjuring 2 (2016)",
+        "count": 2154
+      },
+      {
+        "title": "Oculus (2013)",
+        "count": 1505
+      },
+      {
+        "title": "The Autopsy of Jane Doe (2016)",
+        "count": 1404
+      },
+      {
+        "title": "Hush (2016)",
+        "count": 1590
+      },
+      {
+        "title": "Split (2017)",
+        "count": 5765
+      },
+      {
+        "title": "Saw (2003)",
+        "count": 1637
+      },
+      {
+        "title": "Train to Busan (2016)",
+        "count": 3203
+      },
+      {
+        "title": "The Ritual (2017)",
+        "count": 1122
+      },
+      {
+        "title": "Happy Death Day (2017)",
+        "count": 1475
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Insidious: Chapter 2 (2013)",
+        "count": 1258
+      },
+      {
+        "title": "Annabelle: Creation (2017)",
+        "count": 713
+      },
+      {
+        "title": "The Ritual (2017)",
+        "count": 1122
+      },
+      {
+        "title": "The Conjuring 2 (2016)",
+        "count": 2154
+      },
+      {
+        "title": "Insidious: Chapter 3 (2015)",
+        "count": 732
+      },
+      {
+        "title": "Annabelle (2014)",
+        "count": 1000
+      },
+      {
+        "title": "The Boy (2016)",
+        "count": 686
+      },
+      {
+        "title": "Lights Out (2016)",
+        "count": 844
+      },
+      {
+        "title": "Oculus (2013)",
+        "count": 1505
+      },
+      {
+        "title": "Hush (2016)",
+        "count": 1590
+      }
+    ],
+    "median_alpha0": 1613,
+    "median_alpha05": 1061,
+    "pop_drop_x": 1.5
+  },
+  {
+    "name": "The modern action fan",
+    "genome_tag": [],
+    "liked": [
+      "Bourne Identity, The (2002)",
+      "Bourne Ultimatum, The (2007)",
+      "Bourne Supremacy, The (2004)",
+      "John Wick (2014)",
+      "Mad Max: Fury Road (2015)",
+      "Casino Royale (2006)",
+      "Mission: Impossible - Ghost Protocol (2011)",
+      "Kingsman: The Secret Service (2015)",
+      "Taken (2008)",
+      "Skyfall (2012)",
+      "Sicario (2015)"
+    ],
+    "disliked": [],
+    "anchors": [],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Mission: Impossible - Rogue Nation (2015)",
+        "count": 6281
+      },
+      {
+        "title": "Equalizer, The (2014)",
+        "count": 4509
+      },
+      {
+        "title": "Captain America: The Winter Soldier (2014)",
+        "count": 14167
+      },
+      {
+        "title": "Captain America: Civil War (2016)",
+        "count": 11221
+      },
+      {
+        "title": "Ant-Man (2015)",
+        "count": 10748
+      },
+      {
+        "title": "Jason Bourne (2016)",
+        "count": 3298
+      },
+      {
+        "title": "Avengers: Age of Ultron (2015)",
+        "count": 12390
+      },
+      {
+        "title": "Fury (2014)",
+        "count": 7125
+      },
+      {
+        "title": "X-Men: Days of Future Past (2014)",
+        "count": 13550
+      },
+      {
+        "title": "The Man from U.N.C.L.E. (2015)",
+        "count": 5581
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Mission: Impossible - Rogue Nation (2015)",
+        "count": 6281
+      },
+      {
+        "title": "Bourne Legacy, The (2012)",
+        "count": 5061
+      },
+      {
+        "title": "Jason Bourne (2016)",
+        "count": 3298
+      },
+      {
+        "title": "Equalizer, The (2014)",
+        "count": 4509
+      },
+      {
+        "title": "Jack Reacher (2012)",
+        "count": 4845
+      },
+      {
+        "title": "Shooter (2007)",
+        "count": 6565
+      },
+      {
+        "title": "Red (2010)",
+        "count": 7455
+      },
+      {
+        "title": "Quantum of Solace (2008)",
+        "count": 10196
+      },
+      {
+        "title": "Live Free or Die Hard (2007)",
+        "count": 8784
+      },
+      {
+        "title": "Spectre (2015)",
+        "count": 5630
+      }
+    ],
+    "median_alpha0": 8936,
+    "median_alpha05": 5955,
+    "pop_drop_x": 1.5
+  },
+  {
+    "name": "The modern Pixar-era animation fan",
+    "genome_tag": [
+      "pixar"
+    ],
+    "liked": [
+      "Finding Nemo (2003)",
+      "Incredibles, The (2004)",
+      "Up (2009)",
+      "WALL\u00b7E (2008)",
+      "Ratatouille (2007)",
+      "Toy Story 3 (2010)",
+      "Inside Out (2015)",
+      "How to Train Your Dragon (2010)",
+      "Monsters, Inc. (2001)",
+      "Coco (2017)",
+      "Zootopia (2016)",
+      "Big Hero 6 (2014)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Pixar Story, The (2007)",
+      "Brave (2012)",
+      "Blue Umbrella, The (2013)",
+      "Monsters University (2013)",
+      "Bug's Life, A (1998)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Tangled (2010)",
+        "count": 11869
+      },
+      {
+        "title": "Wreck-It Ralph (2012)",
+        "count": 10930
+      },
+      {
+        "title": "Kung Fu Panda (2008)",
+        "count": 17050
+      },
+      {
+        "title": "How to Train Your Dragon 2 (2014)",
+        "count": 7800
+      },
+      {
+        "title": "Shrek (2001)",
+        "count": 58529
+      },
+      {
+        "title": "Despicable Me (2010)",
+        "count": 14561
+      },
+      {
+        "title": "The Lego Movie (2014)",
+        "count": 10423
+      },
+      {
+        "title": "Toy Story (1995)",
+        "count": 76813
+      },
+      {
+        "title": "Toy Story 2 (1999)",
+        "count": 34495
+      },
+      {
+        "title": "Megamind (2010)",
+        "count": 8352
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "How to Train Your Dragon 2 (2014)",
+        "count": 7800
+      },
+      {
+        "title": "Tangled (2010)",
+        "count": 11869
+      },
+      {
+        "title": "Frozen (2013)",
+        "count": 11380
+      },
+      {
+        "title": "Finding Dory (2016)",
+        "count": 5706
+      },
+      {
+        "title": "The Lego Movie (2014)",
+        "count": 10423
+      },
+      {
+        "title": "Megamind (2010)",
+        "count": 8352
+      },
+      {
+        "title": "Wreck-It Ralph (2012)",
+        "count": 10930
+      },
+      {
+        "title": "Despicable Me (2010)",
+        "count": 14561
+      },
+      {
+        "title": "Despicable Me 2 (2013)",
+        "count": 6561
+      },
+      {
+        "title": "Kung Fu Panda (2008)",
+        "count": 17050
+      }
+    ],
+    "median_alpha0": 13215,
+    "median_alpha05": 10676,
+    "pop_drop_x": 1.2
+  },
+  {
+    "name": "The modern crime-thriller fan",
+    "genome_tag": [
+      "crime"
+    ],
+    "liked": [
+      "No Country for Old Men (2007)",
+      "There Will Be Blood (2007)",
+      "Prisoners (2013)",
+      "Gone Girl (2014)",
+      "Zodiac (2007)",
+      "Sicario (2015)",
+      "Nightcrawler (2014)",
+      "Drive (2011)",
+      "Wind River (2017)",
+      "Hell or High Water (2016)",
+      "Mystic River (2003)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Animal Kingdom (2010)",
+      "Black Mass (2015)",
+      "Mesrine: Killer Instinct (L'instinct de mort) (2008)",
+      "American Gangster (2007)",
+      "Layer Cake (2004)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Town, The (2010)",
+        "count": 7000
+      },
+      {
+        "title": "End of Watch (2012)",
+        "count": 3157
+      },
+      {
+        "title": "The Revenant (2015)",
+        "count": 12122
+      },
+      {
+        "title": "Enemy (2013)",
+        "count": 3151
+      },
+      {
+        "title": "Zero Dark Thirty (2012)",
+        "count": 5662
+      },
+      {
+        "title": "The Machinist (2004)",
+        "count": 12504
+      },
+      {
+        "title": "The Hateful Eight (2015)",
+        "count": 11554
+      },
+      {
+        "title": "Margin Call (2011)",
+        "count": 2713
+      },
+      {
+        "title": "Big Short, The (2015)",
+        "count": 15980
+      },
+      {
+        "title": "Eastern Promises (2007)",
+        "count": 6374
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "End of Watch (2012)",
+        "count": 3157
+      },
+      {
+        "title": "Shot Caller (2017)",
+        "count": 814
+      },
+      {
+        "title": "Town, The (2010)",
+        "count": 7000
+      },
+      {
+        "title": "The Drop (2014)",
+        "count": 1290
+      },
+      {
+        "title": "Blue Ruin (2013)",
+        "count": 1482
+      },
+      {
+        "title": "Sicario: Day of the Soldado (2018)",
+        "count": 1287
+      },
+      {
+        "title": "Margin Call (2011)",
+        "count": 2713
+      },
+      {
+        "title": "A Most Violent Year (2014)",
+        "count": 958
+      },
+      {
+        "title": "Gone Baby Gone (2007)",
+        "count": 6130
+      },
+      {
+        "title": "Eastern Promises (2007)",
+        "count": 6374
+      }
+    ],
+    "median_alpha0": 6687,
+    "median_alpha05": 2097,
+    "pop_drop_x": 3.2
+  },
+  {
+    "name": "The modern superhero fan",
+    "genome_tag": [
+      "superhero"
+    ],
+    "liked": [
+      "Dark Knight, The (2008)",
+      "Iron Man (2008)",
+      "Avengers, The (2012)",
+      "Logan (2017)",
+      "Guardians of the Galaxy (2014)",
+      "Captain America: The Winter Soldier (2014)",
+      "Deadpool (2016)",
+      "X-Men: Days of Future Past (2014)",
+      "Spider-Man 2 (2004)",
+      "Dark Knight Rises, The (2012)",
+      "Doctor Strange (2016)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Hancock (2008)",
+      "Green Lantern (2011)",
+      "Captain America: The First Avenger (2011)",
+      "Ant-Man (2015)",
+      "Daredevil (2003)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Avengers: Age of Ultron (2015)",
+        "count": 12390
+      },
+      {
+        "title": "Iron Man 3 (2013)",
+        "count": 12980
+      },
+      {
+        "title": "Thor: The Dark World (2013)",
+        "count": 8374
+      },
+      {
+        "title": "Iron Man 2 (2010)",
+        "count": 17696
+      },
+      {
+        "title": "X-Men: First Class (2011)",
+        "count": 15907
+      },
+      {
+        "title": "Thor (2011)",
+        "count": 14900
+      },
+      {
+        "title": "Captain America: Civil War (2016)",
+        "count": 11221
+      },
+      {
+        "title": "Amazing Spider-Man, The (2012)",
+        "count": 9462
+      },
+      {
+        "title": "Star Trek Into Darkness (2013)",
+        "count": 10687
+      },
+      {
+        "title": "The Hunger Games: Mockingjay - Part 1 (2014)",
+        "count": 9958
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Iron Man 3 (2013)",
+        "count": 12980
+      },
+      {
+        "title": "Thor: The Dark World (2013)",
+        "count": 8374
+      },
+      {
+        "title": "Amazing Spider-Man, The (2012)",
+        "count": 9462
+      },
+      {
+        "title": "Man of Steel (2013)",
+        "count": 7483
+      },
+      {
+        "title": "Avengers: Age of Ultron (2015)",
+        "count": 12390
+      },
+      {
+        "title": "Incredible Hulk, The (2008)",
+        "count": 8079
+      },
+      {
+        "title": "Iron Man 2 (2010)",
+        "count": 17696
+      },
+      {
+        "title": "X-Men Origins: Wolverine (2009)",
+        "count": 10571
+      },
+      {
+        "title": "X-Men: First Class (2011)",
+        "count": 15907
+      },
+      {
+        "title": "The Amazing Spider-Man 2 (2014)",
+        "count": 4366
+      }
+    ],
+    "median_alpha0": 11805,
+    "median_alpha05": 10016,
+    "pop_drop_x": 1.2
+  }
+]

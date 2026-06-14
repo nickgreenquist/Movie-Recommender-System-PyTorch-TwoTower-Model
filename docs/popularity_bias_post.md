@@ -6,17 +6,15 @@
 
 Picture a die-hard **WW2 movie buff**. Their watchlist is *Saving Private Ryan*, *Enemy at the Gates*, *Stalingrad*, *The Great Escape*. You ask the recommender: what next?
 
-Here's what my two-tower model returned — **the same user, the same architecture, the same code path — for two versions that differ by exactly one number in the training loss:**
+Here's what my two-tower model returned — **the same user, the same architecture, the same code path — for two versions of the model: one trained with a popularity-debiasing correction, one without.**
 
 ![WW2 movie buff: α=0 (left, before) vs α=0.5 (right, after) recommendations, each poster badged with its MovieLens rating count](ww2_poster_board.png)
 
-*(Interactive version: `poster_board.html` — posters load live from TMDB.)*
-
-Look at the left wall (the "before"). For a *WW2* fan, the model serves up **Braveheart** (medieval Scotland), **Gladiator** (ancient Rome), **The Lord of the Rings — twice** (Middle-earth), and **The Godfather Part II** (the Mob). **Six of the ten aren't even war movies.** What they *are* is **massively popular** — Braveheart alone has **75,514 ratings**. The model didn't recommend war films. It recommended *famous* films and hoped you wouldn't notice.
+Look at the left wall (the "before"). For a *WW2* fan, the model serves up **Braveheart** (medieval Scotland), **Gladiator** (ancient Rome), **The Lord of the Rings — twice** (Middle-earth), and **The Godfather Part II** (the Mob). **Six of the ten aren't even war movies.** What they *are* is **massively popular** — Braveheart alone has **75,514 ratings**. The model didn't recommend war films.
 
 Now the right wall (the "after"). **The Devil's Brigade. Cross of Iron. Tora! Tora! Tora! Battle of Britain.** Actual war films — most with **a few hundred ratings**, the kind of catalog depth a real enthusiast actually wants. The median recommendation went from **35,547 ratings to 1,083** — roughly **33× less mainstream — and it got *more* on-genre, not less.**
 
-This isn't a WW2 quirk — the same before/after holds for *every* taste I tried. See **six more fans** — high-fantasy, crime, courtroom, vintage sci-fi, giallo horror, and screwball comedy — in the **[Appendix](#appendix-more-examples)** (the courtroom fan's "before" wall is, almost comically, the literal IMDb Top 10).
+This isn't a WW2 quirk — the same before/after holds for *every* taste I tried. See **six more fans** — high-fantasy, crime, courtroom, vintage sci-fi, giallo horror, and screwball comedy — in the **[Appendix](#appendix-more-examples)** (the courtroom fan's "before" wall is practically the literal IMDb Top 10).
 
 ## What's actually going wrong here
 
@@ -26,9 +24,9 @@ This is **popularity bias**, and it's a feedback loop, not a bug:
 2. You train on those clicks, so the model learns *"popular = good."*
 3. The model shows popular movies even more. **Go to step 1.**
 
-Left alone, your "personalized" recommender slowly collapses into a **Trending shelf** — it hands everyone the same blockbusters and quietly buries the entire long tail of the catalog. Which, for a business, is the half of your inventory you paid to license and now never show anyone.
+Left alone, your "personalized" recommender slowly collapses into a **Trending shelf** — it hands everyone the same blockbusters and quietly buries the entire long tail of the catalog.
 
-## The fix is one line — and it's free at serving time
+## The fix
 
 This comes straight from a 2020 paper, **["Long-Tail Learning via Logit Adjustment" (Menon et al.)](https://arxiv.org/abs/2007.07314)**. The idea is almost suspiciously simple:
 
@@ -51,7 +49,7 @@ The strength is one knob, **α**. At `α=0` you get the blockbuster wall. Crank 
 
 ## Why this beats the usual post-ranking hacks
 
-Most teams fight popularity bias **after** the model — demotion multipliers, per-page blockbuster caps, a bolted-on diversity re-ranker — heuristics nobody fully trusts that rot as the catalog shifts and add a stage to the serving path. Logit adjustment is the opposite: **one line** in the loss, **mathematically grounded** (the Fisher-consistent term from the box above, not an eyeballed constant), and **trivial to maintain** — the whole behavior is one hyperparameter you re-tune in the next retrain if a PM finds the debiasing too aggressive.
+Most teams fight popularity bias **after** the model — demotion multipliers, per-page blockbuster caps, a bolted-on diversity re-ranker — heuristics nobody fully trusts that rot as the catalog shifts and add a stage to the serving path. Logit adjustment is the opposite: **one line** in the loss, **mathematically grounded** (the Fisher-consistent term from the box above, not an eyeballed constant), and **trivial to maintain** — the whole behavior is one hyperparameter you re-tune in the next retrain if your team finds the debiasing too aggressive.
 
 It's not even two-tower-specific: the correction lives in the softmax, so it drops into *any* model trained with cross-entropy over candidate items — **ranking models included.**
 
@@ -68,7 +66,7 @@ I ran both models over **60,000 held-out recommendation contexts** from 3,000 re
 
 The median recommendation got **half as mainstream**, and the model went from surfacing **48% of the catalog to 84%** — 3,400+ movies that previously had *zero* chance of being recommended to anyone.
 
-## So what's the catch? (there's always a catch)
+## No free lunch: the catch
 
 ![The trade in one chart: −4% accuracy on popular hits, +390% on niche long-tail films](accuracy_tradeoff.png)
 
@@ -89,7 +87,23 @@ About **4% off the top line.** Real — but look at *where* the bill is paid:
 
 **The entire cost lands on the popular head** — the blockbusters the model already nails and that barely need a recommender to be found. Meanwhile the **long tail gets 5–12× more accurate** (tail Recall@10 climbs from 0.2% to 3%): still hard in absolute terms, but no longer hopeless — and that's exactly the region where a recommender earns its keep.
 
-So the honest trade is: **give up ~4% accuracy on movies everyone already knows, to make the other 84% of the catalog findable at all.** For a discovery product, you take that trade every time. And because `α` is a dial, not a switch, you choose *exactly* how much head-accuracy you're willing to spend.
+So the honest trade is: **give up ~4% accuracy on movies everyone already knows, to make the other 84% of the catalog findable at all.**
+
+## But doesn't that hurt people who *like* the popular stuff?
+
+That −4.7% on the popular head is the objection an interviewer always pushes on: if the model spends its budget discounting popularity, what happens to the user whose taste genuinely *is* mainstream — or who loves a niche but watches its *recent*, popular entries? Does α=0.5 exile them to the long tail too?
+
+No. I ran the same two twins on exactly those users.
+
+**A pure-blockbuster fan** — liked nothing but the four-quadrant canon (*Avatar*, *Titanic*, *Jurassic Park*, *The Dark Knight*, *Inception*, *The Matrix*…), every seed north of 27k ratings. The α=0.5 wall comes back *Spider-Man*, *Batman Begins*, *Iron Man*, *The Incredibles*, *Minority Report*, *Harry Potter* — still blockbusters, all of them. The median recommendation moves **42,700 → 38,700 ratings**: a rounding error. When mainstream really is your taste, the correction leaves you there.
+
+![Pure-blockbuster fan: α=0 (left) vs α=0.5 (right). Both walls stay blockbusters — median recommendation 42,700 → 38,700 ratings, no collapse.](blockbuster_poster_board.png)
+
+**A modern sci-fi fan** — *Inception*, *Interstellar*, *Ex Machina*, *Arrival*, *District 9*, *Moon* — a genre devotee who watches 2010s films, not 1950s ones. This is the case people *expect* α to break: surely demoting popularity dumps them into *Forbidden Planet* and *2001*? It doesn't. α=0.5 cuts the median recommendation **2.3× (15,100 → 6,500 ratings)** — real work — yet every pick stays modern, on-genre sci-fi: *Oblivion*, *Prometheus*, *Sunshine*, *Primer*, *Coherence*, *Predestination*, all **2004–2014**. The discount surfaced *modern catalog depth*, not vintage classics.
+
+![Modern sci-fi fan: α=0 (left) vs α=0.5 (right). Every pick stays modern, on-genre sci-fi (2002–2015); α=0.5 surfaces deeper modern catalog — median 15,100 → 6,500 ratings.](modern_scifi_poster_board.png)
+
+That's the payoff of doing this in the loss rather than with a blunt post-filter: it discounts popularity *relative to how well a title matches you*, so the films you genuinely match still score high. α=0.5 stops the model pushing blockbusters on people who *don't* want them; it doesn't take them from the people who do. (Same result on every profile I checked — modern superhero, Pixar-era animation, action, crime-thriller, post-2000 horror: each stayed in recent, on-genre films.)
 
 ## The takeaway
 
@@ -98,33 +112,30 @@ Most "fix the recommender" projects mean a bigger model, more features, more com
 - **halved** the popularity of recommendations,
 - nearly **doubled** catalog coverage,
 - made the long tail **5–12× more findable**,
-- cost ~4% head-accuracy and **zero** added latency, and
-- ships as a **toggle you can flip in the live demo**.
+- cost ~4% head-accuracy and **zero** added latency.
 
 ## Appendix: More examples
 
-Same two models, same toggle — a different taste. A **high-fantasy fan** (seeded on *The Lord of the Rings*, *The Dark Crystal*, *Dragonslayer*, and *Dune*) tells the same story even louder: at "before," **9 of 10 picks are Star Trek, Star Wars, Thor, and Indiana Jones** — sci-fi blockbusters, not a single sword in sight. At "after," it's *Ladyhawke, Krull, The NeverEnding Story, Conan* — the genre the user actually asked for.
+**High-fantasy fan**
 
-![High-fantasy fan: α=0 (left, before) vs α=0.5 (right, after) recommendations, each poster badged with its MovieLens rating count](fantasy_poster_board.png)
+![](fantasy_poster_board.png)
 
-And the same one-line toggle holds across five more tastes — crime, courtroom, vintage sci-fi, horror, and classic comedy. Every "before" wall is the same handful of blockbusters everyone's already seen; every "after" wall is the catalog that fan was actually asking for.
+**Courtroom-drama fan**
 
-**The courtroom-drama fan** (*12 Angry Men*, *Anatomy of a Murder*, *The Verdict*) gives the most violent swing of all. At "before," the model serves the all-time-famous shelf — *The Shawshank Redemption* (122k ratings), *Schindler's List*, *The Godfather*, *Casablanca*, *Raiders of the Lost Ark* — almost none of them courtroom films. At "after," it finds the mid-century legal and social dramas the fan actually wants: *In the Heat of the Night*, *The Caine Mutiny*, *Seven Days in May*, *Norma Rae*. Median recommendation popularity: **73,948 → 851 ratings — 87× less mainstream.**
+![](courtroom_poster_board.png)
 
-![Courtroom-drama fan: α=0 famous classics (Shawshank, Schindler's List, Casablanca) vs α=0.5 deep mid-century legal and social dramas](courtroom_poster_board.png)
+**Organized-crime fan**
 
-**The organized-crime fan** (*Donnie Brasco*, *Casino*, *American Gangster*) gets handed the most famous "dark serious" movies ever made — *Fight Club*, *The Dark Knight*, *The Godfather Part II*, *Reservoir Dogs* — several of them not even crime films. At "after," the genuine deep catalog: *Mean Streets*, *King of New York*, *Deep Cover*, *New Jack City*. **46,294 → 736 ratings (63×).**
+![](crime_poster_board.png)
 
-![Organized-crime fan: α=0 famous crime and blockbuster films vs α=0.5 deep-cut crime cinema](crime_poster_board.png)
+**1950s creature-feature fan**
 
-**The 1950s creature-feature fan** (*Them!*, *Tarantula*, *Creature from the Black Lagoon*) gets the art-house syllabus at "before" — *2001*, *Psycho*, *Taxi Driver*, *Citizen Kane*, *A Clockwork Orange* — prestige cinema, not a rubber monster in sight. At "after," the actual drive-in canon: *The Day of the Triffids*, *Quatermass and the Pit*, *Invaders from Mars*, *Soylent Green*. **26,087 → 1,137 ratings (23×).**
+![](creature_feature_poster_board.png)
 
-![1950s creature-feature fan: α=0 prestige classics (2001, Psycho, Citizen Kane) vs α=0.5 vintage B-movie sci-fi](creature_feature_poster_board.png)
+**Argento-Fulci giallo cultist**
 
-**The Argento-Fulci giallo cultist** (*Suspiria*, *Deep Red*, *Tenebre*) is offered the famous-horror starter pack at "before" — *The Exorcist*, *Jaws*, *Halloween*, *Rosemary's Baby*. At "after," it descends into the Italian and cult underground: *The Beyond*, *Black Sabbath*, *Zombie*, *Black Christmas*. **8,884 → 435 ratings (20×).**
+![](giallo_poster_board.png)
 
-![Argento-Fulci giallo cultist: α=0 famous mainstream horror vs α=0.5 Italian and cult horror deep cuts](giallo_poster_board.png)
+**1930s screwball-comedy fan**
 
-**The 1930s screwball-comedy fan** (*His Girl Friday*, *The Lady Eve*, *My Man Godfrey*) drifts at "before" to famous classics that aren't screwball at all — *North by Northwest*, *Singin' in the Rain*, *Butch Cassidy and the Sundance Kid*. At "after," the deep pre-war comedy shelf: *The Thin Man* and its sequels, *Talk of the Town*, *You Can't Take It with You*. **8,195 → 482 ratings (17×).**
-
-![1930s screwball-comedy fan: α=0 famous classics (North by Northwest, Singin' in the Rain) vs α=0.5 deep pre-war comedies](screwball_poster_board.png)
+![](screwball_poster_board.png)

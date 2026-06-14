@@ -248,6 +248,76 @@ PERSONAS = [
             ('Thin Man, The (1934)', False),
         ],
     },
+    # ── Robustness / "no-harm" boards ────────────────────────────────────────────
+    # The taste boards above show α=0.5 *rescuing* niche fans. These two show the flip
+    # side — it does NOT punish a user whose taste is genuinely mainstream, or genuinely
+    # modern. Like the giallo board, every pick is on-profile, so there are no off-genre
+    # chips: the blockbuster fan's story is in the badges (counts stay high on BOTH walls,
+    # median 42.7k → 38.7k — no collapse), the sci-fi fan's is in the year captions (every
+    # pick stays 2002–2015, α=0.5 just goes deeper into the modern catalog: 15.1k → 6.5k).
+    {
+        'name': 'The four-quadrant blockbuster fan',
+        'genome': 'blockbusters',
+        'seeds': ['Avatar (2009)', 'Titanic (1997)', 'Jurassic Park (1993)',
+                  'Dark Knight, The (2008)', 'Inception (2010)', 'Matrix, The (1999)',
+                  'Forrest Gump (1994)'],
+        'off_label': 'long tail',
+        'alpha0': [
+            ('Lord of the Rings: The Two Towers, The (2002)', False),
+            ('Lord of the Rings: The Return of the King, The (2003)', False),
+            ('Batman Begins (2005)', False),
+            ('Spider-Man (2002)', False),
+            ('Minority Report (2002)', False),
+            ('Incredibles, The (2004)', False),
+            ("Ocean's Eleven (2001)", False),
+            ('X-Men (2000)', False),
+            ('Bourne Identity, The (2002)', False),
+            ('Shrek (2001)', False),
+        ],
+        'alpha05': [
+            ('Spider-Man (2002)', False),
+            ('Batman Begins (2005)', False),
+            ('Bourne Identity, The (2002)', False),
+            ('Matrix Reloaded, The (2003)', False),
+            ('Incredibles, The (2004)', False),
+            ('Kill Bill: Vol. 2 (2004)', False),
+            ('Minority Report (2002)', False),
+            ('Harry Potter and the Prisoner of Azkaban (2004)', False),
+            ('Iron Man (2008)', False),
+            ('Star Wars: Episode II - Attack of the Clones (2002)', False),
+        ],
+    },
+    {
+        'name': 'The modern sci-fi fan',
+        'genome': 'modern sci-fi',
+        'seeds': ['Inception (2010)', 'Interstellar (2014)', 'Ex Machina (2015)',
+                  'Arrival (2016)', 'District 9 (2009)', 'Moon (2009)', 'Looper (2012)'],
+        'off_label': 'pre-2000',
+        'alpha0': [
+            ('Oblivion (2013)', False),
+            ('Gravity (2013)', False),
+            ('Her (2013)', False),
+            ('Predestination (2014)', False),
+            ('Prometheus (2012)', False),
+            ('Equilibrium (2002)', False),
+            ('Limitless (2011)', False),
+            ('Elysium (2013)', False),
+            ('Gattaca (1997)', False),
+            ('The Martian (2015)', False),
+        ],
+        'alpha05': [
+            ('Oblivion (2013)', False),
+            ('Prometheus (2012)', False),
+            ('Elysium (2013)', False),
+            ('Primer (2004)', False),
+            ('Europa Report (2013)', False),
+            ('Gravity (2013)', False),
+            ('Sunshine (2007)', False),
+            ('Predestination (2014)', False),
+            ('Transcendence (2014)', False),
+            ('Coherence (2013)', False),
+        ],
+    },
 ]
 
 

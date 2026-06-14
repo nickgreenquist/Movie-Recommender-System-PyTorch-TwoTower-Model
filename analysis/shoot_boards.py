@@ -24,6 +24,8 @@ BOARDS = sys.argv[1:] or [
     ("the-1950s-creature-feature-fan",    "creature_feature_poster_board.png"),
     ("the-argento-fulci-giallo-cultist",  "giallo_poster_board.png"),
     ("the-1930s-screwball-comedy-fan",    "screwball_poster_board.png"),
+    ("the-four-quadrant-blockbuster-fan", "blockbuster_poster_board.png"),
+    ("the-modern-sci-fi-fan",             "modern_scifi_poster_board.png"),
 ]
 
 
