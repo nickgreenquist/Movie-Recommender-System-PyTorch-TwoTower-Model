@@ -96,7 +96,8 @@ _MAP_GENOME_TAGS = [
     'kurosawa', 'studio ghibli', 'tarantino', 'silent', 'dreamlike', 'psychedelic',
     'cyberpunk', 'space opera', 'giant robots', 'dinosaurs', 'slasher', 'grindhouse',
     'haunted house', 'zombies', 'samurai', 'wuxia', 'bollywood', 'spaghetti western',
-    'marvel', '007', 'film noir', 'courtroom drama', 'holocaust', 'based on a video game',
+    'harry potter', 'marvel', '007', 'film noir', 'courtroom drama', 'holocaust',
+    'based on a video game',
 ]
 # Overlay markers — WAY bigger than the catalog points so the pick and its neighbors pop.
 _MAP_PICK_SIZE     = 15      # the single picked movie (between the neighbor size and the old 20)
