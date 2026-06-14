@@ -1,0 +1,2403 @@
+[
+  {
+    "name": "The 70s dystopia obsessive",
+    "genome_tag": [
+      "dystopia",
+      "post-apocalyptic"
+    ],
+    "liked": [
+      "Soylent Green (1973)",
+      "Omega Man, The (1971)",
+      "THX 1138 (1971)",
+      "Death Race 2000 (1975)",
+      "Rollerball (1975)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Aut\u00f3mata (Automata) (2014)",
+      "Logan's Run (1976)",
+      "Insurgent (2015)",
+      "Priest (2011)",
+      "Elysium (2013)",
+      "Book of Eli, The (2010)",
+      "Colony, The (2013)",
+      "Cherry 2000 (1987)",
+      "Hardware (1990)",
+      "Stake Land (2010)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Star Wars: Episode II - Attack of the Clones (2002)",
+        "count": 28418
+      },
+      {
+        "title": "Spider-Man 2 (2004)",
+        "count": 27683
+      },
+      {
+        "title": "X2: X-Men United (2003)",
+        "count": 25427
+      },
+      {
+        "title": "Matrix Reloaded, The (2003)",
+        "count": 30788
+      },
+      {
+        "title": "Spider-Man (2002)",
+        "count": 39737
+      },
+      {
+        "title": "Maltese Falcon, The (1941)",
+        "count": 15630
+      },
+      {
+        "title": "Matrix Revolutions, The (2003)",
+        "count": 24470
+      },
+      {
+        "title": "Spirited Away (Sen to Chihiro no kamikakushi) (2001)",
+        "count": 35375
+      },
+      {
+        "title": "Harry Potter and the Chamber of Secrets (2002)",
+        "count": 31004
+      },
+      {
+        "title": "Batman Begins (2005)",
+        "count": 43300
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Planet of the Apes (2001)",
+        "count": 13165
+      },
+      {
+        "title": "Terminator 3: Rise of the Machines (2003)",
+        "count": 14994
+      },
+      {
+        "title": "Men in Black II (a.k.a. MIIB) (a.k.a. MIB 2) (2002)",
+        "count": 19334
+      },
+      {
+        "title": "After Earth (2013)",
+        "count": 1828
+      },
+      {
+        "title": "Pearl Harbor (2001)",
+        "count": 14418
+      },
+      {
+        "title": "G.I. Joe: Retaliation (2013)",
+        "count": 1362
+      },
+      {
+        "title": "Mummy Returns, The (2001)",
+        "count": 14183
+      },
+      {
+        "title": "Darkest Hour, The (2011)",
+        "count": 429
+      },
+      {
+        "title": "Gravity (2013)",
+        "count": 18613
+      },
+      {
+        "title": "Mr. & Mrs. Smith (2005)",
+        "count": 17895
+      }
+    ],
+    "median_alpha0": 29603,
+    "median_alpha05": 14300,
+    "pop_drop_x": 2.1
+  },
+  {
+    "name": "The nuclear wasteland obsessive",
+    "genome_tag": [
+      "post-apocalyptic",
+      "nuclear war"
+    ],
+    "liked": [
+      "Fail-Safe (1964)",
+      "Miracle Mile (1989)",
+      "Testament (1983)",
+      "Quiet Earth, The (1985)",
+      "Carriers (2009)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Book of Eli, The (2010)",
+      "Colony, The (2013)",
+      "Cherry 2000 (1987)",
+      "Priest (2011)",
+      "Hardware (1990)",
+      "Day After, The (1983)",
+      "On the Beach (1959)",
+      "Atomic Cafe, The (1982)",
+      "WarGames (1983)",
+      "Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb (1964)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Silent Running (1972)",
+        "count": 1128
+      },
+      {
+        "title": "Outland (1981)",
+        "count": 1270
+      },
+      {
+        "title": "Forbidden Planet (1956)",
+        "count": 4420
+      },
+      {
+        "title": "Day the Earth Stood Still, The (1951)",
+        "count": 7522
+      },
+      {
+        "title": "Andromeda Strain, The (1971)",
+        "count": 2337
+      },
+      {
+        "title": "Hidden, The (1987)",
+        "count": 1397
+      },
+      {
+        "title": "Solaris (2002)",
+        "count": 4184
+      },
+      {
+        "title": "Thing from Another World, The (1951)",
+        "count": 1303
+      },
+      {
+        "title": "Them! (1954)",
+        "count": 1720
+      },
+      {
+        "title": "Omega Man, The (1971)",
+        "count": 1974
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Explorers (1985)",
+        "count": 619
+      },
+      {
+        "title": "Signal, The (2007)",
+        "count": 252
+      },
+      {
+        "title": "Zach Galifianakis: Live at the Purple Onion (2006)",
+        "count": 386
+      },
+      {
+        "title": "Sunshine (2007)",
+        "count": 6657
+      },
+      {
+        "title": "Southland Tales (2006)",
+        "count": 647
+      },
+      {
+        "title": "Silent Running (1972)",
+        "count": 1128
+      },
+      {
+        "title": "Enemy Mine (1985)",
+        "count": 1577
+      },
+      {
+        "title": "X: The Man with the X-Ray Eyes (1963)",
+        "count": 296
+      },
+      {
+        "title": "Last Mimzy, The (2007)",
+        "count": 652
+      },
+      {
+        "title": "Code 46 (2003)",
+        "count": 705
+      }
+    ],
+    "median_alpha0": 1847,
+    "median_alpha05": 649,
+    "pop_drop_x": 2.8
+  },
+  {
+    "name": "The robot dystopia fan",
+    "genome_tag": [
+      "robot",
+      "dystopia"
+    ],
+    "liked": [
+      "Screamers (1995)",
+      "Chappie (2015)",
+      "Aut\u00f3mata (Automata) (2014)",
+      "Short Circuit (1986)",
+      "Robot & Frank (2012)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "I, Robot (2004)",
+      "Runaway (1984)",
+      "Astro Boy (2009)",
+      "Real Steel (2011)",
+      "Robots (2005)",
+      "Rollerball (1975)",
+      "Logan's Run (1976)",
+      "Insurgent (2015)",
+      "Priest (2011)",
+      "Elysium (2013)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Jupiter Ascending (2015)",
+        "count": 2632
+      },
+      {
+        "title": "Resident Evil (2002)",
+        "count": 9314
+      },
+      {
+        "title": "After Earth (2013)",
+        "count": 1828
+      },
+      {
+        "title": "Resident Evil: Retribution (2012)",
+        "count": 1661
+      },
+      {
+        "title": "Maze Runner, The (2014)",
+        "count": 7381
+      },
+      {
+        "title": "Giver, The (2014)",
+        "count": 1773
+      },
+      {
+        "title": "Transcendence (2014)",
+        "count": 3354
+      },
+      {
+        "title": "John Carter (2012)",
+        "count": 3674
+      },
+      {
+        "title": "Resident Evil: Apocalypse (2004)",
+        "count": 4864
+      },
+      {
+        "title": "Tomorrowland (2015)",
+        "count": 2928
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Jupiter Ascending (2015)",
+        "count": 2632
+      },
+      {
+        "title": "After Earth (2013)",
+        "count": 1828
+      },
+      {
+        "title": "Europa Report (2013)",
+        "count": 1327
+      },
+      {
+        "title": "Skyline (2010)",
+        "count": 851
+      },
+      {
+        "title": "Independence Day: Resurgence (2016)",
+        "count": 1858
+      },
+      {
+        "title": "Last Days on Mars, The (2013)",
+        "count": 322
+      },
+      {
+        "title": "Starship Troopers 2: Hero of the Federation (2004)",
+        "count": 564
+      },
+      {
+        "title": "Darkest Hour, The (2011)",
+        "count": 429
+      },
+      {
+        "title": "Colony, The (2013)",
+        "count": 380
+      },
+      {
+        "title": "Resident Evil: Retribution (2012)",
+        "count": 1661
+      }
+    ],
+    "median_alpha0": 3141,
+    "median_alpha05": 1089,
+    "pop_drop_x": 2.9
+  },
+  {
+    "name": "The Hammer-and-fang vampire devotee",
+    "genome_tag": [
+      "vampire",
+      "gothic"
+    ],
+    "liked": [
+      "Near Dark (1987)",
+      "Fright Night (1985)",
+      "Lost Boys, The (1987)",
+      "Shadow of the Vampire (2000)",
+      "Cronos (1993)",
+      "Thirst (Bakjwi) (2009)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Vampires (1998)",
+      "Forsaken, The (2001)",
+      "Interview with the Vampire: The Vampire Chronicles (1994)",
+      "Queen of the Damned (2002)",
+      "Underworld (2003)",
+      "Black Sunday (La maschera del demonio) (1960)",
+      "Son of Dracula (1943)",
+      "House of Frankenstein (1944)",
+      "Fall of the House of Usher, The (House of Usher) (1960)",
+      "Horror of Dracula (Dracula) (1958)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Hellraiser (1987)",
+        "count": 3995
+      },
+      {
+        "title": "Halloween (1978)",
+        "count": 9930
+      },
+      {
+        "title": "Dracula (1931)",
+        "count": 2748
+      },
+      {
+        "title": "Haunting, The (1963)",
+        "count": 1960
+      },
+      {
+        "title": "Nightmare on Elm Street, A (1984)",
+        "count": 10874
+      },
+      {
+        "title": "Poltergeist (1982)",
+        "count": 12413
+      },
+      {
+        "title": "Re-Animator (1985)",
+        "count": 3012
+      },
+      {
+        "title": "Carrie (1976)",
+        "count": 11889
+      },
+      {
+        "title": "Dracula (Bram Stoker's Dracula) (1992)",
+        "count": 12600
+      },
+      {
+        "title": "Rosemary's Baby (1968)",
+        "count": 11699
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Masque of the Red Death, The (1964)",
+        "count": 626
+      },
+      {
+        "title": "Lady in White (a.k.a. The Mystery of the Lady in White) (1988)",
+        "count": 353
+      },
+      {
+        "title": "Sleepaway Camp (1983)",
+        "count": 591
+      },
+      {
+        "title": "Howling, The (1980)",
+        "count": 2282
+      },
+      {
+        "title": "Carnival of Souls (1962)",
+        "count": 922
+      },
+      {
+        "title": "House on Haunted Hill (1959)",
+        "count": 1096
+      },
+      {
+        "title": "Suspiria (1977)",
+        "count": 2306
+      },
+      {
+        "title": "Company of Wolves, The (1984)",
+        "count": 527
+      },
+      {
+        "title": "Something Wicked This Way Comes (1983)",
+        "count": 1524
+      },
+      {
+        "title": "Haunting, The (1963)",
+        "count": 1960
+      }
+    ],
+    "median_alpha0": 10402,
+    "median_alpha05": 1009,
+    "pop_drop_x": 10.3
+  },
+  {
+    "name": "The Nosferatu art-house vampirologist",
+    "genome_tag": [
+      "vampires",
+      "gothic"
+    ],
+    "liked": [
+      "Nosferatu (Nosferatu, eine Symphonie des Grauens) (1922)",
+      "Nosferatu the Vampyre (Nosferatu: Phantom der Nacht) (1979)",
+      "Vampyr (1932)",
+      "Only Lovers Left Alive (2013)",
+      "Byzantium (2012)",
+      "Let the Right One In (L\u00e5t den r\u00e4tte komma in) (2008)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Vampires (1998)",
+      "Near Dark (1987)",
+      "Forsaken, The (2001)",
+      "Underworld (2003)",
+      "Interview with the Vampire: The Vampire Chronicles (1994)",
+      "Black Sunday (La maschera del demonio) (1960)",
+      "Son of Dracula (1943)",
+      "House of Frankenstein (1944)",
+      "Fall of the House of Usher, The (House of Usher) (1960)",
+      "Horror of Dracula (Dracula) (1958)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Dracula (1931)",
+        "count": 2748
+      },
+      {
+        "title": "Frankenstein (1931)",
+        "count": 4428
+      },
+      {
+        "title": "Bride of Frankenstein, The (Bride of Frankenstein) (1935)",
+        "count": 2789
+      },
+      {
+        "title": "Exorcist, The (1973)",
+        "count": 19186
+      },
+      {
+        "title": "Haunting, The (1963)",
+        "count": 1960
+      },
+      {
+        "title": "Birds, The (1963)",
+        "count": 14930
+      },
+      {
+        "title": "Suspiria (1977)",
+        "count": 2306
+      },
+      {
+        "title": "Hellraiser (1987)",
+        "count": 3995
+      },
+      {
+        "title": "Rosemary's Baby (1968)",
+        "count": 11699
+      },
+      {
+        "title": "Halloween (1978)",
+        "count": 9930
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Wolf Man, The (1941)",
+        "count": 1134
+      },
+      {
+        "title": "Masque of the Red Death, The (1964)",
+        "count": 626
+      },
+      {
+        "title": "Carnival of Souls (1962)",
+        "count": 922
+      },
+      {
+        "title": "Company of Wolves, The (1984)",
+        "count": 527
+      },
+      {
+        "title": "Black Sabbath (Tre volti della paura, I) (1963)",
+        "count": 277
+      },
+      {
+        "title": "Dracula (1931)",
+        "count": 2748
+      },
+      {
+        "title": "Suspiria (1977)",
+        "count": 2306
+      },
+      {
+        "title": "Lady in White (a.k.a. The Mystery of the Lady in White) (1988)",
+        "count": 353
+      },
+      {
+        "title": "Pit and the Pendulum (1961)",
+        "count": 807
+      },
+      {
+        "title": "Fright Night (1985)",
+        "count": 2800
+      }
+    ],
+    "median_alpha0": 4211,
+    "median_alpha05": 864,
+    "pop_drop_x": 4.9
+  },
+  {
+    "name": "The Poe-and-Lewton gothic-atmosphere connoisseur",
+    "genome_tag": [
+      "gothic",
+      "atmospheric"
+    ],
+    "liked": [
+      "Pit and the Pendulum (1961)",
+      "Masque of the Red Death, The (1964)",
+      "Abominable Dr. Phibes, The (1971)",
+      "Curse of Frankenstein, The (1957)",
+      "Innocents, The (1961)",
+      "Mummy, The (1959)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Black Sunday (La maschera del demonio) (1960)",
+      "Son of Dracula (1943)",
+      "House of Frankenstein (1944)",
+      "Fall of the House of Usher, The (House of Usher) (1960)",
+      "Horror of Dracula (Dracula) (1958)",
+      "Black Sabbath (Tre volti della paura, I) (1963)",
+      "Carnival of Souls (1962)",
+      "Cat People (1942)",
+      "Tenant, The (Locataire, Le) (1976)",
+      "Don't Look Now (1973)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Dracula (1931)",
+        "count": 2748
+      },
+      {
+        "title": "Bride of Frankenstein, The (Bride of Frankenstein) (1935)",
+        "count": 2789
+      },
+      {
+        "title": "Birds, The (1963)",
+        "count": 14930
+      },
+      {
+        "title": "Frankenstein (1931)",
+        "count": 4428
+      },
+      {
+        "title": "Blob, The (1958)",
+        "count": 3122
+      },
+      {
+        "title": "Halloween (1978)",
+        "count": 9930
+      },
+      {
+        "title": "Wolf Man, The (1941)",
+        "count": 1134
+      },
+      {
+        "title": "Haunting, The (1963)",
+        "count": 1960
+      },
+      {
+        "title": "Exorcist, The (1973)",
+        "count": 19186
+      },
+      {
+        "title": "Howling, The (1980)",
+        "count": 2282
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Wolf Man, The (1941)",
+        "count": 1134
+      },
+      {
+        "title": "Mummy's Tomb, The (1942)",
+        "count": 210
+      },
+      {
+        "title": "Body Snatcher, The (1945)",
+        "count": 766
+      },
+      {
+        "title": "Legend of Hell House, The (1973)",
+        "count": 378
+      },
+      {
+        "title": "Tingler, The (1959)",
+        "count": 429
+      },
+      {
+        "title": "Devil Rides Out, The (1968)",
+        "count": 201
+      },
+      {
+        "title": "House on Haunted Hill (1959)",
+        "count": 1096
+      },
+      {
+        "title": "House of Dracula (1945)",
+        "count": 257
+      },
+      {
+        "title": "Horror Express (1972)",
+        "count": 206
+      },
+      {
+        "title": "Son of Frankenstein (1939)",
+        "count": 453
+      }
+    ],
+    "median_alpha0": 2955,
+    "median_alpha05": 403,
+    "pop_drop_x": 7.3
+  },
+  {
+    "name": "The space-opera adventurer",
+    "genome_tag": [
+      "space opera",
+      "star trek"
+    ],
+    "liked": [
+      "Flash Gordon (1980)",
+      "Last Starfighter, The (1984)",
+      "Krull (1983)",
+      "Enemy Mine (1985)",
+      "Star Trek IV: The Voyage Home (1986)",
+      "Forbidden Planet (1956)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Battle Beyond the Stars (1980)",
+      "Star Wars: Episode IV - A New Hope (1977)",
+      "Star Wars: Episode V - The Empire Strikes Back (1980)",
+      "Star Wars: Episode VI - Return of the Jedi (1983)",
+      "Star Trek II: The Wrath of Khan (1982)",
+      "Star Trek III: The Search for Spock (1984)",
+      "Star Trek: Insurrection (1998)",
+      "Star Trek: First Contact (1996)",
+      "Star Trek VI: The Undiscovered Country (1991)",
+      "Star Trek Into Darkness (2013)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Star Trek: Generations (1994)",
+        "count": 30854
+      },
+      {
+        "title": "Star Trek: The Motion Picture (1979)",
+        "count": 12214
+      },
+      {
+        "title": "Star Trek V: The Final Frontier (1989)",
+        "count": 9264
+      },
+      {
+        "title": "Stargate (1994)",
+        "count": 38768
+      },
+      {
+        "title": "Fifth Element, The (1997)",
+        "count": 42155
+      },
+      {
+        "title": "Starman (1984)",
+        "count": 4652
+      },
+      {
+        "title": "Tron (1982)",
+        "count": 13172
+      },
+      {
+        "title": "Serenity (2005)",
+        "count": 15781
+      },
+      {
+        "title": "Dune (1984)",
+        "count": 11669
+      },
+      {
+        "title": "Logan's Run (1976)",
+        "count": 6288
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Omega Man, The (1971)",
+        "count": 1974
+      },
+      {
+        "title": "Outland (1981)",
+        "count": 1270
+      },
+      {
+        "title": "Star Trek: The Motion Picture (1979)",
+        "count": 12214
+      },
+      {
+        "title": "Logan's Run (1976)",
+        "count": 6288
+      },
+      {
+        "title": "Silent Running (1972)",
+        "count": 1128
+      },
+      {
+        "title": "Star Trek V: The Final Frontier (1989)",
+        "count": 9264
+      },
+      {
+        "title": "Black Hole, The (1979)",
+        "count": 2430
+      },
+      {
+        "title": "Alien Nation (1988)",
+        "count": 2495
+      },
+      {
+        "title": "Time Bandits (1981)",
+        "count": 10163
+      },
+      {
+        "title": "Fantastic Voyage (1966)",
+        "count": 1905
+      }
+    ],
+    "median_alpha0": 12693,
+    "median_alpha05": 2462,
+    "pop_drop_x": 5.2
+  },
+  {
+    "name": "The 70s/80s space-cult fan",
+    "genome_tag": [
+      "space opera",
+      "space"
+    ],
+    "liked": [
+      "Silent Running (1972)",
+      "Outland (1981)",
+      "Saturn 3 (1980)",
+      "Black Hole, The (1979)",
+      "Dark Star (1974)",
+      "Capricorn One (1978)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Battle Beyond the Stars (1980)",
+      "Star Wars: Episode IV - A New Hope (1977)",
+      "Star Wars: Episode V - The Empire Strikes Back (1980)",
+      "Star Wars: Episode VI - Return of the Jedi (1983)",
+      "Star Trek II: The Wrath of Khan (1982)",
+      "SpaceCamp (1986)",
+      "Mission to Mars (2000)",
+      "Destination Moon (1950)",
+      "2010: The Year We Make Contact (1984)",
+      "Cargo (2009)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Fifth Element, The (1997)",
+        "count": 42155
+      },
+      {
+        "title": "Star Trek: First Contact (1996)",
+        "count": 23884
+      },
+      {
+        "title": "Star Trek VI: The Undiscovered Country (1991)",
+        "count": 13057
+      },
+      {
+        "title": "Terminator, The (1984)",
+        "count": 48672
+      },
+      {
+        "title": "Aliens (1986)",
+        "count": 40182
+      },
+      {
+        "title": "Star Trek III: The Search for Spock (1984)",
+        "count": 13193
+      },
+      {
+        "title": "Escape from New York (1981)",
+        "count": 11835
+      },
+      {
+        "title": "Road Warrior, The (Mad Max 2) (1981)",
+        "count": 12549
+      },
+      {
+        "title": "Star Trek IV: The Voyage Home (1986)",
+        "count": 16043
+      },
+      {
+        "title": "Total Recall (1990)",
+        "count": 27630
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Omega Man, The (1971)",
+        "count": 1974
+      },
+      {
+        "title": "Forbidden Planet (1956)",
+        "count": 4420
+      },
+      {
+        "title": "Them! (1954)",
+        "count": 1720
+      },
+      {
+        "title": "Enemy Mine (1985)",
+        "count": 1577
+      },
+      {
+        "title": "Day the Earth Stood Still, The (1951)",
+        "count": 7522
+      },
+      {
+        "title": "Quatermass and the Pit (1967)",
+        "count": 483
+      },
+      {
+        "title": "Thing from Another World, The (1951)",
+        "count": 1303
+      },
+      {
+        "title": "Close Encounters of the Third Kind (1977)",
+        "count": 18679
+      },
+      {
+        "title": "Alien Nation (1988)",
+        "count": 2495
+      },
+      {
+        "title": "Westworld (1973)",
+        "count": 5175
+      }
+    ],
+    "median_alpha0": 19963,
+    "median_alpha05": 2234,
+    "pop_drop_x": 8.9
+  },
+  {
+    "name": "The android & robot sci-fi fan",
+    "genome_tag": [
+      "robots",
+      "robot"
+    ],
+    "liked": [
+      "Short Circuit (1986)",
+      "Screamers (1995)",
+      "Cherry 2000 (1987)",
+      "D.A.R.Y.L. (1985)",
+      "Bicentennial Man (1999)",
+      "Westworld (1973)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Aut\u00f3mata (Automata) (2014)",
+      "I, Robot (2004)",
+      "Runaway (1984)",
+      "Transformers: Revenge of the Fallen (2009)",
+      "Real Steel (2011)",
+      "Robot & Frank (2012)",
+      "Astro Boy (2009)",
+      "Robots (2005)",
+      "Chappie (2015)",
+      "Transformers (2007)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Jupiter Ascending (2015)",
+        "count": 2632
+      },
+      {
+        "title": "After Earth (2013)",
+        "count": 1828
+      },
+      {
+        "title": "Lost in Space (1998)",
+        "count": 9481
+      },
+      {
+        "title": "Transcendence (2014)",
+        "count": 3354
+      },
+      {
+        "title": "Sphere (1998)",
+        "count": 7719
+      },
+      {
+        "title": "Pitch Black (2000)",
+        "count": 12062
+      },
+      {
+        "title": "Surrogates (2009)",
+        "count": 3877
+      },
+      {
+        "title": "Elysium (2013)",
+        "count": 7598
+      },
+      {
+        "title": "John Carter (2012)",
+        "count": 3674
+      },
+      {
+        "title": "Tomorrowland (2015)",
+        "count": 2928
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Starship Troopers 2: Hero of the Federation (2004)",
+        "count": 564
+      },
+      {
+        "title": "Jupiter Ascending (2015)",
+        "count": 2632
+      },
+      {
+        "title": "After Earth (2013)",
+        "count": 1828
+      },
+      {
+        "title": "Skyline (2010)",
+        "count": 851
+      },
+      {
+        "title": "Battle: Los Angeles (2011)",
+        "count": 2242
+      },
+      {
+        "title": "Last Days on Mars, The (2013)",
+        "count": 322
+      },
+      {
+        "title": "Apollo 18 (2011)",
+        "count": 530
+      },
+      {
+        "title": "Europa Report (2013)",
+        "count": 1327
+      },
+      {
+        "title": "Sphere (1998)",
+        "count": 7719
+      },
+      {
+        "title": "Impostor (2002)",
+        "count": 803
+      }
+    ],
+    "median_alpha0": 3775,
+    "median_alpha05": 1089,
+    "pop_drop_x": 3.5
+  },
+  {
+    "name": "The neo-noir deep-cut fan",
+    "genome_tag": [
+      "neo-noir"
+    ],
+    "liked": [
+      "Grifters, The (1990)",
+      "U Turn (1997)",
+      "One False Move (1992)",
+      "Bound (1996)",
+      "Simple Plan, A (1998)",
+      "Shallow Grave (1994)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Killer (Bulletproof Heart) (1994)",
+      "Red Rock West (1992)",
+      "Last Seduction, The (1994)",
+      "Brick (2005)",
+      "Blood Simple (1984)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Usual Suspects, The (1995)",
+        "count": 72893
+      },
+      {
+        "title": "L.A. Confidential (1997)",
+        "count": 35791
+      },
+      {
+        "title": "Casino (1995)",
+        "count": 23932
+      },
+      {
+        "title": "Fargo (1996)",
+        "count": 61977
+      },
+      {
+        "title": "Heat (1995)",
+        "count": 31850
+      },
+      {
+        "title": "Memento (2000)",
+        "count": 55649
+      },
+      {
+        "title": "Game, The (1997)",
+        "count": 24978
+      },
+      {
+        "title": "Jackie Brown (1997)",
+        "count": 15878
+      },
+      {
+        "title": "Big Lebowski, The (1998)",
+        "count": 37746
+      },
+      {
+        "title": "Schindler's List (1993)",
+        "count": 84232
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Sydney (Hard Eight) (1996)",
+        "count": 2333
+      },
+      {
+        "title": "Spanish Prisoner, The (1997)",
+        "count": 4964
+      },
+      {
+        "title": "Mortal Thoughts (1991)",
+        "count": 599
+      },
+      {
+        "title": "Palmetto (1998)",
+        "count": 1377
+      },
+      {
+        "title": "Game, The (1997)",
+        "count": 24978
+      },
+      {
+        "title": "Devil in a Blue Dress (1995)",
+        "count": 4714
+      },
+      {
+        "title": "Jackie Brown (1997)",
+        "count": 15878
+      },
+      {
+        "title": "Suicide Kings (1997)",
+        "count": 2522
+      },
+      {
+        "title": "Kiss the Girls (1997)",
+        "count": 5758
+      },
+      {
+        "title": "Romeo Is Bleeding (1993)",
+        "count": 2292
+      }
+    ],
+    "median_alpha0": 36768,
+    "median_alpha05": 3618,
+    "pop_drop_x": 10.2
+  },
+  {
+    "name": "The surrealist body-horror cinephile",
+    "genome_tag": [
+      "surreal",
+      "surrealism"
+    ],
+    "liked": [
+      "Naked Lunch (1991)",
+      "Beauty of the Day (Belle de jour) (1967)",
+      "Santa Sangre (1989)",
+      "Tetsuo, the Ironman (Tetsuo) (1988)",
+      "Videodrome (1983)",
+      "Kafka (1991)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Gozu (Gokud\u00f4 ky\u00f4fu dai-gekij\u00f4: Gozu) (2003)",
+      "Golden Age, The (\u00c2ge d'Or, L') (1930)",
+      "Andalusian Dog, An (Chien andalou, Un) (1929)",
+      "Eraserhead (1977)",
+      "Meshes of the Afternoon (1943)",
+      "Phantom of Liberty, The (Fant\u00f4me de la libert\u00e9, Le) (1974)",
+      "Lesson Faust (1994)",
+      "Discreet Charm of the Bourgeoisie, The (Charme discret de la bourgeoisie, Le) (1972)",
+      "Cat Soup (Nekojiru-so) (2001)",
+      "Alice (Neco z Alenky) (1988)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Suspiria (1977)",
+        "count": 2306
+      },
+      {
+        "title": "Persona (1966)",
+        "count": 2736
+      },
+      {
+        "title": "Solaris (Solyaris) (1972)",
+        "count": 3705
+      },
+      {
+        "title": "Stalker (1979)",
+        "count": 4024
+      },
+      {
+        "title": "Freaks (1932)",
+        "count": 1786
+      },
+      {
+        "title": "Cabinet of Dr. Caligari, The (Cabinet des Dr. Caligari., Das) (1920)",
+        "count": 2315
+      },
+      {
+        "title": "Nosferatu (Nosferatu, eine Symphonie des Grauens) (1922)",
+        "count": 5074
+      },
+      {
+        "title": "Jet\u00e9e, La (1962)",
+        "count": 1563
+      },
+      {
+        "title": "Nosferatu the Vampyre (Nosferatu: Phantom der Nacht) (1979)",
+        "count": 1197
+      },
+      {
+        "title": "Possession (1981)",
+        "count": 691
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Hour of the Wolf (Vargtimmen) (1968)",
+        "count": 512
+      },
+      {
+        "title": "Holy Mountain, The (Monta\u00f1a sagrada, La) (1973)",
+        "count": 1202
+      },
+      {
+        "title": "Topo, El (1970)",
+        "count": 773
+      },
+      {
+        "title": "Stalker (1979)",
+        "count": 4024
+      },
+      {
+        "title": "Persona (1966)",
+        "count": 2736
+      },
+      {
+        "title": "Jet\u00e9e, La (1962)",
+        "count": 1563
+      },
+      {
+        "title": "Kwaidan (Kaidan) (1964)",
+        "count": 585
+      },
+      {
+        "title": "Suspiria (1977)",
+        "count": 2306
+      },
+      {
+        "title": "Andrei Rublev (Andrey Rublyov) (1969)",
+        "count": 1338
+      },
+      {
+        "title": "Possession (1981)",
+        "count": 691
+      }
+    ],
+    "median_alpha0": 2310,
+    "median_alpha05": 1270,
+    "pop_drop_x": 1.8
+  },
+  {
+    "name": "The psychedelic dreamscape seeker",
+    "genome_tag": [
+      "psychedelic",
+      "dreamlike"
+    ],
+    "liked": [
+      "Fountain, The (2006)",
+      "Waking Life (2001)",
+      "Stalker (1979)",
+      "Tideland (2005)",
+      "Hour of the Wolf (Vargtimmen) (1968)",
+      "Uncle Boonmee Who Can Recall His Past Lives (Loong Boonmee raleuk chat) (2010)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Yellow Submarine (1968)",
+      "Enter the Void (2009)",
+      "Fear and Loathing in Las Vegas (1998)",
+      "Holy Mountain, The (Monta\u00f1a sagrada, La) (1973)",
+      "Altered States (1980)",
+      "Valerie and Her Week of Wonders (Valerie a t\u00fdden divu) (1970)",
+      "Meshes of the Afternoon (1943)",
+      "MirrorMask (2005)",
+      "Trial, The (Proc\u00e8s, Le) (1962)",
+      "Nostalghia (1983)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Persona (1966)",
+        "count": 2736
+      },
+      {
+        "title": "Eraserhead (1977)",
+        "count": 4673
+      },
+      {
+        "title": "Fallen Angels (Duo luo tian shi) (1995)",
+        "count": 979
+      },
+      {
+        "title": "Antichrist (2009)",
+        "count": 2356
+      },
+      {
+        "title": "In the Mood For Love (Fa yeung nin wa) (2000)",
+        "count": 4270
+      },
+      {
+        "title": "My Neighbor Totoro (Tonari no Totoro) (1988)",
+        "count": 14010
+      },
+      {
+        "title": "Solaris (Solyaris) (1972)",
+        "count": 3705
+      },
+      {
+        "title": "Andalusian Dog, An (Chien andalou, Un) (1929)",
+        "count": 1463
+      },
+      {
+        "title": "Suspiria (1977)",
+        "count": 2306
+      },
+      {
+        "title": "Topo, El (1970)",
+        "count": 773
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Topo, El (1970)",
+        "count": 773
+      },
+      {
+        "title": "Persona (1966)",
+        "count": 2736
+      },
+      {
+        "title": "Daisies (Sedmikrasky) (1966)",
+        "count": 326
+      },
+      {
+        "title": "Salo, or The 120 Days of Sodom (Sal\u00f2 o le 120 giornate di Sodoma) (1976)",
+        "count": 901
+      },
+      {
+        "title": "Pierrot le fou (1965)",
+        "count": 872
+      },
+      {
+        "title": "Mirror, The (Zerkalo) (1975)",
+        "count": 1298
+      },
+      {
+        "title": "Santa Sangre (1989)",
+        "count": 655
+      },
+      {
+        "title": "Sacrifice, The (Offret - Sacraficatio) (1986)",
+        "count": 607
+      },
+      {
+        "title": "Andrei Rublev (Andrey Rublyov) (1969)",
+        "count": 1338
+      },
+      {
+        "title": "Fallen Angels (Duo luo tian shi) (1995)",
+        "count": 979
+      }
+    ],
+    "median_alpha0": 2546,
+    "median_alpha05": 886,
+    "pop_drop_x": 2.9
+  },
+  {
+    "name": "The 70s paranoia-thriller fan",
+    "genome_tag": [
+      "conspiracy",
+      "paranoia"
+    ],
+    "liked": [
+      "Parallax View, The (1974)",
+      "Three Days of the Condor (3 Days of the Condor) (1975)",
+      "Conversation, The (1974)",
+      "Marathon Man (1976)",
+      "Klute (1971)",
+      "Blow Out (1981)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Pelican Brief, The (1993)",
+      "Conspiracy Theory (1997)",
+      "JFK (1991)",
+      "All the President's Men (1976)",
+      "Enemy of the State (1998)",
+      "Tenant, The (Locataire, Le) (1976)",
+      "Invasion of the Body Snatchers (1978)",
+      "Thing, The (1982)",
+      "Invasion of the Body Snatchers (1956)",
+      "Arlington Road (1999)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Body Heat (1981)",
+        "count": 4299
+      },
+      {
+        "title": "Dirty Harry (1971)",
+        "count": 8013
+      },
+      {
+        "title": "Cape Fear (1962)",
+        "count": 4981
+      },
+      {
+        "title": "Primal Fear (1996)",
+        "count": 13889
+      },
+      {
+        "title": "In the Heat of the Night (1967)",
+        "count": 4325
+      },
+      {
+        "title": "Mystic River (2003)",
+        "count": 15183
+      },
+      {
+        "title": "No Way Out (1987)",
+        "count": 3093
+      },
+      {
+        "title": "Day of the Jackal, The (1973)",
+        "count": 2252
+      },
+      {
+        "title": "Key Largo (1948)",
+        "count": 3318
+      },
+      {
+        "title": "Serpico (1973)",
+        "count": 5513
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Sea of Love (1989)",
+        "count": 1310
+      },
+      {
+        "title": "Gorky Park (1983)",
+        "count": 686
+      },
+      {
+        "title": "Thief (1981)",
+        "count": 796
+      },
+      {
+        "title": "Play Misty for Me (1971)",
+        "count": 1049
+      },
+      {
+        "title": "Beguiled, The (1971)",
+        "count": 239
+      },
+      {
+        "title": "Unlawful Entry (1992)",
+        "count": 618
+      },
+      {
+        "title": "Package, The (1989)",
+        "count": 250
+      },
+      {
+        "title": "Southern Comfort (1981)",
+        "count": 292
+      },
+      {
+        "title": "Body Double (1984)",
+        "count": 577
+      },
+      {
+        "title": "Presumed Innocent (1990)",
+        "count": 1472
+      }
+    ],
+    "median_alpha0": 4653,
+    "median_alpha05": 652,
+    "pop_drop_x": 7.1
+  },
+  {
+    "name": "The prison-and-escape film fan",
+    "genome_tag": [
+      "prison",
+      "prison escape"
+    ],
+    "liked": [
+      "Brubaker (1980)",
+      "Escape from Alcatraz (1979)",
+      "Papillon (1973)",
+      "Starred Up (2013)",
+      "Midnight Express (1978)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Lock Up (1989)",
+      "Carandiru (2003)",
+      "Felon (2008)",
+      "Last Castle, The (2001)",
+      "Trou, Le (Hole, The) (Night Watch, The) (1960)",
+      "Escape Plan (2013)",
+      "Man Escaped, A (Un  condamn\u00e9 \u00e0 mort s'est \u00e9chapp\u00e9 ou Le vent souffle o\u00f9 il veut) (1956)",
+      "Fortress (1992)",
+      "Mesrine: Killer Instinct (L'instinct de mort) (2008)",
+      "Great Escape, The (1963)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Something the Lord Made (2004)",
+        "count": 350
+      },
+      {
+        "title": "Damned United, The (2009)",
+        "count": 691
+      },
+      {
+        "title": "Rescue Dawn (2006)",
+        "count": 1660
+      },
+      {
+        "title": "Cocaine Cowboys (2006)",
+        "count": 768
+      },
+      {
+        "title": "Counterfeiters, The (Die F\u00e4lscher) (2007)",
+        "count": 1453
+      },
+      {
+        "title": "Tyson (2008)",
+        "count": 321
+      },
+      {
+        "title": "Roots (1977)",
+        "count": 561
+      },
+      {
+        "title": "Taxi to the Dark Side (2007)",
+        "count": 345
+      },
+      {
+        "title": "In the Shadow of the Moon (2007)",
+        "count": 375
+      },
+      {
+        "title": "Letters from Iwo Jima (2006)",
+        "count": 3760
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Gone in 60 Seconds (1974)",
+        "count": 231
+      },
+      {
+        "title": "24: Redemption (2008)",
+        "count": 352
+      },
+      {
+        "title": "Hunter Killer (2018)",
+        "count": 291
+      },
+      {
+        "title": "Recount (2008)",
+        "count": 427
+      },
+      {
+        "title": "Centurion (2010)",
+        "count": 730
+      },
+      {
+        "title": "Traitor (2008)",
+        "count": 925
+      },
+      {
+        "title": "Takers (2010)",
+        "count": 287
+      },
+      {
+        "title": "Damned United, The (2009)",
+        "count": 691
+      },
+      {
+        "title": "Something the Lord Made (2004)",
+        "count": 350
+      },
+      {
+        "title": "Armored (2009)",
+        "count": 278
+      }
+    ],
+    "median_alpha0": 626,
+    "median_alpha05": 351,
+    "pop_drop_x": 1.8
+  },
+  {
+    "name": "The classic courtroom-drama fan",
+    "genome_tag": [
+      "courtroom",
+      "courtroom drama"
+    ],
+    "liked": [
+      "Anatomy of a Murder (1959)",
+      "Judgment at Nuremberg (1961)",
+      "...And Justice for All (1979)",
+      "Verdict, The (1982)",
+      "Witness for the Prosecution (1957)",
+      "Inherit the Wind (1960)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Suspect (1987)",
+      "Few Good Men, A (1992)",
+      "Civil Action, A (1998)",
+      "Jagged Edge (1985)",
+      "Lincoln Lawyer, The (2011)",
+      "Primal Fear (1996)",
+      "Rainmaker, The (1997)",
+      "Time to Kill, A (1996)",
+      "Accused, The (1988)",
+      "Breaker Morant (1980)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Schindler's List (1993)",
+        "count": 84232
+      },
+      {
+        "title": "Godfather, The (1972)",
+        "count": 75004
+      },
+      {
+        "title": "12 Angry Men (1957)",
+        "count": 22730
+      },
+      {
+        "title": "Shawshank Redemption, The (1994)",
+        "count": 122296
+      },
+      {
+        "title": "Fight Club (1999)",
+        "count": 86207
+      },
+      {
+        "title": "Raiders of the Lost Ark (Indiana Jones and the Raiders of the Lost Ark) (1981)",
+        "count": 75248
+      },
+      {
+        "title": "Usual Suspects, The (1995)",
+        "count": 72893
+      },
+      {
+        "title": "Godfather: Part II, The (1974)",
+        "count": 47271
+      },
+      {
+        "title": "Dark Knight, The (2008)",
+        "count": 65349
+      },
+      {
+        "title": "Casablanca (1942)",
+        "count": 34813
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Absence of Malice (1981)",
+        "count": 756
+      },
+      {
+        "title": "Elmer Gantry (1960)",
+        "count": 624
+      },
+      {
+        "title": "Lilies of the Field (1963)",
+        "count": 946
+      },
+      {
+        "title": "Caine Mutiny, The (1954)",
+        "count": 1244
+      },
+      {
+        "title": "Norma Rae (1979)",
+        "count": 1306
+      },
+      {
+        "title": "In the Heat of the Night (1967)",
+        "count": 4325
+      },
+      {
+        "title": "Seven Days in May (1964)",
+        "count": 1043
+      },
+      {
+        "title": "Twelve O'Clock High (1949)",
+        "count": 752
+      },
+      {
+        "title": "Days of Wine and Roses (1962)",
+        "count": 729
+      },
+      {
+        "title": "Summer of '42 (1971)",
+        "count": 434
+      }
+    ],
+    "median_alpha0": 73948,
+    "median_alpha05": 851,
+    "pop_drop_x": 86.9
+  },
+  {
+    "name": "The Toho kaiju fanatic",
+    "genome_tag": [
+      "giant robots"
+    ],
+    "liked": [
+      "Godzilla (Gojira) (1954)",
+      "Godzilla vs. Mothra (Mosura tai Gojira) (1964)",
+      "King Kong vs. Godzilla (Kingukongu tai Gojira) (1962)",
+      "Godzilla 2000 (Gojira ni-sen mireniamu) (1999)",
+      "Godzilla, King of the Monsters! (Kaij\u00fb-\u00f4 Gojira) (1956)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Transformers: Revenge of the Fallen (2009)",
+      "Transformers (2007)",
+      "Pacific Rim (2013)",
+      "Transformers: Dark of the Moon (2011)",
+      "Transformers: Age of Extinction (2014)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Matrix Reloaded, The (2003)",
+        "count": 30788
+      },
+      {
+        "title": "Lord of the Rings: The Return of the King, The (2003)",
+        "count": 75512
+      },
+      {
+        "title": "Matrix Revolutions, The (2003)",
+        "count": 24470
+      },
+      {
+        "title": "Batman Begins (2005)",
+        "count": 43300
+      },
+      {
+        "title": "Star Wars: Episode II - Attack of the Clones (2002)",
+        "count": 28418
+      },
+      {
+        "title": "Inception (2010)",
+        "count": 65056
+      },
+      {
+        "title": "Alien\u00b3 (a.k.a. Alien 3) (1992)",
+        "count": 17653
+      },
+      {
+        "title": "X2: X-Men United (2003)",
+        "count": 25427
+      },
+      {
+        "title": "WALL\u00b7E (2008)",
+        "count": 42033
+      },
+      {
+        "title": "Minority Report (2002)",
+        "count": 40414
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Starship Troopers 2: Hero of the Federation (2004)",
+        "count": 564
+      },
+      {
+        "title": "Solo (1996)",
+        "count": 966
+      },
+      {
+        "title": "Resident Evil: Retribution (2012)",
+        "count": 1661
+      },
+      {
+        "title": "Carnosaur (1993)",
+        "count": 406
+      },
+      {
+        "title": "Star Wars: The Clone Wars (2008)",
+        "count": 2361
+      },
+      {
+        "title": "Skyline (2010)",
+        "count": 851
+      },
+      {
+        "title": "Earth vs. the Flying Saucers (1956)",
+        "count": 438
+      },
+      {
+        "title": "Lord of the Rings: The Return of the King, The (2003)",
+        "count": 75512
+      },
+      {
+        "title": "Predators (2010)",
+        "count": 2661
+      },
+      {
+        "title": "Terminator Salvation (2009)",
+        "count": 5939
+      }
+    ],
+    "median_alpha0": 35601,
+    "median_alpha05": 1313,
+    "pop_drop_x": 27.1
+  },
+  {
+    "name": "The dinosaur-cinema obsessive",
+    "genome_tag": [
+      "dinosaurs"
+    ],
+    "liked": [
+      "Land Before Time, The (1988)",
+      "We're Back! A Dinosaur's Story (1993)",
+      "Dinosaur (2000)",
+      "Carnosaur (1993)",
+      "The Good Dinosaur (2015)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Jurassic Park III (2001)",
+      "Jurassic Park (1993)",
+      "Jurassic World (2015)",
+      "Lost World: Jurassic Park, The (1997)",
+      "One Million Years B.C. (1966)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Garfield: The Movie (2004)",
+        "count": 2207
+      },
+      {
+        "title": "Spy Kids 3-D: Game Over (2003)",
+        "count": 1606
+      },
+      {
+        "title": "Stuart Little 2 (2002)",
+        "count": 1641
+      },
+      {
+        "title": "Bulletproof Monk (2003)",
+        "count": 2288
+      },
+      {
+        "title": "Dumb and Dumberer: When Harry Met Lloyd (2003)",
+        "count": 2292
+      },
+      {
+        "title": "Sinbad: Legend of the Seven Seas (2003)",
+        "count": 1155
+      },
+      {
+        "title": "Johnny English (2003)",
+        "count": 4513
+      },
+      {
+        "title": "Jimmy Neutron: Boy Genius (2001)",
+        "count": 1954
+      },
+      {
+        "title": "Rush Hour 2 (2001)",
+        "count": 10222
+      },
+      {
+        "title": "Taxi (2004)",
+        "count": 936
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Planet of the Apes (2001)",
+        "count": 13165
+      },
+      {
+        "title": "Clockstoppers (2002)",
+        "count": 881
+      },
+      {
+        "title": "Fantastic Four (2015)",
+        "count": 1732
+      },
+      {
+        "title": "Outside the Wire (2021)",
+        "count": 210
+      },
+      {
+        "title": "Absolutely Anything (2015)",
+        "count": 389
+      },
+      {
+        "title": "Lightyear (2022)",
+        "count": 351
+      },
+      {
+        "title": "Wing Commander (1999)",
+        "count": 1817
+      },
+      {
+        "title": "Sonic the Hedgehog 2 (2022)",
+        "count": 258
+      },
+      {
+        "title": "Men in Black II (a.k.a. MIIB) (a.k.a. MIB 2) (2002)",
+        "count": 19334
+      },
+      {
+        "title": "Like Mike (2002)",
+        "count": 578
+      }
+    ],
+    "median_alpha0": 2080,
+    "median_alpha05": 729,
+    "pop_drop_x": 2.9
+  },
+  {
+    "name": "The Ray Harryhausen stop-motion creature buff",
+    "genome_tag": [
+      "mythology"
+    ],
+    "liked": [
+      "7th Voyage of Sinbad, The (1958)",
+      "The Golden Voyage of Sinbad (1973)",
+      "Sinbad and the Eye of the Tiger (1977)",
+      "Jason and the Argonauts (1963)",
+      "Clash of the Titans (1981)",
+      "One Million Years B.C. (1966)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Immortals (2011)",
+      "Wrath of the Titans (2012)",
+      "Clash of the Titans (2010)",
+      "Gods of Egypt (2016)",
+      "Thor (2011)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Lord of the Rings: The Return of the King, The (2003)",
+        "count": 75512
+      },
+      {
+        "title": "Indiana Jones and the Temple of Doom (1984)",
+        "count": 30436
+      },
+      {
+        "title": "Seven Samurai (Shichinin no samurai) (1954)",
+        "count": 17120
+      },
+      {
+        "title": "Indiana Jones and the Last Crusade (1989)",
+        "count": 48979
+      },
+      {
+        "title": "Sanjuro (Tsubaki Sanj\u00fbr\u00f4) (1962)",
+        "count": 1824
+      },
+      {
+        "title": "Lupin III: The Castle Of Cagliostro (Rupan sansei: Kariosutoro no shiro) (1979)",
+        "count": 1678
+      },
+      {
+        "title": "Forbidden Kingdom, The (2008)",
+        "count": 1471
+      },
+      {
+        "title": "Star Wars: Episode VI - Return of the Jedi (1983)",
+        "count": 76773
+      },
+      {
+        "title": "Good, the Bad and the Ugly, The (Buono, il brutto, il cattivo, Il) (1966)",
+        "count": 23823
+      },
+      {
+        "title": "Dark Knight, The (2008)",
+        "count": 65349
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Librarian, The: The Curse of the Judas Chalice (2008)",
+        "count": 261
+      },
+      {
+        "title": "Dragonslayer (1981)",
+        "count": 1069
+      },
+      {
+        "title": "Forbidden Kingdom, The (2008)",
+        "count": 1471
+      },
+      {
+        "title": "Escaflowne: The Movie (Escaflowne) (2000)",
+        "count": 508
+      },
+      {
+        "title": "Treasure Island (1950)",
+        "count": 446
+      },
+      {
+        "title": "Seventh Son (2014)",
+        "count": 567
+      },
+      {
+        "title": "Force 10 from Navarone (1978)",
+        "count": 1141
+      },
+      {
+        "title": "Ladyhawke (1985)",
+        "count": 4272
+      },
+      {
+        "title": "Once Upon a Time in China III (Wong Fei-hung tsi sam: Siwong tsangba) (1993)",
+        "count": 233
+      },
+      {
+        "title": "Bridge at Remagen, The (1969)",
+        "count": 380
+      }
+    ],
+    "median_alpha0": 27129,
+    "median_alpha05": 537,
+    "pop_drop_x": 50.5
+  },
+  {
+    "name": "The Errol Flynn swashbuckler",
+    "genome_tag": [
+      "swashbuckler",
+      "pirates"
+    ],
+    "liked": [
+      "Captain Blood (1935)",
+      "Adventures of Robin Hood, The (1938)",
+      "Mark of Zorro, The (1940)",
+      "Crimson Pirate, The (1952)",
+      "Three Musketeers, The (1973)",
+      "7th Voyage of Sinbad, The (1958)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Cutthroat Island (1995)",
+      "Pirates of the Caribbean: The Curse of the Black Pearl (2003)",
+      "Pirates of the Caribbean: On Stranger Tides (2011)",
+      "Pirates of the Caribbean: Dead Man's Chest (2006)",
+      "Pirates of the Caribbean: At World's End (2007)",
+      "Pirates of the Caribbean: Dead Men Tell No Tales (2017)",
+      "Pirates! Band of Misfits, The (2012)",
+      "Treasure Island (1950)",
+      "Captain Phillips (2013)",
+      "Project A ('A' gai waak) (1983)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Sanjuro (Tsubaki Sanj\u00fbr\u00f4) (1962)",
+        "count": 1824
+      },
+      {
+        "title": "City Lights (1931)",
+        "count": 4103
+      },
+      {
+        "title": "Ikiru (1952)",
+        "count": 2096
+      },
+      {
+        "title": "Seven Samurai (Shichinin no samurai) (1954)",
+        "count": 17120
+      },
+      {
+        "title": "Yojimbo (1961)",
+        "count": 5208
+      },
+      {
+        "title": "Once Upon a Time in the West (C'era una volta il West) (1968)",
+        "count": 7426
+      },
+      {
+        "title": "Rashomon (Rash\u00f4mon) (1950)",
+        "count": 6198
+      },
+      {
+        "title": "Kagemusha (1980)",
+        "count": 1749
+      },
+      {
+        "title": "Lord of the Rings: The Two Towers, The (2002)",
+        "count": 73687
+      },
+      {
+        "title": "Inception (2010)",
+        "count": 65056
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Never Say Never Again (1983)",
+        "count": 1556
+      },
+      {
+        "title": "You Only Live Twice (1967)",
+        "count": 3394
+      },
+      {
+        "title": "Where Eagles Dare (1968)",
+        "count": 1604
+      },
+      {
+        "title": "Fighting Seabees, The (1944)",
+        "count": 311
+      },
+      {
+        "title": "Octopussy (1983)",
+        "count": 2332
+      },
+      {
+        "title": "Sholay (1975)",
+        "count": 227
+      },
+      {
+        "title": "Police Story (Ging chaat goo si) (1985)",
+        "count": 764
+      },
+      {
+        "title": "Eagle Has Landed, The (1976)",
+        "count": 892
+      },
+      {
+        "title": "How the West Was Won (1962)",
+        "count": 297
+      },
+      {
+        "title": "Sands of Iwo Jima (1949)",
+        "count": 248
+      }
+    ],
+    "median_alpha0": 5703,
+    "median_alpha05": 828,
+    "pop_drop_x": 6.9
+  },
+  {
+    "name": "The silent-slapstick devotee",
+    "genome_tag": [
+      "silent"
+    ],
+    "liked": [
+      "General, The (1926)",
+      "Sherlock Jr. (1924)",
+      "Safety Last! (1923)",
+      "Gold Rush, The (1925)",
+      "Circus, The (1928)",
+      "Steamboat Bill, Jr. (1928)",
+      "Kid, The (1921)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "The Artist (2011)",
+      "Modern Times (1936)",
+      "Sunrise: A Song of Two Humans (1927)",
+      "Passion of Joan of Arc, The (Passion de Jeanne d'Arc, La) (1928)",
+      "Last Laugh, The (Letzte Mann, Der) (1924)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Rashomon (Rash\u00f4mon) (1950)",
+        "count": 6198
+      },
+      {
+        "title": "Yojimbo (1961)",
+        "count": 5208
+      },
+      {
+        "title": "M (1931)",
+        "count": 5934
+      },
+      {
+        "title": "Third Man, The (1949)",
+        "count": 9277
+      },
+      {
+        "title": "Ikiru (1952)",
+        "count": 2096
+      },
+      {
+        "title": "City Lights (1931)",
+        "count": 4103
+      },
+      {
+        "title": "Paths of Glory (1957)",
+        "count": 5604
+      },
+      {
+        "title": "Bicycle Thieves (a.k.a. The Bicycle Thief) (a.k.a. The Bicycle Thieves) (Ladri di biciclette) (1948)",
+        "count": 5034
+      },
+      {
+        "title": "Throne of Blood (Kumonosu j\u00f4) (1957)",
+        "count": 1753
+      },
+      {
+        "title": "Battle of Algiers, The (La battaglia di Algeri) (1966)",
+        "count": 1927
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "City Lights (1931)",
+        "count": 4103
+      },
+      {
+        "title": "Rules of the Game, The (La r\u00e8gle du jeu) (1939)",
+        "count": 1157
+      },
+      {
+        "title": "Rashomon (Rash\u00f4mon) (1950)",
+        "count": 6198
+      },
+      {
+        "title": "Ikiru (1952)",
+        "count": 2096
+      },
+      {
+        "title": "Throne of Blood (Kumonosu j\u00f4) (1957)",
+        "count": 1753
+      },
+      {
+        "title": "Bicycle Thieves (a.k.a. The Bicycle Thief) (a.k.a. The Bicycle Thieves) (Ladri di biciclette) (1948)",
+        "count": 5034
+      },
+      {
+        "title": "Yojimbo (1961)",
+        "count": 5208
+      },
+      {
+        "title": "Tokyo Story (T\u00f4ky\u00f4 monogatari) (1953)",
+        "count": 1456
+      },
+      {
+        "title": "Kind Hearts and Coronets (1949)",
+        "count": 1247
+      },
+      {
+        "title": "Wages of Fear, The (Salaire de la peur, Le) (1953)",
+        "count": 1321
+      }
+    ],
+    "median_alpha0": 5121,
+    "median_alpha05": 1924,
+    "pop_drop_x": 2.7
+  },
+  {
+    "name": "The sword-and-sandal Roman-epic purist",
+    "genome_tag": [
+      "epic",
+      "biblical"
+    ],
+    "liked": [
+      "El Cid (1961)",
+      "Robe, The (1953)",
+      "Cleopatra (1963)",
+      "Ten Commandments, The (1956)",
+      "Spartacus (1960)",
+      "Ben-Hur: A Tale of the Christ (1925)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Lord of the Rings: The Return of the King, The (2003)",
+      "Braveheart (1995)",
+      "Gladiator (2000)",
+      "Lord of the Rings: The Two Towers, The (2002)",
+      "Ben-Hur (1959)",
+      "Greatest Story Ever Told, The (1965)",
+      "Exodus: Gods and Kings (2014)",
+      "Left Behind: The Movie (2000)",
+      "Last Temptation of Christ, The (1988)",
+      "Noah (2014)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Raiders of the Lost Ark (Indiana Jones and the Raiders of the Lost Ark) (1981)",
+        "count": 75248
+      },
+      {
+        "title": "Pirates of the Caribbean: The Curse of the Black Pearl (2003)",
+        "count": 50868
+      },
+      {
+        "title": "Shrek (2001)",
+        "count": 58529
+      },
+      {
+        "title": "Lord of the Rings: The Fellowship of the Ring, The (2001)",
+        "count": 79940
+      },
+      {
+        "title": "Finding Nemo (2003)",
+        "count": 48124
+      },
+      {
+        "title": "Saving Private Ryan (1998)",
+        "count": 64235
+      },
+      {
+        "title": "Back to the Future (1985)",
+        "count": 67777
+      },
+      {
+        "title": "Indiana Jones and the Last Crusade (1989)",
+        "count": 48979
+      },
+      {
+        "title": "Princess Bride, The (1987)",
+        "count": 50775
+      },
+      {
+        "title": "Star Wars: Episode V - The Empire Strikes Back (1980)",
+        "count": 80200
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Pirates of the Caribbean: The Curse of the Black Pearl (2003)",
+        "count": 50868
+      },
+      {
+        "title": "X-Men (2000)",
+        "count": 42387
+      },
+      {
+        "title": "Finding Nemo (2003)",
+        "count": 48124
+      },
+      {
+        "title": "Sixth Sense, The (1999)",
+        "count": 60439
+      },
+      {
+        "title": "Shrek (2001)",
+        "count": 58529
+      },
+      {
+        "title": "Terminator 2: Judgment Day (1991)",
+        "count": 71820
+      },
+      {
+        "title": "Batman Begins (2005)",
+        "count": 43300
+      },
+      {
+        "title": "Monsters, Inc. (2001)",
+        "count": 48441
+      },
+      {
+        "title": "Men in Black (a.k.a. MIB) (1997)",
+        "count": 49951
+      },
+      {
+        "title": "Ocean's Eleven (2001)",
+        "count": 42340
+      }
+    ],
+    "median_alpha0": 61382,
+    "median_alpha05": 49196,
+    "pop_drop_x": 1.2
+  }
+]

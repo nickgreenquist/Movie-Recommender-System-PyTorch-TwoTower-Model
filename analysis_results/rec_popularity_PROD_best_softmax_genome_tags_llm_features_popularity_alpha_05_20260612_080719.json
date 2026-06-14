@@ -1,0 +1,20 @@
+{
+  "checkpoint": "PROD_best_softmax_genome_tags_llm_features_popularity_alpha_05_20260612_080719.pth",
+  "alpha": null,
+  "n_users": 3000,
+  "n_contexts": 59928,
+  "top_k": 20,
+  "n_items": 9375,
+  "n_head_movies": 4461,
+  "n_tail_movies": 4914,
+  "mean_rec_popularity": 21009.731151548523,
+  "median_rec_popularity": 13200.0,
+  "p90_rec_popularity": 49951.0,
+  "median_log10_pop": 4.120606831056773,
+  "head_slot_share": 0.9574881524496062,
+  "tail_slot_share": 0.04251184755039383,
+  "top_decile_share": 0.6081172406888266,
+  "catalog_coverage": 0.84256,
+  "n_distinct_served": 7899,
+  "impression_gini": 0.7762718962310328
+}

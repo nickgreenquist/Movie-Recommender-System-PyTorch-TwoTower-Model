@@ -1,0 +1,128 @@
+[
+  {
+    "name": "The spaghetti-western fanatic",
+    "genome_tag": "spaghetti western",
+    "liked": ["Django (1966)", "Great Silence, The (Grande silenzio, Il) (1969)", "My Name Is Nobody (Il Mio nome è Nessuno) (1973)", "Duck, You Sucker (1971)", "For a Few Dollars More (Per qualche dollaro in più) (1965)", "Once Upon a Time in the West (C'era una volta il West) (1968)"],
+    "disliked": []
+  },
+  {
+    "name": "The revisionist-western devotee",
+    "genome_tag": "western",
+    "liked": ["Wild Bunch, The (1969)", "McCabe & Mrs. Miller (1971)", "Pat Garrett and Billy the Kid (1973)", "Ride the High Country (1962)", "Jeremiah Johnson (1972)", "Little Big Man (1970)"],
+    "disliked": []
+  },
+  {
+    "name": "The Ford-era frontier purist",
+    "genome_tag": "western",
+    "liked": ["Searchers, The (1956)", "Stagecoach (1939)", "Rio Bravo (1959)", "Red River (1948)", "My Darling Clementine (1946)", "She Wore a Yellow Ribbon (1949)"],
+    "disliked": []
+  },
+  {
+    "name": "The 80s slasher diehard",
+    "genome_tag": "slasher",
+    "liked": ["Friday the 13th Part 2 (1981)", "Friday the 13th Part IV: The Final Chapter (1984)", "Halloween II (1981)", "Sleepaway Camp (1983)", "My Bloody Valentine (1981)", "Prom Night (1980)", "Child's Play (1988)"],
+    "disliked": []
+  },
+  {
+    "name": "The living-dead gut-muncher",
+    "genome_tag": "zombie",
+    "liked": ["Day of the Dead (1985)", "Return of the Living Dead, The (1985)", "Zombie (a.k.a. Zombie 2: The Dead Are Among Us) (Zombi 2) (1979)", "City of the Living Dead (a.k.a. Gates of Hell, The) (Paura nella città dei morti viventi) (1980)", "Night of the Living Dead (1990)", "Return of the Living Dead Part II (1988)", "Dawn of the Dead (1978)"],
+    "disliked": []
+  },
+  {
+    "name": "The practical-FX splatter gorehound",
+    "genome_tag": "splatter",
+    "liked": ["Re-Animator (1985)", "Bride of Re-Animator (1990)", "From Beyond (1986)", "Basket Case (1982)", "Dead Alive (Braindead) (1992)", "Hellraiser (1987)", "Hellbound: Hellraiser II (1988)"],
+    "disliked": []
+  },
+  {
+    "name": "The chanbara purist",
+    "genome_tag": "samurai",
+    "liked": ["Harakiri (Seppuku) (1962)", "Sword of Doom, The (Dai-bosatsu tôge) (1966)", "Samurai Rebellion (Jôi-uchi: Hairyô tsuma shimatsu) (1967)", "Lone Wolf and Cub: Sword of Vengeance (Kozure Ôkami: Kowokashi udekashi tsukamatsuru) (1972)", "Sanjuro (Tsubaki Sanjûrô) (1962)", "Samurai I: Musashi Miyamoto (Miyamoto Musashi) (1954)", "13 Assassins (Jûsan-nin no shikaku) (2010)"],
+    "disliked": []
+  },
+  {
+    "name": "The classic kung-fu obsessive",
+    "genome_tag": "kung fu",
+    "liked": ["Drunken Master (Jui kuen) (1978)", "Iron Monkey (Siu nin Wong Fei-hung ji: Tit Ma Lau) (1993)", "Once Upon a Time in China (Wong Fei Hung) (1991)", "Fist of Legend (Jing wu ying xiong) (1994)", "Fist of Fury (Chinese Connection, The) (Jing wu men) (1972)", "36th Chamber of Shaolin, The (Shao Lin san shi liu fang) (Master Killer) (1978)", "Legend, The (Legend of Fong Sai-Yuk, The) (Fong Sai Yuk) (1993)"],
+    "disliked": []
+  },
+  {
+    "name": "The Hong Kong heroic-bloodshed devotee",
+    "genome_tag": "hong kong",
+    "liked": ["Killer, The (Die xue shuang xiong) (1989)", "Hard-Boiled (Lat sau san taam) (1992)", "Better Tomorrow, A (Ying hung boon sik) (1986)", "Once a Thief (Zong heng si hai) (1991)", "Infernal Affairs (Mou gaan dou) (2002)", "Supercop (Police Story 3: Supercop) (Jing cha gu shi III: Chao ji jing cha) (1992)", "Police Story (Ging chaat goo si) (1985)"],
+    "disliked": []
+  },
+  {
+    "name": "The 1940s film-noir purist",
+    "genome_tag": "film noir",
+    "liked": ["Out of the Past (1947)", "Laura (1944)", "Gilda (1946)", "Asphalt Jungle, The (1950)", "Kiss Me Deadly (1955)", "In a Lonely Place (1950)", "Postman Always Rings Twice, The (1946)"],
+    "disliked": []
+  },
+  {
+    "name": "The golden-age MGM musical devotee",
+    "genome_tag": "musical",
+    "liked": ["American in Paris, An (1951)", "Meet Me in St. Louis (1944)", "Band Wagon, The (1953)", "Swing Time (1936)", "Easter Parade (1948)", "On the Town (1949)", "Seven Brides for Seven Brothers (1954)"],
+    "disliked": []
+  },
+  {
+    "name": "The 1930s screwball-comedy aficionado",
+    "genome_tag": "screwball",
+    "liked": ["His Girl Friday (1940)", "Lady Eve, The (1941)", "My Man Godfrey (1936)", "Awful Truth, The (1937)", "Palm Beach Story, The (1942)", "Twentieth Century (1934)", "Ball of Fire (1941)"],
+    "disliked": []
+  },
+  {
+    "name": "The Cold War espionage purist",
+    "genome_tag": "espionage",
+    "liked": ["Tinker Tailor Soldier Spy (2011)", "Spy Who Came in from the Cold, The (1965)", "Ipcress File, The (1965)", "Russia House, The (1990)", "A Most Wanted Man (2014)", "Funeral in Berlin (1966)", "Fourth Protocol, The (1987)"],
+    "disliked": []
+  },
+  {
+    "name": "The submarine warfare obsessive",
+    "genome_tag": "submarine",
+    "liked": ["Boot, Das (Boat, The) (1981)", "Run Silent Run Deep (1958)", "Ice Station Zebra (1968)", "K-19: The Widowmaker (2002)", "Enemy Below, The (1957)", "Black Sea (2015)"],
+    "disliked": []
+  },
+  {
+    "name": "The Vietnam War deep-cut devotee",
+    "genome_tag": "vietnam war",
+    "liked": ["Hamburger Hill (1987)", "Casualties of War (1989)", "Gardens of Stone (1987)", "Tigerland (2000)", "Rescue Dawn (2006)", "Quiet American, The (2002)", "Coming Home (1978)"],
+    "disliked": []
+  },
+  {
+    "name": "The 1970s disaster-movie completist",
+    "genome_tag": "disaster",
+    "liked": ["Poseidon Adventure, The (1972)", "Towering Inferno, The (1974)", "Earthquake (1974)", "Airport (1970)", "Airport 1975 (1974)", "Swarm, The (1978)", "Meteor (1979)"],
+    "disliked": []
+  },
+  {
+    "name": "The 1950s atomic-age creature-feature fan",
+    "genome_tag": "1950s",
+    "liked": ["Them! (1954)", "Thing from Another World, The (1951)", "Creature from the Black Lagoon, The (1954)", "Tarantula (1955)", "It Came from Outer Space (1953)", "Incredible Shrinking Man, The (1957)", "Earth vs. the Flying Saucers (1956)"],
+    "disliked": []
+  },
+  {
+    "name": "The Universal classic-monster devotee",
+    "genome_tag": "monster",
+    "liked": ["Frankenstein (1931)", "Bride of Frankenstein, The (Bride of Frankenstein) (1935)", "Dracula (1931)", "Mummy, The (1932)", "Wolf Man, The (1941)", "Invisible Man, The (1933)", "Son of Frankenstein (1939)"],
+    "disliked": []
+  },
+  {
+    "name": "The cyberpunk-anime obsessive",
+    "genome_tag": "cyberpunk",
+    "liked": ["Ghost in the Shell (Kôkaku kidôtai) (1995)", "Akira (1988)", "Ninja Scroll (Jûbei ninpûchô) (1995)", "Vampire Hunter D: Bloodlust (Banpaia hantâ D) (2000)", "Perfect Blue (1997)", "Appleseed (Appurushîdo) (2004)", "Spriggan (Supurigan) (1998)"],
+    "disliked": []
+  },
+  {
+    "name": "The 80s sword-and-sorcery diehard",
+    "genome_tag": "dark fantasy",
+    "liked": ["Conan the Barbarian (1982)", "Conan the Destroyer (1984)", "Beastmaster, The (1982)", "Krull (1983)", "Red Sonja (1985)", "Dragonslayer (1981)", "Fire and Ice (1983)"],
+    "disliked": []
+  },
+  {
+    "name": "The Argento-Fulci giallo cultist",
+    "genome_tag": "slasher",
+    "liked": ["Suspiria (1977)", "Deep Red (Profondo rosso) (1975)", "Tenebre (1982)", "Phenomena (a.k.a. Creepers) (1985)", "Inferno (1980)", "City of the Living Dead (a.k.a. Gates of Hell, The) (Paura nella città dei morti viventi) (1980)", "Bird with the Crystal Plumage, The (Uccello dalle piume di cristallo, L') (1970)"],
+    "disliked": []
+  }
+]

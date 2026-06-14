@@ -1,0 +1,1941 @@
+[
+  {
+    "name": "Children's Movie Lover",
+    "genome_tag": [
+      "pixar animation"
+    ],
+    "liked": [
+      "Toy Story 2 (1999)",
+      "Finding Nemo (2003)",
+      "Finding Dory (2016)",
+      "Madagascar (2005)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Geri's Game (1997)",
+      "Knick Knack (1989)",
+      "Boundin' (2003)",
+      "Bug's Life, A (1998)",
+      "Incredibles, The (2004)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Monsters University (2013)",
+        "count": 6672
+      },
+      {
+        "title": "Over the Hedge (2006)",
+        "count": 4653
+      },
+      {
+        "title": "Cloudy with a Chance of Meatballs (2009)",
+        "count": 5494
+      },
+      {
+        "title": "Megamind (2010)",
+        "count": 8352
+      },
+      {
+        "title": "Mulan (1998)",
+        "count": 15736
+      },
+      {
+        "title": "Cars (2006)",
+        "count": 12017
+      },
+      {
+        "title": "Wreck-It Ralph (2012)",
+        "count": 10930
+      },
+      {
+        "title": "Bolt (2008)",
+        "count": 5017
+      },
+      {
+        "title": "Surf's Up (2007)",
+        "count": 1785
+      },
+      {
+        "title": "Ratatouille (2007)",
+        "count": 29486
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "For the Birds (2000)",
+        "count": 1746
+      },
+      {
+        "title": "Over the Hedge (2006)",
+        "count": 4653
+      },
+      {
+        "title": "Surf's Up (2007)",
+        "count": 1785
+      },
+      {
+        "title": "Cars (2006)",
+        "count": 12017
+      },
+      {
+        "title": "Wreck-It Ralph (2012)",
+        "count": 10930
+      },
+      {
+        "title": "Horton Hears a Who! (2008)",
+        "count": 2969
+      },
+      {
+        "title": "Cloudy with a Chance of Meatballs (2009)",
+        "count": 5494
+      },
+      {
+        "title": "Partly Cloudy (2009)",
+        "count": 1394
+      },
+      {
+        "title": "Flushed Away (2006)",
+        "count": 2532
+      },
+      {
+        "title": "Ice Age (2002)",
+        "count": 24772
+      }
+    ],
+    "median_alpha0": 7512,
+    "median_alpha05": 3811,
+    "pop_drop_x": 2.0
+  },
+  {
+    "name": "Horror Lover",
+    "genome_tag": [],
+    "liked": [
+      "Blair Witch Project, The (1999)",
+      "Texas Chainsaw Massacre, The (2003)",
+      "Exorcism of Emily Rose, The (2005)",
+      "Wrong Turn (2003)",
+      "28 Days Later (2002)",
+      "Descent, The (2005)",
+      "Dawn of the Dead (2004)",
+      "Session 9 (2001)",
+      "[REC] (2007)"
+    ],
+    "disliked": [],
+    "anchors": [],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Ring, The (2002)",
+        "count": 16686
+      },
+      {
+        "title": "Resident Evil (2002)",
+        "count": 9314
+      },
+      {
+        "title": "Others, The (2001)",
+        "count": 17050
+      },
+      {
+        "title": "Mist, The (2007)",
+        "count": 5740
+      },
+      {
+        "title": "Saw (2004)",
+        "count": 13133
+      },
+      {
+        "title": "Identity (2003)",
+        "count": 7887
+      },
+      {
+        "title": "Skeleton Key, The (2005)",
+        "count": 2366
+      },
+      {
+        "title": "Silent Hill (2006)",
+        "count": 3885
+      },
+      {
+        "title": "Jeepers Creepers (2001)",
+        "count": 3290
+      },
+      {
+        "title": "28 Weeks Later (2007)",
+        "count": 8128
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Dead End (2003)",
+        "count": 374
+      },
+      {
+        "title": "Hills Have Eyes, The (2006)",
+        "count": 2051
+      },
+      {
+        "title": "Ring, The (2002)",
+        "count": 16686
+      },
+      {
+        "title": "Shutter (2004)",
+        "count": 596
+      },
+      {
+        "title": "Grave Encounters (2011)",
+        "count": 525
+      },
+      {
+        "title": "Jeepers Creepers (2001)",
+        "count": 3290
+      },
+      {
+        "title": "House of the Devil, The (2009)",
+        "count": 655
+      },
+      {
+        "title": "Tale of Two Sisters, A (Janghwa, Hongryeon) (2003)",
+        "count": 1274
+      },
+      {
+        "title": "Land of the Dead (2005)",
+        "count": 1871
+      },
+      {
+        "title": "[REC]\u00b2 (2009)",
+        "count": 678
+      }
+    ],
+    "median_alpha0": 8007,
+    "median_alpha05": 976,
+    "pop_drop_x": 8.2
+  },
+  {
+    "name": "Sci-Fi Lover",
+    "genome_tag": [],
+    "liked": [
+      "Contact (1997)",
+      "2010: The Year We Make Contact (1984)",
+      "It Came from Outer Space (1953)",
+      "Solaris (Solyaris) (1972)",
+      "2001: A Space Odyssey (1968)"
+    ],
+    "disliked": [],
+    "anchors": [],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Stalker (1979)",
+        "count": 4024
+      },
+      {
+        "title": "Forbidden Planet (1956)",
+        "count": 4420
+      },
+      {
+        "title": "Fifth Element, The (1997)",
+        "count": 42155
+      },
+      {
+        "title": "Soylent Green (1973)",
+        "count": 5139
+      },
+      {
+        "title": "Until the End of the World (Bis ans Ende der Welt) (1991)",
+        "count": 1193
+      },
+      {
+        "title": "Independence Day (a.k.a. ID4) (1996)",
+        "count": 63687
+      },
+      {
+        "title": "1984 (Nineteen Eighty-Four) (1984)",
+        "count": 4196
+      },
+      {
+        "title": "Brazil (1985)",
+        "count": 19441
+      },
+      {
+        "title": "Solaris (2002)",
+        "count": 4184
+      },
+      {
+        "title": "Clockwork Orange, A (1971)",
+        "count": 38195
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Forbidden Planet (1956)",
+        "count": 4420
+      },
+      {
+        "title": "Until the End of the World (Bis ans Ende der Welt) (1991)",
+        "count": 1193
+      },
+      {
+        "title": "Silent Running (1972)",
+        "count": 1128
+      },
+      {
+        "title": "Omega Man, The (1971)",
+        "count": 1974
+      },
+      {
+        "title": "Soylent Green (1973)",
+        "count": 5139
+      },
+      {
+        "title": "1984 (Nineteen Eighty-Four) (1984)",
+        "count": 4196
+      },
+      {
+        "title": "Brother from Another Planet, The (1984)",
+        "count": 1146
+      },
+      {
+        "title": "Day the Earth Stood Still, The (1951)",
+        "count": 7522
+      },
+      {
+        "title": "Logan's Run (1976)",
+        "count": 6288
+      },
+      {
+        "title": "Outland (1981)",
+        "count": 1270
+      }
+    ],
+    "median_alpha0": 4779,
+    "median_alpha05": 3085,
+    "pop_drop_x": 1.5
+  },
+  {
+    "name": "Comedy Lover",
+    "genome_tag": [],
+    "liked": [
+      "American Pie (1999)",
+      "Dumb & Dumber (Dumb and Dumber) (1994)",
+      "Dodgeball: A True Underdog Story (2004)",
+      "Ted 2 (2015)"
+    ],
+    "disliked": [],
+    "anchors": [],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "40-Year-Old Virgin, The (2005)",
+        "count": 20667
+      },
+      {
+        "title": "Meet the Parents (2000)",
+        "count": 26477
+      },
+      {
+        "title": "Step Brothers (2008)",
+        "count": 6736
+      },
+      {
+        "title": "Superbad (2007)",
+        "count": 20188
+      },
+      {
+        "title": "Harold and Kumar Go to White Castle (2004)",
+        "count": 7438
+      },
+      {
+        "title": "Pineapple Express (2008)",
+        "count": 8580
+      },
+      {
+        "title": "Austin Powers: International Man of Mystery (1997)",
+        "count": 29591
+      },
+      {
+        "title": "Anchorman: The Legend of Ron Burgundy (2004)",
+        "count": 13700
+      },
+      {
+        "title": "Talladega Nights: The Ballad of Ricky Bobby (2006)",
+        "count": 5907
+      },
+      {
+        "title": "School of Rock (2003)",
+        "count": 19590
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Step Brothers (2008)",
+        "count": 6736
+      },
+      {
+        "title": "Talladega Nights: The Ballad of Ricky Bobby (2006)",
+        "count": 5907
+      },
+      {
+        "title": "Blades of Glory (2007)",
+        "count": 4498
+      },
+      {
+        "title": "Meet the Parents (2000)",
+        "count": 26477
+      },
+      {
+        "title": "Click (2006)",
+        "count": 7798
+      },
+      {
+        "title": "40-Year-Old Virgin, The (2005)",
+        "count": 20667
+      },
+      {
+        "title": "Knocked Up (2007)",
+        "count": 11437
+      },
+      {
+        "title": "Forgetting Sarah Marshall (2008)",
+        "count": 9934
+      },
+      {
+        "title": "Tropic Thunder (2008)",
+        "count": 11071
+      },
+      {
+        "title": "Liar Liar (1997)",
+        "count": 24704
+      }
+    ],
+    "median_alpha0": 16645,
+    "median_alpha05": 10502,
+    "pop_drop_x": 1.6
+  },
+  {
+    "name": "Romance Lover",
+    "genome_tag": [],
+    "liked": [
+      "Shakespeare in Love (1998)",
+      "Sense and Sensibility (1995)",
+      "When Harry Met Sally... (1989)",
+      "Sleepless in Seattle (1993)",
+      "Notting Hill (1999)",
+      "Pride and Prejudice (1995)",
+      "North & South (2004)"
+    ],
+    "disliked": [],
+    "anchors": [],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Four Weddings and a Funeral (1994)",
+        "count": 31577
+      },
+      {
+        "title": "Pride & Prejudice (2005)",
+        "count": 8523
+      },
+      {
+        "title": "You've Got Mail (1998)",
+        "count": 16093
+      },
+      {
+        "title": "Pretty Woman (1990)",
+        "count": 40755
+      },
+      {
+        "title": "My Best Friend's Wedding (1997)",
+        "count": 13190
+      },
+      {
+        "title": "Chocolat (2000)",
+        "count": 15832
+      },
+      {
+        "title": "American President, The (1995)",
+        "count": 20256
+      },
+      {
+        "title": "French Kiss (1995)",
+        "count": 13873
+      },
+      {
+        "title": "Love Actually (2003)",
+        "count": 18878
+      },
+      {
+        "title": "Emma (1996)",
+        "count": 9402
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Persuasion (2007)",
+        "count": 421
+      },
+      {
+        "title": "You've Got Mail (1998)",
+        "count": 16093
+      },
+      {
+        "title": "Holiday, The (2006)",
+        "count": 5546
+      },
+      {
+        "title": "Pride & Prejudice (2005)",
+        "count": 8523
+      },
+      {
+        "title": "French Kiss (1995)",
+        "count": 13873
+      },
+      {
+        "title": "The Hundred-Foot Journey (2014)",
+        "count": 959
+      },
+      {
+        "title": "Wedding Date, The (2005)",
+        "count": 1262
+      },
+      {
+        "title": "Leap Year (2010)",
+        "count": 1446
+      },
+      {
+        "title": "No Reservations (2007)",
+        "count": 1172
+      },
+      {
+        "title": "Holiday (1938)",
+        "count": 621
+      }
+    ],
+    "median_alpha0": 15962,
+    "median_alpha05": 1354,
+    "pop_drop_x": 11.8
+  },
+  {
+    "name": "War Movie Lover",
+    "genome_tag": [],
+    "liked": [
+      "Bridge on the River Kwai, The (1957)",
+      "Glory (1989)",
+      "Downfall (Untergang, Der) (2004)",
+      "1917 (2019)",
+      "Enemy at the Gates (2001)"
+    ],
+    "disliked": [],
+    "anchors": [],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Patton (1970)",
+        "count": 9974
+      },
+      {
+        "title": "Good, the Bad and the Ugly, The (Buono, il brutto, il cattivo, Il) (1966)",
+        "count": 23823
+      },
+      {
+        "title": "Longest Day, The (1962)",
+        "count": 3244
+      },
+      {
+        "title": "Deer Hunter, The (1978)",
+        "count": 14465
+      },
+      {
+        "title": "Killing Fields, The (1984)",
+        "count": 8314
+      },
+      {
+        "title": "Platoon (1986)",
+        "count": 20860
+      },
+      {
+        "title": "Boot, Das (Boat, The) (1981)",
+        "count": 17052
+      },
+      {
+        "title": "Lawrence of Arabia (1962)",
+        "count": 17152
+      },
+      {
+        "title": "Tora! Tora! Tora! (1970)",
+        "count": 2251
+      },
+      {
+        "title": "Band of Brothers (2001)",
+        "count": 2835
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Bridge Too Far, A (1977)",
+        "count": 1514
+      },
+      {
+        "title": "Cross of Iron (1977)",
+        "count": 776
+      },
+      {
+        "title": "We Were Soldiers (2002)",
+        "count": 4964
+      },
+      {
+        "title": "Gettysburg (1993)",
+        "count": 1852
+      },
+      {
+        "title": "Memphis Belle (1990)",
+        "count": 1594
+      },
+      {
+        "title": "Lord of the Rings: The Two Towers, The (2002)",
+        "count": 73687
+      },
+      {
+        "title": "Band of Brothers (2001)",
+        "count": 2835
+      },
+      {
+        "title": "Beast of War, The (Beast, The) (1988)",
+        "count": 221
+      },
+      {
+        "title": "Letters from Iwo Jima (2006)",
+        "count": 3760
+      },
+      {
+        "title": "Restrepo (2010)",
+        "count": 693
+      }
+    ],
+    "median_alpha0": 12219,
+    "median_alpha05": 1723,
+    "pop_drop_x": 7.1
+  },
+  {
+    "name": "Fantasy Lover",
+    "genome_tag": [
+      "high fantasy"
+    ],
+    "liked": [
+      "Lord of the Rings: The Fellowship of the Ring, The (2001)",
+      "Dark Crystal, The (1982)",
+      "Lord of the Rings: The Return of the King, The (2003)",
+      "Dragonslayer (1981)",
+      "Dune (1984)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Legend (1985)",
+      "Willow (1988)",
+      "Lord of the Rings: The Two Towers, The (2002)",
+      "Hobbit: The Desolation of Smaug, The (2013)",
+      "Hobbit: An Unexpected Journey, The (2012)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "The Hobbit: The Battle of the Five Armies (2014)",
+        "count": 8785
+      },
+      {
+        "title": "Indiana Jones and the Temple of Doom (1984)",
+        "count": 30436
+      },
+      {
+        "title": "Star Trek III: The Search for Spock (1984)",
+        "count": 13193
+      },
+      {
+        "title": "Star Trek V: The Final Frontier (1989)",
+        "count": 9264
+      },
+      {
+        "title": "Star Trek VI: The Undiscovered Country (1991)",
+        "count": 13057
+      },
+      {
+        "title": "Star Trek: The Motion Picture (1979)",
+        "count": 12214
+      },
+      {
+        "title": "Thor: The Dark World (2013)",
+        "count": 8374
+      },
+      {
+        "title": "Star Wars: Episode III - Revenge of the Sith (2005)",
+        "count": 25425
+      },
+      {
+        "title": "Star Wars: Episode V - The Empire Strikes Back (1980)",
+        "count": 80200
+      },
+      {
+        "title": "Star Trek II: The Wrath of Khan (1982)",
+        "count": 19401
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Ladyhawke (1985)",
+        "count": 4272
+      },
+      {
+        "title": "Solomon Kane (2009)",
+        "count": 722
+      },
+      {
+        "title": "Conan the Destroyer (1984)",
+        "count": 2394
+      },
+      {
+        "title": "47 Ronin (2013)",
+        "count": 1420
+      },
+      {
+        "title": "Krull (1983)",
+        "count": 1470
+      },
+      {
+        "title": "The Golden Voyage of Sinbad (1973)",
+        "count": 687
+      },
+      {
+        "title": "NeverEnding Story, The (1984)",
+        "count": 13617
+      },
+      {
+        "title": "Mad Max Beyond Thunderdome (1985)",
+        "count": 7378
+      },
+      {
+        "title": "Percy Jackson: Sea of Monsters (2013)",
+        "count": 1204
+      },
+      {
+        "title": "John Carter (2012)",
+        "count": 3674
+      }
+    ],
+    "median_alpha0": 13125,
+    "median_alpha05": 1932,
+    "pop_drop_x": 6.8
+  },
+  {
+    "name": "Crime Lover",
+    "genome_tag": [
+      "organized crime",
+      "mafia"
+    ],
+    "liked": [
+      "Donnie Brasco (1997)",
+      "The Irishman (2019)",
+      "Casino (1995)",
+      "Narc (2002)",
+      "American Gangster (2007)",
+      "Sicario (2015)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Goodfellas (1990)",
+      "Scarface (1932)",
+      "Little Caesar (1931)",
+      "Kill the Irishman (2011)",
+      "Miller's Crossing (1990)",
+      "Analyze This (1999)",
+      "Black Mass (2015)",
+      "Bronx Tale, A (1993)",
+      "Jane Austen's Mafia! (1998)",
+      "Gomorrah (Gomorra) (2008)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Scarface (1983)",
+        "count": 19997
+      },
+      {
+        "title": "Godfather: Part II, The (1974)",
+        "count": 47271
+      },
+      {
+        "title": "Heat (1995)",
+        "count": 31850
+      },
+      {
+        "title": "Full Metal Jacket (1987)",
+        "count": 33265
+      },
+      {
+        "title": "Usual Suspects, The (1995)",
+        "count": 72893
+      },
+      {
+        "title": "Reservoir Dogs (1992)",
+        "count": 45318
+      },
+      {
+        "title": "Fight Club (1999)",
+        "count": 86207
+      },
+      {
+        "title": "Carlito's Way (1993)",
+        "count": 11440
+      },
+      {
+        "title": "Dark Knight, The (2008)",
+        "count": 65349
+      },
+      {
+        "title": "One Flew Over the Cuckoo's Nest (1975)",
+        "count": 49316
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Sicario: Day of the Soldado (2018)",
+        "count": 1287
+      },
+      {
+        "title": "Brawl in Cell Block 99 (2017)",
+        "count": 658
+      },
+      {
+        "title": "Mean Streets (1973)",
+        "count": 2355
+      },
+      {
+        "title": "Deep Cover (1992)",
+        "count": 298
+      },
+      {
+        "title": "Brooklyn's Finest (2010)",
+        "count": 418
+      },
+      {
+        "title": "King of New York (1990)",
+        "count": 1573
+      },
+      {
+        "title": "Layer Cake (2004)",
+        "count": 5383
+      },
+      {
+        "title": "Shot Caller (2017)",
+        "count": 814
+      },
+      {
+        "title": "Too Big to Fail (2011)",
+        "count": 386
+      },
+      {
+        "title": "New Jack City (1991)",
+        "count": 654
+      }
+    ],
+    "median_alpha0": 46294,
+    "median_alpha05": 736,
+    "pop_drop_x": 62.9
+  },
+  {
+    "name": "Heist Lover",
+    "genome_tag": [
+      "heist"
+    ],
+    "liked": [
+      "Heist (2001)",
+      "Ocean's Eleven (a.k.a. Ocean's 11) (1960)",
+      "The Drop (2014)",
+      "Bank Job, The (2008)",
+      "Italian Job, The (1969)",
+      "Town, The (2010)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Good Thief, The (2002)",
+      "Takers (2010)",
+      "Rififi (Du rififi chez les hommes) (1955)",
+      "Score, The (2001)",
+      "Ocean's Eleven (2001)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Bourne Identity, The (2002)",
+        "count": 38896
+      },
+      {
+        "title": "Batman Begins (2005)",
+        "count": 43300
+      },
+      {
+        "title": "Minority Report (2002)",
+        "count": 40414
+      },
+      {
+        "title": "Spider-Man (2002)",
+        "count": 39737
+      },
+      {
+        "title": "Incredibles, The (2004)",
+        "count": 42953
+      },
+      {
+        "title": "Catch Me If You Can (2002)",
+        "count": 39714
+      },
+      {
+        "title": "Beautiful Mind, A (2001)",
+        "count": 43013
+      },
+      {
+        "title": "Departed, The (2006)",
+        "count": 36481
+      },
+      {
+        "title": "Kill Bill: Vol. 2 (2004)",
+        "count": 38553
+      },
+      {
+        "title": "Kill Bill: Vol. 1 (2003)",
+        "count": 46973
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Confidence (2003)",
+        "count": 1281
+      },
+      {
+        "title": "Out of Time (2003)",
+        "count": 1082
+      },
+      {
+        "title": "Bourne Supremacy, The (2004)",
+        "count": 26612
+      },
+      {
+        "title": "Bourne Identity, The (2002)",
+        "count": 38896
+      },
+      {
+        "title": "Hostage (2005)",
+        "count": 1869
+      },
+      {
+        "title": "Cellular (2004)",
+        "count": 2009
+      },
+      {
+        "title": "Rundown, The (2003)",
+        "count": 2682
+      },
+      {
+        "title": "Spartan (2004)",
+        "count": 1144
+      },
+      {
+        "title": "Man on Fire (2004)",
+        "count": 10198
+      },
+      {
+        "title": "Assault on Precinct 13 (2005)",
+        "count": 1655
+      }
+    ],
+    "median_alpha0": 40075,
+    "median_alpha05": 1939,
+    "pop_drop_x": 20.7
+  },
+  {
+    "name": "Action Junkie",
+    "genome_tag": [
+      "explosions",
+      "adrenaline"
+    ],
+    "liked": [
+      "Die Hard 2 (1990)",
+      "Rambo III (1988)",
+      "Under Siege (1992)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Con Air (1997)",
+      "Die Hard (1988)",
+      "Speed (1994)",
+      "Expendables 2, The (2012)",
+      "Expendables, The (2010)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Bad Boys (1995)",
+        "count": 16784
+      },
+      {
+        "title": "Lethal Weapon 3 (1992)",
+        "count": 11773
+      },
+      {
+        "title": "Drop Zone (1994)",
+        "count": 4905
+      },
+      {
+        "title": "Last Action Hero (1993)",
+        "count": 16265
+      },
+      {
+        "title": "Rambo: First Blood Part II (1985)",
+        "count": 6627
+      },
+      {
+        "title": "Desperado (1995)",
+        "count": 18090
+      },
+      {
+        "title": "Godfather: Part III, The (1990)",
+        "count": 14446
+      },
+      {
+        "title": "Mechanic, The (2011)",
+        "count": 2678
+      },
+      {
+        "title": "Equalizer, The (2014)",
+        "count": 4509
+      },
+      {
+        "title": "Days of Thunder (1990)",
+        "count": 6647
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Blown Away (1994)",
+        "count": 2546
+      },
+      {
+        "title": "Good Day to Die Hard, A (2013)",
+        "count": 1571
+      },
+      {
+        "title": "Judgment Night (1993)",
+        "count": 1316
+      },
+      {
+        "title": "Daylight (1996)",
+        "count": 3585
+      },
+      {
+        "title": "Marked for Death (1990)",
+        "count": 1158
+      },
+      {
+        "title": "Metro (1997)",
+        "count": 1512
+      },
+      {
+        "title": "Days of Thunder (1990)",
+        "count": 6647
+      },
+      {
+        "title": "Taken 3 (2015)",
+        "count": 1736
+      },
+      {
+        "title": "G.I. Joe: Retaliation (2013)",
+        "count": 1362
+      },
+      {
+        "title": "Maximum Risk (1996)",
+        "count": 1033
+      }
+    ],
+    "median_alpha0": 9210,
+    "median_alpha05": 1541,
+    "pop_drop_x": 6.0
+  },
+  {
+    "name": "Arthouse Lover",
+    "genome_tag": [
+      "art house",
+      "slow burn"
+    ],
+    "liked": [
+      "The Lobster (2015)",
+      "Antichrist (2009)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Under the Skin (2013)",
+      "Nostalghia (1983)",
+      "Lost Highway (1997)",
+      "Eraserhead (1977)",
+      "Persona (1966)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Twin Peaks: Fire Walk with Me (1992)",
+        "count": 3686
+      },
+      {
+        "title": "Blue Velvet (1986)",
+        "count": 13086
+      },
+      {
+        "title": "Stalker (1979)",
+        "count": 4024
+      },
+      {
+        "title": "One Flew Over the Cuckoo's Nest (1975)",
+        "count": 49316
+      },
+      {
+        "title": "Chungking Express (Chung Hing sam lam) (1994)",
+        "count": 3683
+      },
+      {
+        "title": "Wild at Heart (1990)",
+        "count": 2576
+      },
+      {
+        "title": "Pulp Fiction (1994)",
+        "count": 108756
+      },
+      {
+        "title": "Taxi Driver (1976)",
+        "count": 39051
+      },
+      {
+        "title": "Godfather, The (1972)",
+        "count": 75004
+      },
+      {
+        "title": "Mulholland Drive (2001)",
+        "count": 17061
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Stalker (1979)",
+        "count": 4024
+      },
+      {
+        "title": "Enter the Void (2009)",
+        "count": 1609
+      },
+      {
+        "title": "Dogtooth (Kynodontas) (2009)",
+        "count": 1852
+      },
+      {
+        "title": "Melancholia (2011)",
+        "count": 3645
+      },
+      {
+        "title": "Nymphomaniac: Volume I (2013)",
+        "count": 1791
+      },
+      {
+        "title": "Irreversible (Irr\u00e9versible) (2002)",
+        "count": 2484
+      },
+      {
+        "title": "Inland Empire (2006)",
+        "count": 1480
+      },
+      {
+        "title": "Twin Peaks: Fire Walk with Me (1992)",
+        "count": 3686
+      },
+      {
+        "title": "Salo, or The 120 Days of Sodom (Sal\u00f2 o le 120 giornate di Sodoma) (1976)",
+        "count": 901
+      },
+      {
+        "title": "Holy Mountain, The (Monta\u00f1a sagrada, La) (1973)",
+        "count": 1202
+      }
+    ],
+    "median_alpha0": 15073,
+    "median_alpha05": 1821,
+    "pop_drop_x": 8.3
+  },
+  {
+    "name": "Superhero Lover",
+    "genome_tag": [
+      "superhero"
+    ],
+    "liked": [
+      "Guardians of the Galaxy (2014)",
+      "Iron Man 3 (2013)",
+      "Avengers: Age of Ultron (2015)",
+      "Ant-Man and the Wasp: Quantumania (2023)",
+      "Aquaman (2018)",
+      "Captain America: Civil War (2016)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Iron Man (2008)",
+      "Hancock (2008)",
+      "Green Lantern (2011)",
+      "Captain America: The First Avenger (2011)",
+      "Ant-Man (2015)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Captain America: The Winter Soldier (2014)",
+        "count": 14167
+      },
+      {
+        "title": "Thor: The Dark World (2013)",
+        "count": 8374
+      },
+      {
+        "title": "Iron Man 2 (2010)",
+        "count": 17696
+      },
+      {
+        "title": "Amazing Spider-Man, The (2012)",
+        "count": 9462
+      },
+      {
+        "title": "Thor (2011)",
+        "count": 14900
+      },
+      {
+        "title": "X-Men: Days of Future Past (2014)",
+        "count": 13550
+      },
+      {
+        "title": "Spider-Man 2 (2004)",
+        "count": 27683
+      },
+      {
+        "title": "Avengers, The (2012)",
+        "count": 27495
+      },
+      {
+        "title": "X-Men Origins: Wolverine (2009)",
+        "count": 10571
+      },
+      {
+        "title": "Mission: Impossible - Ghost Protocol (2011)",
+        "count": 9843
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Amazing Spider-Man, The (2012)",
+        "count": 9462
+      },
+      {
+        "title": "The Amazing Spider-Man 2 (2014)",
+        "count": 4366
+      },
+      {
+        "title": "Man of Steel (2013)",
+        "count": 7483
+      },
+      {
+        "title": "Iron Man 2 (2010)",
+        "count": 17696
+      },
+      {
+        "title": "Thor: The Dark World (2013)",
+        "count": 8374
+      },
+      {
+        "title": "X-Men Origins: Wolverine (2009)",
+        "count": 10571
+      },
+      {
+        "title": "Captain America: The Winter Soldier (2014)",
+        "count": 14167
+      },
+      {
+        "title": "Incredible Hulk, The (2008)",
+        "count": 8079
+      },
+      {
+        "title": "Thor (2011)",
+        "count": 14900
+      },
+      {
+        "title": "X-Men: Days of Future Past (2014)",
+        "count": 13550
+      }
+    ],
+    "median_alpha0": 13858,
+    "median_alpha05": 10016,
+    "pop_drop_x": 1.4
+  },
+  {
+    "name": "WW2 Lover",
+    "genome_tag": [
+      "wwii"
+    ],
+    "liked": [
+      "Stalingrad (1993)",
+      "Great Escape, The (1963)",
+      "Band of Brothers (2001)",
+      "Saving Private Ryan (1998)",
+      "Inglourious Basterds (2009)",
+      "Enemy at the Gates (2001)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Sahara (1943)",
+      "Anthropoid (2016)",
+      "Twelve O'Clock High (1949)",
+      "Von Ryan's Express (1965)",
+      "Judgment at Nuremberg (1961)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Lord of the Rings: The Two Towers, The (2002)",
+        "count": 73687
+      },
+      {
+        "title": "Gladiator (2000)",
+        "count": 60749
+      },
+      {
+        "title": "Godfather: Part II, The (1974)",
+        "count": 47271
+      },
+      {
+        "title": "Bridge on the River Kwai, The (1957)",
+        "count": 15792
+      },
+      {
+        "title": "Lord of the Rings: The Return of the King, The (2003)",
+        "count": 75512
+      },
+      {
+        "title": "Good, the Bad and the Ugly, The (Buono, il brutto, il cattivo, Il) (1966)",
+        "count": 23823
+      },
+      {
+        "title": "Pianist, The (2002)",
+        "count": 23807
+      },
+      {
+        "title": "Braveheart (1995)",
+        "count": 75514
+      },
+      {
+        "title": "Bridge Too Far, A (1977)",
+        "count": 1514
+      },
+      {
+        "title": "Guns of Navarone, The (1961)",
+        "count": 4106
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Bridge Too Far, A (1977)",
+        "count": 1514
+      },
+      {
+        "title": "Longest Day, The (1962)",
+        "count": 3244
+      },
+      {
+        "title": "Devil's Brigade, The (1968)",
+        "count": 221
+      },
+      {
+        "title": "Tora! Tora! Tora! (1970)",
+        "count": 2251
+      },
+      {
+        "title": "Cross of Iron (1977)",
+        "count": 776
+      },
+      {
+        "title": "Battle of Britain (1969)",
+        "count": 407
+      },
+      {
+        "title": "Zulu (1964)",
+        "count": 1274
+      },
+      {
+        "title": "Gettysburg (1993)",
+        "count": 1852
+      },
+      {
+        "title": "Bridge at Remagen, The (1969)",
+        "count": 380
+      },
+      {
+        "title": "Eagle Has Landed, The (1976)",
+        "count": 892
+      }
+    ],
+    "median_alpha0": 35547,
+    "median_alpha05": 1083,
+    "pop_drop_x": 32.8
+  },
+  {
+    "name": "Western Lover",
+    "genome_tag": [
+      "western"
+    ],
+    "liked": [
+      "Searchers, The (1956)",
+      "Stagecoach (1939)",
+      "Rio Bravo (1959)",
+      "Big Jake (1971)",
+      "Shootist, The (1976)",
+      "El Dorado (1966)",
+      "She Wore a Yellow Ribbon (1949)",
+      "Sons of Katie Elder (1965)",
+      "Red River (1948)",
+      "McLintock! (1963)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Silverado (1985)",
+      "Salvation, The (2014)",
+      "Pale Rider (1985)",
+      "Outlaw Josey Wales, The (1976)",
+      "Open Range (2003)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Dirty Harry (1971)",
+        "count": 8013
+      },
+      {
+        "title": "Magnificent Seven, The (1960)",
+        "count": 4894
+      },
+      {
+        "title": "Man Who Shot Liberty Valance, The (1962)",
+        "count": 2491
+      },
+      {
+        "title": "For a Few Dollars More (Per qualche dollaro in pi\u00f9) (1965)",
+        "count": 7153
+      },
+      {
+        "title": "Where Eagles Dare (1968)",
+        "count": 1604
+      },
+      {
+        "title": "Butch Cassidy and the Sundance Kid (1969)",
+        "count": 18982
+      },
+      {
+        "title": "Zulu (1964)",
+        "count": 1274
+      },
+      {
+        "title": "Ox-Bow Incident, The (1943)",
+        "count": 631
+      },
+      {
+        "title": "Enforcer, The (1976)",
+        "count": 846
+      },
+      {
+        "title": "Caine Mutiny, The (1954)",
+        "count": 1244
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Enforcer, The (1976)",
+        "count": 846
+      },
+      {
+        "title": "Big Country, The (1958)",
+        "count": 453
+      },
+      {
+        "title": "Hang 'Em High (1968)",
+        "count": 1949
+      },
+      {
+        "title": "Winchester '73 (1950)",
+        "count": 380
+      },
+      {
+        "title": "Davy Crockett, King of the Wild Frontier (1955)",
+        "count": 855
+      },
+      {
+        "title": "Support Your Local Sheriff! (1969)",
+        "count": 570
+      },
+      {
+        "title": "Joe Kidd (1972)",
+        "count": 220
+      },
+      {
+        "title": "Fort Apache (1948)",
+        "count": 276
+      },
+      {
+        "title": "How the West Was Won (1962)",
+        "count": 297
+      },
+      {
+        "title": "Jeremiah Johnson (1972)",
+        "count": 1778
+      }
+    ],
+    "median_alpha0": 2047,
+    "median_alpha05": 511,
+    "pop_drop_x": 4.0
+  },
+  {
+    "name": "Musical Lover",
+    "genome_tag": [
+      "musical"
+    ],
+    "liked": [
+      "Madame Butterfly (1995)",
+      "Grease (1978)",
+      "Mary Poppins (1964)",
+      "Singin' in the Rain (1952)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Kiss Me Kate (1953)",
+      "Guys and Dolls (1955)",
+      "\"Great Performances\" Cats (1998)",
+      "Oklahoma! (1955)",
+      "There's No Business Like Show Business (1954)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "My Fair Lady (1964)",
+        "count": 12668
+      },
+      {
+        "title": "Holiday Inn (1942)",
+        "count": 1937
+      },
+      {
+        "title": "Sabrina (1954)",
+        "count": 6534
+      },
+      {
+        "title": "Bishop's Wife, The (1947)",
+        "count": 770
+      },
+      {
+        "title": "West Side Story (1961)",
+        "count": 10874
+      },
+      {
+        "title": "Sound of Music, The (1965)",
+        "count": 19092
+      },
+      {
+        "title": "Roman Holiday (1953)",
+        "count": 8180
+      },
+      {
+        "title": "It's a Wonderful Life (1946)",
+        "count": 19738
+      },
+      {
+        "title": "Philadelphia Story, The (1940)",
+        "count": 8292
+      },
+      {
+        "title": "Bringing Up Baby (1938)",
+        "count": 5417
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "South Pacific (1958)",
+        "count": 2235
+      },
+      {
+        "title": "Seven Brides for Seven Brothers (1954)",
+        "count": 1075
+      },
+      {
+        "title": "Great Ziegfeld, The (1936)",
+        "count": 339
+      },
+      {
+        "title": "Thoroughly Modern Millie (1967)",
+        "count": 295
+      },
+      {
+        "title": "Music Man, The (1962)",
+        "count": 998
+      },
+      {
+        "title": "Easter Parade (1948)",
+        "count": 269
+      },
+      {
+        "title": "Royal Wedding (1951)",
+        "count": 264
+      },
+      {
+        "title": "Gigi (1958)",
+        "count": 1909
+      },
+      {
+        "title": "Blue Hawaii (1961)",
+        "count": 485
+      },
+      {
+        "title": "Funny Girl (1968)",
+        "count": 1061
+      }
+    ],
+    "median_alpha0": 8236,
+    "median_alpha05": 741,
+    "pop_drop_x": 11.1
+  },
+  {
+    "name": "Anime Lover",
+    "genome_tag": [
+      "studio ghibli"
+    ],
+    "liked": [
+      "Princess Mononoke (Mononoke-hime) (1997)",
+      "Berserk: The Golden Age Arc 2 - The Battle for Doldrey (2012)",
+      "Ponyo (Gake no ue no Ponyo) (2008)",
+      "Animatrix, The (2003)",
+      "Cowboy Bebop: The Movie (Cowboy Bebop: Tengoku no Tobira) (2001)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "From Up on Poppy Hill (Kokuriko-zaka kara) (2011)",
+      "Secret World of Arrietty, The (Kari-gurashi no Arietti) (2010)",
+      "Laputa: Castle in the Sky (Tenk\u00fb no shiro Rapyuta) (1986)",
+      "Tale of Princess Kaguya, The (Kaguyahime no monogatari) (2013)",
+      "My Neighbor Totoro (Tonari no Totoro) (1988)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Nausica\u00e4 of the Valley of the Wind (Kaze no tani no Naushika) (1984)",
+        "count": 7596
+      },
+      {
+        "title": "Tokyo Godfathers (2003)",
+        "count": 1652
+      },
+      {
+        "title": "Akira (1988)",
+        "count": 12122
+      },
+      {
+        "title": "Ghost in the Shell (K\u00f4kaku kid\u00f4tai) (1995)",
+        "count": 10986
+      },
+      {
+        "title": "Grave of the Fireflies (Hotaru no haka) (1988)",
+        "count": 6946
+      },
+      {
+        "title": "Perfect Blue (1997)",
+        "count": 2918
+      },
+      {
+        "title": "Cat Returns, The (Neko no ongaeshi) (2002)",
+        "count": 1882
+      },
+      {
+        "title": "Girl Who Leapt Through Time, The (Toki o kakeru sh\u00f4jo) (2006)",
+        "count": 2831
+      },
+      {
+        "title": "Paprika (Papurika) (2006)",
+        "count": 3998
+      },
+      {
+        "title": "Ghost in the Shell 2: Innocence (a.k.a. Innocence) (Inosensu) (2004)",
+        "count": 2184
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Tokyo Godfathers (2003)",
+        "count": 1652
+      },
+      {
+        "title": "Evangelion: 1.0 You Are (Not) Alone (Evangerion shin gekij\u00f4ban: Jo) (2007)",
+        "count": 888
+      },
+      {
+        "title": "Jin Roh: The Wolf Brigade (Jin-R\u00f4) (1998)",
+        "count": 914
+      },
+      {
+        "title": "Cat Returns, The (Neko no ongaeshi) (2002)",
+        "count": 1882
+      },
+      {
+        "title": "Ghost in the Shell 2: Innocence (a.k.a. Innocence) (Inosensu) (2004)",
+        "count": 2184
+      },
+      {
+        "title": "Millennium Actress (Sennen joy\u00fb) (2001)",
+        "count": 1216
+      },
+      {
+        "title": "Summer Wars (Sam\u00e2 w\u00f4zu) (2009)",
+        "count": 1049
+      },
+      {
+        "title": "5 Centimeters per Second (By\u00f4soku 5 senchim\u00eatoru) (2007)",
+        "count": 1453
+      },
+      {
+        "title": "Vampire Hunter D: Bloodlust (Banpaia hant\u00e2 D) (2000)",
+        "count": 1967
+      },
+      {
+        "title": "Neon Genesis Evangelion: The End of Evangelion (Shin seiki Evangelion Gekij\u00f4-ban: Air/Magokoro wo, kimi ni) (1997)",
+        "count": 1787
+      }
+    ],
+    "median_alpha0": 3458,
+    "median_alpha05": 1552,
+    "pop_drop_x": 2.2
+  },
+  {
+    "name": "Martial Arts Lover",
+    "genome_tag": [
+      "kung fu"
+    ],
+    "liked": [
+      "Ong-Bak: The Thai Warrior (Ong Bak) (2003)",
+      "Jet Li's Fearless (Huo Yuan Jia) (2006)",
+      "Protector, The (a.k.a. Warrior King) (Tom yum goong) (2005)",
+      "Unleashed (Danny the Dog) (2005)",
+      "The Raid 2: Berandal (2014)",
+      "Project A ('A' gai waak) (1983)",
+      "Shaolin Soccer (Siu lam juk kau) (2001)"
+    ],
+    "disliked": [],
+    "anchors": [
+      "Drunken Master (Jui kuen) (1978)",
+      "Iron Monkey (Siu nin Wong Fei-hung ji: Tit Ma Lau) (1993)",
+      "36th Chamber of Shaolin, The (Shao Lin san shi liu fang) (Master Killer) (1978)",
+      "Once Upon a Time in China (Wong Fei Hung) (1991)",
+      "Kung Fu Panda 2 (2011)"
+    ],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Fist of Legend (Jing wu ying xiong) (1994)",
+        "count": 808
+      },
+      {
+        "title": "Kung Fu Hustle (Gong fu) (2004)",
+        "count": 6516
+      },
+      {
+        "title": "Ip Man 2 (2010)",
+        "count": 1871
+      },
+      {
+        "title": "Ip Man (2008)",
+        "count": 4373
+      },
+      {
+        "title": "Big Boss, The (Fists of Fury) (Tang shan da xiong) (1971)",
+        "count": 653
+      },
+      {
+        "title": "Ninja Scroll (J\u00fbbei ninp\u00fbch\u00f4) (1995)",
+        "count": 2400
+      },
+      {
+        "title": "Fist of Fury (Chinese Connection, The) (Jing wu men) (1972)",
+        "count": 676
+      },
+      {
+        "title": "Infernal Affairs (Mou gaan dou) (2002)",
+        "count": 3140
+      },
+      {
+        "title": "The Man from Nowhere (2010)",
+        "count": 1087
+      },
+      {
+        "title": "District 13 (Banlieue 13) (2004)",
+        "count": 1831
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Police Story (Ging chaat goo si) (1985)",
+        "count": 764
+      },
+      {
+        "title": "Big Boss, The (Fists of Fury) (Tang shan da xiong) (1971)",
+        "count": 653
+      },
+      {
+        "title": "Police Story 2 (Ging chaat goo si juk jaap) (1988)",
+        "count": 310
+      },
+      {
+        "title": "Ong-Bak 2: The Beginning (Ong Bak 2) (2008)",
+        "count": 287
+      },
+      {
+        "title": "Legend, The (Legend of Fong Sai-Yuk, The) (Fong Sai Yuk) (1993)",
+        "count": 430
+      },
+      {
+        "title": "Fist of Legend (Jing wu ying xiong) (1994)",
+        "count": 808
+      },
+      {
+        "title": "Game of Death (1978)",
+        "count": 371
+      },
+      {
+        "title": "Fist of Fury (Chinese Connection, The) (Jing wu men) (1972)",
+        "count": 676
+      },
+      {
+        "title": "Violent Cop (Sono otoko, ky\u00f4b\u00f4 ni tsuki) (1989)",
+        "count": 209
+      },
+      {
+        "title": "Way of the Dragon, The (a.k.a. Return of the Dragon) (Meng long guo jiang) (1972)",
+        "count": 860
+      }
+    ],
+    "median_alpha0": 1851,
+    "median_alpha05": 541,
+    "pop_drop_x": 3.4
+  },
+  {
+    "name": "Nick's Recommendations",
+    "genome_tag": [],
+    "liked": [
+      "Lord of the Rings: The Fellowship of the Ring, The (2001)",
+      "Lord of the Rings: The Return of the King, The (2003)",
+      "300 (2007)",
+      "Kill Bill: Vol. 1 (2003)",
+      "Lost in Translation (2003)",
+      "Casino Royale (2006)",
+      "Before Sunrise (1995)",
+      "Old Boy (2003)",
+      "Idiocracy (2006)",
+      "Parasite (2019)",
+      "28 Days Later (2002)",
+      "Saving Private Ryan (1998)",
+      "Ip Man (2008)"
+    ],
+    "disliked": [],
+    "anchors": [],
+    "missing_seeds": [],
+    "alpha0": [
+      {
+        "title": "Lord of the Rings: The Two Towers, The (2002)",
+        "count": 73687
+      },
+      {
+        "title": "Shrek (2001)",
+        "count": 58529
+      },
+      {
+        "title": "Gladiator (2000)",
+        "count": 60749
+      },
+      {
+        "title": "Sixth Sense, The (1999)",
+        "count": 60439
+      },
+      {
+        "title": "Pirates of the Caribbean: The Curse of the Black Pearl (2003)",
+        "count": 50868
+      },
+      {
+        "title": "Matrix, The (1999)",
+        "count": 107056
+      },
+      {
+        "title": "Ring, The (2002)",
+        "count": 16686
+      },
+      {
+        "title": "Dark Knight, The (2008)",
+        "count": 65349
+      },
+      {
+        "title": "Harry Potter and the Order of the Phoenix (2007)",
+        "count": 21900
+      },
+      {
+        "title": "Blood Diamond (2006)",
+        "count": 16944
+      }
+    ],
+    "alpha05": [
+      {
+        "title": "Lord of the Rings: The Two Towers, The (2002)",
+        "count": 73687
+      },
+      {
+        "title": "Tae Guk Gi: The Brotherhood of War (Taegukgi hwinalrimyeo) (2004)",
+        "count": 620
+      },
+      {
+        "title": "Kill Bill: Vol. 2 (2004)",
+        "count": 38553
+      },
+      {
+        "title": "Gladiator (2000)",
+        "count": 60749
+      },
+      {
+        "title": "Death Proof (2007)",
+        "count": 6407
+      },
+      {
+        "title": "Come and See (Idi i smotri) (1985)",
+        "count": 1501
+      },
+      {
+        "title": "Sympathy for Mr. Vengeance (Boksuneun naui geot) (2002)",
+        "count": 1955
+      },
+      {
+        "title": "Irreversible (Irr\u00e9versible) (2002)",
+        "count": 2484
+      },
+      {
+        "title": "The Witch (2015)",
+        "count": 4089
+      },
+      {
+        "title": "Saw III (2006)",
+        "count": 3676
+      }
+    ],
+    "median_alpha0": 59484,
+    "median_alpha05": 3882,
+    "pop_drop_x": 15.3
+  }
+]

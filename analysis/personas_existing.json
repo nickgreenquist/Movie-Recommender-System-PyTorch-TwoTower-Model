@@ -1,0 +1,262 @@
+[
+  {
+    "name": "Children's Movie Lover",
+    "genome_tag": [
+      "pixar animation"
+    ],
+    "liked": [
+      "Toy Story 2 (1999)",
+      "Finding Nemo (2003)",
+      "Finding Dory (2016)",
+      "Madagascar (2005)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Horror Lover",
+    "genome_tag": [],
+    "liked": [
+      "Blair Witch Project, The (1999)",
+      "Texas Chainsaw Massacre, The (2003)",
+      "Exorcism of Emily Rose, The (2005)",
+      "Wrong Turn (2003)",
+      "28 Days Later (2002)",
+      "Descent, The (2005)",
+      "Dawn of the Dead (2004)",
+      "Session 9 (2001)",
+      "[REC] (2007)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Sci-Fi Lover",
+    "genome_tag": [],
+    "liked": [
+      "Contact (1997)",
+      "2010: The Year We Make Contact (1984)",
+      "It Came from Outer Space (1953)",
+      "Solaris (Solyaris) (1972)",
+      "2001: A Space Odyssey (1968)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Comedy Lover",
+    "genome_tag": [],
+    "liked": [
+      "American Pie (1999)",
+      "Dumb & Dumber (Dumb and Dumber) (1994)",
+      "Dodgeball: A True Underdog Story (2004)",
+      "Ted 2 (2015)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Romance Lover",
+    "genome_tag": [],
+    "liked": [
+      "Shakespeare in Love (1998)",
+      "Sense and Sensibility (1995)",
+      "When Harry Met Sally... (1989)",
+      "Sleepless in Seattle (1993)",
+      "Notting Hill (1999)",
+      "Pride and Prejudice (1995)",
+      "North & South (2004)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "War Movie Lover",
+    "genome_tag": [],
+    "liked": [
+      "Bridge on the River Kwai, The (1957)",
+      "Glory (1989)",
+      "Downfall (Untergang, Der) (2004)",
+      "1917 (2019)",
+      "Enemy at the Gates (2001)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Fantasy Lover",
+    "genome_tag": [
+      "high fantasy"
+    ],
+    "liked": [
+      "Lord of the Rings: The Fellowship of the Ring, The (2001)",
+      "Dark Crystal, The (1982)",
+      "Lord of the Rings: The Return of the King, The (2003)",
+      "Dragonslayer (1981)",
+      "Dune (1984)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Crime Lover",
+    "genome_tag": [
+      "organized crime",
+      "mafia"
+    ],
+    "liked": [
+      "Donnie Brasco (1997)",
+      "The Irishman (2019)",
+      "Casino (1995)",
+      "Narc (2002)",
+      "American Gangster (2007)",
+      "Sicario (2015)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Heist Lover",
+    "genome_tag": [
+      "heist"
+    ],
+    "liked": [
+      "Heist (2001)",
+      "Ocean's Eleven (a.k.a. Ocean's 11) (1960)",
+      "The Drop (2014)",
+      "Bank Job, The (2008)",
+      "Italian Job, The (1969)",
+      "Town, The (2010)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Action Junkie",
+    "genome_tag": [
+      "explosions",
+      "adrenaline"
+    ],
+    "liked": [
+      "Die Hard 2 (1990)",
+      "Rambo III (1988)",
+      "Under Siege (1992)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Arthouse Lover",
+    "genome_tag": [
+      "art house",
+      "slow burn"
+    ],
+    "liked": [
+      "The Lobster (2015)",
+      "Antichrist (2009)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Superhero Lover",
+    "genome_tag": [
+      "superhero"
+    ],
+    "liked": [
+      "Guardians of the Galaxy (2014)",
+      "Iron Man 3 (2013)",
+      "Avengers: Age of Ultron (2015)",
+      "Ant-Man and the Wasp: Quantumania (2023)",
+      "Aquaman (2018)",
+      "Captain America: Civil War (2016)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "WW2 Lover",
+    "genome_tag": [
+      "wwii"
+    ],
+    "liked": [
+      "Stalingrad (1993)",
+      "Great Escape, The (1963)",
+      "Band of Brothers (2001)",
+      "Saving Private Ryan (1998)",
+      "Inglourious Basterds (2009)",
+      "Enemy at the Gates (2001)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Western Lover",
+    "genome_tag": [
+      "western"
+    ],
+    "liked": [
+      "Searchers, The (1956)",
+      "Stagecoach (1939)",
+      "Rio Bravo (1959)",
+      "Big Jake (1971)",
+      "Shootist, The (1976)",
+      "El Dorado (1966)",
+      "She Wore a Yellow Ribbon (1949)",
+      "Sons of Katie Elder (1965)",
+      "Red River (1948)",
+      "McLintock! (1963)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Musical Lover",
+    "genome_tag": [
+      "musical"
+    ],
+    "liked": [
+      "Madame Butterfly (1995)",
+      "Grease (1978)",
+      "Mary Poppins (1964)",
+      "Singin' in the Rain (1952)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Anime Lover",
+    "genome_tag": [
+      "studio ghibli"
+    ],
+    "liked": [
+      "Princess Mononoke (Mononoke-hime) (1997)",
+      "Berserk: The Golden Age Arc 2 - The Battle for Doldrey (2012)",
+      "Ponyo (Gake no ue no Ponyo) (2008)",
+      "Animatrix, The (2003)",
+      "Cowboy Bebop: The Movie (Cowboy Bebop: Tengoku no Tobira) (2001)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Martial Arts Lover",
+    "genome_tag": [
+      "kung fu"
+    ],
+    "liked": [
+      "Ong-Bak: The Thai Warrior (Ong Bak) (2003)",
+      "Jet Li's Fearless (Huo Yuan Jia) (2006)",
+      "Protector, The (a.k.a. Warrior King) (Tom yum goong) (2005)",
+      "Unleashed (Danny the Dog) (2005)",
+      "The Raid 2: Berandal (2014)",
+      "Project A ('A' gai waak) (1983)",
+      "Shaolin Soccer (Siu lam juk kau) (2001)"
+    ],
+    "disliked": []
+  },
+  {
+    "name": "Nick's Recommendations",
+    "genome_tag": [],
+    "liked": [
+      "Lord of the Rings: The Fellowship of the Ring, The (2001)",
+      "Lord of the Rings: The Return of the King, The (2003)",
+      "300 (2007)",
+      "Kill Bill: Vol. 1 (2003)",
+      "Lost in Translation (2003)",
+      "Casino Royale (2006)",
+      "Before Sunrise (1995)",
+      "Old Boy (2003)",
+      "Idiocracy (2006)",
+      "Parasite (2019)",
+      "28 Days Later (2002)",
+      "Saving Private Ryan (1998)",
+      "Ip Man (2008)"
+    ],
+    "disliked": []
+  }
+]
