@@ -75,6 +75,29 @@ _MAP_HEIGHT        = 680     # plot height (px)
 # and the unselected genres fade to faint context so the selection pops.
 _MAP_HL_SIZE       = 6       # a highlighted genre's point size
 _MAP_HL_DIM_OPACITY = 0.12   # unselected genres' opacity while any genre is highlighted
+# Genome-tag highlight (genome pills, below the genre pills): same pop-and-dim behavior, but the
+# selection cross-cuts genre — a tag lights up the movies that very clearly carry it (genome
+# relevance ≥ _MAP_GENOME_MIN_RELEVANCE), wherever they sit in the cloud, instead of a whole
+# primary-genre bucket.
+# A genome-tag pill highlights only movies that VERY clearly carry the tag — relevance ≥ this floor,
+# never a fixed top-N. The genre pills cluster tightly because they key on a movie's single PRIMARY
+# genre; a strict relevance floor is the genome analogue (a loose top-N lit up too many weakly-tagged
+# movies and smeared the highlight across the whole cloud).
+_MAP_GENOME_MIN_RELEVANCE = 0.8
+# Hand-picked from the MIDDLE of the genome-frequency distribution — deliberately NOT the "head" tags
+# that thousands of movies score high on (those fill the entire cloud and never cluster), but
+# specific themes only a few dozen movies definitively carry, so each lights up a tight, legible
+# region. Five are intentionally from the TAIL (rare auteur/niche labels the model groups by content
+# alone, with no director or style input: kurosawa, studio ghibli, tarantino, grindhouse, giant
+# robots); 007 is here by request (the Bond films). Validated for above-floor cluster tightness in
+# the baked 3D space. Ordered by family (auteurs → style/era → sci-fi → horror →
+# action/international → crime/war) so the pill row scans cleanly.
+_MAP_GENOME_TAGS = [
+    'kurosawa', 'studio ghibli', 'tarantino', 'silent', 'dreamlike', 'psychedelic',
+    'cyberpunk', 'space opera', 'giant robots', 'dinosaurs', 'slasher', 'grindhouse',
+    'haunted house', 'zombies', 'samurai', 'wuxia', 'bollywood', 'spaghetti western',
+    'marvel', '007', 'film noir', 'courtroom drama', 'holocaust', 'based on a video game',
+]
 # Overlay markers — WAY bigger than the catalog points so the pick and its neighbors pop.
 _MAP_PICK_SIZE     = 15      # the single picked movie (between the neighbor size and the old 20)
 _MAP_NEIGHBOR_SIZE = 11      # its top genome-space neighbors
@@ -959,9 +982,31 @@ def _map_base_layers():
              _top_genome_tags(all_ids[i], fs, i_to_name)]
             for i in idx
         ], dtype=object)
-        layers.append({'name': g, 'color': color_map[g],
+        layers.append({'name': g, 'color': color_map[g], 'rows': idx,
                        'x': xyz[:, 0], 'y': xyz[:, 1], 'z': xyz[:, 2], 'customdata': customdata})
     return layers
+
+
+@st.cache_resource
+def _map_genome_highlight_rows():
+    """For each genome-tag pill, the set of all_ids ROW indices it highlights on the map — every
+    movie whose relevance for that tag clears _MAP_GENOME_MIN_RELEVANCE (so only movies that very
+    clearly carry the tag light up, the way a genre pill keys on the single primary genre). Returns
+    an ordered {tag_name: frozenset(rows)} so the pill row stays in _MAP_GENOME_TAGS order; tags
+    missing from the vocabulary are skipped (defensive). Built once: the per-render highlight is then
+    a set union over the picked pills, keyed by the same all_ids rows the base layers store."""
+    art = load_artifacts()
+    fs, all_ids = art.fs, art.all_ids
+    name_to_i = {fs['genome_tag_names'][tid]: fs['genome_tag_to_i'][tid] for tid in fs['genome_tag_to_i']}
+    G = np.stack([np.asarray(fs['movieId_to_genome_tag_context'][mid], dtype=np.float32) for mid in all_ids])
+    out = {}
+    for tag in _MAP_GENOME_TAGS:
+        col = name_to_i.get(tag)
+        if col is None:
+            continue
+        rows = np.where(G[:, col] >= _MAP_GENOME_MIN_RELEVANCE)[0]
+        out[tag] = frozenset(int(r) for r in rows)
+    return out
 
 
 def _genome_neighbors_overlay(art, selected_title, k=_MAP_NEIGHBORS):
@@ -989,13 +1034,18 @@ def _genome_neighbors_overlay(art, selected_title, k=_MAP_NEIGHBORS):
     }
 
 
-def _map_figure(layers, highlight_genres, overlay=None):
+def _map_figure(layers, highlight_genres, highlight_rows=None, overlay=None):
     """Assemble the 3D point cloud: per-genre Scatter3d traces + optional neighbor overlay.
 
-    Every genre is always drawn. `highlight_genres` is the set selected in the genre pills: when
-    it's non-empty, those genres' points grow (_MAP_HL_SIZE) and stay bright while the rest fade to
-    faint context (_MAP_HL_DIM_OPACITY) so the selection pops — nothing is added or removed, only
-    emphasized. The Plotly legend is off; the genre pills beside the chart drive the highlight.
+    Every genre is always drawn. Two highlighters drive emphasis, both with the same pop-and-dim
+    feel: `highlight_genres` (genre pills) lights up whole primary-genre buckets, while
+    `highlight_rows` (genome-tag pills) is a set of all_ids ROW indices that cross-cuts genre — the
+    movies that very clearly carry the picked tags. A point is emphasized if its genre is selected OR its row is in
+    highlight_rows; emphasized points grow (_MAP_HL_SIZE) and stay bright, the rest fade to faint
+    context (_MAP_HL_DIM_OPACITY). Nothing is added or removed, only emphasized; the Plotly legend is
+    off (the pills beside the chart drive it). When any highlight is active a genre layer is split
+    into its on/off point subsets so opacity (a per-trace property on Scatter3d) can differ within a
+    genre — the genome pills need within-genre emphasis that whole-trace opacity can't express.
 
     Every movie fills a true volumetric position (its baked 3D genome-space coordinate — all three
     axes carry structure, so this preserves more of the high-dim neighbourhood than a flat 2D map,
@@ -1004,21 +1054,36 @@ def _map_figure(layers, highlight_genres, overlay=None):
     markers read on top. Axes are hidden — only relative position (the clusters) is meaningful — and
     aspectmode='data' keeps the cloud's true proportions as you spin it."""
     base_opacity = _MAP_DIM_OPACITY if overlay else _MAP_BASE_OPACITY
-    highlighting = bool(highlight_genres)
+    highlight_rows = highlight_rows or set()
+    highlighting = bool(highlight_genres) or bool(highlight_rows)
     hover = ("<b>%{customdata[0]}</b><br>%{customdata[1]}"
              "<br><span style='color:#9aa3ad'>%{customdata[2]}</span><extra></extra>")
 
     fig = go.Figure()
 
-    for layer in layers:
-        on = (not highlighting) or (layer['name'] in highlight_genres)
+    def _add_subset(layer, mask, size, opacity):
+        # One Scatter3d trace over a boolean subset of a genre layer (mask=None → whole layer).
+        sel = slice(None) if mask is None else mask
         fig.add_trace(go.Scatter3d(
-            x=layer['x'], y=layer['y'], z=layer['z'], name=layer['name'], mode='markers',
-            marker=dict(size=_MAP_HL_SIZE if (highlighting and on) else _MAP_BASE_SIZE,
-                        color=layer['color'],
-                        opacity=base_opacity if on else _MAP_HL_DIM_OPACITY),
-            customdata=layer['customdata'], hovertemplate=hover,
+            x=layer['x'][sel], y=layer['y'][sel], z=layer['z'][sel], name=layer['name'],
+            mode='markers',
+            marker=dict(size=size, color=layer['color'], opacity=opacity),
+            customdata=layer['customdata'][sel], hovertemplate=hover,
         ))
+
+    for layer in layers:
+        if not highlighting:
+            _add_subset(layer, None, _MAP_BASE_SIZE, base_opacity)
+            continue
+        if layer['name'] in highlight_genres:
+            on = np.ones(len(layer['rows']), dtype=bool)   # whole genre selected → all points pop
+        else:
+            on = np.fromiter((r in highlight_rows for r in layer['rows']),
+                             dtype=bool, count=len(layer['rows']))
+        if on.any():
+            _add_subset(layer, on, _MAP_HL_SIZE, base_opacity)
+        if (~on).any():
+            _add_subset(layer, ~on, _MAP_BASE_SIZE, _MAP_HL_DIM_OPACITY)
 
     annotations = []
     if overlay:
@@ -1080,16 +1145,22 @@ def _map_figure(layers, highlight_genres, overlay=None):
     return fig
 
 
-def _render_genre_filter(col, all_genres):
-    """The genre highlighter beside the cloud — it replaces the old Plotly legend (Streamlit can't
-    drive a Plotly legend's clicks, so they could never reach the app). A multi-select pill group:
-    pick one or more genres to make their points pop while the rest fade back; pick none (the
-    default) and the whole cloud shows normally. Returns the set of highlighted genres."""
+def _render_map_filters(col, all_genres, genome_rows_by_tag):
+    """The highlighters beside the cloud — they replace the old Plotly legend (Streamlit can't drive
+    a Plotly legend's clicks, so they could never reach the app). Two stacked multi-select pill
+    groups: 'genre' lights up whole primary-genre buckets; 'genome tag' (below it) lights up the
+    movies that very clearly carry a content tag, which cross-cuts genre. Both behave identically —
+    pick some to make their points pop while the rest fade back; pick none and the whole cloud shows
+    normally. Returns (highlight_genres set, highlight_rows set of all_ids row indices)."""
     with col:
         st.caption("**Highlight genre**")
-        selected = st.pills("Genres", options=all_genres, selection_mode="multi",
-                            key='map_genre_pills', label_visibility="collapsed")
-    return set(selected or [])
+        genres = st.pills("Genres", options=all_genres, selection_mode="multi",
+                          key='map_genre_pills', label_visibility="collapsed")
+        st.caption("**Highlight genome tag**")
+        tags = st.pills("Genome tags", options=list(genome_rows_by_tag.keys()),
+                        selection_mode="multi", key='map_genome_pills', label_visibility="collapsed")
+    highlight_rows = set().union(*(genome_rows_by_tag[t] for t in tags)) if tags else set()
+    return set(genres or []), highlight_rows
 
 
 def tab_map(art):
@@ -1109,8 +1180,9 @@ def tab_map(art):
         "All ~9,375 catalog movies in a **true 3D projection** of the item tower's learned "
         "genome-tag **content space** (the same one the *Similar* tab ranks in). Colored by primary "
         "genre — but genre was never an input, so the clustering is the model's own. **Drag to "
-        "rotate, scroll to zoom, hover** for a title and its top genome tags; use the **genre "
-        "pills** to highlight genres, or **pick a movie below** to spotlight its nearest neighbors."
+        "rotate, scroll to zoom, hover** for a title and its top genome tags; use the **genre** or "
+        "**genome-tag pills** to light up a theme, or **pick a movie below** to spotlight its "
+        "nearest neighbors."
     )
 
     selected = st.selectbox(
@@ -1125,11 +1197,12 @@ def tab_map(art):
 
     layers     = _map_base_layers()
     all_genres = [layer['name'] for layer in layers]      # real genres present, in cloud order
+    genome_rows_by_tag = _map_genome_highlight_rows()
 
-    chart_col, genre_col = st.columns([4, 1], gap="medium")
-    highlight_genres = _render_genre_filter(genre_col, all_genres)
+    chart_col, filter_col = st.columns([4, 1], gap="medium")
+    highlight_genres, highlight_rows = _render_map_filters(filter_col, all_genres, genome_rows_by_tag)
 
-    fig = _map_figure(layers, highlight_genres, overlay)
+    fig = _map_figure(layers, highlight_genres, highlight_rows, overlay)
     # scrollZoom for wheel/pinch zoom; drop 'pan3d' so the cloud can't be dragged off-center —
     # left-drag is locked to orbit-rotation, so the user only ever spins it to find their movies.
     # (Click-to-select isn't wired: Streamlit's Plotly click handler only emits a selection for
