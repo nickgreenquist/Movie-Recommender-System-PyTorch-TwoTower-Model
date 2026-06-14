@@ -1020,7 +1020,19 @@ def _map_figure(layers, highlight_genres, overlay=None):
             customdata=layer['customdata'], hovertemplate=hover,
         ))
 
+    annotations = []
     if overlay:
+        # In-graph legend for the overlay markers — kept in the plot's blank top-left rather than
+        # below the chart (where it sits out of view). Only shown once a movie is picked.
+        annotations.append(dict(
+            xref='paper', yref='paper', x=0.01, y=0.99, xanchor='left', yanchor='top',
+            showarrow=False, align='left',
+            text=(f"<span style='color:{_MAP_PICK_HEX}'>⬤</span> your pick<br>"
+                  f"<span style='color:{_MAP_NEIGHBOR_HEX}'>◆</span> "
+                  f"{_MAP_NEIGHBORS} nearest genome-tag neighbors"),
+            font=dict(size=12, color='#c8cdd4'),
+            bgcolor='rgba(14,17,23,0.55)', bordercolor='#3a3f47', borderwidth=1, borderpad=6,
+        ))
         nbr_xyz, nbr_titles = overlay['neighbors']
         fig.add_trace(go.Scatter3d(
             x=nbr_xyz[:, 0], y=nbr_xyz[:, 1], z=nbr_xyz[:, 2], name='Top neighbors', mode='markers',
@@ -1044,9 +1056,14 @@ def _map_figure(layers, highlight_genres, overlay=None):
     fig.update_layout(
         template='plotly_dark',
         height=_MAP_HEIGHT,
-        margin=dict(l=0, r=0, t=8, b=0),
+        margin=dict(l=2, r=2, t=8, b=2),   # a couple px so the framing border isn't clipped
         paper_bgcolor='rgba(0,0,0,0)',
-        showlegend=False,   # genre toggling moved to the Streamlit genre filter beside the chart
+        showlegend=False,   # genre highlighting lives in the Streamlit pills beside the chart
+        annotations=annotations,
+        # Thin border around the plot 'world' — makes it obvious where a drag/scroll spins the cloud
+        # vs. where it scrolls the page (the transparent canvas gives no edge cue otherwise).
+        shapes=[dict(type='rect', xref='paper', yref='paper', x0=0, y0=0, x1=1, y1=1,
+                     line=dict(color='#3a3f47', width=1), fillcolor='rgba(0,0,0,0)')],
         hoverlabel=dict(bgcolor='#0e1117', bordercolor='#444444', font=dict(size=12)),
         scene=dict(
             xaxis=hidden_axis, yaxis=hidden_axis, zaxis=hidden_axis,
@@ -1056,7 +1073,8 @@ def _map_figure(layers, highlight_genres, overlay=None):
             # the unusable feel. center pinned at the origin + pan removed (config below) means a
             # drag only SPINS the cloud in place; it never slides around the screen.
             dragmode='orbit',
-            camera=dict(eye=dict(x=1.6, y=1.6, z=1.0), center=dict(x=0, y=0, z=0)),
+            # eye pulled in (was 1.6/1.6/1.0) so the cloud fills the framed box on first load
+            camera=dict(eye=dict(x=1.0, y=1.0, z=0.63), center=dict(x=0, y=0, z=0)),
         ),
     )
     return fig
@@ -1088,15 +1106,11 @@ def tab_map(art):
         return
 
     st.caption(
-        "Every one of the ~9,375 catalog movies, placed in a **true 3D projection** of the model's "
-        "learned **content embeddings** (the item tower's 32-dim genome-tag space, the same one the "
-        "*Similar* tab ranks in). Unlike a flat map — or a sphere *surface*, which is still only 2D "
-        "— this fills 3D space, so all three axes carry structure and nearer points are more "
-        "genome-similar. Points are colored by primary genre, but nothing here was told *about* "
-        "genre — the clustering is the model's own. **Drag to rotate in any direction, scroll to "
-        "zoom**, and hover a point for its title and top genome tags. Use the **genre pills on the "
-        "right** to highlight one or more genres — their points pop while the rest fade back. "
-        "**Pick a movie below** to spotlight it and its nearest neighbors."
+        "All ~9,375 catalog movies in a **true 3D projection** of the item tower's learned "
+        "genome-tag **content space** (the same one the *Similar* tab ranks in). Colored by primary "
+        "genre — but genre was never an input, so the clustering is the model's own. **Drag to "
+        "rotate, scroll to zoom, hover** for a title and its top genome tags; use the **genre "
+        "pills** to highlight genres, or **pick a movie below** to spotlight its nearest neighbors."
     )
 
     selected = st.selectbox(
@@ -1125,18 +1139,6 @@ def tab_map(art):
                  'modeBarButtonsToRemove': ['pan3d', 'resetCameraLastSave3d']}
     with chart_col:
         st.plotly_chart(fig, use_container_width=True, theme=None, key='map_chart', config=chart_cfg)
-
-    if overlay:
-        st.caption(
-            f"⬤ **your pick** · ◆ **its {_MAP_NEIGHBORS} nearest neighbors in genome-tag space**. "
-            "They cluster together because the cloud *is* that space — this is the Similar tab's "
-            "genome ranking, shown in context."
-        )
-    reducer = art.map_reducer or '3D projection'
-    space   = art.fs.get('item_coords_space', 'item')
-    st.caption(f"Projection computed offline at export ({reducer} on the {space} embedding) and "
-               "loaded from the serving bundle — the app never runs dimensionality reduction at "
-               "request time.")
 
 
 # ── Tab: About ───────────────────────────────────────────────────────────────
