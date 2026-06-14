@@ -2,3 +2,9 @@ torch==2.9.1
 streamlit==1.56.0
 pandas==2.3.3
 numpy==2.3.5
+plotly==5.24.1
+
+# Export-time-only extras (NOT installed on the serving host — the deployed app never imports
+# them; coords ship pre-computed in serving/feature_store.pt):
+#   umap-learn  — best 2D projection for the Map tab (python main.py export). The export
+#                 degrades to scikit-learn t-SNE, then PCA, when it is absent.

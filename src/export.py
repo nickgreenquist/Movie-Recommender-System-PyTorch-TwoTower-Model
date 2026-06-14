@@ -6,6 +6,14 @@ Generates serving/ directory with three files:
   movie_embeddings.pt   — {movieId: {MOVIE_EMBEDDING_COMBINED, sub-embeddings}}
   feature_store.pt      — inference-only dict (no user data)
 
+The feature_store also carries a baked TRUE 3D (volumetric) projection of every item embedding
+(`item_coords_3d`) for the app's 3D Map tab — see `_project_embeddings_3d`. Points fill 3D
+space (not pinned to a sphere surface, which would be only 2-dimensional and no more
+informative than a flat 2D scatter). The reducers that compute it (UMAP / scikit-learn) are
+EXPORT-TIME-ONLY dependencies; the deployed app only ever loads the coordinates, never
+re-projects, so they stay out of the serving requirements. `pip install umap-learn` for the
+best projection; the export degrades to t-SNE then PCA when it is absent.
+
 Usage:
     python main.py export
     python main.py export <checkpoint_path>
@@ -25,6 +33,66 @@ from src.features import FEATURES_VERSION
 from src.train import build_model, get_config
 
 SERVING_DIR = 'serving'
+
+
+def _center_3d(xyz: np.ndarray) -> np.ndarray:
+    """Center a 3D embedding on the origin (so it rotates about its own middle) WITHOUT touching the
+    radial spread — every point keeps its own distance from center, so all THREE axes carry real
+    structure. (Contrast a sphere-surface projection, which discards the radius and is therefore
+    only 2-dimensional in disguise — no more informative than a flat 2D scatter.)"""
+    xyz = np.asarray(xyz, dtype=np.float32)
+    return (xyz - xyz.mean(axis=0, keepdims=True)).astype(np.float32)
+
+
+def _project_embeddings_3d(embeddings: np.ndarray) -> tuple:
+    """
+    Project (N, D) item embeddings to a TRUE volumetric (N, 3) layout for the app's 3D Map tab.
+
+    Points fill 3D space — they are NOT pinned to a sphere surface. A sphere surface has only two
+    intrinsic degrees of freedom (latitude / longitude), so it carries no more information than a 2D
+    scatter; a volumetric 3D embedding uses all three axes and preserves more of the high-dimensional
+    cosine neighbourhood (lower distortion than 2D).
+
+    Tries reducers in descending quality, returning the first whose library is installed — so the
+    export never hard-fails on a missing OPTIONAL, export-time-only viz dependency:
+      1. UMAP    (umap-learn)   — n_components=3; the `cosine` input metric mirrors the model's own
+                                  similarity (cosine over the genome-tag tower output).
+      2. t-SNE   (scikit-learn) — 3 components, cosine; no extra dependency, slower on ~9k points.
+      3. PCA     (scikit-learn) — 3 components; linear last resort, always available.
+
+    All centered on the origin (radius preserved). `random_state` is pinned so re-exports are
+    reproducible. Returns (xyz (N,3) float32, reducer_name) — the name is baked alongside the coords
+    as provenance for the tab caption. None of these libraries are in requirements.txt: the coords
+    ship pre-computed, so the deployed app only LOADS them and never imports a reducer.
+    """
+    n = int(embeddings.shape[0])
+    embeddings = np.ascontiguousarray(embeddings, dtype=np.float32)
+
+    try:
+        import umap  # umap-learn — export-time only
+        xyz = umap.UMAP(
+            n_components=3, n_neighbors=15, min_dist=0.1,
+            metric='cosine', random_state=42,
+        ).fit_transform(embeddings)
+        return _center_3d(xyz), 'UMAP (cosine, 3D)'
+    except ImportError:
+        pass
+
+    try:
+        from sklearn.manifold import TSNE
+        # perplexity must stay below the sample count; cap it so tiny corpora still project.
+        perplexity = min(30, max(5, (n - 1) // 3))
+        xyz = TSNE(
+            n_components=3, metric='cosine', init='pca',
+            perplexity=perplexity, random_state=42,
+        ).fit_transform(embeddings)
+        return _center_3d(xyz), 't-SNE (cosine, 3D)'
+    except ImportError:
+        pass
+
+    from sklearn.decomposition import PCA
+    xyz = PCA(n_components=3, random_state=42).fit_transform(embeddings)
+    return _center_3d(xyz), 'PCA (3D)'
 
 
 def run_export(data_dir: str = 'data', checkpoint_path: str = None,
@@ -108,6 +176,33 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
         if t and t not in covered:
             popularity_ordered_titles.append(t)
 
+    # ── 3D (volumetric) projection for the Map tab ───────────────────────────
+    # Project the item embeddings to a true volumetric (N, 3) layout once, offline, so the app can
+    # plot the whole catalog in 3D without ever running UMAP/t-SNE at request time (and without
+    # reading data/). coord_movie_ids records the row order — it equals build_movie_embeddings'
+    # fs.top_movies order, but baking it explicitly keeps the app robust to any future reorder.
+    #
+    # We project the GENOME-TAG TOWER output (item_genome_tag_tower, 32-dim) — NOT the 128-dim
+    # combined item embedding. The combined vector is dominated by the year/timestamp + item-ID
+    # signal and clusters movies by RELEASE ERA (measured head-to-head: mean nearest-neighbor
+    # year-gap 4.2y vs 10.4y, and its neighbor lists collapse to same-year titles regardless of
+    # genre). The genome projection — the same space the app's Similar tab ranks in — clusters by
+    # THEME/CONTENT, which is what the map exists to make legible. Falls back to the combined
+    # embedding only for a checkpoint with no genome tower.
+    print("Projecting item embeddings to 3D for the Map tab ...")
+    coord_movie_ids = list(movie_embeddings.keys())
+    sample = movie_embeddings[coord_movie_ids[0]]
+    if 'MOVIE_GENOME_TAG_EMBEDDING' in sample:
+        coord_key, coord_space = 'MOVIE_GENOME_TAG_EMBEDDING', 'genome-tag content'
+    else:
+        coord_key, coord_space = 'MOVIE_EMBEDDING_COMBINED', 'combined retrieval'
+    emb_matrix = torch.cat(
+        [movie_embeddings[m][coord_key] for m in coord_movie_ids], dim=0
+    ).cpu().numpy()
+    item_coords_3d, reducer_name = _project_embeddings_3d(emb_matrix)
+    print(f"  + projected {item_coords_3d.shape[0]} movies to 3D via {reducer_name} on the "
+          f"{coord_space} embedding ({coord_key}, {emb_matrix.shape[1]}-dim)")
+
     # ── feature_store.pt ─────────────────────────────────────────────────────
     feature_store = {
         # Movie titles ordered by rating count (for app dropdowns)
@@ -151,6 +246,12 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
         'user_context_size':    fs.user_context_size,
         'timestamp_num_bins':   fs.timestamp_num_bins,
         'timestamp_bins':       fs.timestamp_bins,
+        # 2D embedding projection for the Map tab (additive — older bundles lack these keys
+        # and the app hides the tab body behind a notice when they're absent).
+        'item_coords_3d':       item_coords_3d,       # (N, 3) float32, true volumetric 3D layout
+        'item_coords_movie_ids': coord_movie_ids,     # movieId per row, aligned to item_coords_3d
+        'item_coords_reducer':  reducer_name,         # reducer provenance for the tab caption
+        'item_coords_space':    coord_space,          # which embedding was projected (genome vs combined)
         # Model config — needed to reconstruct the model in the Streamlit app
         'model_config':         config,
     }

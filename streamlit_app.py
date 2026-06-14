@@ -17,6 +17,8 @@ from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
+import plotly.colors as pcolors
+import plotly.graph_objects as go
 import streamlit as st
 import torch
 import torch.nn.functional as F
@@ -58,6 +60,28 @@ _TOTAL_RESULTS = 60     # total movies to fetch (3 pages)
 _REC_MODEL_DEFAULT_LABEL  = 'On (α = 0.5)'
 _REC_MODEL_NO_ALPHA_LABEL = 'Off (α = 0)'
 
+# ── Map tab ────────────────────────────────────────────────────────────────────
+# Coloring rule: a movie has several genres, so the map colors each point by its FIRST-listed
+# (MovieLens-canonical "primary") genre. Deterministic and one-trace-per-genre, which is what
+# makes the legend click-to-isolate. _MAP_NO_GENRE is muted grey — it isn't a real genre.
+_MAP_NO_GENRE      = '(no genres listed)'
+_MAP_NO_GENRE_HEX  = '#6b7280'
+_MAP_BASE_SIZE     = 3       # catalog point size in the 3D cloud (px)
+_MAP_BASE_OPACITY  = 0.80    # catalog point opacity with no movie picked
+_MAP_DIM_OPACITY   = 0.28    # dimmed catalog opacity once a pick is on, so the overlay reads on top
+_MAP_NEIGHBORS     = 25      # genome-space nearest neighbors highlighted for the picked movie
+_MAP_HEIGHT        = 680     # plot height (px)
+# Genre highlight (genre pills): every genre stays on the map, but a selected genre's points grow
+# and the unselected genres fade to faint context so the selection pops.
+_MAP_HL_SIZE       = 6       # a highlighted genre's point size
+_MAP_HL_DIM_OPACITY = 0.12   # unselected genres' opacity while any genre is highlighted
+# Overlay markers — WAY bigger than the catalog points so the pick and its neighbors pop.
+_MAP_PICK_SIZE     = 15      # the single picked movie (between the neighbor size and the old 20)
+_MAP_NEIGHBOR_SIZE = 11      # its top genome-space neighbors
+_MAP_PICK_HEX      = '#ffffff'   # white — your pick
+_MAP_PICK_EDGE     = '#ffd23f'   # gold ring around your pick
+_MAP_NEIGHBOR_HEX  = '#19e0ff'   # cyan — its genome-space neighbors
+
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 
@@ -85,6 +109,8 @@ class Artifacts(NamedTuple):
     ts_inference:    torch.Tensor
     posters:         dict
     tmdb_ids:        dict
+    map_coords:      object        # (N, 3) float32 baked 3D projection, all_ids order — None on old bundles
+    map_reducer:     object        # name of the offline reducer (provenance caption) — None on old bundles
 
 
 def _load_tmdb_ids(fs):
@@ -259,10 +285,29 @@ def load_artifacts() -> Artifacts:
 
     tmdb_ids = _load_tmdb_ids(fs)
 
+    # ── Map tab coordinates ──────────────────────────────────────────────────────────────────
+    # The 3D projection is baked at export (src/export.py:_project_embeddings_3d). Realign it
+    # to all_ids order via the row→movieId map that ships beside it, so the coords stay matched to
+    # all_embs even if the two artifacts were ever written in different orders. Absent on bundles
+    # exported before this feature — map_coords stays None and the Map tab shows a re-export notice.
+    map_coords  = None
+    map_reducer = None
+    coords_3d   = fs.get('item_coords_3d')
+    if coords_3d is not None:
+        coords_3d   = np.asarray(coords_3d, dtype=np.float32)
+        coord_mids  = fs.get('item_coords_movie_ids')
+        if coord_mids is not None and list(coord_mids) != all_ids:
+            row_of     = {m: i for i, m in enumerate(coord_mids)}
+            map_coords = np.stack([coords_3d[row_of[m]] for m in all_ids]).astype(np.float32)
+        else:
+            map_coords = coords_3d
+        map_reducer = fs.get('item_coords_reducer', '3D projection')
+
     return Artifacts(
         model=model, fs=fs, me=me, all_ids=all_ids, all_embs=all_embs, rec_models=rec_models,
         all_norm_genre=all_norm_genre, all_norm_genome=all_norm_genome, sim_spaces=sim_spaces,
         ts_inference=ts_inference, posters=posters, tmdb_ids=tmdb_ids,
+        map_coords=map_coords, map_reducer=map_reducer,
     )
 
 
@@ -860,6 +905,240 @@ def tab_explore_genome(me, fs, all_ids, all_norm_genome, posters, tmdb_ids):
     _show_results('genome', posters, fs, tmdb_ids)
 
 
+# ── Tab: Map ───────────────────────────────────────────────────────────────────
+
+def _genre_color_map(genres_ordered):
+    """Stable genre → hex color. A bright qualitative palette (Light24) reads well on the dark
+    canvas; the synthetic '(no genres listed)' bucket gets a muted grey so it never competes with
+    a real genre for attention. Colors are assigned in genres_ordered order so they're identical
+    across reruns (the legend never reshuffles)."""
+    palette = pcolors.qualitative.Light24
+    cmap, ci = {}, 0
+    for g in genres_ordered:
+        if g == _MAP_NO_GENRE:
+            cmap[g] = _MAP_NO_GENRE_HEX
+        else:
+            cmap[g] = palette[ci % len(palette)]
+            ci += 1
+    return cmap
+
+
+@st.cache_resource
+def _map_base_layers():
+    """Per-genre Scatter3d-ready arrays for the catalog cloud — built once, on first Map-tab view.
+
+    Buckets every catalog movie into ONE layer by its first-listed (primary) genre, so each genre
+    is an independently toggleable trace driven by the genre filter. Each layer carries its 3D xyz
+    plus pre-rendered hover customdata (title / full genre list / top genome tags). Movies with no
+    genre are dropped entirely — '(no genres listed)' is not a real genre and never appears on the
+    map. Cached as a resource: it's static for the process, and the per-request neighbor overlay is
+    layered on top at render time without ever recomputing this. Lazy (not built in load_artifacts)
+    so visitors who never open the tab don't pay for it at startup."""
+    art = load_artifacts()
+    fs, all_ids, coords = art.fs, art.all_ids, art.map_coords
+    color_map = _genre_color_map(fs['genres_ordered'])
+    i_to_name = _build_genome_i_to_name(fs)
+
+    buckets = {g: [] for g in fs['genres_ordered']}
+    for i, mid in enumerate(all_ids):
+        genres = fs['movieId_to_genres'].get(mid) or [_MAP_NO_GENRE]
+        primary = genres[0] if genres[0] in buckets else _MAP_NO_GENRE
+        buckets[primary].append(i)
+
+    layers = []
+    for g in fs['genres_ordered']:
+        if g == _MAP_NO_GENRE:        # not a real genre — keep it off the map entirely
+            continue
+        idx = buckets[g]
+        if not idx:
+            continue
+        xyz = coords[idx]
+        customdata = np.array([
+            [fs['movieId_to_title'][all_ids[i]],
+             ', '.join(fs['movieId_to_genres'][all_ids[i]]),
+             _top_genome_tags(all_ids[i], fs, i_to_name)]
+            for i in idx
+        ], dtype=object)
+        layers.append({'name': g, 'color': color_map[g],
+                       'x': xyz[:, 0], 'y': xyz[:, 1], 'z': xyz[:, 2], 'customdata': customdata})
+    return layers
+
+
+def _genome_neighbors_overlay(art, selected_title, k=_MAP_NEIGHBORS):
+    """Spotlight a picked movie and its k nearest neighbors IN GENOME-TAG SPACE on the map.
+
+    This tab is a *visualizer of the genome content space*, not a recommender: neighbors are ranked
+    by cosine over the item tower's genome-tag projection (art.all_norm_genome) — the exact ranking
+    the Similar tab's "Genome Tags / Learned embedding" uses — NOT through the user/retrieval tower.
+    So the highlighted points are literally the nearest movies in the space the map is drawn from,
+    which is why they sit right next to the pick. Returns {'pick': (xy, title),
+    'neighbors': (xy, titles)}, or None if the title isn't in the corpus."""
+    fs, all_ids, coords = art.fs, art.all_ids, art.map_coords
+    row_of = {m: i for i, m in enumerate(all_ids)}
+    mid    = fs['title_to_movieId'].get(selected_title)
+    if mid not in row_of:
+        return None
+    i = row_of[mid]
+    with torch.no_grad():
+        sims = (art.all_norm_genome @ art.all_norm_genome[i:i + 1].T).squeeze(-1)
+    nbr_rows   = [j for j in torch.argsort(sims, descending=True).tolist() if j != i][:k]
+    nbr_titles = [fs['movieId_to_title'][all_ids[j]] for j in nbr_rows]
+    return {
+        'pick':      (coords[i], selected_title),
+        'neighbors': (coords[nbr_rows], nbr_titles),
+    }
+
+
+def _map_figure(layers, highlight_genres, overlay=None):
+    """Assemble the 3D point cloud: per-genre Scatter3d traces + optional neighbor overlay.
+
+    Every genre is always drawn. `highlight_genres` is the set selected in the genre pills: when
+    it's non-empty, those genres' points grow (_MAP_HL_SIZE) and stay bright while the rest fade to
+    faint context (_MAP_HL_DIM_OPACITY) so the selection pops — nothing is added or removed, only
+    emphasized. The Plotly legend is off; the genre pills beside the chart drive the highlight.
+
+    Every movie fills a true volumetric position (its baked 3D genome-space coordinate — all three
+    axes carry structure, so this preserves more of the high-dim neighbourhood than a flat 2D map,
+    and a sphere SURFACE would not — that's only 2D). Points are Scatter3d (WebGL gl3d) — ~9k stay
+    smooth on the free CPU tier. Base points dim when a movie is picked so the big pick/neighbor
+    markers read on top. Axes are hidden — only relative position (the clusters) is meaningful — and
+    aspectmode='data' keeps the cloud's true proportions as you spin it."""
+    base_opacity = _MAP_DIM_OPACITY if overlay else _MAP_BASE_OPACITY
+    highlighting = bool(highlight_genres)
+    hover = ("<b>%{customdata[0]}</b><br>%{customdata[1]}"
+             "<br><span style='color:#9aa3ad'>%{customdata[2]}</span><extra></extra>")
+
+    fig = go.Figure()
+
+    for layer in layers:
+        on = (not highlighting) or (layer['name'] in highlight_genres)
+        fig.add_trace(go.Scatter3d(
+            x=layer['x'], y=layer['y'], z=layer['z'], name=layer['name'], mode='markers',
+            marker=dict(size=_MAP_HL_SIZE if (highlighting and on) else _MAP_BASE_SIZE,
+                        color=layer['color'],
+                        opacity=base_opacity if on else _MAP_HL_DIM_OPACITY),
+            customdata=layer['customdata'], hovertemplate=hover,
+        ))
+
+    if overlay:
+        nbr_xyz, nbr_titles = overlay['neighbors']
+        fig.add_trace(go.Scatter3d(
+            x=nbr_xyz[:, 0], y=nbr_xyz[:, 1], z=nbr_xyz[:, 2], name='Top neighbors', mode='markers',
+            marker=dict(size=_MAP_NEIGHBOR_SIZE, color=_MAP_NEIGHBOR_HEX, symbol='diamond',
+                        line=dict(width=1, color='#06343b')),
+            customdata=np.array(nbr_titles, dtype=object).reshape(-1, 1),
+            hovertemplate="<b>%{customdata[0]}</b><br>genome-space neighbor<extra></extra>",
+        ))
+        pick_xyz, pick_title = overlay['pick']
+        fig.add_trace(go.Scatter3d(
+            x=[float(pick_xyz[0])], y=[float(pick_xyz[1])], z=[float(pick_xyz[2])],
+            name='Your pick', mode='markers',
+            marker=dict(size=_MAP_PICK_SIZE, color=_MAP_PICK_HEX, symbol='circle',
+                        line=dict(width=2, color=_MAP_PICK_EDGE)),
+            customdata=np.array([[pick_title]], dtype=object),
+            hovertemplate="<b>%{customdata[0]}</b><br>your pick<extra></extra>",
+        ))
+
+    hidden_axis = dict(visible=False, showbackground=False, showgrid=False, zeroline=False,
+                       showticklabels=False, title='')
+    fig.update_layout(
+        template='plotly_dark',
+        height=_MAP_HEIGHT,
+        margin=dict(l=0, r=0, t=8, b=0),
+        paper_bgcolor='rgba(0,0,0,0)',
+        showlegend=False,   # genre toggling moved to the Streamlit genre filter beside the chart
+        hoverlabel=dict(bgcolor='#0e1117', bordercolor='#444444', font=dict(size=12)),
+        scene=dict(
+            xaxis=hidden_axis, yaxis=hidden_axis, zaxis=hidden_axis,
+            aspectmode='data', bgcolor='rgba(0,0,0,0)',
+            # 'orbit' = free trackball rotation in EVERY direction (up/down AND side-to-side). The
+            # plotly default, 'turntable', locks the up-axis so vertical drags barely tilt — that's
+            # the unusable feel. center pinned at the origin + pan removed (config below) means a
+            # drag only SPINS the cloud in place; it never slides around the screen.
+            dragmode='orbit',
+            camera=dict(eye=dict(x=1.6, y=1.6, z=1.0), center=dict(x=0, y=0, z=0)),
+        ),
+    )
+    return fig
+
+
+def _render_genre_filter(col, all_genres):
+    """The genre highlighter beside the cloud — it replaces the old Plotly legend (Streamlit can't
+    drive a Plotly legend's clicks, so they could never reach the app). A multi-select pill group:
+    pick one or more genres to make their points pop while the rest fade back; pick none (the
+    default) and the whole cloud shows normally. Returns the set of highlighted genres."""
+    with col:
+        st.caption("**Highlight genre**")
+        selected = st.pills("Genres", options=all_genres, selection_mode="multi",
+                            key='map_genre_pills', label_visibility="collapsed")
+    return set(selected or [])
+
+
+def tab_map(art):
+    st.subheader("Map of the learned movie space")
+
+    # Graceful degradation: bundles exported before this feature have no baked coordinates. Keep
+    # the tab present (stable layout) but show a re-export notice instead of crashing.
+    if art.map_coords is None:
+        st.info(
+            "This serving bundle predates the 3D map — the projection isn't baked in yet.\n\n"
+            "Re-export to enable it: `python main.py export <checkpoint>` "
+            "(`pip install umap-learn` first for the best projection)."
+        )
+        return
+
+    st.caption(
+        "Every one of the ~9,375 catalog movies, placed in a **true 3D projection** of the model's "
+        "learned **content embeddings** (the item tower's 32-dim genome-tag space, the same one the "
+        "*Similar* tab ranks in). Unlike a flat map — or a sphere *surface*, which is still only 2D "
+        "— this fills 3D space, so all three axes carry structure and nearer points are more "
+        "genome-similar. Points are colored by primary genre, but nothing here was told *about* "
+        "genre — the clustering is the model's own. **Drag to rotate in any direction, scroll to "
+        "zoom**, and hover a point for its title and top genome tags. Use the **genre pills on the "
+        "right** to highlight one or more genres — their points pop while the rest fade back. "
+        "**Pick a movie below** to spotlight it and its nearest neighbors."
+    )
+
+    selected = st.selectbox(
+        "Movie to place on the map",
+        options=[None] + art.fs['popularity_ordered_titles'],
+        format_func=lambda x: "Choose a movie..." if x is None else x,
+        key='map_movie', label_visibility="collapsed",
+        help="Highlights this movie and its nearest neighbors in the genome-tag content space — "
+             "the same ranking as the Similar tab's Genome / Learned-embedding option.")
+
+    overlay = _genome_neighbors_overlay(art, selected) if selected else None
+
+    layers     = _map_base_layers()
+    all_genres = [layer['name'] for layer in layers]      # real genres present, in cloud order
+
+    chart_col, genre_col = st.columns([4, 1], gap="medium")
+    highlight_genres = _render_genre_filter(genre_col, all_genres)
+
+    fig = _map_figure(layers, highlight_genres, overlay)
+    # scrollZoom for wheel/pinch zoom; drop 'pan3d' so the cloud can't be dragged off-center —
+    # left-drag is locked to orbit-rotation, so the user only ever spins it to find their movies.
+    # (Click-to-select isn't wired: Streamlit's Plotly click handler only emits a selection for
+    # sunburst/treemap points — it bails on a scatter3d point — so a node click can't reach Python.
+    # The dropdown above is the selection path; hover shows a point's title and tags.)
+    chart_cfg = {'displaylogo': False, 'scrollZoom': True,
+                 'modeBarButtonsToRemove': ['pan3d', 'resetCameraLastSave3d']}
+    with chart_col:
+        st.plotly_chart(fig, use_container_width=True, theme=None, key='map_chart', config=chart_cfg)
+
+    if overlay:
+        st.caption(
+            f"⬤ **your pick** · ◆ **its {_MAP_NEIGHBORS} nearest neighbors in genome-tag space**. "
+            "They cluster together because the cloud *is* that space — this is the Similar tab's "
+            "genome ranking, shown in context."
+        )
+    reducer = art.map_reducer or '3D projection'
+    space   = art.fs.get('item_coords_space', 'item')
+    st.caption(f"Projection computed offline at export ({reducer} on the {space} embedding) and "
+               "loaded from the serving bundle — the app never runs dimensionality reduction at "
+               "request time.")
+
+
 # ── Tab: About ───────────────────────────────────────────────────────────────
 
 def tab_about():
@@ -980,6 +1259,7 @@ def tab_about():
 | **Examples** | Pre-built taste personas (Sci-Fi, Horror, Heist, …) to see the model's range without typing anything. |
 | **Similar** | Nearest neighbors of any movie in the 128-dim space — with a learned-embedding vs. raw-feature toggle, over genome or LLM content. |
 | **Genres** / **Genome** | Probe what the *item tower itself* encodes — query its genre and genome-tag sub-spaces directly. |
+| **Map** | The whole catalog as an interactive **3D point cloud** — a true volumetric projection of the item tower's learned *content* embeddings, colored by genre — the model's thematic structure, made visible. Pick any movie to spotlight it and its nearest neighbors in genome-tag space. |
 """, unsafe_allow_html=True)
 
         st.header("Limitations of the live demo")
@@ -1084,8 +1364,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-recommend_tab, examples_tab, similar_tab, genres_tab, genome_tab, about_tab = st.tabs(
-    ["Recommend", "Examples", "Similar", "Genres", "Genome", "About"]
+recommend_tab, examples_tab, similar_tab, genres_tab, genome_tab, map_tab, about_tab = st.tabs(
+    ["Recommend", "Examples", "Similar", "Genres", "Genome", "Map", "About"]
 )
 
 with recommend_tab:
@@ -1106,6 +1386,9 @@ with genres_tab:
 with genome_tab:
     tab_explore_genome(art.me, art.fs, art.all_ids, art.all_norm_genome,
                        art.posters, art.tmdb_ids)
+
+with map_tab:
+    tab_map(art)
 
 with about_tab:
     tab_about()
