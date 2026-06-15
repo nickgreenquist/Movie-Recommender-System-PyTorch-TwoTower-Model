@@ -1,0 +1,20 @@
+I asked my movie recommender what a WW2 movie buff should watch next.
+
+It returned (two) The Lord of the Rings movies and six of its ten picks weren't even war movies — they were just massively popular.
+
+That's popularity bias: a common recsys feedback loop. Popular titles get shown more → get more clicks → model learns to show them more. Unchecked, almost every recommender collapses into a 'Most Popular' shelf.
+
+The fix (Menon et al., 2020): during training, add α·log(popularity) to every movie's score (one line change). Inference isn't affected and there is zero added latency.
+
+Same WW2 Movie fan:
+Before: The Return of the King, Braveheart, Gladiator, The Godfather Part II. Not a WW2 movie among them.
+After: Cross of Iron, Tora! Tora! Tora!, Battle of Britain. Actual war films.
+
+In exchange for a ~4% accuracy drop (which fell only on already-popular movies), the share of my entire catalog recommended to eval users jumped from 48% → 84%.
+
+Full writeup below. ↓
+
+
+FIRST COMMENT (ignore for char count):
+Full method + project writeup:
+https://nickgreenquist.com/blog/projects/2026/06/14/taming-popularity-bias/

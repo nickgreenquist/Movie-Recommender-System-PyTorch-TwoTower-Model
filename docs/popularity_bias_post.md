@@ -1,6 +1,6 @@
 # Taming popularity bias in recommender systems with logit adjustment
 
-*How a single scalar in the loss function got my recommender surfacing the niche films users actually want (instead of always showing blockbusters) — with zero added latency.*
+*My recommender kept handing everyone the same blockbusters. Here's how I got it to surface the niche films that actually fit each user's taste.*
 
 ---
 
@@ -24,20 +24,20 @@ This is **popularity bias**, and it's a feedback loop, not a bug:
 2. You train on those clicks, so the model learns *"popular = good."*
 3. The model shows popular movies even more. **Go to step 1.**
 
-Left alone, your "personalized" recommender slowly collapses into a **Trending shelf** — it hands everyone the same blockbusters and quietly buries the entire long tail of the catalog.
+Left alone, your "personalized" recommender slowly collapses into a **Most Popular shelf** — it hands everyone the same blockbusters and quietly buries the entire long tail of the catalog.
 
 ## The fix
 
 This comes straight from a 2020 paper, **["Long-Tail Learning via Logit Adjustment" (Menon et al.)](https://arxiv.org/abs/2007.07314)**. The idea is almost suspiciously simple:
 
-**During training, add a bonus to every movie's score equal to how popular it is — including every wrong answer.**
+**During training, add a bonus to every movie's score equal to how popular it is — including the negatives.**
 
 ```python
 # during training only: add each movie's log-popularity to its score
 scores = user · movie_embeddings  +  α · log(1 + rating_count)
 ```
 
-The beautiful part for anyone who's shipped models: **the serving code never changes.** The correction lives entirely in training. Inference is still one dot product — **zero extra lookups, zero added latency.** In fact, my live demo ships *both* trained models behind a single toggle, and flipping it just swaps which weights you score against. The "before/after" walls above? That's literally the toggle.
+The correction lives entirely in training — you just retrain a new model. Serving doesn't change, which makes it very easy to A/B test online.
 
 The strength is one knob, **α**. At `α=0` you get the blockbuster wall. Crank it too high and you over-correct into pure obscurity. I tuned it to **`α=0.5`** — enough to fix the drift, not so much that *Saving Private Ryan* never shows up.
 
