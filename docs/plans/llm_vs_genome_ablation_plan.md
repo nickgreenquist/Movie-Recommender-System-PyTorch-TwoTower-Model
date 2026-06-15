@@ -2,8 +2,8 @@
 
 > **What this is.** The reproduction record for the completed LLM-vs-genome ablation — the
 > durable lab notebook, not the original build plan. The narrative writeup is
-> [`docs/llm_vs_genome_ablation.md`](../llm_vs_genome_ablation.md); grounded genome construction
-> facts are in [`docs/movielens_genome_features_info.md`](../movielens_genome_features_info.md).
+> [`docs/llm_vs_genome_ablation/llm_vs_genome_ablation.md`](../llm_vs_genome_ablation/llm_vs_genome_ablation.md); grounded genome construction
+> facts are in [`docs/llm_vs_genome_ablation/movielens_genome_features_info.md`](../llm_vs_genome_ablation/movielens_genome_features_info.md).
 > This file keeps what those two don't: the authoritative model→checkpoint map, the exact eval
 > methodology, the full result tables (**including Phase 1, which the writeup omits**), and the cost
 > budget. The original stage-by-stage build plan, two-phase decision gate, implementation order,
@@ -18,7 +18,7 @@ Test whether LLM-generated item features can match or beat the human-curated Mov
 
 **Deliverable:** Trained two-tower models on MovieLens 32M — one using genome tags (then-prod), one using LLM-generated features from scraped web content, and a no-content-slot floor baseline. Quantified ablation of which produces better recommendations, with the floor baseline measuring how much either content source adds at all. (A 4th arm, D = genome + LLM, was added as a secondary "does *more* help?" check.)
 
-**Two experiments, in the order the writeup presents them** (`docs/llm_vs_genome_ablation.md`):
+**Two experiments, in the order the writeup presents them** (`docs/llm_vs_genome_ablation/llm_vs_genome_ablation.md`):
 
 1. **Primary — stripped "CF-base" models** (`BASE_TOWERS=idonly`): item ID embedding + a single implicit history pool + the content slot, and nothing else. This is the realistic / universal setting — what an implicit-feedback recommender with no curated metadata actually has. It is where the content question is cleanly answerable, so it leads.
 2. **Follow-up — rich feature models** (default `BASE_TOWERS=all`): the same three content arms re-run with MovieLens's curated genre + 306 user tags + year + the rating-derived 4-pool history added back, to ask whether genome / LLM still help once the model is metadata-rich. (This was historically run *first*; the stripped experiment came after we noticed how much MovieLens-specific privilege the rich model baked in. The writeup and these tables present them in logical, not chronological, order.)
@@ -50,7 +50,7 @@ Code lives in `llm_features/` (run end-to-end once, then cached per movie+group)
 - **Scrape discipline:** store raw on disk, truncate **only at feed time** (`format_for_prompt`) — keeps the durable cache policy-free and the input token bill down (see Cost Budget; raw Wikipedia plots ≈5× the input cost).
 - **Grouping rationale:** a single 130-dim prompt hits "lost in the middle" and defaults late dims to 0.5; six focused ~20–30-dim calls don't. Visual + prestige groups are **factual-only** (animation / b&w / Oscar-winner — yes; "visually stunning" from a synopsis — no). Reception is its own group so it is separately ablatable.
 - **Validation gates (before training):** per-group 0–1 calibration (no defaulting to 0.5), known-similar similarity (Toy Story 1/2/3, Godfather I/II), and a cross-group consistency check (flag contradictory profiles, e.g. uplifting+devastating).
-- **Analysis / figures:** `feature_level_analysis.py` (the 132 shared-axis correlations) and `make_figures.py` (writeup figures → `results/figures/`, committed copies in `docs/figures/`, correlation cache `feature_agreement_r.json`).
+- **Analysis / figures:** `feature_level_analysis.py` (the 132 shared-axis correlations) and `make_figures.py` (writeup figures → `results/figures/`, committed copies in `docs/llm_vs_genome_ablation/figures/`, correlation cache `feature_agreement_r.json`).
 
 ### LLM choice — Sonnet via Claude Code (bake-off dropped)
 **Decision (2026-06): extraction was run with Claude Sonnet through Claude Code, on a flat-rate Max subscription — marginal API cost ~$0.** The originally-planned Sonnet-vs-Haiku bake-off is **dropped.** Its entire rationale was pay-as-you-go cost control (output dominates the bill — Sonnet output $15/MTok vs Haiku ~$4/MTok — so a cheaper model that passed calibration would have cut the bill ~4×). That premise no longer holds: the features were generated under a subscription already in hand, at no marginal API cost, so there is nothing to optimize by switching models. Running the bake-off would *itself* cost $100+ in API credits to answer a **secondary** question ("could a smaller model also do it?") that the core LLM-vs-genome comparison does not need.
@@ -285,7 +285,7 @@ Because the LLM schema was derived from the top-discriminability genome tags, ev
 
 ### Experiment 1 — stripped CF-base (primary; isolating the content slot)
 
-> **This is the PRIMARY experiment** (the writeup leads with it; `docs/llm_vs_genome_ablation.md`
+> **This is the PRIMARY experiment** (the writeup leads with it; `docs/llm_vs_genome_ablation/llm_vs_genome_ablation.md`
 > §4). It is placed after the rich follow-up here only for document history — the rich run was
 > built first; logically the stripped experiment is first (see the Goal's two-experiment framing).
 > **Status (2026-06-10):** full-corpus + phase1 arms done + evaluated, canonical low-variance

@@ -1,5 +1,5 @@
 """
-Screenshot each per-persona poster board (docs/poster_board.html is the interactive
+Screenshot each per-persona poster board (docs/popularity_bias/poster_board.html is the interactive
 combined page; this renders the standalone single-persona pages from
 `poster_board.py --split` and saves a tight PNG per board for the blog).
 
@@ -51,8 +51,8 @@ def shoot(slug, out_png):
     im = Image.open(raw).convert("RGB")
     bbox = ImageChops.difference(im, Image.new("RGB", im.size, BG)).getbbox()
     out = im.crop(bbox) if bbox else im
-    out.save(f"docs/{out_png}")
-    print(f"  → docs/{out_png}  ({out.size[0]}x{out.size[1]})")
+    out.save(f"docs/popularity_bias/figures/{out_png}")
+    print(f"  → docs/popularity_bias/figures/{out_png}  ({out.size[0]}x{out.size[1]})")
 
 
 if __name__ == "__main__":

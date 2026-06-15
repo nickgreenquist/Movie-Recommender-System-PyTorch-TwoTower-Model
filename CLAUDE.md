@@ -134,7 +134,7 @@ All get `ts_max_bin` (most recent timestamp). Horror & Sci-Fi are most genre-dri
 - Dataset cap > 20/user — null MRR, +4GB RAM.
 
 ## LLM-vs-Genome Ablation
-Narrative `docs/llm_vs_genome_ablation.md`; full record + checkpoint→model map `docs/plans/llm_vs_genome_ablation_plan.md`. Question: does an item content vector help, genome vs LLM-extracted, on genome's 132 axes? Verdict (low-variance, seeded, α=0): content beats the CF floor in the stripped `BASE_TOWERS=idonly` setting (C′<A′<B′, LLM +3.0%); in the rich base the lift vanishes (content is redundant with curated genre/tags). LLM ≥ genome on every tier of both corpora — LLM features are less redundant with cheap metadata, i.e. more genuinely additive. Model D (genome+LLM) shows no clear additive benefit; prod is a separate α=0.5 portfolio deployment of the D architecture, not metrics-driven.
+Narrative `docs/llm_vs_genome_ablation/llm_vs_genome_ablation.md`; full record + checkpoint→model map `docs/plans/llm_vs_genome_ablation_plan.md`. Question: does an item content vector help, genome vs LLM-extracted, on genome's 132 axes? Verdict (low-variance, seeded, α=0): content beats the CF floor in the stripped `BASE_TOWERS=idonly` setting (C′<A′<B′, LLM +3.0%); in the rich base the lift vanishes (content is redundant with curated genre/tags). LLM ≥ genome on every tier of both corpora — LLM features are less redundant with cheap metadata, i.e. more genuinely additive. Model D (genome+LLM) shows no clear additive benefit; prod is a separate α=0.5 portfolio deployment of the D architecture, not metrics-driven.
 
 ---
 

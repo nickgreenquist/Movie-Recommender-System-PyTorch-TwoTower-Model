@@ -131,7 +131,7 @@ once**, the very model the genome was designed to avoid.
 - **An LLM with structured (JSON-schema) output** to score the item against a fixed tag taxonomy.
 
 *Realistic cost (grounded in this repo's actual run — see
-[`docs/plans/llm_vs_genome_ablation_plan.md`](plans/llm_vs_genome_ablation_plan.md), Cost Budget):*
+[`docs/plans/llm_vs_genome_ablation_plan.md`](../plans/llm_vs_genome_ablation_plan.md), Cost Budget):*
 scraping is free; extraction for the full ~9.4k-movie corpus is **low-hundreds-of-dollars** of
 metered LLM inference (and **~$0 marginal** when amortized under a flat-rate subscription — as it was
 actually run, it consumed ~84% of one week's Sonnet quota on a Claude Max 5× plan, June 2026); the

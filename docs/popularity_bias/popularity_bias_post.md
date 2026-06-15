@@ -8,7 +8,7 @@ Picture a die-hard **WW2 movie buff**. Their watchlist is *Saving Private Ryan*,
 
 Here's what my two-tower model returned — **the same user, the same architecture, the same code path — for two versions of the model: one trained with a popularity-debiasing correction, one without.**
 
-![WW2 movie buff: α=0 (left, before) vs α=0.5 (right, after) recommendations, each poster badged with its MovieLens rating count](ww2_poster_board.png)
+![WW2 movie buff: α=0 (left, before) vs α=0.5 (right, after) recommendations, each poster badged with its MovieLens rating count](figures/ww2_poster_board.png)
 
 Look at the left wall (the "before"). For a *WW2* fan, the model serves up **Braveheart** (medieval Scotland), **Gladiator** (ancient Rome), **The Lord of the Rings — twice** (Middle-earth), and **The Godfather Part II** (the Mob). **Six of the ten aren't even war movies.** What they *are* is **massively popular** — Braveheart alone has **75,514 ratings**. The model didn't recommend war films.
 
@@ -68,7 +68,7 @@ The median recommendation got **half as mainstream**, and the model went from su
 
 ## No free lunch: the catch
 
-![The trade in one chart: −4% accuracy on popular hits, +390% on niche long-tail films](accuracy_tradeoff.png)
+![The trade in one chart: −4% accuracy on popular hits, +390% on niche long-tail films](figures/accuracy_tradeoff.png)
 
 Demoting popular titles isn't free, and any honest writeup has to show the bill. Held-out viewings skew popular — that's literally what popularity bias *is* — so when you down-weight popular movies, some of those held-out favorites get ranked a notch lower. Across the **same ~100,000 held-out viewings**, scored by both models:
 
@@ -97,11 +97,11 @@ No. I ran the same two twins on exactly those users.
 
 **A pure-blockbuster fan** — liked nothing but the four-quadrant canon (*Avatar*, *Titanic*, *Jurassic Park*, *The Dark Knight*, *Inception*, *The Matrix*…), every seed north of 27k ratings. The α=0.5 wall comes back *Spider-Man*, *Batman Begins*, *Iron Man*, *The Incredibles*, *Minority Report*, *Harry Potter* — still blockbusters, all of them. The median recommendation moves **42,700 → 38,700 ratings**: a rounding error. When mainstream really is your taste, the correction leaves you there.
 
-![Pure-blockbuster fan: α=0 (left) vs α=0.5 (right). Both walls stay blockbusters — median recommendation 42,700 → 38,700 ratings, no collapse.](blockbuster_poster_board.png)
+![Pure-blockbuster fan: α=0 (left) vs α=0.5 (right). Both walls stay blockbusters — median recommendation 42,700 → 38,700 ratings, no collapse.](figures/blockbuster_poster_board.png)
 
 **A modern sci-fi fan** — *Inception*, *Interstellar*, *Ex Machina*, *Arrival*, *District 9*, *Moon* — a genre devotee who watches 2010s films, not 1950s ones. This is the case people *expect* α to break: surely demoting popularity dumps them into *Forbidden Planet* and *2001*? It doesn't. α=0.5 cuts the median recommendation **2.3× (15,100 → 6,500 ratings)** — real work — yet every pick stays modern, on-genre sci-fi: *Oblivion*, *Prometheus*, *Sunshine*, *Primer*, *Coherence*, *Predestination*, all **2004–2014**. The discount surfaced *modern catalog depth*, not vintage classics.
 
-![Modern sci-fi fan: α=0 (left) vs α=0.5 (right). Every pick stays modern, on-genre sci-fi (2002–2015); α=0.5 surfaces deeper modern catalog — median 15,100 → 6,500 ratings.](modern_scifi_poster_board.png)
+![Modern sci-fi fan: α=0 (left) vs α=0.5 (right). Every pick stays modern, on-genre sci-fi (2002–2015); α=0.5 surfaces deeper modern catalog — median 15,100 → 6,500 ratings.](figures/modern_scifi_poster_board.png)
 
 That's the payoff of doing this in the loss rather than with a blunt post-filter: it discounts popularity *relative to how well a title matches you*, so the films you genuinely match still score high. α=0.5 stops the model pushing blockbusters on people who *don't* want them; it doesn't take them from the people who do. (Same result on every profile I checked — modern superhero, Pixar-era animation, action, crime-thriller, post-2000 horror: each stayed in recent, on-genre films.)
 
@@ -118,24 +118,24 @@ Most "fix the recommender" projects mean a bigger model, more features, more com
 
 **High-fantasy fan**
 
-![](fantasy_poster_board.png)
+![](figures/fantasy_poster_board.png)
 
 **Courtroom-drama fan**
 
-![](courtroom_poster_board.png)
+![](figures/courtroom_poster_board.png)
 
 **Organized-crime fan**
 
-![](crime_poster_board.png)
+![](figures/crime_poster_board.png)
 
 **1950s creature-feature fan**
 
-![](creature_feature_poster_board.png)
+![](figures/creature_feature_poster_board.png)
 
 **Argento-Fulci giallo cultist**
 
-![](giallo_poster_board.png)
+![](figures/giallo_poster_board.png)
 
 **1930s screwball-comedy fan**
 
-![](screwball_poster_board.png)
+![](figures/screwball_poster_board.png)

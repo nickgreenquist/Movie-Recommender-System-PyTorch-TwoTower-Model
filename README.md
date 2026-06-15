@@ -225,7 +225,7 @@ FEATURE_TOWERS=both   python main.py train   # D — both fused (deployed)
 BASE_TOWERS=idonly FEATURE_TOWERS=llm python main.py train   # B′
 ```
 
-Full write-up — pipeline, mechanism (*why* it works), cost breakdown, and limitations: [**`docs/llm_vs_genome_ablation.md`**](docs/llm_vs_genome_ablation.md).
+Full write-up — pipeline, mechanism (*why* it works), cost breakdown, and limitations: [**`docs/llm_vs_genome_ablation/llm_vs_genome_ablation.md`**](docs/llm_vs_genome_ablation/llm_vs_genome_ablation.md).
 
 ---
 
