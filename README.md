@@ -11,7 +11,7 @@
 ### 👉 **[Try the live demo](https://movie-recommender-system-two-tower-model.streamlit.app/)**
 
 <p align="center">
-  <img src="assets/demo-examples-scifi.png" alt="Sci-Fi Lover recommendations — the model returns deep-cut classics like Stalker, Forbidden Planet, and Silent Running, not just blockbusters" width="820">
+  <img src="docs/assets/demo-examples-scifi.png" alt="Sci-Fi Lover recommendations — the model returns deep-cut classics like Stalker, Forbidden Planet, and Silent Running, not just blockbusters" width="820">
 </p>
 
 <p align="center"><em>Tell it you love <strong>2001</strong>, <strong>Solaris</strong>, and <strong>Contact</strong> → it returns deep-cut classics (Stalker, Forbidden Planet, Soylent Green), not the IMDb Top 10.</em></p>
@@ -125,7 +125,7 @@ Full softmax has a structural bias: popular movies appear in *every* batch as ha
 Pick a few movies you love and the model builds your taste vector and ranks the whole catalog — live:
 
 <p align="center">
-  <img src="assets/demo-recommend.png" alt="Interactive Recommend tab — selecting Toy Story, Finding Nemo, and Monsters Inc. returns Shrek 2, The Incredibles, WALL·E, and other family/animation picks" width="820">
+  <img src="docs/assets/demo-recommend.png" alt="Interactive Recommend tab — selecting Toy Story, Finding Nemo, and Monsters Inc. returns Shrek 2, The Incredibles, WALL·E, and other family/animation picks" width="820">
 </p>
 
 The [Streamlit app](https://movie-recommender-system-two-tower-model.streamlit.app/) has six tabs:

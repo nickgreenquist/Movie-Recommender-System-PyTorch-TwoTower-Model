@@ -42,6 +42,8 @@ Posters: `TMDB_API_KEY=... python main.py posters` (free key at themoviedb.org/s
 
 **Serving artifacts (`serving/`, written by `export`):** `model.pth` (state_dict), `movie_embeddings.pt` (precomputed item embeddings), `feature_store.pt` (vocabs, index maps, config), `posters.json` (`{"<movieId>": "<url>"}`).
 
+**Dev/analysis scripts (`tools/`, standalone — not part of the `main.py` CLI):** blog/canary tooling (`batch_canary.py`, `persona_tools.py`, `poster_board.py`, `shoot_boards.py`, `rec_popularity.py`) + diagnostics (`analyze_target_distribution.py`, `similar_movies_diagnostic.py`); run from repo root as `python tools/<script>.py`. Persona inputs in `tools/personas/`; outputs in `tools/results/` (`*.json` committed, `figures/` + `*.md` gitignored).
+
 ## Dataset
 
 `data/ml-32m/` must be present (not in git): `ratings.csv`, `movies.csv`, `tags.csv`, `genome-scores.csv`, `genome-tags.csv`. Keep movies with **200+ ratings** (~9,375) and users with 20–500 ratings.

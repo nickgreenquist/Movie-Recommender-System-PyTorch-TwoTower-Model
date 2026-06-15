@@ -1,7 +1,7 @@
 """
 Print top-100 movies by label frequency for both dataset orderings.
 
-Usage: python analyze_target_distribution.py
+Usage: python tools/analyze_target_distribution.py
 """
 import collections
 import pandas as pd

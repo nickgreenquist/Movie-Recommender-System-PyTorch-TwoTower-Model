@@ -7,7 +7,7 @@ poster badged with the movie's raw ratings.csv count so the head→tail shift is
 visible at a glance. Recommendation lists are the exact `main.py canary` output
 for the two prod checkpoints; this script is the visualization layer over them.
 
-    python analysis/poster_board.py        # → docs/popularity_bias/poster_board.html
+    python tools/poster_board.py        # → docs/popularity_bias/poster_board.html
 """
 import json
 import os

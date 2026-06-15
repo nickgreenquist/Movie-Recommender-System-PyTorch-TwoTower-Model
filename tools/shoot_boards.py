@@ -7,8 +7,8 @@ Drives a headless Google Chrome with a throwaway profile (so it never collides w
 Playwright-MCP browser lock), then crops the uniform #0d1117 margin to the content bbox
 so the output matches the existing ww2/fantasy boards (~1124px wide, no border).
 
-    python analysis/poster_board.py --split /tmp/boards
-    python analysis/shoot_boards.py
+    python tools/poster_board.py --split /tmp/boards
+    python tools/shoot_boards.py
 """
 import os
 import subprocess

@@ -20,7 +20,7 @@ probe_similar / tab_similar). For each seed we drop the seed itself and take top
 
 Output: a markdown report with one side-by-side table per seed (rank × method).
 
-Run:  python scripts/similar_movies_diagnostic.py
+Run:  python tools/similar_movies_diagnostic.py
 """
 import os
 import sys
@@ -36,7 +36,7 @@ from src.train import build_model
 
 
 PROD_CKPT = 'saved_models/PROD_best_softmax_genome_tags_llm_features_popularity_alpha_05_20260612_080719.pth'
-OUT_MD    = 'results/similar_movies_component_breakdown.md'
+OUT_MD    = 'tools/results/similar_movies_component_breakdown.md'
 TOP_N     = 10
 
 SEED_TITLES = [

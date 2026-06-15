@@ -1,5 +1,6 @@
 data/
-results/
+tools/results/figures/
+tools/results/*.md
 .DS_Store
 saved_models/
 .ipynb_checkpoints/

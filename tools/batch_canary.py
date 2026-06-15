@@ -14,9 +14,9 @@ Personas come from a JSON list:
       "disliked": ["Title (Year)", ...]   # optional
      }, ...]
 
-    python analysis/batch_canary.py analysis/personas.json
+    python tools/batch_canary.py tools/personas/personas.json
         → prints side-by-side α=0 vs α=0.5 top-10 (rating-count badged) per persona
-        → writes analysis_results/batch_canary.json (structured, for ranking / poster wall)
+        → writes tools/results/batch_canary.json (structured, for ranking / poster wall)
 
 Short MPS inference job — fine to run in the background.
 """
@@ -87,7 +87,7 @@ def _median(recs):
 
 
 def main():
-    personas_path = sys.argv[1] if len(sys.argv) > 1 else 'analysis/personas.json'
+    personas_path = sys.argv[1] if len(sys.argv) > 1 else 'tools/personas/personas.json'
     personas = json.load(open(personas_path))
 
     device = get_device()
@@ -150,8 +150,8 @@ def main():
             r = f"{t5[:42]:<42} {_fmt(c5):>7}"
             print(f"{l}   {r}")
 
-    os.makedirs('analysis_results', exist_ok=True)
-    out_path = 'analysis_results/batch_canary.json'
+    os.makedirs('tools/results', exist_ok=True)
+    out_path = 'tools/results/batch_canary.json'
     with open(out_path, 'w') as f:
         json.dump(out, f, indent=2)
     print(f"\n  → wrote {out_path}  ({len(out)} personas)")

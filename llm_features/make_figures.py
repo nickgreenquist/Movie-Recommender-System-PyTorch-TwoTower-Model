@@ -1,7 +1,7 @@
 """
 Stage 6 — Figures for the LLM-vs-genome writeup (results/llm_vs_genome_ablation.md).
 
-Generates two publication-quality PNGs into results/figures/:
+Generates two publication-quality PNGs into tools/results/figures/:
 
   fig1_content_lift.png    — content's value in the universal vs the MovieLens-rich
                              setting. Left: pure-CF floor vs +genome vs +LLM (base
@@ -16,7 +16,7 @@ Generates two publication-quality PNGs into results/figures/:
 Figure 1 uses the low-variance (seeded, 160k-step) base + rich whole-corpus MRR
 (α=0; see the ablation plan "Phase B" section / eval_results). Figure 2 recomputes the
 132 correlations with the same logic as feature_level_analysis.py and caches them to
-results/figures/feature_agreement_r.json (so re-runs skip the slow features load).
+tools/results/figures/feature_agreement_r.json (so re-runs skip the slow features load).
 
 Usage (from repo root):
     CORPUS=full python -m llm_features.make_figures
@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import Normalize
 
-FIG_DIR = 'results/figures'
+FIG_DIR = 'tools/results/figures'
 R_CACHE = os.path.join(FIG_DIR, 'feature_agreement_r.json')
 
 # floor / genome / llm — colourblind-safe

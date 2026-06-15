@@ -10,11 +10,11 @@ Title format matters: the user tower silently drops any seed whose exact title s
 isn't in the corpus, so every persona seed must be confirmed here first.
 
 CLI
-    python analysis/persona_tools.py check  "Django (1966)" "Fake Movie (1999)" ...
-    python analysis/persona_tools.py search "western"          # title substring (case-insensitive)
-    python analysis/persona_tools.py tags   "western"          # genome-tag substring
-    python analysis/persona_tools.py anchors "spaghetti western" ["another tag" ...]
-    python analysis/persona_tools.py persona "Spaghetti Western fan" "spaghetti western" \
+    python tools/persona_tools.py check  "Django (1966)" "Fake Movie (1999)" ...
+    python tools/persona_tools.py search "western"          # title substring (case-insensitive)
+    python tools/persona_tools.py tags   "western"          # genome-tag substring
+    python tools/persona_tools.py anchors "spaghetti western" ["another tag" ...]
+    python tools/persona_tools.py persona "Spaghetti Western fan" "spaghetti western" \
         --liked "Django (1966)" "Fistful of Dollars, A (1964)"   # full preview of one persona
 
 `check`/`persona` print each title's raw MovieLens-32M rating count (the popularity badge

@@ -27,18 +27,18 @@ Both twins are scored on the IDENTICAL contexts (same seed), so every delta is
 attributable to α alone.
 
 Usage:
-    python analysis/rec_popularity.py <checkpoint.pth>
+    python tools/rec_popularity.py <checkpoint.pth>
 Env:
     REC_POP_N_USERS   val users to sample (default 3,000)
     REC_POP_TOPK      recommendations per context (default 20)
-Writes analysis_results/rec_popularity_<stem>.json and prints a summary block.
+Writes tools/results/rec_popularity_<stem>.json and prints a summary block.
 """
 import json
 import os
 import random
 import sys
 
-# Running `python analysis/rec_popularity.py` puts analysis/ on sys.path, not the
+# Running `python tools/rec_popularity.py` puts tools/ on sys.path, not the
 # repo root — add the root so `src` imports resolve.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -192,7 +192,7 @@ def analyze(checkpoint_path: str, data_dir: str = 'data',
           f"({served:,}/{n_items:,})")
     print(f"  impression Gini                   : {stats['impression_gini']:>12.3f}")
 
-    out_dir = 'analysis_results'
+    out_dir = 'tools/results'
     os.makedirs(out_dir, exist_ok=True)
     stem = os.path.splitext(os.path.basename(checkpoint_path))[0]
     out_path = os.path.join(out_dir, f'rec_popularity_{stem}.json')
@@ -205,7 +205,7 @@ def analyze(checkpoint_path: str, data_dir: str = 'data',
 if __name__ == '__main__':
     ckpt = sys.argv[1] if len(sys.argv) > 1 else None
     if ckpt is None:
-        print("Usage: python analysis/rec_popularity.py <checkpoint.pth>")
+        print("Usage: python tools/rec_popularity.py <checkpoint.pth>")
         sys.exit(1)
     n_users = int(os.environ.get('REC_POP_N_USERS', 3_000))
     top_k   = int(os.environ.get('REC_POP_TOPK', 20))
