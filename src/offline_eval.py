@@ -137,7 +137,7 @@ def _format_block(metrics, ks, title, n_corpus):
 
 def run_offline_eval(model: MovieRecommender, fs: FeatureStore,
                      checkpoint_path: str = '',
-                     n_users: int = 5_000,
+                     n_users: int | None = None,   # None → all val users (full eval)
                      ks: tuple = (1, 5, 10, 20, 50, 100, 150, 200, 250),
                      seed: int = 42,
                      data_dir: str = 'data') -> None:

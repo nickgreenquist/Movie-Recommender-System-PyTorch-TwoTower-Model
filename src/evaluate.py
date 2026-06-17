@@ -212,24 +212,24 @@ def build_movie_embeddings(model: MovieRecommender, fs: FeatureStore) -> dict:
         # Genre/tag embeddings — only when their towers are on (absent for the stripped
         # 'idonly' CF-base arms, which need MOVIE_EMBEDDING_COMBINED only for eval).
         genre_embs = None
-        if model.has_genre:
+        if model.has_item_genre:
             genre_t    = torch.tensor([fs.movieId_to_genre_context[m] for m in all_mids], dtype=torch.float32).to(device)
             genre_embs = model.item_genre_tower(genre_t)
         tag_embs = None
-        if model.has_tag:
+        if model.has_item_tag:
             tag_t    = torch.tensor([fs.movieId_to_tag_context[m] for m in all_mids], dtype=torch.float32).to(device)
             tag_embs = model.item_tag_tower(tag_t)
 
-        # Genome embedding — only when the genome tower is on (absent for Model C and the
+        # Genome embedding — only when the item genome tower is on (absent for Model C and the
         # llm-only Model B). This feeds the genome product probes; it stays genome-specific.
         content_embs = None
-        if model.has_genome:
+        if model.has_item_genome:
             content_embs = model.item_genome_tag_tower(model.genome_context_buffer[emb_idx])
 
-        # LLM-feature embedding — only when the LLM tower is on (Model B / Model D). Parallel to
+        # LLM-feature embedding — only when the item LLM tower is on (Model B / Model D). Parallel to
         # the genome embedding above; feeds the Similar tab's "LLM Features" ranking space.
         llm_embs = None
-        if model.has_llm:
+        if model.has_item_llm:
             llm_embs = model.item_llm_feature_tower(model.llm_feature_buffer[emb_idx])
 
     movieId_to_embedding = {}
@@ -546,12 +546,12 @@ def _setup(data_dir: str, checkpoint_path: str, version: str = FEATURES_VERSION)
     top_movies_len    = m.item_embedding_lookup.num_embeddings - 1
     # Base towers (genre/tag/year/timestamp) are absent for the stripped 'idonly' CF-base
     # arms; genome for a no-genome model (Model C, and the llm-only Model B).
-    genres_len        = m.item_genre_tower[0].in_features if m.has_genre else None
-    tags_len          = m.item_tag_tower[0].in_features   if m.has_tag   else None
-    genome_tags_len   = m.item_genome_tag_tower[0].in_features if m.has_genome else None
-    all_years_len     = m.year_embedding_lookup.num_embeddings  if m.has_year   else None
+    genres_len        = m.item_genre_tower[0].in_features if m.has_item_genre else None
+    tags_len          = m.item_tag_tower[0].in_features   if m.has_item_tag   else None
+    genome_tags_len   = m.item_genome_tag_tower[0].in_features if m.has_item_genome else None
+    all_years_len     = m.year_embedding_lookup.num_embeddings  if m.has_item_year   else None
     ts_num_bins       = m.timestamp_embedding_lookup.num_embeddings if m.has_timestamp else None
-    user_ctx_size     = m.user_genre_tower[0].in_features if m.has_genre else None
+    user_ctx_size     = m.user_genre_tower[0].in_features if m.has_user_genre else None
     n_genres_from_ctx = user_ctx_size // 2 if user_ctx_size is not None else None
     print(f"\n── Required vocab sizes ──")
     print(f"  top_movies:      {top_movies_len}")
@@ -572,11 +572,11 @@ def _setup(data_dir: str, checkpoint_path: str, version: str = FEATURES_VERSION)
     # Genre/tag/genome matrices are each absent when their tower is off (stripped 'idonly'
     # CF-base arms; Model C / llm-only Model B for genome); the matching probes are then N/A.
     all_genre_embs  = (torch.cat([movie_embeddings[m]['MOVIE_GENRE_EMBEDDING']      for m in all_ids], dim=0)
-                       if model.has_genre else None)
+                       if model.has_item_genre else None)
     all_tag_embs    = (torch.cat([movie_embeddings[m]['MOVIE_TAG_EMBEDDING']        for m in all_ids], dim=0)
-                       if model.has_tag else None)
+                       if model.has_item_tag else None)
     all_genome_embs = (torch.cat([movie_embeddings[m]['MOVIE_GENOME_TAG_EMBEDDING'] for m in all_ids], dim=0)
-                       if model.has_genome else None)
+                       if model.has_item_genome else None)
 
     device = next(model.parameters()).device
     all_norm        = F.normalize(all_embs,        dim=1).to(device)

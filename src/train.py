@@ -20,6 +20,18 @@ left besides the ID embeddings is the semantic-feature slot). 'idonly' tags the 
     BASE_TOWERS=idonly FEATURE_TOWERS=none   python main.py train    # C′ pure CF floor
     BASE_TOWERS=idonly FEATURE_TOWERS=genome python main.py train    # A′ ID + genome
     BASE_TOWERS=idonly FEATURE_TOWERS=llm    python main.py train    # B′ ID + LLM
+
+USER_POOLS / USER_FEATURES / ITEM_FEATURES are fine-grained overrides (comma-separated subsets;
+'none' = empty) that select individual towers/pools independently of FEATURE_TOWERS/BASE_TOWERS.
+Unset → the legacy set those coarse knobs imply (so existing runs are byte-identical). Used for the
+multi-pool user-tower ablation (docs/plans/multipool_user_tower_ablation_plan.md); all arms below
+keep the item tower ID-only and the user tower pooling-only:
+
+    BASE_TOWERS=idonly FEATURE_TOWERS=none USER_POOLS=full                                python main.py train  # only history (= C′)
+    BASE_TOWERS=idonly FEATURE_TOWERS=none USER_POOLS=full,liked                          python main.py train  # + likes
+    BASE_TOWERS=idonly FEATURE_TOWERS=none USER_POOLS=weighted                            python main.py train  # rating-weighted pool only
+    BASE_TOWERS=idonly FEATURE_TOWERS=none USER_POOLS=full,liked,disliked,weighted        python main.py train  # 4-pool
+    BASE_TOWERS=idonly FEATURE_TOWERS=none USER_POOLS=full,liked,disliked,weighted,last_liked python main.py train  # 4-pool + last-liked
 """
 import json
 import os
@@ -31,7 +43,8 @@ import torch
 import torch.nn.functional as F
 from src.corpus import CORPUS, corpus_suffix
 from src.dataset import FeatureStore
-from src.model import MovieRecommender
+from src.model import (MovieRecommender, POOL_ORDER, USER_FEATURE_ORDER, ITEM_FEATURE_ORDER,
+                       default_user_pools, default_user_features, default_item_features, _canon)
 
 
 # ── Hyperparameters ───────────────────────────────────────────────────────────
@@ -42,6 +55,20 @@ def get_device() -> torch.device:
     if torch.cuda.is_available():
         return torch.device('cuda')
     return torch.device('cpu')
+
+
+def _env_feature_set(name: str, order: tuple, default) -> list:
+    """Parse a comma-separated tower/pool selector env var into a canonical-order list.
+
+    Unset → the supplied legacy default (list). 'none' (case-insensitive) → empty list. Otherwise a
+    comma list validated against `order` (unknown tokens raise, mirroring FEATURE_TOWERS/BASE_TOWERS)."""
+    raw = os.environ.get(name)
+    if raw is None:
+        return list(default)
+    toks = [t.strip().lower() for t in raw.split(',') if t.strip()]
+    if toks == ['none']:
+        return []
+    return list(_canon(toks, order, name))
 
 
 def get_config() -> dict:
@@ -60,6 +87,14 @@ def get_config() -> dict:
     base_towers = os.environ.get('BASE_TOWERS', 'all')
     if base_towers not in ('all', 'idonly'):
         raise ValueError(f"Unknown BASE_TOWERS={base_towers!r}; expected 'all' or 'idonly'")
+    # Fine-grained per-tower/per-pool overrides (comma-separated subsets; 'none' = empty). Each
+    # defaults to the legacy set implied by feature_towers + base_towers, so an unset knob is a
+    # byte-identical model. Validated + canonicalized here so a typo'd env fails fast before training.
+    user_pools    = _env_feature_set('USER_POOLS',    POOL_ORDER,         default_user_pools(base_towers))
+    user_features = _env_feature_set('USER_FEATURES', USER_FEATURE_ORDER, default_user_features(feature_towers, base_towers))
+    item_features = _env_feature_set('ITEM_FEATURES', ITEM_FEATURE_ORDER, default_item_features(feature_towers, base_towers))
+    if not user_pools:
+        raise ValueError("USER_POOLS must select at least one pool")
     return {
         # Sub-embedding sizes
         'item_movieId_embedding_size':      32,
@@ -76,6 +111,10 @@ def get_config() -> dict:
         'feature_towers':                   feature_towers,
         # Which base towers: 'all' | 'idonly' (stripped CF-base ablation).
         'base_towers':                      base_towers,
+        # Fine-grained per-side selectors (canonical-order lists); override feature_towers/base_towers.
+        'user_pools':                       user_pools,
+        'user_features':                    user_features,
+        'item_features':                    item_features,
         # Projection MLP
         'proj_hidden':  256,
         'output_dim':   128,
@@ -84,12 +123,15 @@ def get_config() -> dict:
         'weight_decay':     0.0,
         'adam_eps':         1e-6,
         'minibatch_size':   512,
-        'training_steps':   160_000,
+        'training_steps':   200_000,
         'log_every':        10_000,
         'checkpoint_every': 30_000,
         'checkpoint_dir':   'saved_models',
         'temperature':      0.1,
         'popularity_alpha': 0.0,
+        # Recorded so every checkpoint sidecar states its seed (SEED env overrides; default 42).
+        # main.py seeds the RNGs from this value, so the seed used == the seed saved.
+        'seed':             int(os.environ.get('SEED', 42)),
     }
 
 
@@ -118,39 +160,54 @@ def _llm_buffer():
 
 def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
     feature_towers = config.get('feature_towers', config.get('content_feature_source', 'genome'))
-    has_genome = feature_towers in ('genome', 'both')
-    has_llm    = feature_towers in ('llm', 'both')
     base_towers = config.get('base_towers', 'all')
-    has_base    = base_towers != 'idonly'   # genre/tag/year towers stripped as a block
+
+    # Effective per-side selectors. config carries them for new runs and resolved checkpoints; fall
+    # back to the legacy feature_towers/base_towers default for old configs and direct callers.
+    user_pools    = config.get('user_pools')    or list(default_user_pools(base_towers))
+    user_features = config.get('user_features')
+    item_features = config.get('item_features')
+    uf = set(user_features if user_features is not None else default_user_features(feature_towers, base_towers))
+    itf = set(item_features if item_features is not None else default_item_features(feature_towers, base_towers))
+
+    # A context buffer is built if EITHER side needs it. genome/llm buffers are shared by the item
+    # and user towers; genre/tag/year buffers feed only the item towers.
+    need_genome = ('genome' in uf) or ('genome' in itf)
+    need_llm    = ('llm' in uf)    or ('llm' in itf)
+    need_genre  = 'genre' in itf
+    need_tag    = 'tag'   in itf
+    need_year   = 'year'  in itf
 
     # Semantic-feature buffers — genome from the FeatureStore (1128-dim), LLM from the pre-built
-    # tensor (132-dim). Each is built only if its tower is on; None (Model C) builds neither.
+    # tensor (132-dim). Built only when a side uses them.
     genome_context_buffer = None
-    genome_tags_len       = len(fs.genome_tag_ids)   # always valid; used as in_features if has_genome
+    genome_tags_len       = len(fs.genome_tag_ids)   # always valid; used as in_features if a genome tower is on
     llm_feature_buffer    = None
     llm_feature_len       = None
-    if has_genome:
+    if need_genome:
         genome_context_buffer, genome_tags_len = _genome_buffer(fs)
-    if has_llm:
+    if need_llm:
         llm_feature_buffer, llm_feature_len, llm_path = _llm_buffer()
         print(f"  LLM features: {llm_path}  ({llm_feature_len}-dim, "
               f"{llm_feature_buffer.shape[0]-1} movies)")
 
-    # Base-tower buffers — built only when the base towers are on ('idonly' strips them).
+    # Item-side base buffers — each built independently (genre/tag/year may now be toggled apart).
     genre_context_buffer = None
     tag_context_buffer   = None
     year_context_buffer  = None
-    if has_base:
+    if need_genre:
         genre_matrix = np.array(
             [fs.movieId_to_genre_context[mid] for mid in fs.top_movies], dtype=np.float32)
-        tag_matrix = np.array(
-            [fs.movieId_to_tag_context[mid] for mid in fs.top_movies], dtype=np.float32)
-        year_array = np.array(
-            [fs.year_to_i[fs.movieId_to_year[mid]] for mid in fs.top_movies], dtype=np.int64)
         genre_context_buffer = torch.from_numpy(
             np.vstack([genre_matrix, np.zeros((1, genre_matrix.shape[1]), dtype=np.float32)]))
+    if need_tag:
+        tag_matrix = np.array(
+            [fs.movieId_to_tag_context[mid] for mid in fs.top_movies], dtype=np.float32)
         tag_context_buffer = torch.from_numpy(
             np.vstack([tag_matrix, np.zeros((1, tag_matrix.shape[1]), dtype=np.float32)]))
+    if need_year:
+        year_array = np.array(
+            [fs.year_to_i[fs.movieId_to_year[mid]] for mid in fs.top_movies], dtype=np.int64)
         year_context_buffer = torch.from_numpy(
             np.concatenate([year_array, np.zeros((1,), dtype=np.int64)]))
 
@@ -164,6 +221,9 @@ def build_model(config: dict, fs: FeatureStore) -> MovieRecommender:
         user_context_size=fs.user_context_size,
         feature_towers=feature_towers,
         base_towers=base_towers,
+        user_pools=user_pools,
+        user_features=user_features,
+        item_features=item_features,
         genome_context_buffer=genome_context_buffer,
         llm_feature_buffer=llm_feature_buffer,
         llm_feature_len=llm_feature_len,
@@ -192,45 +252,59 @@ def print_model_summary(model: MovieRecommender) -> None:
             if isinstance(layer, torch.nn.Linear):
                 return layer.out_features
 
-    # Gated towers (semantic-feature AND base) are each present only when switched on.
+    # Gated towers are present only when switched on (now independent per side).
     id_dim            = m.item_embedding_lookup.embedding_dim
-    genome_item_dim   = _out_dim(m.item_genome_tag_tower)    if m.has_genome else 0
-    genome_user_dim   = _out_dim(m.user_genome_context_tower) if m.has_genome else 0
-    llm_item_dim      = _out_dim(m.item_llm_feature_tower)   if m.has_llm    else 0
-    llm_user_dim      = _out_dim(m.user_llm_feature_tower)   if m.has_llm    else 0
-    genre_dim         = _out_dim(m.user_genre_tower)         if m.has_genre  else 0
+    genome_item_dim   = _out_dim(m.item_genome_tag_tower)     if m.has_item_genome else 0
+    genome_user_dim   = _out_dim(m.user_genome_context_tower) if m.has_user_genome else 0
+    llm_item_dim      = _out_dim(m.item_llm_feature_tower)    if m.has_item_llm    else 0
+    llm_user_dim      = _out_dim(m.user_llm_feature_tower)    if m.has_user_llm    else 0
+    genre_dim         = _out_dim(m.user_genre_tower)          if m.has_user_genre  else 0
     ts_dim            = m.timestamp_embedding_lookup.embedding_dim if m.has_timestamp else 0
-    item_genre_dim    = _out_dim(m.item_genre_tower)         if m.has_genre  else 0
-    item_tag_dim      = _out_dim(m.item_tag_tower)           if m.has_tag    else 0
+    item_genre_dim    = _out_dim(m.item_genre_tower)          if m.has_item_genre  else 0
+    item_tag_dim      = _out_dim(m.item_tag_tower)            if m.has_item_tag    else 0
     item_movieId_dim  = _out_dim(m.item_embedding_tower)
-    year_dim          = _out_dim(m.year_embedding_tower)     if m.has_year   else 0
+    year_dim          = _out_dim(m.year_embedding_tower)      if m.has_item_year   else 0
     item_total        = (item_genre_dim + item_tag_dim + genome_item_dim + llm_item_dim
                          + item_movieId_dim + year_dim)
     n_params          = sum(p.nelement() for p in model.parameters() if p.requires_grad)
 
-    n_pools    = 4 if m.has_rating_pools else 1
+    n_pools    = len(m.user_pools)
     pool_total = n_pools * id_dim
     user_total = pool_total + genome_user_dim + llm_user_dim + genre_dim + ts_dim
-    genome_item_desc = f"genome({genome_item_dim}) + "     if m.has_genome else ""
-    llm_item_desc    = f"llm({llm_item_dim}) + "           if m.has_llm    else ""
-    genre_item_desc  = f"genre({item_genre_dim}) + "       if m.has_genre  else ""
-    tag_item_desc    = f"tag({item_tag_dim}) + "           if m.has_tag    else ""
-    year_item_desc   = f" + year({year_dim})"              if m.has_year   else ""
-    user_parts = [f"{n_pools}×sum_pool_id({id_dim})"]
-    if m.has_genome:    user_parts.append(f"genome_ctx({genome_user_dim})")
-    if m.has_llm:       user_parts.append(f"llm_ctx({llm_user_dim})")
-    if m.has_genre:     user_parts.append(f"genre({genre_dim})")
-    if m.has_timestamp: user_parts.append(f"ts({ts_dim})")
+    genome_item_desc = f"genome({genome_item_dim}) + "     if m.has_item_genome else ""
+    llm_item_desc    = f"llm({llm_item_dim}) + "           if m.has_item_llm    else ""
+    genre_item_desc  = f"genre({item_genre_dim}) + "       if m.has_item_genre  else ""
+    tag_item_desc    = f"tag({item_tag_dim}) + "           if m.has_item_tag    else ""
+    year_item_desc   = f" + year({year_dim})"              if m.has_item_year   else ""
+    user_parts = [f"pools[{'+'.join(m.user_pools)}]({pool_total})"]
+    if m.has_user_genome: user_parts.append(f"genome_ctx({genome_user_dim})")
+    if m.has_user_llm:    user_parts.append(f"llm_ctx({llm_user_dim})")
+    if m.has_user_genre:  user_parts.append(f"genre({genre_dim})")
+    if m.has_timestamp:   user_parts.append(f"ts({ts_dim})")
     user_desc  = " + ".join(user_parts)
 
     proj_h  = m.user_projection[0].out_features
     out_dim = m.user_projection[2].out_features
 
+    # The printed breakdown is derived from the live model's modules, but cross-check it against the
+    # actual projection input dims so this summary can NEVER misrepresent the model being trained —
+    # a mismatch means a wiring bug, so abort here rather than train an hours-long run on a model
+    # that differs from what's printed.
+    real_user, real_item = m.user_projection[0].in_features, m.item_projection[0].in_features
+    assert user_total == real_user, (
+        f"user-tower summary {user_total} != actual concat dim {real_user} "
+        f"(pools={list(m.user_pools)}, user_features={list(m.user_features)})")
+    assert item_total == real_item, (
+        f"item-tower summary {item_total} != actual concat dim {real_item} "
+        f"(item_features={list(m.item_features)})")
+
     print(f"\n── Model dimensions ──")
     print(f"  Feature towers: {m.feature_towers}  |  Base towers: {m.base_towers}")
-    print(f"  User side:  {user_desc}  =  {user_total}")
+    print(f"  Pools: {list(m.user_pools)}  |  User feats: {list(m.user_features)}  |  "
+          f"Item feats: {list(m.item_features)}")
+    print(f"  User side:  {user_desc}  =  {user_total}  (proj in={real_user})")
     print(f"  Item side:  {genre_item_desc}{tag_item_desc}{genome_item_desc}{llm_item_desc}"
-          f"movieId({item_movieId_dim}){year_item_desc}  =  {item_total}")
+          f"movieId({item_movieId_dim}){year_item_desc}  =  {item_total}  (proj in={real_item})")
     print(f"  Projection: Linear({proj_h}) → ReLU → Linear({out_dim})  [both towers]")
     print(f"  Parameters: {n_params:,}")
 
@@ -333,6 +407,22 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
     if base_towers == 'idonly':           tag_parts.append('idonly')
     if feat_towers in ('genome', 'both'): tag_parts.append('genome_tags')
     if feat_towers in ('llm', 'both'):    tag_parts.append('llm_features')
+    # Fine-grained selectors append a descriptive token ONLY when they deviate from the set
+    # feature_towers/base_towers would imply — so coarse runs keep their exact historical names,
+    # while the multi-pool arms get distinct, self-describing stems (hyphen-joined; pool names may
+    # carry an inner '_', e.g. last_liked — the stem is descriptive only, config is re-resolved
+    # from weight keys at load, never parsed from the filename).
+    up  = tuple(config.get('user_pools')    or default_user_pools(base_towers))
+    uf  = tuple(config.get('user_features') if config.get('user_features') is not None
+                else default_user_features(feat_towers, base_towers))
+    itf = tuple(config.get('item_features') if config.get('item_features') is not None
+                else default_item_features(feat_towers, base_towers))
+    if up  != default_user_pools(base_towers):
+        tag_parts.append('pools-' + '-'.join(up))
+    if uf  != default_user_features(feat_towers, base_towers):
+        tag_parts.append('uf-' + ('-'.join(uf) if uf else 'none'))
+    if itf != default_item_features(feat_towers, base_towers):
+        tag_parts.append('if-' + ('-'.join(itf) if itf else 'none'))
     feat_tag      = ('_' + '_'.join(tag_parts)) if tag_parts else ''
     print(f"  Corpus: {CORPUS}  (checkpoint suffix: {corpus_sfx!r})  "
           f"feature towers: {feat_towers}  base towers: {base_towers}  (name tag: {feat_tag!r})")
@@ -344,7 +434,7 @@ def train_softmax(model: MovieRecommender, train_data: tuple, val_data: tuple,
     # noise, enough to flip the genome-vs-LLM ordering); the MRR estimate's SE ~ 1/sqrt(N), so
     # 100,000 cuts that ~3.5x (to ±~0.001) and for the smaller phase1 corpus likely uses all of
     # n_val (no subsampling at all). val-eval is forward-only and runs every 10k steps, so even
-    # at 100k it's ~1s per eval — a negligible fraction of the 160k-step training loop.
+    # at 100k it's ~1s per eval — a negligible fraction of the 200k-step training loop.
     val_eval_size = min(100_000, n_val)
     rng_val = torch.Generator()
     rng_val.manual_seed(0)

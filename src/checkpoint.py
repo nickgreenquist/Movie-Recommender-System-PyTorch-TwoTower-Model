@@ -7,11 +7,13 @@ path (src/export.py) go through here, so checkpoint-compatibility logic lives in
 one spot.
 
 Two responsibilities:
-  - resolve_config_from_state_dict: infer model dims from weight shapes. The semantic-feature
-    towers (genome tags, LLM features) are each OPTIONAL — a checkpoint may have genome, llm,
-    both, or neither, so the resolver guards those reads instead of KeyError-ing. The base
-    towers (genre/tag/year) are likewise optional: the stripped 'idonly' CF-base ablation
-    checkpoints drop all three as a block (base_towers resolved from key presence).
+  - resolve_config_from_state_dict: infer model dims AND the active tower/pool set from weight
+    shapes + key presence. Every sub-tower is OPTIONAL and now independent per side — a checkpoint
+    may have any subset of item/user genre, item tag/year, item/user genome, item/user llm,
+    timestamp, and any subset of the {full,liked,disliked,weighted,last_liked,last_watched,second_to_last_watched} history pools (the
+    hist_*_norm keys). The resolver guards each read and emits user_pools / user_features /
+    item_features (plus back-compat base_towers / feature_towers) so a fine-grained or stripped
+    checkpoint rebuilds from weights alone.
   - load_checkpoint: torch.load + remap legacy tower keys + drop legacy non-persistent buffers
     + resolve config.
 
@@ -33,6 +35,7 @@ import os
 import torch
 
 from src.train import get_config
+from src.model import POOL_ORDER, USER_FEATURE_ORDER, ITEM_FEATURE_ORDER
 
 
 # Non-persistent buffers the model rebuilds from the FeatureStore on load. Older checkpoints
@@ -82,36 +85,56 @@ def resolve_config_from_state_dict(state_dict: dict) -> dict:
     if 'timestamp_embedding_lookup.weight' in sd:   # absent in the stripped 'idonly' arms
         cfg['timestamp_feature_embedding_size'] = sd['timestamp_embedding_lookup.weight'].shape[1]
 
-    # Base towers (genre/tag/year/timestamp) — always-on except in the stripped 'idonly' CF-base
-    # ablation checkpoints, which drop them as a block (plus the liked/disliked/weighted user
-    # pools; the model derives that from base_towers, so no extra keys to read here). Guard each
-    # read (mirrors the semantic-feature guards below) so a stripped model rebuilds from weights
-    # alone.
-    has_genre = 'item_genre_tower.0.weight'    in sd
-    has_tag   = 'item_tag_tower.0.weight'      in sd
-    has_year  = 'year_embedding_lookup.weight' in sd
-    if has_genre:
-        cfg['user_genre_embedding_size'] = sd['user_genre_tower.0.weight'].shape[0]
+    # Per-side towers — each optional and now INDEPENDENT (item vs user). Presence of a tower's
+    # weight key says it's on; read its out_features for the dim. Stripped 'idonly' CF-base arms
+    # drop the base towers; Model C drops the semantic slot; the new fine-grained arms can drop any
+    # subset on either side — so guard every read and rebuild from whatever keys are present.
+    has_item_genre  = 'item_genre_tower.0.weight'          in sd
+    has_user_genre  = 'user_genre_tower.0.weight'          in sd
+    has_item_tag    = 'item_tag_tower.0.weight'            in sd
+    has_item_year   = 'year_embedding_lookup.weight'       in sd
+    has_item_genome = 'item_genome_tag_tower.0.weight'     in sd
+    has_user_genome = 'user_genome_context_tower.0.weight' in sd
+    has_item_llm    = 'item_llm_feature_tower.0.weight'    in sd
+    has_user_llm    = 'user_llm_feature_tower.0.weight'    in sd
+    has_timestamp   = 'timestamp_embedding_lookup.weight'  in sd
+    if has_item_genre:
         cfg['item_genre_embedding_size'] = sd['item_genre_tower.0.weight'].shape[0]
-    if has_tag:
+    if has_user_genre:
+        cfg['user_genre_embedding_size'] = sd['user_genre_tower.0.weight'].shape[0]
+    if has_item_tag:
         cfg['item_tag_embedding_size']   = sd['item_tag_tower.0.weight'].shape[0]
-    if has_year:
+    if has_item_year:
         cfg['item_year_embedding_size']  = sd['year_embedding_lookup.weight'].shape[1]
-    cfg['base_towers'] = 'all' if (has_genre or has_tag or has_year) else 'idonly'
-
-    # Semantic-feature towers — each optional. Presence of the tower keys tells us which are on;
-    # the in_features (genome 1128 / llm 132) come from the rebuilt buffers in build_model, not here.
-    has_genome = 'item_genome_tag_tower.0.weight' in sd
-    has_llm    = 'item_llm_feature_tower.0.weight' in sd
-    if has_genome:
+    if has_item_genome:
         cfg['item_genome_embedding_size'] = sd['item_genome_tag_tower.0.weight'].shape[0]
+    if has_user_genome:
         cfg['user_genome_embedding_size'] = sd['user_genome_context_tower.0.weight'].shape[0]
-    if has_llm:
+    if has_item_llm:
         cfg['item_llm_embedding_size'] = sd['item_llm_feature_tower.0.weight'].shape[0]
+    if has_user_llm:
         cfg['user_llm_embedding_size'] = sd['user_llm_feature_tower.0.weight'].shape[0]
-    cfg['feature_towers'] = ('both'   if has_genome and has_llm else
-                             'genome' if has_genome else
-                             'llm'    if has_llm else None)
+
+    # The three fine-grained selectors, resolved from key presence — the authoritative pool/tower
+    # set (overwrites whatever get_config()'s env defaults seeded above). user_pools comes from the
+    # per-pool hist_*_norm LayerNorm keys (each is a persisted param).
+    cfg['user_pools']    = [p for p in POOL_ORDER if f'hist_{p}_norm.weight' in sd]
+    present_user = {'genre': has_user_genre, 'genome': has_user_genome,
+                    'llm': has_user_llm, 'timestamp': has_timestamp}
+    present_item = {'genre': has_item_genre, 'tag': has_item_tag, 'genome': has_item_genome,
+                    'llm': has_item_llm, 'year': has_item_year}
+    cfg['user_features'] = [f for f in USER_FEATURE_ORDER if present_user[f]]
+    cfg['item_features'] = [f for f in ITEM_FEATURE_ORDER if present_item[f]]
+
+    # Coarse selectors kept for display/back-compat, derived to stay consistent with the per-side
+    # sets (an old checkpoint resolves to exactly its historical base_towers/feature_towers).
+    cfg['base_towers'] = ('all' if (has_item_genre or has_item_tag or has_item_year
+                                    or has_user_genre or has_timestamp) else 'idonly')
+    any_genome = has_item_genome or has_user_genome
+    any_llm    = has_item_llm    or has_user_llm
+    cfg['feature_towers'] = ('both'   if any_genome and any_llm else
+                             'genome' if any_genome else
+                             'llm'    if any_llm else None)
 
     return cfg
 

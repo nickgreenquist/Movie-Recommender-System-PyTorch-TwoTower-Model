@@ -61,8 +61,9 @@ def cmd_train():
     # Seed every RNG BEFORE build_model: weight init draws from the global torch RNG, so the
     # seed must land before init for a run to be reproducible — and so the only thing that
     # differs across the ablation arms is the content slot, not the random init. Seeding inside
-    # train_softmax (after the model is built) is too late. SEED env overrides the default.
-    seed = int(os.environ.get('SEED', 42))
+    # train_softmax (after the model is built) is too late. The seed lives in config (read from
+    # the SEED env, default 42) so the value used here is exactly the value saved to the sidecar.
+    seed = config['seed']
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -88,10 +89,10 @@ def cmd_eval(checkpoint_path=None):
     result = _setup(data_dir=DATA_DIR, checkpoint_path=checkpoint_path)
     model, fs = result[0], result[1]
     checkpoint_path = result[-1]
-    # EVAL_N_USERS overrides the val-user sample size (default 5,000). Raising it
-    # gives the long-tail tiers more examples — the tail is ~3% of targets, so the
-    # whole-corpus numbers barely move but the tail comparison gets far more signal.
-    n_users = int(os.environ['EVAL_N_USERS']) if 'EVAL_N_USERS' in os.environ else 5_000
+    # Default: full eval over ALL val users (n≈382,138) — the canonical, comparable
+    # protocol. EVAL_N_USERS caps DOWN to a subset for quick smoke runs only (a small-user
+    # run overwrites the canonical eval_results/<stem>.txt by stem, so it's opt-in).
+    n_users = int(os.environ['EVAL_N_USERS']) if 'EVAL_N_USERS' in os.environ else None
     run_offline_eval(model, fs, checkpoint_path=checkpoint_path or '', data_dir=DATA_DIR,
                      n_users=n_users)
 
