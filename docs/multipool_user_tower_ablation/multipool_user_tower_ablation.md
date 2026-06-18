@@ -18,15 +18,15 @@ I built a **two-tower movie recommender** and swapped its user tower **twelve wa
 
 ## 1. The setup: how do you turn a history into a vector?
 
-A two-tower model scores a (user, item) pair by the dot product of two embeddings. The item tower is easy. The user tower is the hard half: a user *is* their history, so it has to fold a variable-length list of watched movies into one fixed vector. The default is a **sum pool** — look up an embedding per item, add, project:
+A two-tower model scores a (user, item) pair by the dot product of two embeddings. The user tower is, at its most basic, the user's interaction history. That history is a variable-length list of watched movies, and the tower has to fold it into one fixed-size vector. The default is a **sum pool** — look up an embedding per item, add, project:
 
 ![Pooling an arbitrary-length watch history into one fixed user vector](figures/fig2_pooling_schematic.png)
 
-The pooling op barely matters (sum vs. mean is a wash); what's open is *which* history you pool. Instead of one bag, you can carve history into typed sub-histories — **by rating sign** (liked vs. disliked pools), **by magnitude** (weight each item by how far its rating sat above/below the user's mean), or **by recency** (pull the most-recent item out as its own channel).
+Which pooling op you use seems to matter less than you'd think — here, sum and mean came out about even. The more interesting question is *which* history you pool. Instead of one bag, you can carve history into typed sub-histories — **by rating sign** (liked vs. disliked pools), **by magnitude** (weight each item by how far its rating sat above/below the user's mean), or **by recency** (pull the most-recent item out as its own channel).
 
 ### Adding a channel
 
-Each extra channel is another 32-d block. The recency channel is the cleanest example: the model gathers the single last-watched item, looks up its embedding (**no sum**), and runs its own LayerNorm. That 32-d block is **concatenated** alongside the sum-pool block, and the combined vector goes through the **one shared projection** — concat first, project once:
+Using the single last-watched movie's embedding as its own channel is the simplest case: the model grabs that one item, looks up its embedding (**no sum**), and runs its own LayerNorm. That 32-d block is **concatenated** alongside the sum-pool block, and the combined vector goes through the **one shared projection** — concat first, project once:
 
 ![Adding the last-watched item as its own 32-d block, concatenated before the shared projection](figures/fig3_last_watched.png)
 
@@ -103,14 +103,14 @@ Does pooling help more on popular movies or the long tail? MRR split by target-m
 
 ## 6. Honest caveats
 
-- **The eval may flatter recency.** We're predicting a user's *next* movie, and the winning arms get to see the one they *just* watched — and on MovieLens, back-to-back ratings are often from the same sitting, so the last watch is an unusually strong hint. That tilt is part of the +22%. Whether it holds in production depends on whether you actually know "what they just watched" at serve time.
+- **The eval probably overstates recency.** We're predicting a user's *next* movie, and the winning arms get to see the one they *just* watched. On MovieLens, back-to-back ratings are often from the same sitting, so the last watch is an unusually strong hint. Some of the +22% is just that.
 - **This is dataset-specific.** Recency dominates on MovieLens, where consumption is sequential and session-correlated. On your problem — different catalog, weaker session structure, longer gaps between events — the last item may carry far less, and rating valence may carry more. Treat "recency is the lever" as a hypothesis to re-test, not a law.
 
 ## 7. Takeaway
 
-If you're folding a history into one vector for two-tower retrieval, **the structure that matters is recency, not rating valence.** The single last-watched item is worth more than the entire rest of the history summed together (+22% MRR as its own channel), while the liked / disliked / weighted machinery that *feels* principled adds nothing on top of a plain sum pool.
+If you're folding a history into one vector for two-tower retrieval, **recency may well matter more than rating valence** — it certainly did here. The single last-watched item is worth more than the entire rest of the history summed together (+22% MRR as its own channel), while the liked / disliked / weighted machinery that *feels* principled adds nothing on top of a plain sum pool.
 
-The arms retrace the **FMC → FPMC → SASRec** ladder of sequential recommendation: `last_watched` alone (arm 10) is a first-order **Markov chain (FMC)**; with the full pool (arm 11) it's **FPMC**; and arm 12's hand-built second-order term barely moves. Hand-coding recency runs out by the second item — which is the case for a model that *learns* it instead: self-attention over the sequence, i.e. **SASRec** (a Transformer that weights which past items matter). This ablation is the argument for building it next.
+None of this is new ground — the field walked it years ago, and the arms here happen to retrace its steps. They climb the **FMC → FPMC → SASRec** ladder of sequential recommendation: `last_watched` alone (arm 10) is a first-order **Markov chain (FMC)**; bolt it onto the full pool (arm 11) and you have **FPMC** (Factorizing Personalized Markov Chains — a personalized history pool plus a last-item transition term); and arm 12's hand-built second-order term barely moves. Hand-coding recency runs out by the second item. That's the argument for a model that *learns* it instead: self-attention over the sequence, i.e. **SASRec** (a Transformer that weights which past items matter).
 
 ---
 
