@@ -103,19 +103,23 @@ Does pooling help more on popular movies or the long tail? MRR split by target-m
 
 ## 6. Honest caveats
 
-- **The winning arms exploit a protocol effect.** Rollback targets the *next* item, and `last_watched` is the item immediately before it — an immediate-predecessor→successor signal that's unusually strong offline (consecutive MovieLens ratings are often same-session). It's *why* `last_watched` beat `last_liked`, and part of the +22%. Production value depends on whether "what the user just watched" is known and session-correlated at serve time.
+- **The eval may flatter recency.** We're predicting a user's *next* movie, and the winning arms get to see the one they *just* watched — and on MovieLens, back-to-back ratings are often from the same sitting, so the last watch is an unusually strong hint. That tilt is part of the +22%. Whether it holds in production depends on whether you actually know "what they just watched" at serve time.
 - **This is dataset-specific.** Recency dominates on MovieLens, where consumption is sequential and session-correlated. On your problem — different catalog, weaker session structure, longer gaps between events — the last item may carry far less, and rating valence may carry more. Treat "recency is the lever" as a hypothesis to re-test, not a law.
 
 ## 7. Takeaway
 
 If you're folding a history into one vector for two-tower retrieval, **the structure that matters is recency, not rating valence.** The single last-watched item is worth more than the entire rest of the history summed together (+22% MRR as its own channel), while the liked / disliked / weighted machinery that *feels* principled adds nothing on top of a plain sum pool.
 
-The arms quietly retrace the **FMC → FPMC → SASRec** ladder of sequential recommendation: `last_watched` alone (arm 10) is a learned first-order **Markov chain (FMC)**; fused with the full pool (arm 11) it's **FPMC** (Factorizing Personalized Markov Chains); and arm 12's hand-built second-order term barely moves — recency decays fast, so hand-coding positional pools runs out by the second item. That diminishing return is the whole case for a model that *learns* the recency weighting instead of hard-coding it: self-attention over the sequence — **SASRec** (a Transformer that learns which past items matter). This ablation is the empirical argument for building it next.
+The arms retrace the **FMC → FPMC → SASRec** ladder of sequential recommendation: `last_watched` alone (arm 10) is a first-order **Markov chain (FMC)**; with the full pool (arm 11) it's **FPMC**; and arm 12's hand-built second-order term barely moves. Hand-coding recency runs out by the second item — which is the case for a model that *learns* it instead: self-attention over the sequence, i.e. **SASRec** (a Transformer that weights which past items matter). This ablation is the argument for building it next.
 
 ---
 
-## Appendix — Method & notes
+## Appendix
 
-*Every arm is a two-tower model with an ID-only item tower (`BASE_TOWERS=idonly FEATURE_TOWERS=none`), trained identically — seed 42, 200k steps, LR 0.001 cosine→1e-4, batch 512, temperature 0.1, α=0 — varying only `USER_POOLS`. All pool signals come from the cached softmax training tensor (no data rebuilt between arms). Single-item slots gather the rightmost non-pad history position (`debiased_rating > 0` filter for `last_liked`), correct under both the right-aligned train and left-aligned eval layouts; empty/cold pools fall back to a learned bias vector. Eval is the held-out rollback protocol over all 19,134 val users (n ≈ 382,138), reporting Recall / Hit / NDCG / MRR @ K ∈ {1,5,10,20,50,100,150,200,250} plus the tier split.*
+- **Architecture** — two-tower model, ID-only item tower (`BASE_TOWERS=idonly FEATURE_TOWERS=none`); only `USER_POOLS` varies across arms.
+- **Training** — identical for every arm: seed 42, 200k steps, LR 0.001 (cosine → 1e-4), batch 512, softmax temperature 0.1, α = 0. Pool signals come from the cached softmax training tensor, so no data was rebuilt between arms.
+- **Evaluation** — held-out rollback protocol over all 19,134 validation users (n ≈ 382,138); Recall / Hit / NDCG / MRR @ K ∈ {1, 5, 10, 20, 50, 100, 150, 200, 250} plus the popularity-tier split.
 
-*Background sources: averaging watch-history embeddings into the user vector is the standard baseline introduced by [Covington et al., 2016 (Deep Neural Networks for YouTube Recommendations)](https://research.google/pubs/deep-neural-networks-for-youtube-recommendations/); the order-aware critique and the last-item-vs-full-history framing follow the sequential-recommendation line — [Rendle et al., 2010 (FPMC)](https://dl.acm.org/doi/10.1145/1772690.1772773) and [Kang & McAuley, 2018 (SASRec)](https://arxiv.org/abs/1808.09781).*
+**Background sources.**
+- [Covington et al., 2016 — *Deep Neural Networks for YouTube Recommendations*](https://research.google/pubs/deep-neural-networks-for-youtube-recommendations/): the standard baseline of averaging watch-history embeddings into the user vector.
+- [Rendle et al., 2010 — *FPMC*](https://dl.acm.org/doi/10.1145/1772690.1772773) and [Kang & McAuley, 2018 — *SASRec*](https://arxiv.org/abs/1808.09781): the sequential-recommendation line behind the order-aware, last-item-vs-full-history framing.
