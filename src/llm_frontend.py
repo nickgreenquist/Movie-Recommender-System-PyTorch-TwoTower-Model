@@ -280,6 +280,55 @@ def resolve_title(raw, ctx):
     return None, 'no match'
 
 
+# ── Person resolution (scraped-facet store: name → canonical TMDB person ID) ──
+# The two-tower model has no actor/director concept, so people facets ("Tom Hanks movies")
+# come entirely from the TMDB credits scrape, distilled by llm_features/build_facet_store.py
+# into the facet-store tables (person_name_to_ids / person_id_to_name / person_id_to_film_count)
+# that the export step bakes into serving/. resolve_person mirrors resolve_title but is simpler:
+# canonical TMDB person IDs disambiguate same-name people for free, so an exact normalized-name
+# hit suffices — no fuzzy-year guard. See docs/plans/facet_store_plan.md.
+_PERSON_PUNCT_RE = re.compile(r'[^a-z0-9]+')
+
+
+def _norm_name(s):
+    """Normalize a person name for matching: lowercase, fold accents (Penélope→penelope),
+    collapse punctuation/whitespace runs to single spaces. Mirrors _norm_title's accent-fold +
+    lowercase + punctuation strip, but WITHOUT the title-only logic (no "(year)" strip, no
+    "Name, The" article inversion) — people are neither year-suffixed nor article-inverted.
+
+    Used on BOTH sides so the keys always agree: llm_features/build_facet_store.py imports this
+    to key person_name_to_ids at build time, and resolve_person re-normalizes the LLM-emitted
+    name at inference time."""
+    s = s.strip().lower()
+    s = unicodedata.normalize('NFKD', s)
+    s = ''.join(c for c in s if not unicodedata.combining(c))  # drop accents
+    s = _PERSON_PUNCT_RE.sub(' ', s).strip()
+    return s
+
+
+def resolve_person(raw, facets):
+    """Resolve one LLM-extracted person name to a canonical TMDB person ID.
+
+    Returns (pid | None, note). Strategy: exact normalized-name hit in person_name_to_ids.
+    Unlike resolve_title there is no fuzzy/year machinery — TMDB person IDs make same-name
+    people distinct, so resolution is an exact lookup. On a normalized collision (two real
+    people share a name, e.g. two "Michael Williams") prefer the one with more in-corpus films;
+    person_name_to_ids is pre-sorted that way at build time, so we take the head. A miss returns
+    None and is reported, then dropped by the caller (exactly like an unresolved title).
+
+    `facets` is the baked facet-store dict (person_name_to_ids / person_id_to_name /
+    person_id_to_film_count); Phase 1 will carry it on the FrontendContext."""
+    norm = _norm_name(raw)
+    if not norm:
+        return None, 'empty'
+    ids = facets['person_name_to_ids'].get(norm)
+    if not ids:
+        return None, 'no match'
+    pid = ids[0]  # pre-sorted: most in-corpus films first (fame / coverage tie-break)
+    note = 'exact' if len(ids) == 1 else f'exact, {len(ids)} same-name → most-films'
+    return pid, note
+
+
 # ── Mode-2 synthesis: genome tag → anchor movies (mirror evaluate._get_anchor_titles) ──
 def anchors_for(ctx, genome_tags, exclude, per_tag=ANCHORS_PER_TAG, max_total=None):
     """Top `per_tag` representative real movies per genome tag (descending genome relevance
