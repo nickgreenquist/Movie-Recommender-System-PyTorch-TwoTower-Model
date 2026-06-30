@@ -1,0 +1,233 @@
+{
+ "id": 68,
+ "cat": "family",
+ "utterance": "A wholesome adventure for young children, no violence",
+ "extraction": {
+  "genome_tags": [
+   "feel-good",
+   "heartwarming",
+   "whimsical"
+  ],
+  "hard_constraints": {
+   "require_genres": [
+    "Adventure",
+    "Children"
+   ],
+   "exclude_genres": [
+    "Horror",
+    "War",
+    "Crime",
+    "Thriller"
+   ],
+   "year_min": null,
+   "year_max": null
+  }
+ },
+ "recs": [
+  {
+   "title": "Incredibles, The (2004)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2004",
+   "cos": 0.43527594208717346
+  },
+  {
+   "title": "Inside Out (2015)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Drama",
+    "Fantasy"
+   ],
+   "year": "2015",
+   "cos": 0.4174642562866211
+  },
+  {
+   "title": "WALL\u00b7E (2008)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Romance",
+    "Sci-Fi"
+   ],
+   "year": "2008",
+   "cos": 0.41284072399139404
+  },
+  {
+   "title": "Monsters, Inc. (2001)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Fantasy"
+   ],
+   "year": "2001",
+   "cos": 0.4101640582084656
+  },
+  {
+   "title": "Zootopia (2016)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2016",
+   "cos": 0.37900567054748535
+  },
+  {
+   "title": "The Lego Movie (2014)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Fantasy"
+   ],
+   "year": "2014",
+   "cos": 0.37222862243652344
+  },
+  {
+   "title": "Toy Story 3 (2010)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Fantasy",
+    "IMAX"
+   ],
+   "year": "2010",
+   "cos": 0.3502739667892456
+  },
+  {
+   "title": "Kubo and the Two Strings (2016)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Fantasy"
+   ],
+   "year": "2016",
+   "cos": 0.34533536434173584
+  },
+  {
+   "title": "How to Train Your Dragon (2010)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Fantasy",
+    "IMAX"
+   ],
+   "year": "2010",
+   "cos": 0.3365359604358673
+  },
+  {
+   "title": "Shrek (2001)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Fantasy",
+    "Romance"
+   ],
+   "year": "2001",
+   "cos": 0.32635462284088135
+  },
+  {
+   "title": "Brave (2012)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Animation",
+    "Children"
+   ],
+   "year": "2012",
+   "cos": 0.31978994607925415
+  },
+  {
+   "title": "Shrek 2 (2004)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Musical",
+    "Romance"
+   ],
+   "year": "2004",
+   "cos": 0.2838616967201233
+  },
+  {
+   "title": "Shaun the Sheep Movie (2015)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2015",
+   "cos": 0.2818557024002075
+  },
+  {
+   "title": "Paddington 2 (2017)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2017",
+   "cos": 0.2785133123397827
+  },
+  {
+   "title": "Harry Potter and the Sorcerer's Stone (a.k.a. Harry Potter and the Philosopher's Stone) (2001)",
+   "genres": [
+    "Adventure",
+    "Children",
+    "Fantasy"
+   ],
+   "year": "2001",
+   "cos": 0.27631890773773193
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [
+  "Eddie the Eagle (2016)",
+  "Akeelah and the Bee (2006)",
+  "World's Fastest Indian, The (2005)",
+  "The Intern (2015)",
+  "Hector and the Search for Happiness (2014)",
+  "Up (2009)",
+  "The Fundamentals of Caring (2016)",
+  "Hunt for the Wilderpeople (2016)",
+  "Finding Nemo (2003)",
+  "Intouchables (2011)",
+  "Mood Indigo (L'\u00e9cume des jours) (2013)",
+  "Micmacs (Micmacs \u00e0 tire-larigot) (2009)",
+  "Amelie (Fabuleux destin d'Am\u00e9lie Poulain, Le) (2001)",
+  "Grand Budapest Hotel, The (2014)",
+  "Big Fish (2003)"
+ ],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": false,
+ "filtered": 313
+}

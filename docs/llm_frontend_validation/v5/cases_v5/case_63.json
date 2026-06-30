@@ -1,0 +1,178 @@
+{
+ "id": 63,
+ "cat": "soft_genre",
+ "utterance": "I like comedies but not slapstick",
+ "extraction": {
+  "liked_genres": [
+   "Comedy"
+  ],
+  "genome_tags": [
+   "witty",
+   "satirical",
+   "dark comedy"
+  ]
+ },
+ "recs": [
+  {
+   "title": "Play It Again, Sam (1972)",
+   "genres": [
+    "Comedy",
+    "Romance"
+   ],
+   "year": "1972",
+   "cos": 0.5105719566345215
+  },
+  {
+   "title": "What's Up, Doc? (1972)",
+   "genres": [
+    "Comedy"
+   ],
+   "year": "1972",
+   "cos": 0.5008814334869385
+  },
+  {
+   "title": "Zelig (1983)",
+   "genres": [
+    "Comedy"
+   ],
+   "year": "1983",
+   "cos": 0.4927999973297119
+  },
+  {
+   "title": "Eating Raoul (1982)",
+   "genres": [
+    "Comedy"
+   ],
+   "year": "1982",
+   "cos": 0.4791785776615143
+  },
+  {
+   "title": "Trouble in Paradise (1932)",
+   "genres": [
+    "Comedy",
+    "Romance"
+   ],
+   "year": "1932",
+   "cos": 0.47900623083114624
+  },
+  {
+   "title": "Safety Last! (1923)",
+   "genres": [
+    "Action",
+    "Comedy",
+    "Romance"
+   ],
+   "year": "1923",
+   "cos": 0.4787817597389221
+  },
+  {
+   "title": "Polyester (1981)",
+   "genres": [
+    "Comedy"
+   ],
+   "year": "1981",
+   "cos": 0.47854381799697876
+  },
+  {
+   "title": "Hannah and Her Sisters (1986)",
+   "genres": [
+    "Comedy",
+    "Drama",
+    "Romance"
+   ],
+   "year": "1986",
+   "cos": 0.47597023844718933
+  },
+  {
+   "title": "Awful Truth, The (1937)",
+   "genres": [
+    "Comedy",
+    "Romance"
+   ],
+   "year": "1937",
+   "cos": 0.4741208553314209
+  },
+  {
+   "title": "After Hours (1985)",
+   "genres": [
+    "Comedy",
+    "Thriller"
+   ],
+   "year": "1985",
+   "cos": 0.4670921266078949
+  },
+  {
+   "title": "F for Fake (V\u00e9rit\u00e9s et mensonges) (1973)",
+   "genres": [
+    "Documentary",
+    "Mystery"
+   ],
+   "year": "1973",
+   "cos": 0.45987123250961304
+  },
+  {
+   "title": "Shadow of the Thin Man (1941)",
+   "genres": [
+    "Comedy",
+    "Crime",
+    "Mystery"
+   ],
+   "year": "1941",
+   "cos": 0.4587205648422241
+  },
+  {
+   "title": "Night at the Opera, A (1935)",
+   "genres": [
+    "Comedy",
+    "Musical",
+    "Romance"
+   ],
+   "year": "1935",
+   "cos": 0.4549209475517273
+  },
+  {
+   "title": "Animal Crackers (1930)",
+   "genres": [
+    "Comedy",
+    "Musical"
+   ],
+   "year": "1930",
+   "cos": 0.45182904601097107
+  },
+  {
+   "title": "Junebug (2005)",
+   "genres": [
+    "Comedy",
+    "Drama"
+   ],
+   "year": "2005",
+   "cos": 0.4480854570865631
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [
+  "Ideal Husband, An (1999)",
+  "Thin Man, The (1934)",
+  "Annie Hall (1977)",
+  "Lady Vanishes, The (1938)",
+  "Kiss Kiss Bang Bang (2005)",
+  "Thank You for Smoking (2006)",
+  "Mouse That Roared, The (1959)",
+  "Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb (1964)",
+  "In the Loop (2009)",
+  "Series 7: The Contenders (2001)",
+  "The Voices (2014)",
+  "House of Yes, The (1997)",
+  "Green Butchers, The (Gr\u00f8nne slagtere, De) (2003)",
+  "Sightseers (2012)",
+  "Ice Harvest, The (2005)"
+ ],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": false,
+ "filtered": 0
+}

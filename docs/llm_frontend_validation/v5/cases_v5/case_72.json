@@ -1,0 +1,190 @@
+{
+ "id": 72,
+ "cat": "era",
+ "utterance": "Modern movies, nothing old",
+ "extraction": {
+  "liked_items": [],
+  "disliked_items": [],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "genome_tags": [],
+  "hard_constraints": {
+   "year_min": 2010,
+   "year_max": null,
+   "require_genres": [],
+   "exclude_genres": []
+  }
+ },
+ "recs": [
+  {
+   "title": "Inception (2010)",
+   "genres": [
+    "Action",
+    "Crime",
+    "Drama",
+    "Mystery",
+    "Sci-Fi",
+    "Thriller",
+    "IMAX"
+   ],
+   "year": "2010",
+   "cos": null
+  },
+  {
+   "title": "Interstellar (2014)",
+   "genres": [
+    "Sci-Fi",
+    "IMAX"
+   ],
+   "year": "2014",
+   "cos": null
+  },
+  {
+   "title": "Django Unchained (2012)",
+   "genres": [
+    "Action",
+    "Drama",
+    "Western"
+   ],
+   "year": "2012",
+   "cos": null
+  },
+  {
+   "title": "Dark Knight Rises, The (2012)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Crime",
+    "IMAX"
+   ],
+   "year": "2012",
+   "cos": null
+  },
+  {
+   "title": "Shutter Island (2010)",
+   "genres": [
+    "Drama",
+    "Mystery",
+    "Thriller"
+   ],
+   "year": "2010",
+   "cos": null
+  },
+  {
+   "title": "The Martian (2015)",
+   "genres": [
+    "Adventure",
+    "Drama",
+    "Sci-Fi"
+   ],
+   "year": "2015",
+   "cos": null
+  },
+  {
+   "title": "Wolf of Wall Street, The (2013)",
+   "genres": [
+    "Comedy",
+    "Crime",
+    "Drama"
+   ],
+   "year": "2013",
+   "cos": null
+  },
+  {
+   "title": "Guardians of the Galaxy (2014)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Sci-Fi"
+   ],
+   "year": "2014",
+   "cos": null
+  },
+  {
+   "title": "Avengers, The (2012)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Sci-Fi",
+    "IMAX"
+   ],
+   "year": "2012",
+   "cos": null
+  },
+  {
+   "title": "The Imitation Game (2014)",
+   "genres": [
+    "Drama",
+    "Thriller",
+    "War"
+   ],
+   "year": "2014",
+   "cos": null
+  },
+  {
+   "title": "Deadpool (2016)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Comedy",
+    "Sci-Fi"
+   ],
+   "year": "2016",
+   "cos": null
+  },
+  {
+   "title": "Inside Out (2015)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Drama",
+    "Fantasy"
+   ],
+   "year": "2015",
+   "cos": null
+  },
+  {
+   "title": "Grand Budapest Hotel, The (2014)",
+   "genres": [
+    "Comedy",
+    "Drama"
+   ],
+   "year": "2014",
+   "cos": null
+  },
+  {
+   "title": "Harry Potter and the Deathly Hallows: Part 1 (2010)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Fantasy",
+    "IMAX"
+   ],
+   "year": "2010",
+   "cos": null
+  },
+  {
+   "title": "Mad Max: Fury Road (2015)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "2015",
+   "cos": null
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": true,
+ "filtered": 236
+}

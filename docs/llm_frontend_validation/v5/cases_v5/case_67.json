@@ -1,0 +1,186 @@
+{
+ "id": 67,
+ "cat": "family",
+ "utterance": "Kids movies with talking animals",
+ "extraction": {
+  "genome_tags": [
+   "talking animals"
+  ],
+  "hard_constraints": {
+   "require_genres": [
+    "Children"
+   ]
+  }
+ },
+ "recs": [
+  {
+   "title": "Quest for Camelot (1998)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Fantasy",
+    "Musical"
+   ],
+   "year": "1998",
+   "cos": 0.577330470085144
+  },
+  {
+   "title": "Doug's 1st Movie (1999)",
+   "genres": [
+    "Animation",
+    "Children"
+   ],
+   "year": "1999",
+   "cos": 0.5491467714309692
+  },
+  {
+   "title": "Rugrats Movie, The (1998)",
+   "genres": [
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "1998",
+   "cos": 0.5270628333091736
+  },
+  {
+   "title": "Free Willy 3: The Rescue (1997)",
+   "genres": [
+    "Adventure",
+    "Children",
+    "Drama"
+   ],
+   "year": "1997",
+   "cos": 0.5056262016296387
+  },
+  {
+   "title": "Air Bud: Golden Receiver (1998)",
+   "genres": [
+    "Children",
+    "Comedy"
+   ],
+   "year": "1998",
+   "cos": 0.5019599795341492
+  },
+  {
+   "title": "Barney's Great Adventure (1998)",
+   "genres": [
+    "Adventure",
+    "Children"
+   ],
+   "year": "1998",
+   "cos": 0.4905034303665161
+  },
+  {
+   "title": "Home Alone 3 (1997)",
+   "genres": [
+    "Children",
+    "Comedy"
+   ],
+   "year": "1997",
+   "cos": 0.48343804478645325
+  },
+  {
+   "title": "Amazing Panda Adventure, The (1995)",
+   "genres": [
+    "Adventure",
+    "Children"
+   ],
+   "year": "1995",
+   "cos": 0.4812759757041931
+  },
+  {
+   "title": "Smurfs, The (2011)",
+   "genres": [
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2011",
+   "cos": 0.48070380091667175
+  },
+  {
+   "title": "Cats Don't Dance (1997)",
+   "genres": [
+    "Animation",
+    "Children",
+    "Musical"
+   ],
+   "year": "1997",
+   "cos": 0.4805324673652649
+  },
+  {
+   "title": "Pok\u00e9mon: The First Movie (1998)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Fantasy",
+    "Sci-Fi"
+   ],
+   "year": "1998",
+   "cos": 0.47601255774497986
+  },
+  {
+   "title": "Warriors of Virtue (1997)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Children",
+    "Fantasy"
+   ],
+   "year": "1997",
+   "cos": 0.4595431387424469
+  },
+  {
+   "title": "Tall Tale (1995)",
+   "genres": [
+    "Adventure",
+    "Children",
+    "Fantasy",
+    "Western"
+   ],
+   "year": "1995",
+   "cos": 0.45505744218826294
+  },
+  {
+   "title": "Small Soldiers (1998)",
+   "genres": [
+    "Animation",
+    "Children",
+    "Fantasy",
+    "War"
+   ],
+   "year": "1998",
+   "cos": 0.45473891496658325
+  },
+  {
+   "title": "Ice Age: Collision Course (2016)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2016",
+   "cos": 0.4517902731895447
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [
+  "Dr. Dolittle 2 (2001)",
+  "Dr. Dolittle (1998)",
+  "Racing Stripes (2005)",
+  "Open Season (2006)",
+  "Zookeeper (2011)"
+ ],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": false,
+ "filtered": 17
+}

@@ -1,0 +1,180 @@
+{
+ "id": 47,
+ "cat": "constraint",
+ "utterance": "Sci-fi from after 2010",
+ "extraction": {
+  "hard_constraints": {
+   "require_genres": [
+    "Sci-Fi"
+   ],
+   "year_min": 2011,
+   "year_max": null,
+   "exclude_genres": []
+  }
+ },
+ "recs": [
+  {
+   "title": "Interstellar (2014)",
+   "genres": [
+    "Sci-Fi",
+    "IMAX"
+   ],
+   "year": "2014",
+   "cos": null
+  },
+  {
+   "title": "The Martian (2015)",
+   "genres": [
+    "Adventure",
+    "Drama",
+    "Sci-Fi"
+   ],
+   "year": "2015",
+   "cos": null
+  },
+  {
+   "title": "Guardians of the Galaxy (2014)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Sci-Fi"
+   ],
+   "year": "2014",
+   "cos": null
+  },
+  {
+   "title": "Avengers, The (2012)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Sci-Fi",
+    "IMAX"
+   ],
+   "year": "2012",
+   "cos": null
+  },
+  {
+   "title": "Deadpool (2016)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Comedy",
+    "Sci-Fi"
+   ],
+   "year": "2016",
+   "cos": null
+  },
+  {
+   "title": "Mad Max: Fury Road (2015)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "2015",
+   "cos": null
+  },
+  {
+   "title": "Ex Machina (2015)",
+   "genres": [
+    "Drama",
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "2015",
+   "cos": null
+  },
+  {
+   "title": "The Hunger Games (2012)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Drama",
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "2012",
+   "cos": null
+  },
+  {
+   "title": "Arrival (2016)",
+   "genres": [
+    "Sci-Fi"
+   ],
+   "year": "2016",
+   "cos": null
+  },
+  {
+   "title": "Edge of Tomorrow (2014)",
+   "genres": [
+    "Action",
+    "Sci-Fi",
+    "IMAX"
+   ],
+   "year": "2014",
+   "cos": null
+  },
+  {
+   "title": "Star Wars: Episode VII - The Force Awakens (2015)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Fantasy",
+    "Sci-Fi",
+    "IMAX"
+   ],
+   "year": "2015",
+   "cos": null
+  },
+  {
+   "title": "Gravity (2013)",
+   "genres": [
+    "Action",
+    "Sci-Fi",
+    "IMAX"
+   ],
+   "year": "2013",
+   "cos": null
+  },
+  {
+   "title": "Her (2013)",
+   "genres": [
+    "Drama",
+    "Romance",
+    "Sci-Fi"
+   ],
+   "year": "2013",
+   "cos": null
+  },
+  {
+   "title": "Limitless (2011)",
+   "genres": [
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "2011",
+   "cos": null
+  },
+  {
+   "title": "Avengers: Infinity War - Part I (2018)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Sci-Fi"
+   ],
+   "year": "2018",
+   "cos": null
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": true,
+ "filtered": 391
+}

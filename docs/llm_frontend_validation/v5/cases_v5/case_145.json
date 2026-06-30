@@ -1,0 +1,171 @@
+{
+ "id": 145,
+ "cat": "constraint",
+ "utterance": "Holiday movies for Christmas",
+ "extraction": {
+  "genome_tags": [
+   "christmas",
+   "feel-good",
+   "heartwarming",
+   "sentimental"
+  ]
+ },
+ "recs": [
+  {
+   "title": "Lion (2016)",
+   "genres": [
+    "Drama"
+   ],
+   "year": "2016",
+   "cos": 0.4718204736709595
+  },
+  {
+   "title": "RBG (2018)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2018",
+   "cos": 0.4579271674156189
+  },
+  {
+   "title": "Victoria & Abdul (2017)",
+   "genres": [
+    "Drama"
+   ],
+   "year": "2017",
+   "cos": 0.4538581371307373
+  },
+  {
+   "title": "Mr. Church (2016)",
+   "genres": [
+    "Drama"
+   ],
+   "year": "2016",
+   "cos": 0.446810245513916
+  },
+  {
+   "title": "Hidden Figures (2016)",
+   "genres": [
+    "Drama"
+   ],
+   "year": "2016",
+   "cos": 0.4439791440963745
+  },
+  {
+   "title": "Gifted (2017)",
+   "genres": [
+    "Drama"
+   ],
+   "year": "2017",
+   "cos": 0.4407327175140381
+  },
+  {
+   "title": "13th (2016)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2016",
+   "cos": 0.4403495788574219
+  },
+  {
+   "title": "McFarland, USA (2015)",
+   "genres": [
+    "Drama"
+   ],
+   "year": "2015",
+   "cos": 0.44003182649612427
+  },
+  {
+   "title": "Florence Foster Jenkins (2016)",
+   "genres": [
+    "Comedy",
+    "Drama"
+   ],
+   "year": "2016",
+   "cos": 0.432236909866333
+  },
+  {
+   "title": "X+Y (2014)",
+   "genres": [
+    "Comedy",
+    "Drama"
+   ],
+   "year": "2014",
+   "cos": 0.4243353605270386
+  },
+  {
+   "title": "A Dog's Purpose (2017)",
+   "genres": [
+    "Comedy",
+    "Drama"
+   ],
+   "year": "2017",
+   "cos": 0.4227864146232605
+  },
+  {
+   "title": "Won't You Be My Neighbor? (2018)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2018",
+   "cos": 0.4221695363521576
+  },
+  {
+   "title": "Loving (2016)",
+   "genres": [
+    "Drama"
+   ],
+   "year": "2016",
+   "cos": 0.4214094579219818
+  },
+  {
+   "title": "The Hundred-Foot Journey (2014)",
+   "genres": [
+    "Comedy",
+    "Drama"
+   ],
+   "year": "2014",
+   "cos": 0.4192469120025635
+  },
+  {
+   "title": "Late Night (2019)",
+   "genres": [
+    "Comedy",
+    "Drama"
+   ],
+   "year": "2019",
+   "cos": 0.4152165651321411
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [
+  "Christmas with the Kranks (2004)",
+  "Deck the Halls (2006)",
+  "One Magic Christmas (1985)",
+  "Santa Claus: The Movie (1985)",
+  "Ernest Saves Christmas (1988)",
+  "Eddie the Eagle (2016)",
+  "Akeelah and the Bee (2006)",
+  "World's Fastest Indian, The (2005)",
+  "The Intern (2015)",
+  "Hector and the Search for Happiness (2014)",
+  "Up (2009)",
+  "The Fundamentals of Caring (2016)",
+  "Hunt for the Wilderpeople (2016)",
+  "Finding Nemo (2003)",
+  "Intouchables (2011)",
+  "Cinema Paradiso (Nuovo cinema Paradiso) (1989)",
+  "Awakenings (1990)",
+  "Forrest Gump (1994)",
+  "Going My Way (1944)",
+  "Penny Serenade (1941)"
+ ],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": false,
+ "filtered": 0
+}

@@ -1,0 +1,172 @@
+{
+ "id": 71,
+ "cat": "era",
+ "utterance": "Give me some 70s cinema",
+ "extraction": {
+  "liked_items": [],
+  "disliked_items": [],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "genome_tags": [],
+  "hard_constraints": {
+   "year_min": 1970,
+   "year_max": 1979,
+   "require_genres": [],
+   "exclude_genres": []
+  }
+ },
+ "recs": [
+  {
+   "title": "Star Wars: Episode IV - A New Hope (1977)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Sci-Fi"
+   ],
+   "year": "1977",
+   "cos": null
+  },
+  {
+   "title": "Godfather, The (1972)",
+   "genres": [
+    "Crime",
+    "Drama"
+   ],
+   "year": "1972",
+   "cos": null
+  },
+  {
+   "title": "Monty Python and the Holy Grail (1975)",
+   "genres": [
+    "Adventure",
+    "Comedy",
+    "Fantasy"
+   ],
+   "year": "1975",
+   "cos": null
+  },
+  {
+   "title": "One Flew Over the Cuckoo's Nest (1975)",
+   "genres": [
+    "Drama"
+   ],
+   "year": "1975",
+   "cos": null
+  },
+  {
+   "title": "Alien (1979)",
+   "genres": [
+    "Horror",
+    "Sci-Fi"
+   ],
+   "year": "1979",
+   "cos": null
+  },
+  {
+   "title": "Godfather: Part II, The (1974)",
+   "genres": [
+    "Crime",
+    "Drama"
+   ],
+   "year": "1974",
+   "cos": null
+  },
+  {
+   "title": "Taxi Driver (1976)",
+   "genres": [
+    "Crime",
+    "Drama",
+    "Thriller"
+   ],
+   "year": "1976",
+   "cos": null
+  },
+  {
+   "title": "Clockwork Orange, A (1971)",
+   "genres": [
+    "Crime",
+    "Drama",
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "1971",
+   "cos": null
+  },
+  {
+   "title": "Willy Wonka & the Chocolate Factory (1971)",
+   "genres": [
+    "Children",
+    "Comedy",
+    "Fantasy",
+    "Musical"
+   ],
+   "year": "1971",
+   "cos": null
+  },
+  {
+   "title": "Apocalypse Now (1979)",
+   "genres": [
+    "Action",
+    "Drama",
+    "War"
+   ],
+   "year": "1979",
+   "cos": null
+  },
+  {
+   "title": "Jaws (1975)",
+   "genres": [
+    "Action",
+    "Horror"
+   ],
+   "year": "1975",
+   "cos": null
+  },
+  {
+   "title": "Monty Python's Life of Brian (1979)",
+   "genres": [
+    "Comedy"
+   ],
+   "year": "1979",
+   "cos": null
+  },
+  {
+   "title": "Chinatown (1974)",
+   "genres": [
+    "Crime",
+    "Film-Noir",
+    "Mystery",
+    "Thriller"
+   ],
+   "year": "1974",
+   "cos": null
+  },
+  {
+   "title": "Annie Hall (1977)",
+   "genres": [
+    "Comedy",
+    "Romance"
+   ],
+   "year": "1977",
+   "cos": null
+  },
+  {
+   "title": "Rocky (1976)",
+   "genres": [
+    "Drama"
+   ],
+   "year": "1976",
+   "cos": null
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": true,
+ "filtered": 304
+}

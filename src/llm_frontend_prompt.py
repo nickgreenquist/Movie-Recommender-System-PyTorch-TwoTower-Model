@@ -1,17 +1,17 @@
 """
-tools/llm_frontend_prompt.py — extraction prompt + structured-output schema for the
+src/llm_frontend_prompt.py — extraction prompt + structured-output schema for the
 LLM conversational front-end (v1).
 
 The LLM's ONLY job is to translate a free-text movie request into the structured query
-that the two-tower model's user tower consumes (see tools/llm_frontend_probe.py and
+that the two-tower model's user tower consumes (see src/llm_frontend.py and
 docs/plans/plan.md). It never recommends; the trained model does retrieval. This module
 holds the system prompt, the JSON schema (for Claude tool use / structured outputs), and
 helpers that inject the live vocabularies from serving/feature_store.pt.
 
-In the Claude Code test loop we feed build_system_prompt()/EXTRACTION_SCHEMA to a Haiku
-subagent and run its JSON through the harness. The same prompt + schema are what the
-hosted Haiku API call will use once v1 moves off the test loop — no re-tuning, because the
-subagent is the same model family.
+The prompt + schema were tuned against a Haiku subagent in the in-repo Claude Code test loop
+(tools/llm_frontend_probe.py). The hosted path (src/llm_frontend_extraction.py, used by the
+Streamlit "Ask" tab) feeds the SAME build_system_prompt()/build_schema() to the Claude Haiku
+API — no re-tuning, because the subagent is the same model family.
 """
 
 import json
@@ -109,24 +109,54 @@ resolve to the wrong film.
 from the GENOME TAGS list below (exact spelling/hyphenation; e.g. "thought-provoking" and \
 "feel-good" are valid, "thought provoking" and "feel good" are NOT). If nothing in the list \
 fits, leave genome_tags empty rather than inventing a tag. Choose DISTINCTIVE descriptors of \
-feel/atmosphere/style — NOT broad tags that merely restate a genre you already captured \
-("comedy", "crime", "thriller", "epic", "funny", "romantic", "action" are too generic and \
-pull off-target results; prefer specific ones like "quirky", "neo-noir", "atmospheric", \
-"slow", "stylized"). HOW MANY depends on the mode:
-    • No titles given (pure-mood request): use 3–5 specific tags — they ARE the query.
-    • Titles given in liked_items: use AT MOST 2, and only for a vibe the titles don't already \
-imply. The named titles are the real query; a pile of tags will drown them. Often 0 is right.
+feel/atmosphere/style — NOT broad tags that merely restate a genre you already captured. These \
+restate-a-genre tags are FORBIDDEN in any mode (they pull off-target): "comedy", "crime", \
+"thriller", "epic", "funny", "romantic", "action", "scary", "dramatic", "adventure". Prefer \
+specific, evocative ones like "quirky", "neo-noir", "atmospheric", "surreal", "stylized", \
+"dreamlike". HOW MANY depends on whether the user named any titles:
+    • NO titles given: decide require_genres / year FIRST — whether a HARD constraint defines the \
+request determines how to handle tags.
+        – PURE VIBE or SOFT-GENRE TASTE (no require_genres and no year limit — "I love a good \
+romance", "something dreamy and melancholy", "big fan of war movies", "into crime and mystery"): \
+the tags ARE the query, so ALWAYS emit 3–5 specific mood/style tags — even when you also set a SOFT \
+liked_genres. A bare taste preference is a weak signal on its own, so add concrete vibe tags \
+(romance → "intimate", "heartfelt", "bittersweet"; crime → "noir", "detective", "hardboiled"; war \
+→ "anti-war", "visceral", "harrowing"). Never leave genome_tags empty for a pure-vibe/taste request.
+        – HARD-CONSTRAINT request (a genre is the head noun → require_genres, and/or an explicit \
+era/year — "comedies from the 80s", "show me horror movies", "recent thrillers"): the CONSTRAINT is \
+the query, not a vibe. Set require_genres / year_min / year_max, and emit mood tags ONLY for a \
+GENUINE extra vibe stated beyond the category ("dark gritty westerns" → require ["Western"] + \
+"gritty"). For a plain category(+era) request — "comedies from the 80s" → require ["Comedy"] + \
+year_min 1980 / year_max 1989, NO invented tags — do NOT manufacture quirky/campy/atmospheric-type \
+tags: an invented vibe tag pulls results off the required genre. When unsure here, prefer NO tag.
+    • Titles GIVEN in liked_items: the named titles are the real query and they already encode \
+tone, intensity, and era — so use FEW tags (0–2), and only when they add something the titles \
+don't. Decide by HOW the user frames the mood:
+        – EQUATIVE ("just as dark", "same gritty vibe", "similarly intense") merely RESTATES what \
+the named films already convey — emit NO tag for it. Generic restatement words ("dark", \
+"gritty", "grim", "bleak", "intense", "slow", "ominous", "serious") drag results toward a bleak \
+art-house cluster, so never emit them as an echo of the titles.
+        – COMPARATIVE / PIVOT ("darker", "even more disturbing", "but more emotional", "but \
+WHIMSICAL", "but a MUSICAL") pushes a NEW direction the titles don't already go — emit AT MOST \
+1–2 PRECISE tags for it, preferring specific ones ("psychological", "surreal", "whimsical", \
+"mindfuck", "neo-noir") over vague intensity words ("dark", "intense"). When in doubt, none.
 - liked_genres / disliked_genres: SOFT taste signals ("I like sci-fi", "not really into \
 horror"). Choose only from the GENRES list. Soft = shapes the recommendation, does not \
 hard-filter.
 - hard_constraints: things the model can't express, applied as a post-filter.
     • year_min / year_max: explicit date limits ("after 2010", "90s movies" → 1990–1999, \
 "recent" → roughly year_min {current_year_minus_10}). Use integers or null.
-    • require_genres: HARD genre requirement ("only westerns" → ["Western"]). Every result \
-must match all of these.
+    • require_genres: HARD genre requirement. Use it when a genre is the PRIMARY CATEGORY being \
+requested — the head noun of the ask — not just a taste aside: "only westerns" → ["Western"], \
+and ALSO "comedies from the 80s" → ["Comedy"], "show me horror movies" → ["Horror"], \
+"documentaries about nature" → ["Documentary"]. Every result must contain all of these.
     • exclude_genres: HARD genre exclusion ("absolutely no horror" → ["Horror"]).
-  Distinguish SOFT vs HARD by phrasing: a preference goes in liked_genres; an absolute \
-("only", "must be", "nothing but") goes in require_genres; a hard "no X" goes in exclude_genres.
+  Distinguish SOFT vs HARD by the genre's ROLE, not just keywords: a genre that IS the thing \
+being requested (the head noun — "show me comedies", "I want a western", "horror movies") is \
+HARD → require_genres; a genre mentioned as a side preference ("I'm into sci-fi", "I usually \
+like crime stuff") is SOFT → liked_genres. Absolutes ("only", "must be", "nothing but") are \
+always HARD. A hard "no X" goes in exclude_genres. A genre you put in require_genres may also go \
+in liked_genres so the model leans toward it, but a SOFT preference must NEVER go in require_genres.
 
 NOT SUPPORTED IN v1 — silently ignore these, do not invent fields for them: constraints about \
 specific directors, actors, studios, or content/age ratings ("no Nolan films", "nothing with \

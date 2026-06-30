@@ -1,0 +1,194 @@
+{
+ "id": 65,
+ "cat": "family",
+ "utterance": "Movies my 6-year-old would like",
+ "extraction": {
+  "hard_constraints": {
+   "require_genres": [
+    "Children"
+   ]
+  }
+ },
+ "recs": [
+  {
+   "title": "Toy Story (1995)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Fantasy"
+   ],
+   "year": "1995",
+   "cos": null
+  },
+  {
+   "title": "Shrek (2001)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Fantasy",
+    "Romance"
+   ],
+   "year": "2001",
+   "cos": null
+  },
+  {
+   "title": "Lion King, The (1994)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Drama",
+    "Musical",
+    "IMAX"
+   ],
+   "year": "1994",
+   "cos": null
+  },
+  {
+   "title": "Aladdin (1992)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Musical"
+   ],
+   "year": "1992",
+   "cos": null
+  },
+  {
+   "title": "Finding Nemo (2003)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2003",
+   "cos": null
+  },
+  {
+   "title": "Monsters, Inc. (2001)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Fantasy"
+   ],
+   "year": "2001",
+   "cos": null
+  },
+  {
+   "title": "Beauty and the Beast (1991)",
+   "genres": [
+    "Animation",
+    "Children",
+    "Fantasy",
+    "Musical",
+    "Romance",
+    "IMAX"
+   ],
+   "year": "1991",
+   "cos": null
+  },
+  {
+   "title": "Incredibles, The (2004)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2004",
+   "cos": null
+  },
+  {
+   "title": "WALL\u00b7E (2008)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Romance",
+    "Sci-Fi"
+   ],
+   "year": "2008",
+   "cos": null
+  },
+  {
+   "title": "E.T. the Extra-Terrestrial (1982)",
+   "genres": [
+    "Children",
+    "Drama",
+    "Sci-Fi"
+   ],
+   "year": "1982",
+   "cos": null
+  },
+  {
+   "title": "Up (2009)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Drama"
+   ],
+   "year": "2009",
+   "cos": null
+  },
+  {
+   "title": "Babe (1995)",
+   "genres": [
+    "Children",
+    "Drama"
+   ],
+   "year": "1995",
+   "cos": null
+  },
+  {
+   "title": "Home Alone (1990)",
+   "genres": [
+    "Children",
+    "Comedy"
+   ],
+   "year": "1990",
+   "cos": null
+  },
+  {
+   "title": "Harry Potter and the Sorcerer's Stone (a.k.a. Harry Potter and the Philosopher's Stone) (2001)",
+   "genres": [
+    "Adventure",
+    "Children",
+    "Fantasy"
+   ],
+   "year": "2001",
+   "cos": null
+  },
+  {
+   "title": "Willy Wonka & the Chocolate Factory (1971)",
+   "genres": [
+    "Children",
+    "Comedy",
+    "Fantasy",
+    "Musical"
+   ],
+   "year": "1971",
+   "cos": null
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": true,
+ "filtered": 106
+}

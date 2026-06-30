@@ -1,0 +1,187 @@
+{
+ "id": 144,
+ "cat": "constraint",
+ "utterance": "Westerns but set in space",
+ "extraction": {
+  "liked_items": [],
+  "disliked_items": [],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "genome_tags": [
+   "space"
+  ],
+  "hard_constraints": {
+   "require_genres": [
+    "Western"
+   ],
+   "year_min": null,
+   "year_max": null,
+   "exclude_genres": []
+  }
+ },
+ "recs": [
+  {
+   "title": "Wild Wild West (1999)",
+   "genres": [
+    "Action",
+    "Comedy",
+    "Sci-Fi",
+    "Western"
+   ],
+   "year": "1999",
+   "cos": 0.33174973726272583
+  },
+  {
+   "title": "Firefly (2002)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Sci-Fi",
+    "Western"
+   ],
+   "year": "2002",
+   "cos": 0.23259353637695312
+  },
+  {
+   "title": "Tender Mercies (1983)",
+   "genres": [
+    "Drama",
+    "Romance",
+    "Western"
+   ],
+   "year": "1983",
+   "cos": 0.20023080706596375
+  },
+  {
+   "title": "Spirit: Stallion of the Cimarron (2002)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Western"
+   ],
+   "year": "2002",
+   "cos": 0.10101071000099182
+  },
+  {
+   "title": "She Wore a Yellow Ribbon (1949)",
+   "genres": [
+    "Western"
+   ],
+   "year": "1949",
+   "cos": 0.0998692661523819
+  },
+  {
+   "title": "Back to the Future Part III (1990)",
+   "genres": [
+    "Adventure",
+    "Comedy",
+    "Sci-Fi",
+    "Western"
+   ],
+   "year": "1990",
+   "cos": 0.09949623048305511
+  },
+  {
+   "title": "My Darling Clementine (1946)",
+   "genres": [
+    "Western"
+   ],
+   "year": "1946",
+   "cos": 0.08255446702241898
+  },
+  {
+   "title": "Professionals, The (1966)",
+   "genres": [
+    "Western"
+   ],
+   "year": "1966",
+   "cos": 0.07963995635509491
+  },
+  {
+   "title": "Support Your Local Sheriff! (1969)",
+   "genres": [
+    "Comedy",
+    "Western"
+   ],
+   "year": "1969",
+   "cos": 0.07868673652410507
+  },
+  {
+   "title": "City Slickers II: The Legend of Curly's Gold (1994)",
+   "genres": [
+    "Adventure",
+    "Comedy",
+    "Western"
+   ],
+   "year": "1994",
+   "cos": 0.07799243181943893
+  },
+  {
+   "title": "Legends of the Fall (1994)",
+   "genres": [
+    "Drama",
+    "Romance",
+    "War",
+    "Western"
+   ],
+   "year": "1994",
+   "cos": 0.0666159838438034
+  },
+  {
+   "title": "Tombstone (1993)",
+   "genres": [
+    "Action",
+    "Drama",
+    "Western"
+   ],
+   "year": "1993",
+   "cos": 0.06654760241508484
+  },
+  {
+   "title": "Westworld (1973)",
+   "genres": [
+    "Action",
+    "Sci-Fi",
+    "Thriller",
+    "Western"
+   ],
+   "year": "1973",
+   "cos": 0.06407323479652405
+  },
+  {
+   "title": "Open Range (2003)",
+   "genres": [
+    "Western"
+   ],
+   "year": "2003",
+   "cos": 0.06322597712278366
+  },
+  {
+   "title": "Red River (1948)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Western"
+   ],
+   "year": "1948",
+   "cos": 0.059923917055130005
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [
+  "SpaceCamp (1986)",
+  "Mission to Mars (2000)",
+  "Destination Moon (1950)",
+  "2010: The Year We Make Contact (1984)",
+  "Cargo (2009)"
+ ],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": false,
+ "filtered": 974
+}

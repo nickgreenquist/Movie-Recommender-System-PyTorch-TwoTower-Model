@@ -1,0 +1,182 @@
+{
+ "id": 62,
+ "cat": "soft_genre",
+ "utterance": "Big fan of war movies",
+ "extraction": {
+  "liked_genres": [
+   "War"
+  ],
+  "genome_tags": [
+   "anti-war",
+   "visceral",
+   "harrowing",
+   "gritty"
+  ]
+ },
+ "recs": [
+  {
+   "title": "Beast of War, The (Beast, The) (1988)",
+   "genres": [
+    "Drama",
+    "War"
+   ],
+   "year": "1988",
+   "cos": 0.5591253042221069
+  },
+  {
+   "title": "Winter War (Talvisota) (1989)",
+   "genres": [
+    "Drama",
+    "War"
+   ],
+   "year": "1989",
+   "cos": 0.4937833547592163
+  },
+  {
+   "title": "Bloody Sunday (2002)",
+   "genres": [
+    "Drama"
+   ],
+   "year": "2002",
+   "cos": 0.49065566062927246
+  },
+  {
+   "title": "War Photographer (2001)",
+   "genres": [
+    "Documentary",
+    "War"
+   ],
+   "year": "2001",
+   "cos": 0.4815590977668762
+  },
+  {
+   "title": "Letters from Iwo Jima (2006)",
+   "genres": [
+    "Drama",
+    "War"
+   ],
+   "year": "2006",
+   "cos": 0.480679988861084
+  },
+  {
+   "title": "Restrepo (2010)",
+   "genres": [
+    "Documentary",
+    "War"
+   ],
+   "year": "2010",
+   "cos": 0.47888049483299255
+  },
+  {
+   "title": "Dark Blue World (Tmavomodr\u00fd svet) (2001)",
+   "genres": [
+    "Drama",
+    "War"
+   ],
+   "year": "2001",
+   "cos": 0.4764775037765503
+  },
+  {
+   "title": "Why We Fight (2005)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2005",
+   "cos": 0.47579872608184814
+  },
+  {
+   "title": "Metallica: Some Kind of Monster (2004)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2004",
+   "cos": 0.4725440442562103
+  },
+  {
+   "title": "Midnight Clear, A (1992)",
+   "genres": [
+    "Drama",
+    "War"
+   ],
+   "year": "1992",
+   "cos": 0.4716411530971527
+  },
+  {
+   "title": "Tae Guk Gi: The Brotherhood of War (Taegukgi hwinalrimyeo) (2004)",
+   "genres": [
+    "Action",
+    "Drama",
+    "War"
+   ],
+   "year": "2004",
+   "cos": 0.46073636412620544
+  },
+  {
+   "title": "Orca: The Killer Whale (1977)",
+   "genres": [
+    "Action",
+    "Drama",
+    "Horror",
+    "Thriller"
+   ],
+   "year": "1977",
+   "cos": 0.45156335830688477
+  },
+  {
+   "title": "Tigerland (2000)",
+   "genres": [
+    "Drama"
+   ],
+   "year": "2000",
+   "cos": 0.4496908187866211
+  },
+  {
+   "title": "Band of Brothers (2001)",
+   "genres": [
+    "Action",
+    "Drama",
+    "War"
+   ],
+   "year": "2001",
+   "cos": 0.4491451382637024
+  },
+  {
+   "title": "Bridge Too Far, A (1977)",
+   "genres": [
+    "Action",
+    "Drama",
+    "War"
+   ],
+   "year": "1977",
+   "cos": 0.44903287291526794
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [
+  "All Quiet on the Western Front (1930)",
+  "Paths of Glory (1957)",
+  "Cross of Iron (1977)",
+  "King of Hearts (1966)",
+  "Born on the Fourth of July (1989)",
+  "Straw Dogs (1971)",
+  "Kill Bill: Vol. 1 (2003)",
+  "Green Room (2015)",
+  "Sympathy for Mr. Vengeance (Boksuneun naui geot) (2002)",
+  "Sin City (2005)",
+  "Narc (2002)",
+  "Friends of Eddie Coyle, The (1973)",
+  "French Connection, The (1971)",
+  "Get Carter (1971)",
+  "City of God (Cidade de Deus) (2002)"
+ ],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [
+  "harrowing"
+ ],
+ "unknown_genres": [],
+ "fallback": false,
+ "filtered": 0
+}

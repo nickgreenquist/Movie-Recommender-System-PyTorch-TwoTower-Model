@@ -1,0 +1,203 @@
+{
+ "id": 66,
+ "cat": "family",
+ "utterance": "Something the whole family can watch on movie night",
+ "extraction": {
+  "genome_tags": [
+   "feel-good",
+   "heartwarming",
+   "fun"
+  ]
+ },
+ "recs": [
+  {
+   "title": "Juno (2007)",
+   "genres": [
+    "Comedy",
+    "Drama",
+    "Romance"
+   ],
+   "year": "2007",
+   "cos": 0.5707661509513855
+  },
+  {
+   "title": "Ratatouille (2007)",
+   "genres": [
+    "Animation",
+    "Children",
+    "Drama"
+   ],
+   "year": "2007",
+   "cos": 0.5354029536247253
+  },
+  {
+   "title": "Incredibles, The (2004)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2004",
+   "cos": 0.531900942325592
+  },
+  {
+   "title": "Little Miss Sunshine (2006)",
+   "genres": [
+    "Adventure",
+    "Comedy",
+    "Drama"
+   ],
+   "year": "2006",
+   "cos": 0.5288429260253906
+  },
+  {
+   "title": "Shrek 2 (2004)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Musical",
+    "Romance"
+   ],
+   "year": "2004",
+   "cos": 0.504952073097229
+  },
+  {
+   "title": "WALL\u00b7E (2008)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Romance",
+    "Sci-Fi"
+   ],
+   "year": "2008",
+   "cos": 0.48768937587738037
+  },
+  {
+   "title": "Love Actually (2003)",
+   "genres": [
+    "Comedy",
+    "Drama",
+    "Romance"
+   ],
+   "year": "2003",
+   "cos": 0.4861818552017212
+  },
+  {
+   "title": "Slumdog Millionaire (2008)",
+   "genres": [
+    "Crime",
+    "Drama",
+    "Romance"
+   ],
+   "year": "2008",
+   "cos": 0.4770541191101074
+  },
+  {
+   "title": "Big Fish (2003)",
+   "genres": [
+    "Drama",
+    "Fantasy",
+    "Romance"
+   ],
+   "year": "2003",
+   "cos": 0.4747908115386963
+  },
+  {
+   "title": "Inside Out (2015)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Drama",
+    "Fantasy"
+   ],
+   "year": "2015",
+   "cos": 0.46802306175231934
+  },
+  {
+   "title": "Chocolat (2000)",
+   "genres": [
+    "Drama",
+    "Romance"
+   ],
+   "year": "2000",
+   "cos": 0.4662330448627472
+  },
+  {
+   "title": "Toy Story 3 (2010)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Fantasy",
+    "IMAX"
+   ],
+   "year": "2010",
+   "cos": 0.4650753140449524
+  },
+  {
+   "title": "Ice Age (2002)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2002",
+   "cos": 0.46496790647506714
+  },
+  {
+   "title": "Harry Potter and the Prisoner of Azkaban (2004)",
+   "genres": [
+    "Adventure",
+    "Fantasy",
+    "IMAX"
+   ],
+   "year": "2004",
+   "cos": 0.4627854824066162
+  },
+  {
+   "title": "Bridget Jones's Diary (2001)",
+   "genres": [
+    "Comedy",
+    "Drama",
+    "Romance"
+   ],
+   "year": "2001",
+   "cos": 0.4627619981765747
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [
+  "Eddie the Eagle (2016)",
+  "Akeelah and the Bee (2006)",
+  "World's Fastest Indian, The (2005)",
+  "The Intern (2015)",
+  "Hector and the Search for Happiness (2014)",
+  "Up (2009)",
+  "The Fundamentals of Caring (2016)",
+  "Hunt for the Wilderpeople (2016)",
+  "Finding Nemo (2003)",
+  "Intouchables (2011)",
+  "Mummy, The (1999)",
+  "Pirates of the Caribbean: The Curse of the Black Pearl (2003)",
+  "Monsters, Inc. (2001)",
+  "Shrek (2001)",
+  "Charlie's Angels (2000)"
+ ],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": false,
+ "filtered": 0
+}

@@ -1,0 +1,185 @@
+{
+ "id": 70,
+ "cat": "era",
+ "utterance": "Something from the early 2000s",
+ "extraction": {
+  "liked_items": [],
+  "disliked_items": [],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "genome_tags": [],
+  "hard_constraints": {
+   "year_min": 2000,
+   "year_max": 2005,
+   "require_genres": [],
+   "exclude_genres": []
+  }
+ },
+ "recs": [
+  {
+   "title": "Lord of the Rings: The Fellowship of the Ring, The (2001)",
+   "genres": [
+    "Adventure",
+    "Fantasy"
+   ],
+   "year": "2001",
+   "cos": null
+  },
+  {
+   "title": "Lord of the Rings: The Return of the King, The (2003)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Drama",
+    "Fantasy"
+   ],
+   "year": "2003",
+   "cos": null
+  },
+  {
+   "title": "Lord of the Rings: The Two Towers, The (2002)",
+   "genres": [
+    "Adventure",
+    "Fantasy"
+   ],
+   "year": "2002",
+   "cos": null
+  },
+  {
+   "title": "Gladiator (2000)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Drama"
+   ],
+   "year": "2000",
+   "cos": null
+  },
+  {
+   "title": "Shrek (2001)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Fantasy",
+    "Romance"
+   ],
+   "year": "2001",
+   "cos": null
+  },
+  {
+   "title": "Memento (2000)",
+   "genres": [
+    "Mystery",
+    "Thriller"
+   ],
+   "year": "2000",
+   "cos": null
+  },
+  {
+   "title": "Pirates of the Caribbean: The Curse of the Black Pearl (2003)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Comedy",
+    "Fantasy"
+   ],
+   "year": "2003",
+   "cos": null
+  },
+  {
+   "title": "Finding Nemo (2003)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2003",
+   "cos": null
+  },
+  {
+   "title": "Monsters, Inc. (2001)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Fantasy"
+   ],
+   "year": "2001",
+   "cos": null
+  },
+  {
+   "title": "Eternal Sunshine of the Spotless Mind (2004)",
+   "genres": [
+    "Drama",
+    "Romance",
+    "Sci-Fi"
+   ],
+   "year": "2004",
+   "cos": null
+  },
+  {
+   "title": "Kill Bill: Vol. 1 (2003)",
+   "genres": [
+    "Action",
+    "Crime",
+    "Thriller"
+   ],
+   "year": "2003",
+   "cos": null
+  },
+  {
+   "title": "Amelie (Fabuleux destin d'Am\u00e9lie Poulain, Le) (2001)",
+   "genres": [
+    "Comedy",
+    "Romance"
+   ],
+   "year": "2001",
+   "cos": null
+  },
+  {
+   "title": "Batman Begins (2005)",
+   "genres": [
+    "Action",
+    "Crime",
+    "IMAX"
+   ],
+   "year": "2005",
+   "cos": null
+  },
+  {
+   "title": "Incredibles, The (2004)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2004",
+   "cos": null
+  },
+  {
+   "title": "Beautiful Mind, A (2001)",
+   "genres": [
+    "Drama",
+    "Romance"
+   ],
+   "year": "2001",
+   "cos": null
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": true,
+ "filtered": 56
+}

@@ -1,0 +1,155 @@
+{
+ "id": 51,
+ "cat": "constraint",
+ "utterance": "Nothing but documentaries about nature",
+ "extraction": {
+  "genome_tags": [
+   "nature"
+  ],
+  "hard_constraints": {
+   "require_genres": [
+    "Documentary"
+   ]
+  }
+ },
+ "recs": [
+  {
+   "title": "The Blue Planet (2001)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2001",
+   "cos": 0.46234649419784546
+  },
+  {
+   "title": "Dear Zachary: A Letter to a Son About His Father (2008)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2008",
+   "cos": 0.45837050676345825
+  },
+  {
+   "title": "Going Clear: Scientology and the Prison of Belief (2015)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2015",
+   "cos": 0.45301657915115356
+  },
+  {
+   "title": "The Jinx: The Life and Deaths of Robert Durst (2015)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2015",
+   "cos": 0.44352754950523376
+  },
+  {
+   "title": "Searching for Sugar Man (2012)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2012",
+   "cos": 0.43482086062431335
+  },
+  {
+   "title": "Citizenfour (2014)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2014",
+   "cos": 0.42170146107673645
+  },
+  {
+   "title": "Touching the Void (2003)",
+   "genres": [
+    "Adventure",
+    "Documentary"
+   ],
+   "year": "2003",
+   "cos": 0.4148191213607788
+  },
+  {
+   "title": "Why We Fight (2005)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2005",
+   "cos": 0.4104524254798889
+  },
+  {
+   "title": "The Barkley Marathons: The Race That Eats Its Young (2015)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2015",
+   "cos": 0.39829158782958984
+  },
+  {
+   "title": "Icarus (2017)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2017",
+   "cos": 0.3952518701553345
+  },
+  {
+   "title": "Corporation, The (2003)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2003",
+   "cos": 0.39472755789756775
+  },
+  {
+   "title": "Fog of War: Eleven Lessons from the Life of Robert S. McNamara, The (2003)",
+   "genres": [
+    "Documentary",
+    "War"
+   ],
+   "year": "2003",
+   "cos": 0.39323240518569946
+  },
+  {
+   "title": "O.J.: Made in America (2016)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2016",
+   "cos": 0.3911442160606384
+  },
+  {
+   "title": "Enron: The Smartest Guys in the Room (2005)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2005",
+   "cos": 0.3878268301486969
+  },
+  {
+   "title": "Human Planet (2011)",
+   "genres": [
+    "Documentary"
+   ],
+   "year": "2011",
+   "cos": 0.3873123824596405
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [
+  "Planet Earth (2006)",
+  "Encounters at the End of the World (2008)",
+  "Planet Earth II (2016)",
+  "Earth (2007)",
+  "Alone in the Wilderness (2004)"
+ ],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": false,
+ "filtered": 2
+}

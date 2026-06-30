@@ -1,0 +1,174 @@
+{
+ "id": 49,
+ "cat": "constraint",
+ "utterance": "Comedies from the 80s",
+ "extraction": {
+  "hard_constraints": {
+   "require_genres": [
+    "Comedy"
+   ],
+   "year_min": 1980,
+   "year_max": 1989
+  }
+ },
+ "recs": [
+  {
+   "title": "Back to the Future (1985)",
+   "genres": [
+    "Adventure",
+    "Comedy",
+    "Sci-Fi"
+   ],
+   "year": "1985",
+   "cos": null
+  },
+  {
+   "title": "Princess Bride, The (1987)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Comedy",
+    "Fantasy",
+    "Romance"
+   ],
+   "year": "1987",
+   "cos": null
+  },
+  {
+   "title": "Ghostbusters (a.k.a. Ghost Busters) (1984)",
+   "genres": [
+    "Action",
+    "Comedy",
+    "Sci-Fi"
+   ],
+   "year": "1984",
+   "cos": null
+  },
+  {
+   "title": "Ferris Bueller's Day Off (1986)",
+   "genres": [
+    "Comedy"
+   ],
+   "year": "1986",
+   "cos": null
+  },
+  {
+   "title": "Breakfast Club, The (1985)",
+   "genres": [
+    "Comedy",
+    "Drama"
+   ],
+   "year": "1985",
+   "cos": null
+  },
+  {
+   "title": "When Harry Met Sally... (1989)",
+   "genres": [
+    "Comedy",
+    "Romance"
+   ],
+   "year": "1989",
+   "cos": null
+  },
+  {
+   "title": "Back to the Future Part II (1989)",
+   "genres": [
+    "Adventure",
+    "Comedy",
+    "Sci-Fi"
+   ],
+   "year": "1989",
+   "cos": null
+  },
+  {
+   "title": "Who Framed Roger Rabbit? (1988)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Crime",
+    "Fantasy",
+    "Mystery"
+   ],
+   "year": "1988",
+   "cos": null
+  },
+  {
+   "title": "Airplane! (1980)",
+   "genres": [
+    "Comedy"
+   ],
+   "year": "1980",
+   "cos": null
+  },
+  {
+   "title": "Blues Brothers, The (1980)",
+   "genres": [
+    "Action",
+    "Comedy",
+    "Musical"
+   ],
+   "year": "1980",
+   "cos": null
+  },
+  {
+   "title": "Beetlejuice (1988)",
+   "genres": [
+    "Comedy",
+    "Fantasy"
+   ],
+   "year": "1988",
+   "cos": null
+  },
+  {
+   "title": "Big (1988)",
+   "genres": [
+    "Comedy",
+    "Drama",
+    "Fantasy",
+    "Romance"
+   ],
+   "year": "1988",
+   "cos": null
+  },
+  {
+   "title": "Fish Called Wanda, A (1988)",
+   "genres": [
+    "Comedy",
+    "Crime"
+   ],
+   "year": "1988",
+   "cos": null
+  },
+  {
+   "title": "Lethal Weapon (1987)",
+   "genres": [
+    "Action",
+    "Comedy",
+    "Crime",
+    "Drama"
+   ],
+   "year": "1987",
+   "cos": null
+  },
+  {
+   "title": "This Is Spinal Tap (1984)",
+   "genres": [
+    "Comedy"
+   ],
+   "year": "1984",
+   "cos": null
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": true,
+ "filtered": 285
+}

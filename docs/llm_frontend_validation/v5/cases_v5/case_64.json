@@ -1,0 +1,208 @@
+{
+ "id": 64,
+ "cat": "family",
+ "utterance": "A family-friendly animated adventure from the last ten years, nothing scary",
+ "extraction": {
+  "liked_items": [],
+  "disliked_items": [],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "genome_tags": [
+   "feel-good"
+  ],
+  "hard_constraints": {
+   "require_genres": [
+    "Animation",
+    "Adventure"
+   ],
+   "exclude_genres": [
+    "Horror"
+   ],
+   "year_min": 2016,
+   "year_max": 2026
+  }
+ },
+ "recs": [
+  {
+   "title": "Paddington 2 (2017)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2017",
+   "cos": 0.29903939366340637
+  },
+  {
+   "title": "Finding Dory (2016)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Comedy"
+   ],
+   "year": "2016",
+   "cos": 0.2811690866947174
+  },
+  {
+   "title": "Zootopia (2016)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2016",
+   "cos": 0.2806417942047119
+  },
+  {
+   "title": "Christopher Robin (2018)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Comedy"
+   ],
+   "year": "2018",
+   "cos": 0.26780763268470764
+  },
+  {
+   "title": "Kubo and the Two Strings (2016)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Fantasy"
+   ],
+   "year": "2016",
+   "cos": 0.21198303997516632
+  },
+  {
+   "title": "Moana (2016)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Fantasy"
+   ],
+   "year": "2016",
+   "cos": 0.20169317722320557
+  },
+  {
+   "title": "Kung Fu Panda 3 (2016)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Animation"
+   ],
+   "year": "2016",
+   "cos": 0.19132846593856812
+  },
+  {
+   "title": "Despicable Me 3 (2017)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2017",
+   "cos": 0.18769684433937073
+  },
+  {
+   "title": "Coco (2017)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children"
+   ],
+   "year": "2017",
+   "cos": 0.18019530177116394
+  },
+  {
+   "title": "The Lion King (2019)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Drama"
+   ],
+   "year": "2019",
+   "cos": 0.17537209391593933
+  },
+  {
+   "title": "Abominable (2019)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2019",
+   "cos": 0.15737411379814148
+  },
+  {
+   "title": "Frozen II (2019)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Fantasy"
+   ],
+   "year": "2019",
+   "cos": 0.15120276808738708
+  },
+  {
+   "title": "Soul (2020)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy",
+    "Fantasy"
+   ],
+   "year": "2020",
+   "cos": 0.14781741797924042
+  },
+  {
+   "title": "Incredibles 2 (2018)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Animation",
+    "Children"
+   ],
+   "year": "2018",
+   "cos": 0.14668890833854675
+  },
+  {
+   "title": "Klaus (2019)",
+   "genres": [
+    "Adventure",
+    "Animation",
+    "Children",
+    "Comedy"
+   ],
+   "year": "2019",
+   "cos": 0.1447480469942093
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [
+  "Eddie the Eagle (2016)",
+  "Akeelah and the Bee (2006)",
+  "World's Fastest Indian, The (2005)",
+  "The Intern (2015)",
+  "Hector and the Search for Happiness (2014)"
+ ],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": false,
+ "filtered": 1838
+}

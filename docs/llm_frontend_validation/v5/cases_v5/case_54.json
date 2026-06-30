@@ -1,0 +1,193 @@
+{
+ "id": 54,
+ "cat": "constraint",
+ "utterance": "Crime dramas but please no violence",
+ "extraction": {
+  "liked_genres": [
+   "Crime",
+   "Drama"
+  ],
+  "genome_tags": [
+   "detective",
+   "noir",
+   "cerebral",
+   "dialogue driven"
+  ]
+ },
+ "recs": [
+  {
+   "title": "Kiss Me Deadly (1955)",
+   "genres": [
+    "Film-Noir"
+   ],
+   "year": "1955",
+   "cos": 0.615713357925415
+  },
+  {
+   "title": "Big Heat, The (1953)",
+   "genres": [
+    "Drama",
+    "Film-Noir"
+   ],
+   "year": "1953",
+   "cos": 0.5531019568443298
+  },
+  {
+   "title": "Scarlet Street (1945)",
+   "genres": [
+    "Film-Noir"
+   ],
+   "year": "1945",
+   "cos": 0.5444830060005188
+  },
+  {
+   "title": "Rififi (Du rififi chez les hommes) (1955)",
+   "genres": [
+    "Crime",
+    "Film-Noir",
+    "Thriller"
+   ],
+   "year": "1955",
+   "cos": 0.5376138687133789
+  },
+  {
+   "title": "Detour (1945)",
+   "genres": [
+    "Crime",
+    "Film-Noir"
+   ],
+   "year": "1945",
+   "cos": 0.5367574095726013
+  },
+  {
+   "title": "Asphalt Jungle, The (1950)",
+   "genres": [
+    "Crime",
+    "Film-Noir"
+   ],
+   "year": "1950",
+   "cos": 0.5365480184555054
+  },
+  {
+   "title": "One False Move (1992)",
+   "genres": [
+    "Crime",
+    "Drama",
+    "Film-Noir",
+    "Thriller"
+   ],
+   "year": "1992",
+   "cos": 0.5314856767654419
+  },
+  {
+   "title": "Seconds (1966)",
+   "genres": [
+    "Mystery",
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "1966",
+   "cos": 0.5251034498214722
+  },
+  {
+   "title": "Last Seduction, The (1994)",
+   "genres": [
+    "Crime",
+    "Drama",
+    "Thriller"
+   ],
+   "year": "1994",
+   "cos": 0.5221893787384033
+  },
+  {
+   "title": "In a Lonely Place (1950)",
+   "genres": [
+    "Drama",
+    "Film-Noir",
+    "Mystery",
+    "Romance"
+   ],
+   "year": "1950",
+   "cos": 0.5192487239837646
+  },
+  {
+   "title": "Barton Fink (1991)",
+   "genres": [
+    "Drama",
+    "Thriller"
+   ],
+   "year": "1991",
+   "cos": 0.5187889337539673
+  },
+  {
+   "title": "Gilda (1946)",
+   "genres": [
+    "Drama",
+    "Film-Noir",
+    "Mystery",
+    "Romance"
+   ],
+   "year": "1946",
+   "cos": 0.5180561542510986
+  },
+  {
+   "title": "Lady from Shanghai, The (1947)",
+   "genres": [
+    "Drama",
+    "Film-Noir",
+    "Mystery"
+   ],
+   "year": "1947",
+   "cos": 0.516592264175415
+  },
+  {
+   "title": "Sweet Smell of Success (1957)",
+   "genres": [
+    "Drama",
+    "Film-Noir"
+   ],
+   "year": "1957",
+   "cos": 0.5151069164276123
+  },
+  {
+   "title": "Bob le Flambeur (1955)",
+   "genres": [
+    "Crime",
+    "Drama"
+   ],
+   "year": "1955",
+   "cos": 0.5130174160003662
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [
+  "Memories of Murder (Salinui chueok) (2003)",
+  "Marshland (2014)",
+  "Thin Man, The (1934)",
+  "Laura (1944)",
+  "Murder, My Sweet (1944)",
+  "Out of the Past (1947)",
+  "Killers, The (1946)",
+  "Double Indemnity (1944)",
+  "Big Sleep, The (1946)",
+  "D.O.A. (1950)",
+  "Primer (2004)",
+  "Pi (1998)",
+  "Eternal Sunshine of the Spotless Mind (2004)",
+  "Ex Machina (2015)",
+  "Memento (2000)",
+  "My Night At Maud's (Ma Nuit Chez Maud) (1969)",
+  "Metropolitan (1990)",
+  "Sunset Limited, The (2011)",
+  "Glengarry Glen Ross (1992)",
+  "Winter Sleep (Kis Uykusu) (2014)"
+ ],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": false,
+ "filtered": 0
+}

@@ -1,0 +1,189 @@
+{
+ "id": 57,
+ "cat": "soft_genre",
+ "utterance": "I'm really into sci-fi lately",
+ "extraction": {
+  "liked_genres": [
+   "Sci-Fi"
+  ],
+  "genome_tags": [
+   "futuristic",
+   "intelligent sci-fi",
+   "thought-provoking"
+  ]
+ },
+ "recs": [
+  {
+   "title": "Close Encounters of the Third Kind (1977)",
+   "genres": [
+    "Adventure",
+    "Drama",
+    "Sci-Fi"
+   ],
+   "year": "1977",
+   "cos": 0.45599037408828735
+  },
+  {
+   "title": "Primer (2004)",
+   "genres": [
+    "Drama",
+    "Sci-Fi"
+   ],
+   "year": "2004",
+   "cos": 0.45208674669265747
+  },
+  {
+   "title": "Forbidden Planet (1956)",
+   "genres": [
+    "Drama",
+    "Sci-Fi"
+   ],
+   "year": "1956",
+   "cos": 0.4381558895111084
+  },
+  {
+   "title": "Silent Running (1972)",
+   "genres": [
+    "Drama",
+    "Sci-Fi"
+   ],
+   "year": "1972",
+   "cos": 0.43624651432037354
+  },
+  {
+   "title": "Europa Report (2013)",
+   "genres": [
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "2013",
+   "cos": 0.42347967624664307
+  },
+  {
+   "title": "Sunshine (2007)",
+   "genres": [
+    "Adventure",
+    "Drama",
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "2007",
+   "cos": 0.4198119342327118
+  },
+  {
+   "title": "Soylent Green (1973)",
+   "genres": [
+    "Drama",
+    "Mystery",
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "1973",
+   "cos": 0.4102981388568878
+  },
+  {
+   "title": "Dark City (1998)",
+   "genres": [
+    "Adventure",
+    "Film-Noir",
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "1998",
+   "cos": 0.3990158140659332
+  },
+  {
+   "title": "Brazil (1985)",
+   "genres": [
+    "Fantasy",
+    "Sci-Fi"
+   ],
+   "year": "1985",
+   "cos": 0.39363616704940796
+  },
+  {
+   "title": "2001: A Space Odyssey (1968)",
+   "genres": [
+    "Adventure",
+    "Drama",
+    "Sci-Fi"
+   ],
+   "year": "1968",
+   "cos": 0.391681432723999
+  },
+  {
+   "title": "Annihilation (2018)",
+   "genres": [
+    "Adventure",
+    "Mystery",
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "2018",
+   "cos": 0.3909696936607361
+  },
+  {
+   "title": "Contact (1997)",
+   "genres": [
+    "Drama",
+    "Sci-Fi"
+   ],
+   "year": "1997",
+   "cos": 0.38885045051574707
+  },
+  {
+   "title": "Fantastic Planet, The (Plan\u00e8te sauvage, La) (1973)",
+   "genres": [
+    "Animation",
+    "Sci-Fi"
+   ],
+   "year": "1973",
+   "cos": 0.38577303290367126
+  },
+  {
+   "title": "Omega Man, The (1971)",
+   "genres": [
+    "Action",
+    "Drama",
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "1971",
+   "cos": 0.38466036319732666
+  },
+  {
+   "title": "2010: The Year We Make Contact (1984)",
+   "genres": [
+    "Sci-Fi"
+   ],
+   "year": "1984",
+   "cos": 0.38390207290649414
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [
+  "Logan's Run (1976)",
+  "Gattaca (1997)",
+  "Demolition Man (1993)",
+  "Oblivion (2013)",
+  "Total Recall (1990)",
+  "Quatermass and the Pit (1967)",
+  "Day the Earth Stood Still, The (1951)",
+  "Arrival (2016)",
+  "Andromeda Strain, The (1971)",
+  "District 9 (2009)",
+  "Ex Machina (2015)",
+  "Truman Show, The (1998)",
+  "Moon (2009)",
+  "Manderlay (2005)",
+  "Donnie Darko (2001)"
+ ],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": false,
+ "filtered": 0
+}

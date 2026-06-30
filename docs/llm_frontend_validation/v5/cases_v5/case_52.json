@@ -1,0 +1,176 @@
+{
+ "id": 52,
+ "cat": "constraint",
+ "utterance": "Recent thrillers, last five years or so",
+ "extraction": {
+  "hard_constraints": {
+   "require_genres": [
+    "Thriller"
+   ],
+   "year_min": 2021,
+   "year_max": 2026
+  }
+ },
+ "recs": [
+  {
+   "title": "Nobody (2021)",
+   "genres": [
+    "Action",
+    "Crime",
+    "Thriller"
+   ],
+   "year": "2021",
+   "cos": null
+  },
+  {
+   "title": "Black Widow (2021)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Drama",
+    "Thriller"
+   ],
+   "year": "2021",
+   "cos": null
+  },
+  {
+   "title": "Bullet Train (2022)",
+   "genres": [
+    "Action",
+    "Mystery",
+    "Thriller"
+   ],
+   "year": "2022",
+   "cos": null
+  },
+  {
+   "title": "Nope (2022)",
+   "genres": [
+    "Horror",
+    "Mystery",
+    "Sci-Fi",
+    "Thriller"
+   ],
+   "year": "2022",
+   "cos": null
+  },
+  {
+   "title": "Red Notice (2021)",
+   "genres": [
+    "Action",
+    "Comedy",
+    "Crime",
+    "Thriller"
+   ],
+   "year": "2021",
+   "cos": null
+  },
+  {
+   "title": "Last Night in Soho (2021)",
+   "genres": [
+    "Drama",
+    "Horror",
+    "Mystery",
+    "Thriller"
+   ],
+   "year": "2021",
+   "cos": null
+  },
+  {
+   "title": "Pig (2021)",
+   "genres": [
+    "Drama",
+    "Thriller"
+   ],
+   "year": "2021",
+   "cos": null
+  },
+  {
+   "title": "John Wick: Chapter 4 (2023)",
+   "genres": [
+    "Action",
+    "Crime",
+    "Thriller"
+   ],
+   "year": "2023",
+   "cos": null
+  },
+  {
+   "title": "Prey (2022)",
+   "genres": [
+    "Action",
+    "Thriller"
+   ],
+   "year": "2022",
+   "cos": null
+  },
+  {
+   "title": "Barbarian (2022)",
+   "genres": [
+    "Horror",
+    "Thriller"
+   ],
+   "year": "2022",
+   "cos": null
+  },
+  {
+   "title": "The Courier (2021)",
+   "genres": [
+    "Drama",
+    "Thriller"
+   ],
+   "year": "2021",
+   "cos": null
+  },
+  {
+   "title": "The Gray Man (2022)",
+   "genres": [
+    "Action",
+    "Adventure",
+    "Thriller"
+   ],
+   "year": "2022",
+   "cos": null
+  },
+  {
+   "title": "X (2022)",
+   "genres": [
+    "Horror",
+    "Mystery",
+    "Thriller"
+   ],
+   "year": "2022",
+   "cos": null
+  },
+  {
+   "title": "The Guilty (2021)",
+   "genres": [
+    "Crime",
+    "Drama",
+    "Thriller"
+   ],
+   "year": "2021",
+   "cos": null
+  },
+  {
+   "title": "Army of the Dead (2021)",
+   "genres": [
+    "Action",
+    "Horror",
+    "Thriller"
+   ],
+   "year": "2021",
+   "cos": null
+  }
+ ],
+ "resolution": {
+  "liked": [],
+  "disliked": []
+ },
+ "anchors": [],
+ "anchor_weight": 1.0,
+ "unresolved_tags": [],
+ "unknown_genres": [],
+ "fallback": true,
+ "filtered": 6346
+}
