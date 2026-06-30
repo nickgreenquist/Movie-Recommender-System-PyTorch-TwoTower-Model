@@ -456,8 +456,14 @@ def recommend(ctx, extraction, top_n=TOP_N):
     # 5. Score whole corpus (raw dot product == cosine; both L2-normed). No alpha/temp.
     raw_scores = (ctx.all_embs @ user_emb.T).squeeze(-1)
 
-    # 6. Rank → drop seeds by title → apply post-filters → take top_n.
-    seed_titles = set(liked_resolved) | set(disliked_resolved) | set(anchors)
+    # 6. Rank → drop only USER-NAMED seeds → apply post-filters → take top_n.
+    #    Liked/disliked titles are films the user explicitly named, so we don't surface them back
+    #    (classic "don't recommend what they already know"). Genome anchors are the opposite:
+    #    SYNTHESIZED representatives of a mood the user never named — excluding them would hide
+    #    exactly the on-the-nose films the request asks for (a "western vibe" should be able to
+    #    surface the canonical westerns it anchored on; a future facet seed like Tom Hanks →
+    #    Cast Away should be recommendable). So anchors stay eligible for the output.
+    seed_titles = set(liked_resolved) | set(disliked_resolved)
     recs, kept, filtered = [], 0, 0
     if fallback:
         ranked_titles = fs['popularity_ordered_titles']
