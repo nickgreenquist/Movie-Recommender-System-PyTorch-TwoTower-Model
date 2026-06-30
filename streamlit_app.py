@@ -31,6 +31,8 @@ from src.evaluate import (
     USER_TYPE_TO_GENOME_TAGS,
 )
 from src.inference import build_user_embedding
+from src.llm_frontend import build_frontend_context, build_serving_model, recommend
+from src.llm_frontend_extraction import extract_query
 from src.model import MovieRecommender
 
 EXAMPLE_PROFILES = list(USER_TYPE_TO_FAVORITE_MOVIES.keys())
@@ -50,6 +52,11 @@ _ANCHORS_PER_TAG = 5
 _POSTER_COLS   = 5      # poster grid columns
 _PAGE_SIZE     = 20     # movies per page
 _TOTAL_RESULTS = 60     # total movies to fetch (3 pages)
+
+# Conversational ("Ask") tab — natural language → LLM intent extraction → the shared recommend()
+# pipeline. The LLM (Claude Haiku) only parses intent; the trained model still does all retrieval.
+# A light per-session call cap keeps the demo's hosted-LLM bill negligible (plan §Protections).
+_LLM_SESSION_CAP = 20   # max hosted extraction calls per browser session
 
 # Recommend / Examples popularity-correction A/B — the two separately-trained models the visitor
 # switches between. Prod bakes the Menon α=0.5 logit adjustment into training; the α=0 twin is a
@@ -131,6 +138,7 @@ class Artifacts(NamedTuple):
     all_norm_genome: torch.Tensor
     sim_spaces:      dict          # Similar tab's 2x2: {source: {representation: norm_matrix}}
     ts_inference:    torch.Tensor
+    frontend_ctx:    object        # src.llm_frontend.FrontendContext — powers the conversational Ask tab
     posters:         dict
     tmdb_ids:        dict
     map_coords:      object        # (N, 3) float32 baked 3D projection, all_ids order — None on old bundles
@@ -159,63 +167,8 @@ def _load_tmdb_ids(fs):
     return {}
 
 
-def _build_serving_model(fs, cfg):
-    """Reconstruct the serving MovieRecommender from the self-contained serving/ artifacts.
-
-    Mirrors src.train.build_model's MovieRecommender call, but sources every non-persistent
-    buffer from serving/ rather than the (gitignored, Streamlit-Cloud-absent) data/ dir: the
-    genome buffer is restacked from movieId_to_genome_tag_context, and the LLM buffer is read
-    from llm_feature_buffer baked into feature_store.pt at export time. We can't call build_model
-    directly here precisely because it loads data/llm_features_*.pt. feature_towers
-    ('genome' | 'llm' | 'both' | None) — from the exported model_config — selects which
-    semantic-feature towers are built.
-    """
-    feature_towers = cfg.get('feature_towers', cfg.get('content_feature_source', 'genome'))
-    has_genome = feature_towers in ('genome', 'both')
-    has_llm    = feature_towers in ('llm', 'both')
-
-    top_movies = fs['top_movies']
-
-    genome_context_buffer = None
-    genome_tags_len       = len(fs['genome_tag_ids'])
-    if has_genome:
-        genome_matrix = np.array(
-            [fs['movieId_to_genome_tag_context'][mid] for mid in top_movies], dtype=np.float32)
-        pad_row = np.zeros((1, genome_matrix.shape[1]), dtype=np.float32)
-        genome_context_buffer = torch.from_numpy(np.vstack([genome_matrix, pad_row]))
-        genome_tags_len = genome_matrix.shape[1]
-
-    llm_feature_buffer = None
-    llm_feature_len    = None
-    if has_llm:
-        llm_feature_buffer = fs['llm_feature_buffer']
-        llm_feature_len    = llm_feature_buffer.shape[1]
-
-    return MovieRecommender(
-        genres_len=len(fs['genres_ordered']),
-        tags_len=len(fs['tags_ordered']),
-        genome_tags_len=genome_tags_len,
-        top_movies_len=len(top_movies),
-        all_years_len=len(fs['years_ordered']),
-        timestamp_num_bins=fs['timestamp_num_bins'],
-        user_context_size=fs['user_context_size'],
-        feature_towers=feature_towers,
-        genome_context_buffer=genome_context_buffer,
-        llm_feature_buffer=llm_feature_buffer,
-        llm_feature_len=llm_feature_len,
-        item_genre_embedding_size=cfg['item_genre_embedding_size'],
-        item_tag_embedding_size=cfg['item_tag_embedding_size'],
-        item_genome_embedding_size=cfg.get('item_genome_embedding_size', 32),
-        item_llm_embedding_size=cfg.get('item_llm_embedding_size', 32),
-        item_movieId_embedding_size=cfg['item_movieId_embedding_size'],
-        item_year_embedding_size=cfg['item_year_embedding_size'],
-        user_genre_embedding_size=cfg['user_genre_embedding_size'],
-        timestamp_feature_embedding_size=cfg['timestamp_feature_embedding_size'],
-        user_genome_embedding_size=cfg.get('user_genome_embedding_size', 32),
-        user_llm_embedding_size=cfg.get('user_llm_embedding_size', 32),
-        proj_hidden=cfg.get('proj_hidden', 256),
-        output_dim=cfg.get('output_dim', 128),
-    )
+# _build_serving_model moved to src/llm_frontend.py (build_serving_model) so the deployed app and
+# the conversational front-end reconstruct the serving model from identical code — imported above.
 
 
 @st.cache_resource
@@ -233,9 +186,9 @@ def load_artifacts() -> Artifacts:
     me  = torch.load('serving/movie_embeddings.pt', weights_only=False)
     cfg = fs['model_config']
 
-    model = _build_serving_model(fs, cfg)
+    model = build_serving_model(fs, cfg)
     state_dict = torch.load('serving/model.pth', weights_only=True)
-    # The semantic-feature/context buffers are non-persistent (rebuilt in _build_serving_model);
+    # The semantic-feature/context buffers are non-persistent (rebuilt in build_serving_model);
     # drop any an older serving/model.pth still carries so strict load works on old and new artifacts.
     for buf in ('genome_context_buffer', 'content_context_buffer', 'llm_feature_buffer'):
         state_dict.pop(buf, None)
@@ -256,7 +209,7 @@ def load_artifacts() -> Artifacts:
     na_model_path = 'serving/model_no_alpha.pth'
     na_emb_path   = 'serving/movie_embeddings_no_alpha.pt'
     if os.path.exists(na_model_path) and os.path.exists(na_emb_path):
-        na_model = _build_serving_model(fs, cfg)
+        na_model = build_serving_model(fs, cfg)
         na_sd    = torch.load(na_model_path, weights_only=True)
         for buf in ('genome_context_buffer', 'content_context_buffer', 'llm_feature_buffer'):
             na_sd.pop(buf, None)
@@ -300,6 +253,11 @@ def load_artifacts() -> Artifacts:
         fs['timestamp_bins'], right=False,
     )
 
+    # Conversational ("Ask") tab: the natural-language pipeline reuses this exact loaded model +
+    # corpus. Build the shared FrontendContext once here (cheap lookups over fs) so the tab never
+    # reloads serving/ — it ranks against the same prod model the manual Recommend tab uses.
+    frontend_ctx = build_frontend_context(model, fs, all_ids, all_embs, ts_inference)
+
     poster_path = 'serving/posters.json'
     if os.path.exists(poster_path):
         with open(poster_path) as f:
@@ -330,7 +288,7 @@ def load_artifacts() -> Artifacts:
     return Artifacts(
         model=model, fs=fs, me=me, all_ids=all_ids, all_embs=all_embs, rec_models=rec_models,
         all_norm_genre=all_norm_genre, all_norm_genome=all_norm_genome, sim_spaces=sim_spaces,
-        ts_inference=ts_inference, posters=posters, tmdb_ids=tmdb_ids,
+        ts_inference=ts_inference, frontend_ctx=frontend_ctx, posters=posters, tmdb_ids=tmdb_ids,
         map_coords=map_coords, map_reducer=map_reducer,
     )
 
@@ -721,6 +679,122 @@ def tab_recommend_examples(rec_models, fs, all_ids, ts_inference, posters, tmdb_
     if anchor_caption:
         st.caption(anchor_caption)
     _show_results('examples', posters, fs, tmdb_ids)
+
+
+# ── Tab: Ask (natural language → LLM extraction → trained model) ──────────────
+
+def _anthropic_api_key():
+    """The Anthropic key for the conversational tab: Streamlit secret first (the deployed path,
+    set in the Community Cloud dashboard), then ANTHROPIC_API_KEY from the environment (convenient
+    for local runs). None when neither is set — the tab then shows a setup notice and never calls
+    the API. Wrapped in try/except because st.secrets raises when no secrets.toml exists locally."""
+    try:
+        key = st.secrets.get('ANTHROPIC_API_KEY')
+    except Exception:
+        key = None
+    return key or os.environ.get('ANTHROPIC_API_KEY')
+
+
+def _report_to_df(report, fs):
+    """Adapt src.llm_frontend.recommend()'s report into the poster-feed DataFrame the other tabs
+    use (Title / Genres / Top Genome Tags), so the conversational results render as the same cards."""
+    i_to_name = _build_genome_i_to_name(fs)
+    rows = []
+    for title, genres, _year, _score in report['recs']:
+        mid = fs['title_to_movieId'].get(title)
+        rows.append({
+            'Title':           title,
+            'Genres':          ', '.join(genres),
+            'Top Genome Tags': _top_genome_tags(mid, fs, i_to_name) if mid is not None else '',
+        })
+    return pd.DataFrame(rows)
+
+
+def _render_ask_debug(report):
+    """A collapsed expander showing how the request was interpreted — the structured fields the LLM
+    produced and what they resolved to. The plan keeps raw LLM output out of the default UI (no
+    free-chatbot channel); this panel is opt-in, for the portfolio narrative of how the layer works."""
+    ex  = report['extraction']
+    res = report['resolution']
+    with st.expander("How your request was interpreted (the model's input — normally hidden)"):
+        st.caption(
+            "The LLM only fills in the structured fields below; the trained two-tower model does the "
+            "actual retrieval. This panel is here for transparency — end users never see LLM output."
+        )
+        liked    = [c for _, c, _ in res['liked'] if c]
+        disliked = [c for _, c, _ in res['disliked'] if c]
+        dropped  = [r for r, c, _ in res['liked'] + res['disliked'] if not c]
+        if liked:
+            st.markdown("**Resolved likes:** " + ", ".join(liked))
+        if disliked:
+            st.markdown("**Resolved dislikes:** " + ", ".join(disliked))
+        if report['anchors']:
+            st.markdown(f"**Mood anchors** (weight {report['anchor_weight']}): "
+                        + ", ".join(report['anchors']))
+        hc = ex.get('hard_constraints') or {}
+        if any(hc.get(k) for k in ('year_min', 'year_max', 'require_genres', 'exclude_genres')):
+            st.markdown(f"**Hard post-filters:** `{hc}`")
+        if dropped:
+            st.markdown("**Titles not matched in the catalog (dropped):** " + ", ".join(dropped))
+        if report['fallback']:
+            st.markdown("_No usable taste signal extracted — showing popular titles._")
+        st.markdown("**Raw extraction (consumed internally):**")
+        st.json(ex)
+
+
+def tab_ask(art, posters, tmdb_ids):
+    fs = art.fs
+    st.caption(
+        "Describe what you're in the mood for in plain English — name a few films you love, a vibe, "
+        "an era, genres to include or avoid. A small, fast LLM (Claude Haiku) translates your words "
+        "into the model's input; the **trained two-tower model does all the recommending**. The LLM "
+        "is the interface, not the recommender, and its output is never shown. See the About tab for "
+        "why this is the production pattern."
+    )
+
+    utterance = st.text_area(
+        "What do you feel like watching?",
+        key='ask_text', height=90,
+        placeholder=("e.g. Slow, atmospheric sci-fi like Blade Runner and Arrival — "
+                     "nothing before 2000, and no horror."),
+    )
+
+    _, btn_col, _ = st.columns([2, 1, 2])
+    if btn_col.button("Get Recommendations", use_container_width=True, key='ask_btn'):
+        if not utterance.strip():
+            st.warning("Type a request first.")
+        else:
+            api_key = _anthropic_api_key()
+            calls   = st.session_state.get('ask_calls', 0)
+            if api_key is None:
+                st.info(
+                    "The conversational tab needs an Anthropic API key. Set `ANTHROPIC_API_KEY` in "
+                    "`.streamlit/secrets.toml` (or the environment) — see the README. The manual "
+                    "**Recommend** tab works without a key."
+                )
+            elif calls >= _LLM_SESSION_CAP:
+                st.warning(
+                    f"Per-session limit reached ({_LLM_SESSION_CAP} requests). Refresh to start over "
+                    "— this cap keeps the demo's API cost negligible."
+                )
+            else:
+                extraction = None
+                try:
+                    with st.spinner("Understanding your request…"):
+                        extraction = extract_query(utterance, fs, api_key=api_key)
+                except Exception as exc:  # surface, never crash the app
+                    st.error(f"Couldn't reach the language model — try again in a moment. "
+                             f"({type(exc).__name__})")
+                if extraction is not None:
+                    st.session_state['ask_calls'] = calls + 1
+                    report = recommend(art.frontend_ctx, extraction, top_n=_TOTAL_RESULTS)
+                    _store_results(_report_to_df(report, fs), 'ask')
+                    st.session_state['ask_report'] = report
+
+    report = st.session_state.get('ask_report')
+    if report is not None:
+        _render_ask_debug(report)
+    _show_results('ask', posters, fs, tmdb_ids)
 
 
 # ── Tab: Similar ──────────────────────────────────────────────────────────────
@@ -1332,6 +1406,7 @@ def tab_about():
 | Tab | What it shows |
 |---|---|
 | **Recommend** | Build a taste vector from your *own* picks (optionally nudged with genome tags) → ranked poster grid. Cold-start-free serving in action. |
+| **Ask** | Type a request in plain English; a small, fast LLM (Claude Haiku) parses it into the model's input and the trained two-tower model does the retrieval. The LLM is the **interface, not the recommender** — its output is never shown to you. |
 | **Examples** | Pre-built taste personas (Sci-Fi, Horror, Heist, …) to see the model's range without typing anything. |
 | **Similar** | Nearest neighbors of any movie in the 128-dim space — with a learned-embedding vs. raw-feature toggle, over genome or LLM content. |
 | **Genres** / **Genome** | Probe what the *item tower itself* encodes — query its genre and genome-tag sub-spaces directly. |
@@ -1440,13 +1515,16 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-recommend_tab, examples_tab, similar_tab, genres_tab, genome_tab, map_tab, about_tab = st.tabs(
-    ["Recommend", "Examples", "Similar", "Genres", "Genome", "Map", "About"]
+recommend_tab, ask_tab, examples_tab, similar_tab, genres_tab, genome_tab, map_tab, about_tab = st.tabs(
+    ["Recommend", "Ask", "Examples", "Similar", "Genres", "Genome", "Map", "About"]
 )
 
 with recommend_tab:
     tab_recommend(art.rec_models, art.fs, art.all_ids, art.ts_inference,
                   art.posters, art.tmdb_ids)
+
+with ask_tab:
+    tab_ask(art, art.posters, art.tmdb_ids)
 
 with examples_tab:
     tab_recommend_examples(art.rec_models, art.fs, art.all_ids, art.ts_inference,

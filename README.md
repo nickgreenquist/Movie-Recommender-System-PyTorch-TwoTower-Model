@@ -128,13 +128,43 @@ Pick a few movies you love and the model builds your taste vector and ranks the 
   <img src="docs/assets/demo-recommend.png" alt="Interactive Recommend tab — selecting Toy Story, Finding Nemo, and Monsters Inc. returns Shrek 2, The Incredibles, WALL·E, and other family/animation picks" width="820">
 </p>
 
-The [Streamlit app](https://movie-recommender-system-two-tower-model.streamlit.app/) has six tabs:
+The [Streamlit app](https://movie-recommender-system-two-tower-model.streamlit.app/) has several tabs:
 
 - **Recommend** — pick your favorite movies (and optionally nudge with genome tags) → ranked poster grid.
+- **Ask** — describe what you want in plain English; a small LLM parses your request into the model's input and the trained model recommends (the LLM is the interface, never the recommender). [More ↓](#-natural-language-input--the-llm-front-end)
 - **Examples** — pre-built taste personas (Sci-Fi, Horror, Comedy, Heist, …) to see the model's range instantly.
 - **Similar** — nearest neighbors of any movie in the 128-dim embedding space.
 - **Genres** / **Genome** — probe what the *item tower* learned about genres and genome tags.
 - **About** — the full architecture, training, and popularity-correction write-up.
+
+---
+
+## 💬 Natural-language input — the LLM front-end
+
+The **Ask** tab adds a conversational layer on top of the trained model. Type a request in plain English — *"slow, atmospheric sci-fi like Blade Runner and Arrival, nothing before 2000, no horror"* — and a small, fast hosted LLM (**Claude Haiku**) parses it into the structured input the user tower already consumes: liked/disliked titles, mood as closed-vocab **genome tags** (mapped to representative anchor movies), soft genre hints, and hard year/genre filters. **The trained two-tower model still does all the retrieval; the LLM never picks a single movie.**
+
+This is the production-correct pattern for LLMs in recommenders — *classical model for fast, cheap, large-catalog retrieval; LLM for natural-language understanding at the edge.* At this demo's ~9k-item scale you could feed the catalog to an LLM directly; the two-tower model earns its place only at production scale — catalogs too large for any context window, millisecond latency budgets, billions of requests. The Ask tab demonstrates the **pattern that scales**, not a cost saving at demo scale.
+
+A few deliberate choices:
+
+- **The LLM's output is never shown to you.** It's consumed internally to build the model's input and then discarded — so there's no channel to use the demo as a free general-purpose chatbot, and "LLM as plumbing, not product" stays concrete. (A debug expander can reveal the parsed fields for the curious.)
+- **A small model, on purpose.** Parsing one short message into JSON doesn't need a frontier model; Haiku does it at ~10–20× lower cost. A typical extraction call is well under a cent.
+- **Structured output + caps.** The extraction is a *forced tool call* against a JSON schema, so the pipeline never breaks on malformed output; output is capped at ~300 tokens and a per-session call limit keeps the bill negligible.
+
+The extraction prompt was tuned and validated **entirely in-repo against the trained model** before any API wiring — the reusable harness is [`tools/llm_frontend_probe.py`](tools/llm_frontend_probe.py) (`python tools/llm_frontend_probe.py --smoke`), and the shared retrieval pipeline both it and the app import is [`src/llm_frontend.py`](src/llm_frontend.py).
+
+**Rollout:** v1 (shipped) — titles + mood + year/genre filters. v1.5 — richer post-retrieval filters (director, content rating, runtime, *"actually set in Paris"*) from a baked facet store. v2 — explanations, multi-turn. See [`docs/plans/plan.md`](docs/plans/plan.md).
+
+### Enabling it locally
+
+The Ask tab needs an Anthropic API key (everything else in the app runs without one):
+
+```bash
+cp .streamlit/secrets.toml.example .streamlit/secrets.toml   # then paste your key
+# or: export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Get a key at [console.anthropic.com](https://console.anthropic.com/). On Streamlit Community Cloud, set `ANTHROPIC_API_KEY` in the app's **Settings → Secrets** instead. `.streamlit/secrets.toml` is gitignored, so a local key can never be committed.
 
 ---
 
@@ -148,6 +178,8 @@ The trained, exported model lives in [`serving/`](serving/) and is committed —
 pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
+
+> The conversational **Ask** tab needs an Anthropic API key — see [Natural-language input](#-natural-language-input--the-llm-front-end). Every other tab runs without one.
 
 ### Reproduce the model from scratch
 

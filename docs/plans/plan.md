@@ -16,6 +16,8 @@ This is a deliberate demonstration of a production pattern, NOT a claim that the
 
 Keep this framing in the README. Do not claim the architecture "saves money" at demo scale — it doesn't, and any sharp reader will catch that. Frame it as demonstrating the pattern that scales.
 
+**Grounding reference:** [`hybrid_llm_recommender_research.md`](./hybrid_llm_recommender_research.md) — a transcribed Gemini Deep Research survey of this exact hybrid LLM-front-end + two-tower pattern (closed-vocabulary parsing, anchor resolution, HNSW retrieval, logit-level re-rank, semantic caching, plus Spotify/Netflix/DoorDash/Airbnb/Pinterest production case studies). Use it as the prior-art / design-rationale source for this plan.
+
 ---
 
 ## Iterative Rollout (v1 → v1.5 → v2)
@@ -156,6 +158,16 @@ Only after the prompt is locked in does v1 proceed to wire the real hosted Haiku
 
 The Claude Code test loop is done; these decisions and artifacts are the build spec for the
 remaining v1 work (hosted Haiku API + Streamlit tab). Build against these, don't re-derive them.
+
+> **v1 SHIPPED (2026-06-27).** The retrieval / resolution / anchor / post-filter core was lifted into
+> `src/llm_frontend.py` (`build_serving_model`, `FrontendContext` / `build_frontend_context`,
+> `resolve_title`, `anchors_for`, `recommend`); the prompt + schema moved `tools/` → `src/llm_frontend_prompt.py`;
+> the hosted call is `src/llm_frontend_extraction.py` (`extract_query` — forced-tool Claude Haiku
+> `claude-haiku-4-5`, `max_tokens` 300). `streamlit_app.py` gained an **Ask** tab that reuses cached
+> `load_artifacts()` via `art.frontend_ctx` (built once in `load_artifacts`), with a `.streamlit/secrets.toml`
+> key + per-session call cap (`_LLM_SESSION_CAP`). The two `_build_serving_model` copies are now one (the app
+> imports the shared `build_serving_model`). The handoff bullets below describe the **pre-refactor** `tools/`
+> layout — see the modules above for current paths.
 
 **Artifacts that already exist and are validated:**
 - `tools/llm_frontend_probe.py` — serving/-only harness: `resolve_title` (fuzzy resolution),
