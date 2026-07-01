@@ -111,6 +111,10 @@ Export bakes these into `feature_store.pt`. Keep it int-keyed and compact.
   HARD `require_people`; "I **like** X", "movies **like** X's" = SOFT `liked_people`. Keep
   content-rating/runtime unsupported for now (no clean data). Names are emitted as free strings (the
   harness resolves to IDs); do not enum-constrain (the person vocab is huge).
+  **[Correction, 2026-07-01 — the "no clean data" premise here is OVERTURNED.** The Ask-AI holes
+  measurement found US certification (`details_raw.release_dates`, 98%) and `tmdb.runtime` (100%) are
+  already in the scrape → both become cheap Engine-1 structured facets. See "Ask-AI holes — measured
+  results" at the end of Expansion II.]
 - **`resolve_person(raw, ctx) -> (pid|None, note)`**: `_norm_name(raw)` → `person_name_to_ids`. Exact
   normalized hit → ID (popularity/most-films tie-break on collision). Miss → None + report (drop, like
   unresolved titles). Optional light fuzzy as a last resort, high cutoff.
@@ -156,27 +160,20 @@ exist; the LLM may also emit it.
 > the work into **three engines**, not one keyword-vocab phase. Measurement scripts + judge outputs:
 > memory `project_facet_expansion_measurement`; scratchpad `m1*.py`/`m2_*.py`/`actions.py`/`queries.py`.
 
-> ### ▶ IMMEDIATE NEXT STEP (resume here — 2026-06-30, paused end-of-day)
-> **Continue the "Ask-AI holes" measurement, then apply the plan fix it produces.** In progress: a
-> subagent run that (1) generated **500 realistic "Ask AI" prompts** across 50 user archetypes, (2)
-> oracle-recommends each grounded in our real per-movie data, tagging every signal's coverage
-> (HAVE/PARTIAL/MISSING) and layer (intake vs post-filter), (3) synthesizes the **holes** in this plan
-> (missing data axes, intents the intake LLM isn't taught, filters we can't compute, unhandled intent
-> classes, composition/thin-pool risks). The 500-prompt generation is DONE and saved; only the
-> rec+synthesis remain. Run cost-controlled (**Sonnet**, ~20 agents at a time — the full 50 exhausts the
-> usage window).
+> ### ▶ Ask-AI holes measurement — DONE (2026-07-01)
+> The "Ask-AI holes" run is **complete**: 500 realistic prompts (50 archetypes × 10) were oracle-recommended
+> and coverage-tagged on **Sonnet** (batch 00 = 100 reused Opus records; batches 01–04 = 400 fresh Sonnet,
+> run in cost-controlled sets of 10). Results are folded into the new subsection
+> **"Ask-AI holes — measured results"** at the end of this Expansion II. **Headline:** the plan's biggest
+> assumed data gaps (content-rating, runtime, franchise) are **not** data gaps — they're already in the
+> scrape at 98–100% coverage and become cheap Engine-1 structured facets. See that subsection for the full
+> axis table, the reversal, and the priority-ranked action list.
 >
-> **Durable artifacts** (survive session reset — under `docs/llm_frontend/validation/ask_ai_holes/`):
-> `harvest_500_prompts.json` (the 500 prompts, 50 groups × 10, + 100 already-done Opus rec records),
-> `corpus_helper.py` (grounding CLI: `prompts <i>` / `title` / `search` / `genome` / `kw`; needs
-> `serving/feature_store.pt` + `llm_features/cache/facet_store.pt`; rebuild `agg.pkl` from the scrape via
-> the scratchpad `aggregate.py` if absent), `wf_rec_20_subset.js` (**tomorrow's launch** — 20 hole-rich
-> archetypes, Sonnet, rec-only), `wf_rec_synth_50.js` (full 50 + 6 synthesis lenses).
+> **Durable artifacts** (`docs/llm_frontend/validation/ask_ai_holes/`): `harvest_500_prompts.json` (prompts),
+> `rec_batch_00–04.json` (the 500 tagged records), `rec_aggregate.json` (axis tally + holes), `corpus_helper.py`
+> (grounding CLI). Analysis scripts in the session scratchpad (`aggregate_holes.py`).
 >
-> **To resume:** point `corpus_helper.py` at the harvest, run `wf_rec_20_subset.js` via the Workflow
-> tool, aggregate the returned coverage table + holes, then fold the findings into "The three engines"
-> below as concrete new intake slots / post-filter checks / data-build tasks. THEN the earlier "commit
-> the plan revision" question is still open.
+> **Open question (unchanged):** whether to **commit this plan revision** — still the user's call.
 
 ### The real ask distribution (measured, not assumed)
 The users' own example prompts, mapped to what actually carries the signal and which engine serves it:
@@ -339,6 +336,168 @@ Net: add no provenance plumbing now; just don't throw the signal away when build
   never `if probe in keyword`.
 - **Scope discipline:** the win is *wiring existing data* (keywords + countries + credits + genome), not
   new extraction. Engine 3 is the boil-the-ocean trap the measurement closed — keep it demoted.
+
+### Ask-AI holes — measured results (500 prompts × 50 archetypes, Sonnet oracle-rec, 2026-07-01)
+
+**Method.** 500 realistic "Ask AI" prompts (50 user archetypes × 10) were oracle-recommended by a
+film-curator agent that tagged every signal it used with **coverage** (HAVE/PARTIAL/MISSING vs our real
+`serving/` data) and **layer** (intake = must be extracted from the prompt / postfilter = must be verified
+on candidates). 2,463 signals total. Records `ask_ai_holes/rec_batch_00–04.json`, aggregate
+`rec_aggregate.json`, script `scratchpad/aggregate_holes.py`. (96% of prompts carry ≥1 non-HAVE signal, but
+that headline is noise — almost every rich prompt grazes one lossy axis; the **structural** holes below are
+what matter.)
+
+**Axis coverage — prompt-level demand vs gap (of 500):**
+
+| axis | use | gap | gap% | dominant layer | verdict |
+|---|---|---|---|---|---|
+| genre | 378 | 7 | 2% | intake | ✅ workhorse |
+| mood_affect | 351 | 82 | 23% | both | ✅ Engine 2 (genome) |
+| theme_subject | 181 | 117 | 65% | intake | ⚠️ Engine 1b keyword (recall) |
+| similar_to_title | 160 | 31 | 19% | intake | ✅ existing anchor path |
+| tone_maturity | 126 | 117 | 93% | both | ⚠️ Engine 2 (genome, lossy) |
+| popularity_obscurity | 125 | 23 | 18% | postfilter | ✅ ranking |
+| nationality + language | 111 | 15 | 14% | postfilter | ✅ Engine 1a (planned) |
+| era_period + decade | 104 | 12 | 12% | intake | ✅ year native |
+| subgenre | 101 | 82 | 81% | intake | ⚠️ Engine 1b keyword |
+| pacing | 94 | 91 | 97% | both | ❗ weak genome proxy only |
+| person_director + actor | 86 | 7 | 8% | intake | ✅ people store (built) |
+| occasion_audience | 81 | 81 | 100% | intake | ❗ NEW intent class |
+| character_type | 64 | 59 | 92% | intake | ⚠️ Engine 1b/2 partial |
+| visual_style | 58 | 53 | 91% | intake | ❗ director-anchor + honest limit |
+| setting_location | 57 | 51 | 89% | intake | ⚠️ Engine 1c (planned) |
+| awards_acclaim | 55 | 53 | 96% | postfilter | 🟢 vote_average on disk + awards(data) |
+| ending_type | 47 | 45 | 96% | postfilter | ⚠️ Engine 2 + negation postfilter |
+| content_rating | 40 | 40 | 100% | postfilter | 🟢 release_dates **on disk** |
+| runtime | 34 | 34 | 100% | postfilter | 🟢 tmdb.runtime **on disk** |
+| franchise_universe | 29 | 29 | 100% | intake | 🟢 belongs_to_collection **on disk** |
+| streaming_availability | 11 | 11 | 100% | — | ⛔ out of scope (dynamic) |
+| person_composer | 8 | 8 | 100% | intake | 🟢 credits crew **on disk** |
+| representation_diversity | 8 | 8 | 100% | intake | 🟡 dir-gender(planned)+lgbt kw / limit |
+| cross_media | 7 | 7 | 100% | intake | 🟡 source-kw cheap / seed-map hard |
+
+**⚑ The reversal (most important finding).** The plan's stance *"keep content-rating/runtime unsupported —
+no clean data"* is **wrong on the data.** Verifying the scrape (`llm_features/cache/scraped/*.json`), the top
+pure-MISSING, highest-demand axes are **already on disk at 98–100% coverage** — wiring, not extraction:
+- **runtime** `tmdb.runtime` — **100%**.
+- **content rating** `details_raw.release_dates` (US certification) — **98%**.
+- **franchise** `details_raw.belongs_to_collection` (id+name) — present for **all 2,062 franchise-entry films**
+  (22% of corpus; the rest are genuinely standalone → a clean membership signal, not a gap).
+- **composer** `credits_raw.crew[job='Original Music Composer'].id` — **89%**.
+- **budget/revenue** `details_raw.budget/revenue` — 74% (indie-vs-blockbuster scale).
+- **vote_average / vote_count** — **100%, and already baked into `serving/`** (currently unused for ranking).
+
+So five of the highest-demand "holes" collapse into **Engine 1, cheap** — the same membership / numeric-filter
+machinery, no LLM, no new scrape.
+
+**A · Engine 1 — new structured facets (CHEAP; data on disk; pull into F1).** Reuse `_passes_constraints` +
+candidate maps, baked into `serving/` at export:
+1. **content_rating** — parse US cert from `release_dates`; postfilter `require_rating`/`exclude_rating≥R` +
+   a "kid-safe" (G/PG) flag. 40/500, 37 postfilter — the single biggest deferred data hole, and it's free.
+   Serves the whole content-sensitivity / family / "clean" / "no sex-or-gore" cluster.
+2. **runtime** — wire `tmdb.runtime`; numeric filter like year (`max_runtime`/`min_runtime`). 34/500, 31
+   postfilter. Serves runtime-constrained (in-flight, bedtime, "under 90", "no filler").
+3. **franchise/collection** — `belongs_to_collection.id` membership → "the X films", **franchise EXCLUSION**
+   ("no sequels", "skip the MCU"), watch-order. 29/500. Generalizes the people-store id-membership directly.
+4. **composer** — extend the people store with the composer crew id. "Scored by Hans Zimmer" + soundtrack
+   pulls. 8/500 but trivial.
+5. **vote_average quality-floor** — already in `serving/`; expose as a postfilter/ranking gate for "actually
+   good / not trash / critically loved". Covers most of awards_acclaim (55/500) cheaply; true awards
+   (Oscar/Palme) stay a data-build → defer.
+6. **budget scale** (optional) — indie/blockbuster attribute.
+
+**B · New INTAKE slots the extractor isn't taught (schema/prompt; F1–F2).**
+- **occasion / audience** (81/500, 100% gap, intake-dominant — the largest omitted intent class). Add an
+  `occasion` slot (date-night, kids, party, background, solo-unwind); resolve via a routing table to a
+  **composition** of existing signals (kids → animation/family genre + rating≤PG + short runtime; party →
+  popular + comedy/upbeat mood; date-night → romance/dramedy + mid-runtime). A routing problem, like affect —
+  not a data axis.
+- **exclusion generalization** — `exclude_*` beyond genres/people: mood ("nothing sad"), ending ("no downer"),
+  content ("no sex/gore" → rating), franchise ("no sequels"). The two-tower can't hard-subtract, so **exclusion
+  is postfilter-only**; where the excluded axis is itself MISSING, say so rather than silently failing.
+- **quality_floor** (soft) — "actually good" → vote_average gate.
+- **surprise / no-preference** — cold-start "just pick something": route to popularity **+ diversity (MMR) or a
+  seeded shuffle.** The holes flag that "surprise" currently collapses to the popularity prior with no
+  serendipity or diversity objective (no MMR to guarantee the shortlist even differs).
+
+**C · Route-to-Engine-2 (genome/anchor; PARTIAL, soft-only, honest limits).** pacing (91 gap),
+plot_structure (59), ending_type (45), character_type (59), tone_maturity (117), some visual_style — genome
+carries partial proxies (slow/fast-paced, twist-ending/nonlinear/mindfuck, happy-ending,
+anti-hero/strong-female-lead, dark/gritty). Soft anchors, never hard filters; surface that they're
+approximate. **pacing** is the weakest (mostly MISSING even in genome) — set expectations, don't promise it.
+
+**D · Genuinely unservable / out-of-scope (state honestly; build nothing).** streaming availability
+(dynamic/licensing); recency past ~2023 (corpus boundary — no Barbie/Oppenheimer/2024+); cross-media *seed*
+from a TV show/game (title→movie-space mapping — though "based on a video game" *source* is a cheap keyword);
+"so-bad-it's-good"/camp (vote_average conflates boring-bad with fun-bad); cast ethnicity / fine
+representation; per-scene content grading ("one scary scene for an 8-yo"); background/second-screen
+"plot-light" axis; set-in vs filmed-in. The ≥200-rating corpus floor also caps true obscurity (deep cuts fall
+below it — "hidden gem" is only *relative*).
+
+**E · Composition & thin pools (confirms the plan's hardest problem).** The compositional archetypes stack 4–6
+constraints (3–5 non-HAVE each); thin intersections recur (chess <5 films, Italian giallo absent, Marrakech
+sparse). Rule: **when degrading a thin/empty intersection, drop the un-computable or MISSING hard constraint
+first** (you can't enforce what you don't have) — keep the highest-confidence membership facet + soft anchors,
+never fall silently to empty/popularity.
+
+**Priority (demand × cheapness):**
+1. **content_rating + runtime + vote_average-floor** — highest-demand pure holes, all free, all postfilter. Do first.
+2. **franchise/collection** (incl. exclusion) — free, high-salience, reuses the people-store id-membership.
+3. **occasion intake + routing** — largest intent class; no data, pure schema/routing.
+4. **composer** — trivial people-store extension.
+5. Engine-2 routing (pacing/ending/plot/character/tone) — soft, honest limits.
+6. Everything in **D** — document as out-of-scope; don't build.
+
+**Phasing update:** pull the cheap structured facets (content_rating, runtime, franchise, composer,
+vote_average-floor) into **F1** beside country/language/format — same "wire existing data" move, and they carry
+*more* demand than some originally-planned keyword facets. Occasion-routing + exclusion-generalization join
+**F2** with vibe/affect. Nothing here disturbs the Engine-3 demotion — it stays demoted.
+
+### Cross-check deltas (6-lens blind adversarial synthesis, 2026-07-01)
+
+A 6-lens Sonnet pass (missing-data / partial-lossy / intake-gaps / postfilter-gaps / unhandled-classes /
+composition-thin) re-derived holes from the same evidence **blind to the writeup above** (`synthesis_6lens.json`).
+It **independently reached the reversal** — content-rating via `release_dates`, unwired `runtime`, franchise via
+`belongs_to_collection`, composer via `job=Original Music Composer` all flagged CHEAP without being told they're
+on disk — and confirmed occasion (largest new intake class), exclusion-is-postfilter-only, pacing-weakest, and
+the composition degradation rule. Beyond confirmation, it sharpened the plan on these points:
+
+1. **Constraint-priority 3-tier (the sharpest add — operationalizes composition degradation).** Intake should
+   tag every extracted slot **required** (has data, dealbreaker) / **preferred** (has data, soft) /
+   **cannot_enforce** (no data yet: pacing, ending, rating-until-built). Postfilter applies required as hard
+   filters, preferred as boosts, cannot_enforce as LLM-judgment-only; when a pool goes thin it relaxes
+   cannot_enforce first, then preferred by *lowest data-coverage first*, **never dropping genre/people last.**
+   This turns "drop the un-computable hard constraint first" into a concrete schema mechanism.
+2. **Pacing is cheaper than framed — a derived genome scalar, not just an honest limit.** *Verified:* the genome
+   vocab has `slow paced`, `fast paced`, `atmospheric`, `slow`. Derive a slow−fast scalar at build, wire as a
+   soft rank signal + a `pacing` intake slot. The 97% gap is because it's **unwired**, not absent → Engine-2
+   route, cheap. (Still soft-only, never a hard filter.)
+3. **Negative-affect exclusion GATE (mechanism for Engine 2).** genome carries both poles; add a postfilter
+   hard-exclude when `genome[sad|tense|dark] > threshold` AND an `exclude_mood` slot is set, with intensity
+   banding (low/med/high) for "a *little* sad". Config-knob threshold, tuned on the comfort-watch canary. This
+   is the concrete form of "exclusion is postfilter-only."
+4. **New intake slots the schema still lacks:** `exclude_titles` (named-title negation — "not X or Y", "skip the
+   ones I named", "no sequels I've seen" → remove by movieId); `liked_shows` / cross-media (decompose a TV/game
+   reference into genome+keyword anchors via the **existing** mood→synthesized-anchor path — do *not* attempt a
+   corpus title match; this **downgrades** the difficulty the writeup assigned cross-media); `serendipity_mode`
+   (zero-anchor "surprise me" — all three engines need ≥1 non-null slot, and empty extraction currently risks
+   *fabricated* anchors, so build an explicit popularity-stratified diversity draw + optional one follow-up Q).
+5. **subgenre + theme_subject are primarily INTAKE-EMISSION failures, fixable now** (73/82 and 97/117 gaps at
+   intake). Teach the extractor to canonicalize subgenre→TMDB-keyword clusters and emit ≥3-keyword OR-fans
+   (`space opera`/`heist`/`found footage` already exist as keywords) — a prompt/schema change, not new data.
+6. **Location: drop `production_countries` as a setting proxy.** City-level "set in X" → `require_keywords=[city]`,
+   never `require_country`; country-level "French films" → `require_country`. Sharpens Engine 1c's intake routing.
+7. **Awards has a cheap middle tier I'd dismissed:** a free **Academy Awards CSV** (Kaggle/IMDB) joined on
+   title+year → `oscar_wins`/`nominations`/`best_picture` resolves the top awards cases; vote_average stays the
+   base, Metacritic/RT (OMDb) is the optional expensive tier.
+8. **Ending-type: an optional, *narrowly-scoped* dedicated classification** — a bounded one-time Haiku pass over
+   the already-scraped plot `overview` → `{happy|bittersweet|sad|ambiguous, has_twist}` (~$0.25–3 for 9k). This
+   is a justified exception to the Engine-3 demotion **only because it's closed-label classification, not an
+   undirected prop sweep**; keyword-bootstrap (`twist ending`/`happy ending`) covers ~20% first. Offer, don't assume.
+
+**Not adopted (noted for the record):** OMDb for content-rating (our verified `release_dates` on disk beats it);
+a full visual-style LLM pass (stays Engine-3-demoted — only B&W via `color_info` is cheap); corpus refresh /
+sub-200-rating canon-extension list (a larger project, out of scope for this plan).
 
 ## Validation approach (mirror the v1→v5 harness)
 

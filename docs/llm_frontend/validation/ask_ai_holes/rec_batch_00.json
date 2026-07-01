@@ -1,0 +1,4699 @@
+[
+ {
+  "prompt": "idk just surprise me lol",
+  "intent": "Wants a totally random pick with zero input given",
+  "recs": [
+   "The Grand Budapest Hotel",
+   "Back to the Future",
+   "Spider-Man: Into the Spider-Verse",
+   "Knives Out",
+   "The Prestige",
+   "Groundhog Day"
+  ],
+  "signals": [
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "zero content signal; cold-start falls back to all-time popularity prior"
+   },
+   {
+    "axis": "other",
+    "coverage": "MISSING",
+    "layer": "both",
+    "note": "no randomness/serendipity primitive; system returns top-ranked, not random"
+   }
+  ],
+  "holes": [
+   "No true randomness/serendipity control \u2014 'surprise' collapses to the popularity prior.",
+   "Cold-start Ask-AI has no user history, so the surprise can't be tuned to their taste."
+  ],
+  "archetype": "casual surprise-me browser",
+  "archetype_idx": 0,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "ok so i've been staring at netflix for like 40 minutes and i have no clue what to watch, nothing sounds good but i also dont want to go to bed. can you just pick something for me",
+  "intent": "Decision fatigue \u2014 wants the AI to decide for them",
+  "recs": [
+   "Forrest Gump",
+   "The Princess Bride",
+   "Back to the Future",
+   "Knives Out",
+   "The Grand Budapest Hotel"
+  ],
+  "signals": [
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "no signal; confident single pick from popularity fallback"
+   },
+   {
+    "axis": "streaming_availability",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "extracts 'netflix' but no catalog data to verify availability"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "easy comfort watch proxied by feel-good/light genome tags"
+   }
+  ],
+  "holes": [
+   "No streaming-availability data \u2014 can't guarantee the pick is actually on Netflix.",
+   "No record of what they already scrolled past, so we may re-suggest rejected titles."
+  ],
+  "archetype": "casual surprise-me browser",
+  "archetype_idx": 0,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "whats something good that isnt super long",
+  "intent": "Vague quality ask with a soft runtime constraint",
+  "recs": [
+   "Toy Story",
+   "Groundhog Day",
+   "Whiplash",
+   "Shaun of the Dead",
+   "Coco",
+   "The Lion King"
+  ],
+  "signals": [
+   {
+    "axis": "runtime",
+    "coverage": "MISSING",
+    "layer": "both",
+    "note": "runtime scraped but unwired; length cap cannot be applied"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "quality proxied by TMDB vote_average/vote_count; no awards axis"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "'good' leans on popularity/vote-quality prior"
+   }
+  ],
+  "holes": [
+   "Runtime is not wired into serving \u2014 the 'isnt super long' cap can't be enforced; recs rely on curator knowledge of runtimes."
+  ],
+  "archetype": "casual surprise-me browser",
+  "archetype_idx": 0,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "gimme a movie i probably havent heard of",
+  "intent": "Wants something off the beaten path / non-obvious",
+  "recs": [
+   "Coherence",
+   "Primer",
+   "The Man from Earth",
+   "Moon (2009)",
+   "In Bruges",
+   "Hunt for the Wilderpeople"
+  ],
+  "signals": [
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "detect obscure intent; sort to the low-popularity tail"
+   },
+   {
+    "axis": "other",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "'havent heard of' is per-user; cold start has no exposure history"
+   }
+  ],
+  "holes": [
+   "Corpus floors at >=200 MovieLens ratings \u2014 nothing is truly obscure; only relative hidden gems.",
+   "'Haven't heard of' is user-specific; with no history we approximate via global obscurity, which may still be familiar to them."
+  ],
+  "archetype": "casual surprise-me browser",
+  "archetype_idx": 0,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "bored. what should i watch tonight",
+  "intent": "Minimal-effort request for tonight's viewing",
+  "recs": [
+   "The Dark Knight",
+   "Inception",
+   "Back to the Future",
+   "Knives Out",
+   "Guardians of the Galaxy Vol. 2",
+   "Spider-Man: Into the Spider-Verse"
+  ],
+  "signals": [
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "minimal signal; popularity fallback of easy crowd-pleasers"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "'tonight' implies mood/time we can't actually act on"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "engaging/entertaining proxied via genome fun/entertaining tags"
+   }
+  ],
+  "holes": [
+   "No user history \u2014 'tonight' reduces to generic popularity, not a personalized pick."
+  ],
+  "archetype": "casual surprise-me browser",
+  "archetype_idx": 0,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "i dont really care about genre or anything, i just want something that'll actually keep my attention. throw a few at me",
+  "intent": "Genre-agnostic, wants engaging options to choose from",
+  "recs": [
+   "Se7en",
+   "Prisoners",
+   "Gone Girl",
+   "Nightcrawler",
+   "Whiplash",
+   "Parasite"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "gripping/tense mapped to genome tense/intense/suspenseful tags"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "only coarse genome fast/slow-paced tags; no real engagement metric"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "twisty hooks via genome twist-ending tag"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "user genre-agnostic; span genres via affect, not genre"
+   }
+  ],
+  "holes": [
+   "'Keep my attention' (pacing/engagement) is only approximable via coarse genome fast/slow-paced tags \u2014 no true engagement axis."
+  ],
+  "archetype": "casual surprise-me browser",
+  "archetype_idx": 0,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "what are people watching these days? feel like i'm out of the loop",
+  "intent": "Wants popular/current picks to catch up on",
+  "recs": [
+   "Everything Everywhere All at Once",
+   "Dune (2021)",
+   "Top Gun: Maverick",
+   "The Batman (2022)",
+   "Glass Onion: A Knives Out Mystery",
+   "Spider-Man: No Way Home"
+  ],
+  "signals": [
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "have popularity but it's cumulative all-time rating volume, not trending"
+   },
+   {
+    "axis": "decade_year",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "release year lets us restrict to recent films"
+   },
+   {
+    "axis": "streaming_availability",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no what's-being-watched-now / trending signal"
+   }
+  ],
+  "holes": [
+   "Popularity is cumulative all-time MovieLens rating counts, not real-time trending.",
+   "Corpus frozen ~2023 (no Barbie/Oppenheimer/2024+) \u2014 literal 'these days' is unreachable."
+  ],
+  "archetype": "casual surprise-me browser",
+  "archetype_idx": 0,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "recommend me a chill movie i can half pay attention to while i'm on my phone",
+  "intent": "Low-commitment background watch",
+  "recs": [
+   "Forrest Gump",
+   "The Princess Bride",
+   "The School of Rock",
+   "Mamma Mia!",
+   "Groundhog Day",
+   "Notting Hill"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "chill/comfort mapped to feel-good/light/fun genome tags"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "low-demand proxied by slow/fast-paced genome tags; lossy"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "both",
+    "note": "second-screen/background suitability is not a modeled axis"
+   }
+  ],
+  "holes": [
+   "Background/second-screen suitability (plot-light, low-attention, no subtitles) isn't a modeled axis \u2014 only proxied by feel-good genome tags."
+  ],
+  "archetype": "casual surprise-me browser",
+  "archetype_idx": 0,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "honestly no idea what im in the mood for. maybe something fun? idk you tell me",
+  "intent": "Undecided mood, leaning fun, defers to the AI",
+  "recs": [
+   "Guardians of the Galaxy Vol. 2",
+   "The Nice Guys",
+   "21 Jump Street",
+   "Hot Fuzz",
+   "Jumanji: Welcome to the Jungle",
+   "Knives Out"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "'fun' maps cleanly to genome fun/funny/entertaining tags"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "comedy/adventure/action-comedy support the fun lean"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "light/upbeat tone via genome light tag"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "safe well-liked fun picks from popularity prior"
+   }
+  ],
+  "holes": [
+   "Cold start \u2014 'fun' stays generic; can't tailor to which flavor of fun this user prefers."
+  ],
+  "archetype": "casual surprise-me browser",
+  "archetype_idx": 0,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "give me like 3 random ones and i'll pick",
+  "intent": "Wants a small shortlist to choose from rather than one answer",
+  "recs": [
+   "The Grand Budapest Hotel",
+   "Mad Max: Fury Road",
+   "Get Out",
+   "La La Land",
+   "Knives Out",
+   "Spider-Man: Into the Spider-Verse"
+  ],
+  "signals": [
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "'random' with no signal; popularity fallback for safe picks"
+   },
+   {
+    "axis": "other",
+    "coverage": "MISSING",
+    "layer": "both",
+    "note": "no randomization primitive; 'random' becomes deterministic top-ranked"
+   },
+   {
+    "axis": "genre",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "we hand-spread the 3 across genres; no diversification objective"
+   }
+  ],
+  "holes": [
+   "No randomness primitive \u2014 'random' degrades to top-popularity.",
+   "No diversity/MMR objective to guarantee the shortlist actually differs."
+  ],
+  "archetype": "casual surprise-me browser",
+  "archetype_idx": 0,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "having like 6 people over saturday, everyone's gonna be drinking, need a dumb hilarious movie we can talk over and not miss anything",
+  "intent": "Wants a low-attention, funny movie for a drinking crowd",
+  "recs": [
+   "Dumb and Dumber",
+   "Anchorman: The Legend of Ron Burgundy",
+   "Step Brothers",
+   "Talladega Nights: The Ballad of Ricky Bobby",
+   "Old School",
+   "Zoolander"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Comedy one-hot extracted and verified per candidate"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome/keywords 'hilarious','absurd','farcical' encode funny"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'dumb/lowbrow' only via crude-humor keywords, no rating"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no signal for simple/talk-over-able plot complexity"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "both",
+    "note": "no 'low-attention/background' watchability axis to filter on"
+   }
+  ],
+  "holes": [
+   "Cannot detect 'talk-over-able / won't-miss-anything' \u2014 no narrative-complexity or attention-demand signal",
+   "No content-rating; 'dumb/raunchy' approximated by comedy genre + crude-humor keywords only"
+  ],
+  "archetype": "solo late-night unwind",
+  "archetype_idx": 7,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "best party movies?? something loud and fun",
+  "intent": "Quick ask for high-energy crowd-pleasers",
+  "recs": [
+   "The Blues Brothers",
+   "Kingsman: The Secret Service",
+   "Zombieland",
+   "Talladega Nights: The Ballad of Ricky Bobby",
+   "Ghostbusters",
+   "21 Jump Street"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Comedy/Action genres extracted and verified"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "genome 'exuberant','euphoric','joyous' proxy fun, not loud"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no energy/tempo axis for 'loud and fast'"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "no 'party movie' label; proxy via popularity+genre"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "vote_count/rank identifies broad crowd-pleasers"
+   }
+  ],
+  "holes": [
+   "'Loud'/sonic-energy is not an axis; approximated by action+comedy genre and affect genome",
+   "No explicit 'party movie' tag \u2014 must proxy via genre plus popularity"
+  ],
+  "archetype": "solo late-night unwind",
+  "archetype_idx": 7,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "ok so we've all seen Hangover a million times what else is that vibe. bros doing something stupid, chaos, gets outta hand",
+  "intent": "Wants Hangover-style raunchy chaos comedies beyond the obvious",
+  "recs": [
+   "Old School",
+   "Wedding Crashers",
+   "EuroTrip",
+   "Superbad",
+   "Beerfest",
+   "21 Jump Street"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "The Hangover in-corpus; 128-dim embedding neighbor retrieval"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Comedy/Crime verified per candidate"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "keywords 'male friendship','one night','wild party','chaos'"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'bros' via 'man child','slacker','fraternity' keywords"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "R-rated raunch only via crude-humor keywords, no rating"
+   }
+  ],
+  "holes": [
+   "No content-rating axis to guarantee The Hangover's R-rated raunch level",
+   "'Chaos escalates / gets out of hand' is a plot-shape not encoded; keyword proxy only"
+  ],
+  "archetype": "solo late-night unwind",
+  "archetype_idx": 7,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "movie night with the boys but half of them have the attention span of a goldfish lol. needs to be funny start to finish no boring slow parts",
+  "intent": "Needs a constantly-funny movie for a distracted group",
+  "recs": [
+   "Airplane!",
+   "Monty Python and the Holy Grail",
+   "Anchorman: The Legend of Ron Burgundy",
+   "Dumb and Dumber",
+   "Tropic Thunder",
+   "21 Jump Street"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Comedy extracted and verified"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'parody','spoof','anarchic comedy' proxy joke-dense subgenres"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'hilarious' plus spoof/parody keywords"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no gag-density/'no slow parts' pacing signal"
+   },
+   {
+    "axis": "runtime",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "runtime scraped but unwired; can't favor shorter cuts"
+   }
+  ],
+  "holes": [
+   "Cannot measure joke density or 'no slow parts' \u2014 the core constraint is unservable",
+   "Runtime (shorter for short attention) is scraped but not wired into serving"
+  ],
+  "archetype": "solo late-night unwind",
+  "archetype_idx": 7,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "we wanna do a bad movie night on purpose. like so terrible it's amazing, stuff we can roast the whole time",
+  "intent": "Wants so-bad-it's-good films to mock together",
+  "recs": [
+   "The Room",
+   "Birdemic: Shock and Terror",
+   "Battlefield Earth",
+   "Plan 9 from Outer Space",
+   "Showgirls",
+   "Mac and Me"
+  ],
+  "signals": [
+   {
+    "axis": "awards_acclaim",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "low TMDB vote_average proxies bad, not camp-fun"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'psychotronic' keyword (39 films) is closest cult-bad proxy"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "The Room in-corpus; embedding neighbors as anchor"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no camp/unintentionally-funny affect encoded"
+   }
+  ],
+  "holes": [
+   "No 'so-bad-it's-good'/camp signal; low vote_average confuses boring-bad with fun-bad",
+   "Cannot distinguish intentional camp from sincere failure \u2014 'psychotronic' keyword is the only weak lever"
+  ],
+  "archetype": "solo late-night unwind",
+  "archetype_idx": 7,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "something everyone will actually agree on for a group of 8, no one wants to read subtitles and no one wants some depressing artsy thing",
+  "intent": "Needs a broadly agreeable, easy group pick",
+  "recs": [
+   "Ghostbusters",
+   "The Blues Brothers",
+   "Zombieland",
+   "Rush Hour",
+   "Kingsman: The Secret Service",
+   "Talladega Nights: The Ballad of Ricky Bobby"
+  ],
+  "signals": [
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "spoken/original language 'en' filters out subtitle films"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "favor feel-good genome; exclude sad/heartbreaking/bleak"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "high vote_count identifies broadly agreeable picks"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Comedy/Action broad-appeal genres verified"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'artsy/arthouse' has no axis; proxy via popularity+genre"
+   }
+  ],
+  "holes": [
+   "'Artsy/arthouse' is not a labeled axis; approximated by popularity + genre, risking false positives"
+  ],
+  "archetype": "solo late-night unwind",
+  "archetype_idx": 7,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "stoner comedies. go",
+  "intent": "Wants weed/stoner comedy recommendations",
+  "recs": [
+   "Pineapple Express",
+   "Half Baked",
+   "Harold & Kumar Go to White Castle",
+   "Grandma's Boy",
+   "Dazed and Confused"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "keywords 'stoner','stoner movie','marijuana','pot smoking','weed'"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Comedy verified per candidate"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "'stoner movie' keyword tags the exact subgenre (7 films)"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "chill/silly tone only loosely via genome affect"
+   }
+  ],
+  "holes": [
+   "'stoner movie' keyword covers only 7 titles; broader net uses 'marijuana' which also tags serious drug dramas"
+  ],
+  "archetype": "solo late-night unwind",
+  "archetype_idx": 7,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "gonna be a rager, want a movie playing in the background that people can drop in and out of and it still hits. action or comedy idk",
+  "intent": "Wants background party movie people can half-watch",
+  "recs": [
+   "John Wick",
+   "Mad Max: Fury Road",
+   "Kingsman: The Secret Service",
+   "Zombieland",
+   "The Blues Brothers",
+   "Talladega Nights: The Ballad of Ricky Bobby"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "user-named Action/Comedy extracted and verified"
+   },
+   {
+    "axis": "visual_style",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'epic/visually-stunning' genome + chase keywords proxy spectacle"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "fun/exciting affect from genome and keywords"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "familiar titles fine for half-watching"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no episodic/plot-light/'drop-in' structure signal"
+   }
+  ],
+  "holes": [
+   "No 'background-watchable / episodic / plot-light' signal \u2014 the central drop-in/out ask is unservable",
+   "No pacing axis to gauge continuous energy across a runtime"
+  ],
+  "archetype": "solo late-night unwind",
+  "archetype_idx": 7,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "quotable movies where we can all yell the lines. we already do this with anchorman and step brothers constantly",
+  "intent": "Wants endlessly-quotable comedies like Anchorman/Step Brothers",
+  "recs": [
+   "Talladega Nights: The Ballad of Ricky Bobby",
+   "Zoolander",
+   "The Big Lebowski",
+   "Dumb and Dumber",
+   "Monty Python and the Holy Grail",
+   "Napoleon Dynamite"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Anchorman/Step Brothers in-corpus; embedding neighbor retrieval"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Adam McKay from anchors drives strong same-creator lever"
+   },
+   {
+    "axis": "person_actor",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Will Ferrell facet store links anchors to neighbors"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Comedy verified per candidate"
+   },
+   {
+    "axis": "other",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no quotability/meme-lines/catchphrase signal exists"
+   }
+  ],
+  "holes": [
+   "No 'quotability'/meme-lines signal; must proxy via same-creator/same-cast plus comedy similarity to the anchors"
+  ],
+  "archetype": "solo late-night unwind",
+  "archetype_idx": 7,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "throwing a halloween party for a bunch of drunk friends, want a horror movie thats more funny than actually scary cuz nobody's really paying attention",
+  "intent": "Wants a fun, non-serious horror-comedy for a party",
+  "recs": [
+   "Shaun of the Dead",
+   "Zombieland",
+   "Evil Dead II",
+   "Beetlejuice",
+   "Gremlins",
+   "Warm Bodies"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "intersect Comedy AND Horror one-hots per candidate"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "keywords 'zombie comedy','zom-com','horror spoof' tag horror-comedy"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "favor 'hilarious' over 'tense/creepy'; no scariness dial"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'halloween' keyword present on some, not all candidates"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "no calibrated scariness-intensity scale to bound it"
+   }
+  ],
+  "holes": [
+   "No 'scariness intensity' dial \u2014 can favor Comedy+Horror but can't guarantee 'more funny than scary' beyond genre intersection"
+  ],
+  "archetype": "solo late-night unwind",
+  "archetype_idx": 7,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "i had the worst week ever, just want something cozy and warm to put on tonight. nothing sad please",
+  "intent": "Wants a cozy uplifting movie after a rough week, no downers",
+  "recs": [
+   "Chef",
+   "Paddington 2",
+   "The School of Rock",
+   "The Princess Bride",
+   "Am\u00e9lie",
+   "Enchanted"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome feel-good/heartwarming/sweet directly drive item tower"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'nothing sad' negation only verifiable via genome sad score post-hoc"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'cozy/warm' has no axis; approximated by feel-good genome"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "comedy/romance/family genres retrievable and verifiable"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "'worst week, put on tonight' framing has no data axis"
+   }
+  ],
+  "holes": [
+   "No cozy/warm axis; only feel-good/heartwarming genome approximates the mood.",
+   "Two-tower can't hard-subtract sad films; 'nothing sad' only enforceable as postfilter."
+  ],
+  "archetype": "feel-good comfort watch",
+  "archetype_idx": 2,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "recommend me a feel good movie",
+  "intent": "Simple direct ask for a feel-good film",
+  "recs": [
+   "Am\u00e9lie",
+   "Sing Street",
+   "Cool Runnings",
+   "The School of Rock",
+   "Little Miss Sunshine",
+   "Chef"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "explicit 'feel good movie'/'feel-good' genome+user tags exist"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "comedy/drama-romance genres cleanly retrievable"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "popularity rank lets us favor accessible crowd-pleasers"
+   }
+  ],
+  "holes": [],
+  "archetype": "feel-good comfort watch",
+  "archetype_idx": 2,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "ok so my go-to comfort movies are like Notting Hill, School of Rock, and The Holiday. give me something in that vibe i haven't seen",
+  "intent": "Wants new picks matching their existing comfort-movie taste",
+  "recs": [
+   "You've Got Mail",
+   "About Time",
+   "Julie & Julia",
+   "Love Actually",
+   "Sleepless in Seattle",
+   "Bridget Jones's Diary"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "3 named anchors resolve; 128-dim embedding neighbor search is core engine"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Meyers/Curtis/Linklater in people facet store for overlap"
+   },
+   {
+    "axis": "person_actor",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Hugh Grant/Jack Black/Julia Roberts facets available"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "romcom + warm-comedy blend from anchors"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome comforting/feel-good aligns the 'comfort' vibe"
+   }
+  ],
+  "holes": [
+   "No seen/watched list; can't actually enforce 'haven't seen' beyond dropping the 3 named anchors."
+  ],
+  "archetype": "feel-good comfort watch",
+  "archetype_idx": 2,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "something warm and low stakes where nothing terrible happens and everyone's basically ok in the end?",
+  "intent": "Wants a low-stakes movie with a reassuring, happy resolution",
+  "recs": [
+   "Chef",
+   "Paddington",
+   "The Secret Life of Walter Mitty",
+   "Julie & Julia",
+   "Groundhog Day",
+   "About Time"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "feel-good/heartwarming genome captures 'warm'"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no 'low-stakes'/intensity axis to rank stakes"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'happy ending' genome tag is noisy, not reliable per-movie"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'nothing terrible' inferred by excluding dark/gritty genome"
+   }
+  ],
+  "holes": [
+   "No pacing/low-stakes axis; stakes can't be measured or ranked.",
+   "'Everyone's ok in the end' leans on a single noisy genome 'happy ending' tag."
+  ],
+  "archetype": "feel-good comfort watch",
+  "archetype_idx": 2,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "raining outside, got tea, need the perfect rewatchable cozy movie for a lazy sunday",
+  "intent": "Wants a rewatchable cozy movie for a relaxed rainy day",
+  "recs": [
+   "The Princess Bride",
+   "My Neighbor Totoro",
+   "Am\u00e9lie",
+   "Groundhog Day",
+   "The Grand Budapest Hotel",
+   "Ratatouille"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'cozy' has no tag; proxied by feel-good/heartwarming genome"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "popularity/vote_count proxies broad rewatch appeal"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "vote_average stands in for 'perfect' quality"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "rainy/lazy-Sunday context maps to no data axis"
+   }
+  ],
+  "holes": [
+   "No rewatchability signal; only popularity/vote counts approximate it.",
+   "Weather/occasion framing (rainy Sunday, tea) has no corresponding data axis."
+  ],
+  "archetype": "feel-good comfort watch",
+  "archetype_idx": 2,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "im emotionally exhausted and dont want to think. just something sweet and easy that'll make me smile",
+  "intent": "Wants an easy, gentle heartwarming watch requiring no effort",
+  "recs": [
+   "Paddington 2",
+   "The School of Rock",
+   "Sister Act",
+   "Enchanted",
+   "Cool Runnings",
+   "The Princess Diaries"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome sweet/feel-good/quirky-funny maps 'make me smile'"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "light comedy/children genres serve 'easy'"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no cognitive-load/'don't want to think' axis"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'easy' inferred from excluding cerebral/mindfuck genome"
+   }
+  ],
+  "holes": [
+   "No 'easy/low-effort/undemanding' axis; cognitive load can't be ranked."
+  ],
+  "archetype": "feel-good comfort watch",
+  "archetype_idx": 2,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "movie that feels like a warm hug??",
+  "intent": "Wants a comforting, emotionally soothing film",
+  "recs": [
+   "Am\u00e9lie",
+   "Paddington",
+   "My Neighbor Totoro",
+   "Chef",
+   "The Peanut Butter Falcon",
+   "Little Miss Sunshine"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'warm hug' metaphor approximated by heartwarming/feel-good genome"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "family/comedy-drama support the comforting tone"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "family bonds/friendship genome reinforce warmth"
+   }
+  ],
+  "holes": [
+   "'Warm hug' is pure metaphor; only heartwarming genome loosely approximates it."
+  ],
+  "archetype": "feel-good comfort watch",
+  "archetype_idx": 2,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "looking for one of those small heartwarming feel-good films, maybe about friendship or found family. bonus if it's a little funny too",
+  "intent": "Wants a heartwarming friendship/found-family movie with humor",
+  "recs": [
+   "The Peanut Butter Falcon",
+   "Hunt for the Wilderpeople",
+   "Little Miss Sunshine",
+   "The Intouchables",
+   "Stand by Me",
+   "Sing Street"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome friendship/unlikely-friendships/family-bonds cover the ask"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "heartwarming/feel-good + quirky-funny genome for 'a little funny'"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'found family' keyword tags only 4 movies; genome family broader"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "comedy-drama blend serves 'funny too'"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'small' indie scale not a data axis; popularity is weak proxy"
+   }
+  ],
+  "holes": [
+   "No budget/indie-scale axis; 'small' films can't be identified as such.",
+   "'Found family' keyword is sparse (4 movies); rely on broader family/friendship genome."
+  ],
+  "archetype": "feel-good comfort watch",
+  "archetype_idx": 2,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "need a comfort watch but pls no cheesy hallmark stuff, something actually good but still makes you feel nice",
+  "intent": "Wants a genuinely good feel-good movie, not cheesy or saccharine",
+  "recs": [
+   "Am\u00e9lie",
+   "The Grand Budapest Hotel",
+   "Chef",
+   "Little Miss Sunshine",
+   "Sing Street",
+   "The Intouchables"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "feel-good/heartwarming genome delivers 'feel nice'"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "vote_average proxies 'actually good', no real awards data"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no 'cheesy/saccharine/Hallmark' axis to exclude"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "can steer toward acclaimed rather than TV-movie tier"
+   }
+  ],
+  "holes": [
+   "No 'cheesy/saccharine/Hallmark' axis; that negative style can't be filtered out.",
+   "'Actually good' only proxied by TMDB vote_average, no awards signal."
+  ],
+  "archetype": "feel-good comfort watch",
+  "archetype_idx": 2,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "what's a movie i can fall asleep happy to. nothing intense, nothing scary, just cozy vibes and a good ending",
+  "intent": "Wants a calm, non-intense cozy movie with a happy ending to wind down",
+  "recs": [
+   "My Neighbor Totoro",
+   "Kiki's Delivery Service",
+   "Chef",
+   "The Secret Life of Walter Mitty",
+   "Paddington",
+   "Groundhog Day"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'cozy/calm' proxied by feel-good genome; no calm axis"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'nothing scary' via excluding Horror/Thriller + tense genome"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "'nothing intense' has no intensity/pacing axis"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'good ending' leans on noisy genome 'happy ending' tag"
+   },
+   {
+    "axis": "content_rating",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "MPAA/family-safe rating not wired; genre is the fallback"
+   }
+  ],
+  "holes": [
+   "No intensity/pacing axis; 'nothing intense' only inferred from genre + tense genome.",
+   "No content rating; 'nothing scary' approximated by excluding Horror/Thriller genres."
+  ],
+  "archetype": "feel-good comfort watch",
+  "archetype_idx": 2,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "family movie night tonight, kids are 5 and 8. need something fun everyone can watch without me having to cover their eyes lol",
+  "intent": "Wants a broadly age-appropriate, fun family film that works for both a 5- and 8-year-old on family night.",
+  "recs": [
+   "Zootopia",
+   "Paddington 2",
+   "Moana",
+   "The Lego Movie",
+   "How to Train Your Dragon",
+   "Finding Nemo"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Children/Animation/Comedy one-hot; extract 'family film', verify Children genre on candidates"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'family movie night' inferred via Children genre + genome 'kids and family'; no explicit family-viewing label"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome 'feel-good'/'funny' verify fun tone on candidates"
+   },
+   {
+    "axis": "content_rating",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "'no covering eyes'=wants G/PG; no MPAA field, only weak genome scary/violence proxy"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "genome 'scary'/'violence' proxy for age-safety; cannot certify"
+   }
+  ],
+  "holes": [
+   "No content-rating field: cannot guarantee a film is G/PG-safe for a 5yo.",
+   "Cannot reliably screen out a single scene that would startle an 8-year-old."
+  ],
+  "archetype": "family w/ young kids",
+  "archetype_idx": 5,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "my daughter is obsessed with animals right now, any good animated movies with cute animals that arent scary?",
+  "intent": "Seeking non-scary animated films centered on cute/anthropomorphic animals for a young child.",
+  "recs": [
+   "Zootopia",
+   "Finding Nemo",
+   "The Secret Life of Pets",
+   "Madagascar",
+   "Rio",
+   "Ponyo"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Animation genre one-hot; extract 'animated', verify on candidates"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "keywords 'animals'/'talking animal'/'cartoon animal' (256 movies) capture animal focus"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "keyword 'anthropomorphism'/'talking animal' verify animal protagonists"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "genome 'cute' exists but 'not scary' only via crude 'scary' tag proxy"
+   },
+   {
+    "axis": "content_rating",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no rating to certify 'not scary' for a young child"
+   }
+  ],
+  "holes": [
+   "'Not scary' is only a coarse genome-tag proxy; no rating or per-scene fright grading."
+  ],
+  "archetype": "family w/ young kids",
+  "archetype_idx": 5,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "we've seen every Pixar movie like a hundred times, what else is out there thats that good",
+  "intent": "Wants high-quality family films at Pixar's level from outside the Pixar catalog.",
+  "recs": [
+   "How to Train Your Dragon",
+   "The Iron Giant",
+   "Klaus",
+   "Kubo and the Two Strings",
+   "Spirited Away",
+   "Zootopia"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Animation/Children one-hot filters the family-film space"
+   },
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no studio/production-company field; cannot literally exclude 'Pixar' titles"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "TMDB vote_average proxies 'that good'; no Oscars/awards data wired"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "vote_average/vote_count rank quality among family films"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "128-dim embedding could anchor on a named Pixar title if provided"
+   }
+  ],
+  "holes": [
+   "No studio metadata: cannot exclude the Pixar catalog the user has exhausted.",
+   "No awards data; 'that good' judged only by TMDB vote average."
+  ],
+  "archetype": "family w/ young kids",
+  "archetype_idx": 5,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "something short please, my toddler cant sit still for more than an hour",
+  "intent": "Needs a short-runtime (roughly under an hour) kid-friendly movie.",
+  "recs": [
+   "Winnie the Pooh",
+   "Dumbo",
+   "The Aristocats",
+   "Charlotte's Web",
+   "Ponyo"
+  ],
+  "signals": [
+   {
+    "axis": "runtime",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "runtime scraped but unused; the core 'under an hour' filter is unavailable"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Children/Animation one-hot narrows to kid films"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "'toddler' inferred; no age-band field to enforce"
+   }
+  ],
+  "holes": [
+   "Runtime is not wired into serving: the pipeline cannot filter by length at all.",
+   "Recs rely on curator memory of short titles, not on data the system can query."
+  ],
+  "archetype": "family w/ young kids",
+  "archetype_idx": 5,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "Looking for a movie for a 6 year old that's exciting/adventurous but nothing too intense... no scary villains or sad deaths if possible she cries easy",
+  "intent": "Wants a gentle adventure film for a sensitive 6-year-old, avoiding frightening villains and upsetting deaths.",
+  "recs": [
+   "Moana",
+   "Ponyo",
+   "Kiki's Delivery Service",
+   "My Neighbor Totoro",
+   "Paddington 2",
+   "Winnie the Pooh"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Adventure/Children one-hot captures 'exciting/adventurous'"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "genome 'adventure' + keyword 'gentle'/'lighthearted' approximate gentle-but-exciting"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'no scary villains' via keyword 'villain' + genome 'scary'; crude, not intensity-graded"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "'no sad deaths' undetectable; genome 'sad' is whole-film affect, not a character death"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'nothing too intense' only via scary/violence tags; no rating or intensity scale"
+   }
+  ],
+  "holes": [
+   "Cannot detect 'a sad character death'; only whole-movie 'sad' affect exists.",
+   "No intensity/rating scale to guarantee a villain isn't too frightening."
+  ],
+  "archetype": "family w/ young kids",
+  "archetype_idx": 5,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "any good ones that arent full cartoon? like real people but still ok for kids",
+  "intent": "Seeking live-action (non-animated) family films that remain kid-appropriate.",
+  "recs": [
+   "The Princess Bride",
+   "Matilda",
+   "Jumanji",
+   "Paddington",
+   "Nanny McPhee",
+   "Mary Poppins"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "live-action = absence of Animation one-hot; keep Children genre; both computable"
+   },
+   {
+    "axis": "visual_style",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "'full cartoon' rejection maps cleanly to Animation genre flag"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "'ok for kids' via Children genre; no explicit kid-safety grade"
+   },
+   {
+    "axis": "content_rating",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no MPAA rating to certify 'ok for kids' beyond genre + scary proxy"
+   }
+  ],
+  "holes": [
+   "'Ok for kids' relies on Children genre + scary/violence proxy; no content rating."
+  ],
+  "archetype": "family w/ young kids",
+  "archetype_idx": 5,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "kid movies with a good message for the grownups too, so my husband doesnt fall asleep",
+  "intent": "Wants a family film with substance/wit that also keeps an adult engaged (dual appeal).",
+  "recs": [
+   "Zootopia",
+   "The Iron Giant",
+   "The Lego Movie",
+   "Shrek",
+   "Kubo and the Two Strings",
+   "Spirited Away"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Children/Animation one-hot anchors the family-film base"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome 'witty'/'clever' verify adult-engaging humor on candidates"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'good message' via genome 'thought-provoking'/'allegory' keyword; loose proxy"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "dual kid+adult appeal has no direct axis; proxied by wit + high vote_average"
+   }
+  ],
+  "holes": [
+   "No explicit 'adults enjoy it too' signal; dual appeal is only proxied by wit/acclaim tags."
+  ],
+  "archetype": "family w/ young kids",
+  "archetype_idx": 5,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "we loved Paddington and Moana. more like those??",
+  "intent": "Wants family films similar in warmth, humor, and adventure to two named beloved titles.",
+  "recs": [
+   "How to Train Your Dragon",
+   "Zootopia",
+   "Klaus",
+   "Sing",
+   "The Secret Life of Pets",
+   "Paddington 2"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "both titles in corpus; 128-dim item embedding + shared genome/keywords drive nearest-neighbors"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "shared Children/Animation/Adventure/Comedy tags confirm family fit"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome 'feel-good'/'heartwarming' match the warm tone of both anchors"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "facet store has Paul King (Paddington); limited pull but available"
+   }
+  ],
+  "holes": [
+   "Embedding neighbors may drift toward co-watch popularity rather than the specific gentle-warm tone shared by both anchors."
+  ],
+  "archetype": "family w/ young kids",
+  "archetype_idx": 5,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "its raining and the kids are bored out of their minds. give me like 3 movies for a 7yo and a 4yo they can both agree on",
+  "intent": "Wants a few options that satisfy both a 7-year-old and a 4-year-old simultaneously.",
+  "recs": [
+   "Moana",
+   "Zootopia",
+   "Finding Nemo",
+   "The Lego Movie",
+   "Paddington 2",
+   "How to Train Your Dragon"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Children/Animation one-hot narrows to broadly kid-friendly films"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "co-viewing across ages 4&7 inferred via Children genre; no age-band field"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome 'fun'/'feel-good' keep it engaging for both"
+   },
+   {
+    "axis": "content_rating",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no rating to ensure a 4yo won't hit a scary beat"
+   }
+  ],
+  "holes": [
+   "No age-band rating: cannot certify a pick is gentle enough for the 4yo while still holding the 7yo."
+  ],
+  "archetype": "family w/ young kids",
+  "archetype_idx": 5,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "is there anything funny and silly for littles that isnt just baby stuff, my son is 9 and thinks hes too cool now but his little sister is 3",
+  "intent": "Wants a genuinely funny/silly comedy that a 9-year-old finds not-babyish yet stays safe for a 3-year-old.",
+  "recs": [
+   "The Lego Movie",
+   "Despicable Me",
+   "Shrek",
+   "The Bad Guys",
+   "Cloudy with a Chance of Meatballs",
+   "Zootopia"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Comedy + Animation/Children one-hot anchors the funny-kid-film space"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome 'funny'/'silly'/'slapstick' verify the comedic tone requested"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "wide 3-to-9 age span inferred; no age-band field to enforce both ends"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "'not baby stuff' needs target-age grading; cannot distinguish preschool-only from 6-10 appeal"
+   }
+  ],
+  "holes": [
+   "No target-age/'babyish vs older-kid' grading: cannot tell a preschool-only title from one with 9-year-old appeal.",
+   "No rating to confirm irreverent humor stays safe for a 3yo."
+  ],
+  "archetype": "family w/ young kids",
+  "archetype_idx": 5,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "i need a movie that will make me ugly cry tonight. like full on sobbing. hit me",
+  "intent": "Wants a guaranteed maximal tearjerker for a big cathartic cry",
+  "recs": [
+   "Grave of the Fireflies",
+   "The Green Mile",
+   "Terms of Endearment",
+   "Manchester by the Sea",
+   "Schindler's List",
+   "Life Is Beautiful"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome sad/emotional/heartbreaking + keyword tragic/disheartening drive selection"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Drama anchor extractable and one-hot in item tower"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "death/loss/tragedy keywords verify devastating subject matter"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "vote_average/vote_count favor proven consensus cry-canon"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "devastating ending only via noisy tragic/disheartening affect keywords"
+   }
+  ],
+  "holes": [
+   "No tearjerker/tears tag; cry-intensity is subjective and unmeasurable, only proxied via sad genome"
+  ],
+  "archetype": "dark/bleak/disturbing",
+  "archetype_idx": 3,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "had the worst week and i just want to sit on the couch and let it all out. what's a good sad movie to cry to",
+  "intent": "Seeking accessible emotional release after a rough week",
+  "recs": [
+   "Steel Magnolias",
+   "Beaches",
+   "The Notebook",
+   "My Girl",
+   "Terms of Endearment",
+   "Marley & Me"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "sad/emotional genome + sentimental/comforting keywords"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Drama/Romance weepie anchor"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "loss/friendship/illness keywords confirm cry-worthy plots"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "popularity rank favors mainstream comfort-watch, not arthouse"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no couch/comfort-watch tag; accessibility inferred from popularity only"
+   }
+  ],
+  "holes": [
+   "No occasion axis for casual couch viewing; can't distinguish easy-cry from demanding arthouse grief"
+  ],
+  "archetype": "dark/bleak/disturbing",
+  "archetype_idx": 3,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "Looking for something really moving and bittersweet. Not depressing exactly, more like the kind of sad that feels good. Any recs?",
+  "intent": "Wants poignant hopeful-sad films rather than bleak ones",
+  "recs": [
+   "Cinema Paradiso",
+   "Big Fish",
+   "About Time",
+   "Coco",
+   "Life Is Beautiful",
+   "Up"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome bittersweet/touching + 'sad but good' directly encode this valence"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "hopeful/comforting keywords proxy warm-sad; no true ending-valence field"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "must exclude bleak/depressing, done via noisy affect tags"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Drama with Fantasy/Family uplift"
+   }
+  ],
+  "holes": [
+   "Separating bittersweet-hopeful from bleak-depressing leans on noisy genome affect, not structured ending valence"
+  ],
+  "archetype": "dark/bleak/disturbing",
+  "archetype_idx": 3,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "movies about losing a parent that will wreck me",
+  "intent": "Wants grief-focused films about a child losing a parent",
+  "recs": [
+   "Big Fish",
+   "A Monster Calls",
+   "The Descendants",
+   "Beaches",
+   "Coco",
+   "Terms of Endearment"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "death of mother/father, grief, bereavement keywords present but sparse"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "parent-child, mother/father relationship keywords verify the relationship"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "sad/heartbreaking genome ensures the wrecking emotional register"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Drama anchor"
+   }
+  ],
+  "holes": [
+   "'death of father/mother' keywords tag only ~13-23 films each, so recall of this exact theme is thin"
+  ],
+  "archetype": "dark/bleak/disturbing",
+  "archetype_idx": 3,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "recommend me a tearjerker but PLEASE not a dog dying movie i cannot handle that",
+  "intent": "Wants a cathartic cry while avoiding pet-death trauma",
+  "recs": [
+   "Terms of Endearment",
+   "Schindler's List",
+   "Manchester by the Sea",
+   "Steel Magnolias",
+   "The Green Mile",
+   "Life Is Beautiful"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "sad/heartbreaking genome selects strong human-loss tearjerkers"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "EXCLUDE dog-death: only 'dead dog' (7 films), no reliable pet-death flag"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Drama tearjerker anchor"
+   },
+   {
+    "axis": "object_prop",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'dog' keyword (255) present but doesn't signal whether the dog dies"
+   }
+  ],
+  "holes": [
+   "No animal/pet-death flag to safely exclude on; excluding all 'dog' films would be over-broad and lossy"
+  ],
+  "archetype": "dark/bleak/disturbing",
+  "archetype_idx": 3,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "what are the saddest movies of all time",
+  "intent": "Broad ask for the most emotionally devastating films",
+  "recs": [
+   "Grave of the Fireflies",
+   "Schindler's List",
+   "Requiem for a Dream",
+   "Manchester by the Sea",
+   "The Green Mile",
+   "Dancer in the Dark"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "peak sad/heartbreaking/disheartening genome+keywords rank devastation"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "'of all time' implies canon; vote_average/vote_count surface acclaimed picks"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "popularity rank favors widely-recognized consensus saddest films"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Drama/War dominant"
+   }
+  ],
+  "holes": [
+   "No cross-user 'sadness ranking' stored; 'saddest of all time' is approximated by sad-genome times acclaim"
+  ],
+  "archetype": "dark/bleak/disturbing",
+  "archetype_idx": 3,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "ok so my grandma passed a couple weeks ago and honestly i think i've been bottling it up. i want to watch something that lets me finally break down and cry about it, something about family and loss but that ends on a warm note if that makes sense",
+  "intent": "Processing personal grief; wants a family/loss film with a warm ending",
+  "recs": [
+   "Coco",
+   "The Farewell",
+   "Big Fish",
+   "Up",
+   "A Monster Calls",
+   "About Time"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "family, loss, grandmother, grandparent-grandchild keywords present"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "grandmother/family relationship keywords verify the grandparent framing"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "warm ending via hopeful/comforting keywords, not a real ending-valence field"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "sad-but-good/touching genome matches cathartic-yet-warm register"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "bereavement-processing motivation isn't a stored axis, only mapped to themes"
+   }
+  ],
+  "holes": [
+   "'Warm ending' constraint rests on noisy affect keywords, not structured ending valence"
+  ],
+  "archetype": "dark/bleak/disturbing",
+  "archetype_idx": 3,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "need a good cry before bed. something quiet and beautiful and heartbreaking",
+  "intent": "Wants a gentle, beautiful, heartbreaking film for a quiet cry",
+  "recs": [
+   "In the Mood for Love",
+   "Cinema Paradiso",
+   "Aftersun",
+   "Lost in Translation",
+   "Portrait of a Lady on Fire",
+   "The Straight Story"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "heartbreaking/melancholy/wistful genome+keywords anchor the ache"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "'quiet/slow/gentle' pacing not wired; can't select for calm register"
+   },
+   {
+    "axis": "visual_style",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'beautiful' only via coarse visually-stunning genome, no cinematography axis"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "contemplative tone proxied by reflective/lyrical/wistful keywords"
+   }
+  ],
+  "holes": [
+   "Pacing (quiet/slow) is not wired, so 'quiet' cannot be filtered",
+   "'Beautiful' cinematography has only a coarse genome proxy, no real visual axis"
+  ],
+  "archetype": "dark/bleak/disturbing",
+  "archetype_idx": 3,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "any movies about long distance love or people who cant be together that will destroy me emotionally",
+  "intent": "Wants a devastating romance/longing tearjerker",
+  "recs": [
+   "In the Mood for Love",
+   "Brokeback Mountain",
+   "Atonement",
+   "Call Me by Your Name",
+   "5 Centimeters per Second",
+   "Titanic"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Romance/Drama anchor"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'long distance relationship' only 3 films; forbidden/star-crossed proxies broader"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "tragic/heartbreak genome+keywords ensure the devastating register"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "tragic separation via tragic-love/heartbreak keywords, not structured"
+   }
+  ],
+  "holes": [
+   "'Long distance' is barely tagged (3 films); recall relies on broader forbidden/star-crossed proxies",
+   "Ideal pick Past Lives (2023) is not in corpus"
+  ],
+  "archetype": "dark/bleak/disturbing",
+  "archetype_idx": 3,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "i miss my mom so much rn she lives far away. what movie will make me feel all the feelings and cry",
+  "intent": "Feeling homesick for a distant parent; wants an emotional cry",
+  "recs": [
+   "Lady Bird",
+   "Brooklyn",
+   "The Joy Luck Club",
+   "Terms of Endearment",
+   "Little Women",
+   "Coco"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "mother-daughter, family, home keywords rich; homesickness sparse (5 films)"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "mother/mother-daughter relationship keywords verify the parent focus"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "sad/emotional/sentimental genome+keywords deliver the cry"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Drama/Romance family register"
+   }
+  ],
+  "holes": [
+   "'Homesickness' keyword covers only 5 films; missing-a-distant-parent is a viewing motive mapped onto mother/family themes"
+  ],
+  "archetype": "dark/bleak/disturbing",
+  "archetype_idx": 3,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "i want something really dark. like bleak, no happy ending, leaves you feeling gutted",
+  "intent": "wants a bleak film with a downer ending",
+  "recs": [
+   "Requiem for a Dream",
+   "Dancer in the Dark",
+   "Grave of the Fireflies",
+   "No Country for Old Men",
+   "The Road",
+   "Manchester by the Sea"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'dark','bleak','gritty','heartbreaking' feed item tower + postfilter verify"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "genome 'bad ending'/'non-hollywood ending' approximate no-happy-ending; no true downer axis"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'gutted' emotional heaviness inferred from sad/heartbreaking relevance, lossy"
+   }
+  ],
+  "holes": [
+   "No explicit 'downer ending' signal; 'bad ending' genome tag is a lossy proxy"
+  ],
+  "archetype": "emotional cry/catharsis",
+  "archetype_idx": 1,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "give me the most disturbing movie you can think of",
+  "intent": "wants maximum disturbing content",
+  "recs": [
+   "A Serbian Film",
+   "Martyrs",
+   "Antichrist",
+   "Irreversible",
+   "Cannibal Holocaust",
+   "Audition"
+  ],
+  "signals": [
+   {
+    "axis": "tone_maturity",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'disturbing' tag; item tower + postfilter both use it"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "keywords torture/rape/gore/snuff/depravity verify extremity but not intensity"
+   },
+   {
+    "axis": "content_rating",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no MPAA/NC-17/unrated field to gate extreme content"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "can rank 'disturbing' relevance but no true intensity scale for superlative"
+   }
+  ],
+  "holes": [
+   "No content-rating field to gate extremity",
+   "'Most' superlative not computable \u2014 no disturbing-intensity magnitude, only relevance ranking"
+  ],
+  "archetype": "emotional cry/catharsis",
+  "archetype_idx": 1,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "Looking for something grim and depressing tonight. Not horror necessarily, just crushing and hopeless. Something that stays with you and kind of ruins your mood for a couple days honestly",
+  "intent": "wants an emotionally devastating, hopeless drama over horror",
+  "recs": [
+   "Manchester by the Sea",
+   "Dancer in the Dark",
+   "Grave of the Fireflies",
+   "Biutiful",
+   "The Road",
+   "Amour"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "20-way one-hot; prefer Drama, down-weight/exclude Horror per 'not horror'"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'grim','depressing','bleak','heartbreaking' feed item tower + verify"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'crushing/hopeless' has no genome tag; 'hopeless' absent, approximated"
+   }
+  ],
+  "holes": [
+   "No 'hopeless' axis \u2014 proxied by depressing/bleak, lossy",
+   "'Ruins your mood for days' (lingering after-affect) is not measurable"
+  ],
+  "archetype": "emotional cry/catharsis",
+  "archetype_idx": 1,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "movies that mess with your head and make you feel gross after",
+  "intent": "wants unsettling psychological films that leave a bad feeling",
+  "recs": [
+   "Oldboy",
+   "Requiem for a Dream",
+   "Enemy",
+   "Perfect Blue",
+   "Antichrist",
+   "Audition"
+  ],
+  "signals": [
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'psychological','mindfuck','cerebral' capture 'messes with your head'"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'disturbing','creepy','atmospheric' feed item tower + postfilter"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'gross' proxied by keywords depravity/perversity/incest, lossy"
+   }
+  ],
+  "holes": [
+   "'Feel gross after' is a moral-disgust after-affect with no axis; proxied by disturbing+depravity keywords"
+  ],
+  "archetype": "emotional cry/catharsis",
+  "archetype_idx": 1,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "i loved requiem for a dream and irreversible, what else is in that lane",
+  "intent": "wants films similar to notoriously bleak/disturbing titles",
+  "recs": [
+   "Enter the Void",
+   "Climax",
+   "Antichrist",
+   "Martyrs",
+   "Dancer in the Dark",
+   "Oldboy"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "both seeds in corpus; probe_similar on 128-dim embedding drives retrieval"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "people facet: No\u00e9 (Irreversible) \u2192 Enter the Void/Climax; Aronofsky links"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "shared 'bleak','disturbing','drug addiction' genome DNA verifies the lane"
+   }
+  ],
+  "holes": [
+   "Embedding similarity is co-watch+genome driven; may drift to popularity over shared disturbing intensity"
+  ],
+  "archetype": "emotional cry/catharsis",
+  "archetype_idx": 1,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "something nihilistic. no redemption, no hope, just people at their worst",
+  "intent": "wants a nihilistic film with no redemption",
+  "recs": [
+   "No Country for Old Men",
+   "The Seventh Continent",
+   "Dogville",
+   "Se7en",
+   "Funny Games",
+   "Requiem for a Dream"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'nihilism' is keyword-only (18 movies), absent from genome/item tower"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'dark','bleak','grim' feed item tower + verify"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'no redemption' proxied by low 'redemption'/'bad ending' genome relevance"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'people at their worst' from keywords misanthropy/evil, lossy"
+   }
+  ],
+  "holes": [
+   "'Nihilistic' and 'no redemption' are keyword-level only, not recommender axes; no philosophy/theme model"
+  ],
+  "archetype": "emotional cry/catharsis",
+  "archetype_idx": 1,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "whats a good bleak arthouse film about grief or trauma, slow and heavy is fine",
+  "intent": "wants a slow, heavy arthouse film about grief or trauma",
+  "recs": [
+   "Amour",
+   "Manchester by the Sea",
+   "The Seventh Continent",
+   "Rabbit Hole",
+   "In the Bedroom",
+   "Melancholia"
+  ],
+  "signals": [
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "genome 'art house'/'artsy' is coarse; no clean arthouse classifier"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "grief(50)/trauma(110) are keywords only, not in item tower"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'slow','slow paced' cleanly serve 'slow and heavy'"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'bleak' feeds item tower + postfilter verify"
+   }
+  ],
+  "holes": [
+   "'Arthouse' has no clean signal \u2014 coarse genome tag only",
+   "Grief/trauma live in TMDB keywords, not the recommender's item tower"
+  ],
+  "archetype": "emotional cry/catharsis",
+  "archetype_idx": 1,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "recommend me a war movie thats actually brutal and horrifying not the patriotic kind",
+  "intent": "wants an unflinchingly brutal anti-war film",
+  "recs": [
+   "Come and See",
+   "Grave of the Fireflies",
+   "Platoon",
+   "Full Metal Jacket",
+   "Paths of Glory",
+   "The Thin Red Line"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "War one-hot genre cleanly gates candidates"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'anti-war' + keywords war crimes/atrocity/horrors of war"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'brutal','brutality','violent' feed item tower + verify"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'not patriotic' proxied by 'anti-war' tag; can't detect jingoistic tone"
+   }
+  ],
+  "holes": [
+   "No 'patriotic vs anti-war tone' axis beyond the anti-war tag; excluding jingoistic films is lossy"
+  ],
+  "archetype": "emotional cry/catharsis",
+  "archetype_idx": 1,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "dark serial killer movie but the smart disturbing kind not jump scares",
+  "intent": "wants a serious, disturbing serial-killer film not a slasher",
+  "recs": [
+   "Zodiac",
+   "Se7en",
+   "The Silence of the Lambs",
+   "Memories of Murder",
+   "Henry: Portrait of a Serial Killer",
+   "I Saw the Devil"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'serial killer' + keyword (199 movies) cleanly serve"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'dark','disturbing','psychological' feed item tower + verify"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "Crime/Thriller genre + exclude 'slasher' genome; 'smart' via 'cerebral'"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'not jump scares' proxied by excluding horror/slasher; execution style unmodeled"
+   }
+  ],
+  "holes": [
+   "'Not jump scares' (execution/craft style) is not detectable \u2014 proxied by excluding slasher/horror, lossy"
+  ],
+  "archetype": "emotional cry/catharsis",
+  "archetype_idx": 1,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "need a movie that just destroys me emotionally. bleaker the better. hit me",
+  "intent": "wants an emotionally destroying, maximally bleak film",
+  "recs": [
+   "Grave of the Fireflies",
+   "Dancer in the Dark",
+   "Manchester by the Sea",
+   "Requiem for a Dream",
+   "Come and See",
+   "Amour"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'heartbreaking','sad','bleak','depressing' feed item tower + verify"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "emotionally destroying often needs downer ending; only 'bad ending' proxy"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'bleaker the better' ranks by relevance, no true intensity magnitude"
+   }
+  ],
+  "holes": [
+   "Superlative 'bleaker the better' \u2014 no bleakness-intensity scale; can rank relevance, not guarantee maximal"
+  ],
+  "archetype": "emotional cry/catharsis",
+  "archetype_idx": 1,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "date night with my girlfriend tonight, we want something romantic but not too cheesy. any ideas?",
+  "intent": "Romantic date-night movie that avoids being overly sappy",
+  "recs": [
+   "Eternal Sunshine of the Spotless Mind",
+   "Before Sunrise",
+   "Silver Linings Playbook",
+   "Lost in Translation",
+   "Her",
+   "Moonrise Kingdom"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Romance/Drama one-hot; core retrieval filter"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'romantic' required; 'cheesy'/'sentimental' tags let us downweight sap"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "love/relationship keywords present per movie"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "vote_average proxies quality, not a real awards axis"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "date-night intent inferable but no explicit occasion signal"
+   }
+  ],
+  "holes": [
+   "No streaming-availability data, so we cannot answer 'watch tonight' with where-to-watch"
+  ],
+  "archetype": "date-night couple",
+  "archetype_idx": 4,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "me and my boyfriend can never agree on a movie lol. he likes action, i like rom coms. whats a good middle ground for date night",
+  "intent": "Compromise pick balancing action and romance for two differing tastes",
+  "recs": [
+   "True Lies",
+   "Romancing the Stone",
+   "The Princess Bride",
+   "Knight and Day",
+   "Out of Sight",
+   "Grosse Pointe Blank"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Action AND Romance/Comedy genre intersection is the core lever"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "action-comedy / romantic-adventure via keywords + genome"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "'fun'/'lighthearted'/'romantic' affect tags available"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "single-user tower cannot blend two distinct profiles"
+   },
+   {
+    "axis": "representation_diversity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "'his taste vs her taste' modeled only as genre union"
+   }
+  ],
+  "holes": [
+   "Recommender is single-user; cannot ingest two people's tastes and compute a true midpoint, only a genre-overlap heuristic"
+  ],
+  "archetype": "date-night couple",
+  "archetype_idx": 4,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "anniversary tonight!! looking for something special and beautiful, we loved Before Sunrise and La La Land",
+  "intent": "Special, visually beautiful romantic film seeded by liked titles",
+  "recs": [
+   "Before Sunset",
+   "In the Mood for Love",
+   "Am\u00e9lie",
+   "Call Me by Your Name",
+   "Atonement",
+   "Her"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Before Sunrise + La La Land seed 128-dim probe_similar retrieval"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Romance/Drama confirmed on candidates"
+   },
+   {
+    "axis": "visual_style",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome 'visually stunning'/'beautiful'/'cinematography' tags capture 'beautiful'"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "romantic/wistful/bittersweet affect tags present"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "auteur signal (Linklater/Chazelle) usable from people store"
+   },
+   {
+    "axis": "person_composer",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no composer/score axis; La La Land's musical-score appeal unmodeled"
+   }
+  ],
+  "holes": [
+   "No composer or musical-score axis, so the La La Land 'gorgeous soundtrack/musical' pull is lost",
+   "No streaming availability for 'tonight'"
+  ],
+  "archetype": "date-night couple",
+  "archetype_idx": 4,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "need a good couch movie for a cozy night in with my partner and a bottle of wine",
+  "intent": "Low-key cozy stay-at-home date movie",
+  "recs": [
+   "Chocolat",
+   "Notting Hill",
+   "About Time",
+   "Julie & Julia",
+   "Moonstruck",
+   "Groundhog Day"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "literal 'cozy' tag absent; approximate via feel-good/heartwarming/comforting"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Romance/Comedy/Drama core filter"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "low-stakes/warm inferred from affect, no direct tone axis"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "relaxed/unhurried not a clean data axis"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "'night in on the couch' has no explicit signal"
+   }
+  ],
+  "holes": [
+   "'Cozy' is not a real tag (zero genome matches); only inferred from comfort-affect tags",
+   "No streaming-availability data for a stay-home pick"
+  ],
+  "archetype": "date-night couple",
+  "archetype_idx": 4,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "something with a little spice? date night and we want something sexy but still a real movie not just softcore trash",
+  "intent": "Sensual but well-made film for a couple",
+  "recs": [
+   "The Handmaiden",
+   "Out of Sight",
+   "Body Heat",
+   "Unfaithful",
+   "Basic Instinct",
+   "Blue Is the Warmest Color"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'sexy'/'erotic' tags directly capture 'spice'"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "'erotic thriller'/neo-noir keywords available (84 movies)"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "vote_average/count proxies 'real movie not trash', imperfect"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Drama/Thriller/Romance on candidates"
+   },
+   {
+    "axis": "content_rating",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no MPAA; cannot formally separate tasteful-explicit from softcore"
+   }
+  ],
+  "holes": [
+   "No content/MPAA rating, so 'sexy but not softcore trash' relies only on acclaim + genre proxies"
+  ],
+  "archetype": "date-night couple",
+  "archetype_idx": 4,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "we just started dating so nothing too heavy or sad. fun first-few-dates kind of movie please",
+  "intent": "Light, upbeat movie appropriate for a new relationship",
+  "recs": [
+   "The Princess Bride",
+   "10 Things I Hate About You",
+   "Crazy, Stupid, Love.",
+   "The Proposal",
+   "Palm Springs",
+   "Groundhog Day"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "require 'fun'/'feel-good'/'light'; exclude 'sad'/'heavy' affect tags"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Comedy/Romance core filter"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'not heavy' approximated by affect, no direct tone axis"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "dating/new-love keywords present"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "'new couple / early dates' not an explicit signal"
+   }
+  ],
+  "holes": [
+   "No content rating to flag awkward-for-a-new-couple explicit content beyond keyword guesses"
+  ],
+  "archetype": "date-night couple",
+  "archetype_idx": 4,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "first movie night at his place and i want to seem cool not basic. what should i suggest",
+  "intent": "Impressive-but-approachable pick to make a good impression",
+  "recs": [
+   "Drive",
+   "Eternal Sunshine of the Spotless Mind",
+   "Moonrise Kingdom",
+   "Lost in Translation",
+   "Am\u00e9lie",
+   "In the Mood for Love"
+  ],
+  "signals": [
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "popularity rank lets us avoid top-10 'basic' yet stay approachable"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "vote_average proxies 'respected/cult cachet'"
+   },
+   {
+    "axis": "visual_style",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "'visually stunning'/'atmospheric'/'stylish' genome tags"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "auteur cachet (Refn, Coppola, Anderson, Wong Kar-Wai)"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "cool/atmospheric affect available"
+   }
+  ],
+  "holes": [
+   "'Seem cool not basic' is a social-signaling judgment with no data axis; only crudely proxied by obscurity + acclaim + style"
+  ],
+  "archetype": "date-night couple",
+  "archetype_idx": 4,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "wife and i have maybe 90 min after the kids go to bed. something short and good we can both enjoy",
+  "intent": "Short runtime crowd-pleaser both partners will like",
+  "recs": [
+   "Before Sunset",
+   "Palm Springs",
+   "Groundhog Day",
+   "Zombieland",
+   "Moonrise Kingdom",
+   "Sing Street"
+  ],
+  "signals": [
+   {
+    "axis": "runtime",
+    "coverage": "MISSING",
+    "layer": "both",
+    "note": "runtime scraped but NOT wired; the central '90 min' constraint is unenforceable"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "broad Comedy/Romance/Adventure crowd-pleaser filter"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "fun/feel-good tags for 'both enjoy'"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "well-liked/known signals a crowd-pleaser"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "'both of us enjoy' modeled only as broad appeal"
+   }
+  ],
+  "holes": [
+   "No runtime data is wired, so the defining '~90 min' constraint cannot be filtered; recs are runtime-guessed from world knowledge",
+   "Cannot model 'both of us' as two separate tastes"
+  ],
+  "archetype": "date-night couple",
+  "archetype_idx": 4,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "date night but we're both kinda tired and don't want to think too hard. easy watch that's still romantic?",
+  "intent": "Undemanding but romantic movie for a low-energy evening",
+  "recs": [
+   "Notting Hill",
+   "The Proposal",
+   "Crazy, Stupid, Love.",
+   "About Time",
+   "Groundhog Day",
+   "Roman Holiday"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "require 'romantic'/'light'/'comforting'; exclude 'cerebral'"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "invert 'mindfuck'/'nonlinear' tags to favor simple plots"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'easy watch' has no direct pacing/effort axis"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Romance/Comedy core filter"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "low-stakes inferred from affect tags"
+   }
+  ],
+  "holes": [
+   "'Undemanding / low mental effort' is only approximated by inverting cerebral/twist tags; no real cognitive-load axis"
+  ],
+  "archetype": "date-night couple",
+  "archetype_idx": 4,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "planning a surprise movie night for my husband, he's into thrillers and i want it to be tense but also work for a couple thing",
+  "intent": "Tense thriller that also suits a shared date-night mood",
+  "recs": [
+   "Gone Girl",
+   "A Simple Favor",
+   "Knives Out",
+   "Prisoners",
+   "Rear Window",
+   "A Quiet Place"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Thriller/Mystery is the core retrieval filter"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "genome 'tense'/'suspense'/'suspenseful' capture the tension goal"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "marriage/couple angle (Gone Girl, A Simple Favor) via keywords"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'couple-friendly, not too gory' only from avoiding horror/gore keywords"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "accessible mainstream thriller vs niche"
+   }
+  ],
+  "holes": [
+   "No content/MPAA or gore-level axis to guarantee 'tense but couple-friendly, not too disturbing'",
+   "Cannot model his thriller taste plus shared-appeal as two distinct signals"
+  ],
+  "archetype": "date-night couple",
+  "archetype_idx": 4,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "cant sleep, need something chill to throw on. nothing that makes me think too hard",
+  "intent": "Low-effort comfort watch to fall asleep to",
+  "recs": [
+   "Groundhog Day",
+   "The Princess Bride",
+   "The School of Rock",
+   "Kung Fu Panda",
+   "Finding Nemo",
+   "Cool Runnings"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "feel-good/light genome tags present, drive chill selection"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "comedy/animation as low-effort proxy"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'light' genome exists but undemanding-ness not a real axis"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "genome slow-paced exists, but 'chill' differs from slow"
+   },
+   {
+    "axis": "other",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no cognitive-load / 'doesn't make me think' signal"
+   }
+  ],
+  "holes": [
+   "No cognitive-load axis; we proxy 'brain-off' with light comedy + feel-good genome, cannot rank by mental effort",
+   "No rewatchability or fall-asleep suitability signal"
+  ],
+  "archetype": "foreign cinema by country",
+  "archetype_idx": 10,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "ok so its like 1am and i just want to zone out before bed lol. something cozy and low stakes, maybe kinda funny? had a brutal day and i really dont wanna cry or stress out over a plot",
+  "intent": "Cozy, low-stakes, gently funny wind-down after a hard day",
+  "recs": [
+   "Chef",
+   "Paddington 2",
+   "Hunt for the Wilderpeople",
+   "The Grand Budapest Hotel",
+   "Kiki's Delivery Service",
+   "The School of Rock"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "feel-good genome up, sad/heartbreaking genome excluded"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "comedy for 'kinda funny'"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'low stakes' has no axis; proxied via gentle tone"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'dont wanna cry' proxied by excluding sad genome"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "1am wind-down mapped to mood/pacing, no occasion tag"
+   }
+  ],
+  "holes": [
+   "No 'low-stakes'/tension-level or cozy axis; feel-good genome + comedy only approximate 'won't stress me out'"
+  ],
+  "archetype": "foreign cinema by country",
+  "archetype_idx": 10,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "whats a good movie i can half-watch while i scroll my phone",
+  "intent": "Background-friendly movie for divided attention",
+  "recs": [
+   "Forrest Gump",
+   "Mamma Mia!",
+   "The School of Rock",
+   "Legally Blonde",
+   "Big",
+   "Cool Runnings"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "comedy/musical as easy-to-follow proxy"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "light/feel-good genome"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "familiar high-popularity films are easy to half-follow"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "no low-plot-density signal, proxied loosely"
+   },
+   {
+    "axis": "other",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no background-friendly / plot-complexity / attention-demand axis"
+   }
+  ],
+  "holes": [
+   "No background-friendliness or plot-complexity signal \u2014 the entire request is unmodeled, proxied by familiar light comedy",
+   "No runtime signal"
+  ],
+  "archetype": "foreign cinema by country",
+  "archetype_idx": 10,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "give me a comfort rewatch, the kind of movie thats basically a warm blanket. problem is ive seen all the usual ones a million times already",
+  "intent": "Familiar comfort movie beyond the obvious rewatches",
+  "recs": [
+   "About Time",
+   "Begin Again",
+   "Hunt for the Wilderpeople",
+   "Chef",
+   "The Sandlot",
+   "Whip It"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "comforting/heartwarming genome anchors the warm-blanket feel"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "popularity rank lets us skip the ubiquitous picks"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "128-dim embedding finds comfort-movie neighborhood"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "comedy/drama/romance comfort space"
+   }
+  ],
+  "holes": [
+   "The Ask flow is cold \u2014 no personal watch history, so 'beyond the ones you've seen' is guessed from general popularity, not what THIS user watched"
+  ],
+  "archetype": "foreign cinema by country",
+  "archetype_idx": 10,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "something to wind down to, under 2 hours pls. im wired from work and dont have the attention span for anything long tonight",
+  "intent": "Short, easy movie to decompress after work",
+  "recs": [
+   "Clueless",
+   "Legally Blonde",
+   "The School of Rock",
+   "Groundhog Day",
+   "Kung Fu Panda",
+   "Paddington 2"
+  ],
+  "signals": [
+   {
+    "axis": "runtime",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "runtime scraped but not wired into serving; cannot enforce <2h"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "light comedy for easy decompress"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "feel-good/light genome"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'short attention span' proxied by undemanding tone"
+   }
+  ],
+  "holes": [
+   "Runtime is not in serving artifacts \u2014 the pipeline literally cannot enforce or rank the 'under 2 hours' constraint; recs rely on curator knowledge"
+  ],
+  "archetype": "foreign cinema by country",
+  "archetype_idx": 10,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "nothing scary nothing sad no subtitles im too tired for any of that. just something easy and nice",
+  "intent": "Gentle, undemanding pick with hard no-gos",
+  "recs": [
+   "The Princess Bride",
+   "Finding Nemo",
+   "Groundhog Day",
+   "Legally Blonde",
+   "Big",
+   "The School of Rock"
+  ],
+  "signals": [
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "original/spoken language lets us keep English-only, no subtitles"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "exclude Horror genre for 'nothing scary'"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "exclude sad/heartbreaking genome for 'nothing sad'"
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "US/GB English productions reinforce no-subtitles"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'easy and nice' proxied via gentle tone"
+   }
+  ],
+  "holes": [
+   "'Nothing scary' beyond dropping the Horror genre is imprecise \u2014 a tense non-horror thriller can still scare; tense/creepy genome is only a coarse proxy"
+  ],
+  "archetype": "foreign cinema by country",
+  "archetype_idx": 10,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "late night solo couch + wine situation. i want something pretty and slow and vibey, honestly dont even care about the plot",
+  "intent": "Atmospheric mood piece over plot for a relaxed night in",
+  "recs": [
+   "Lost in Translation",
+   "Her",
+   "Drive",
+   "Call Me by Your Name",
+   "The Tree of Life",
+   "Moonlight"
+  ],
+  "signals": [
+   {
+    "axis": "visual_style",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "visually-stunning/appealing genome tags serve 'pretty'"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "slow/slow-paced genome tags exist for 'slow'"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "atmospheric genome tag anchors 'vibey'"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'dont care about plot' mood-over-plot not directly modeled"
+   }
+  ],
+  "holes": [
+   "'Pretty'/cinematography has no dedicated axis \u2014 the visually-stunning genome tag is a coarse crowd proxy, not a real cinematography rating"
+  ],
+  "archetype": "foreign cinema by country",
+  "archetype_idx": 10,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "i keep opening the app and closing it and picking nothing. can you just decide for me? cozy vibes only",
+  "intent": "Wants a single decisive cozy pick to end decision paralysis",
+  "recs": [
+   "Paddington 2",
+   "Chef",
+   "The Princess Bride",
+   "About Time",
+   "Kiki's Delivery Service",
+   "The Grand Budapest Hotel"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "feel-good/heartwarming genome anchors 'cozy vibes'"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "comedy/family cozy space"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "pick a safe crowd-pleaser for high-confidence single choice"
+   },
+   {
+    "axis": "other",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "no 'cozy' tag; comforting/gentle keywords approximate it"
+   }
+  ],
+  "holes": [
+   "'Cozy' has no dedicated axis; approximated via feel-good/heartwarming genome plus comedy \u2014 decisiveness itself is a UX ranking choice, not a data signal"
+  ],
+  "archetype": "foreign cinema by country",
+  "archetype_idx": 10,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "recommend a chill atmospheric sci-fi to drift off to. no jump scares no action, i just wanna float",
+  "intent": "Calm, ambient sci-fi without tension or scares",
+  "recs": [
+   "Her",
+   "Arrival",
+   "Blade Runner 2049",
+   "2001: A Space Odyssey",
+   "Contact",
+   "Moon"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Sci-Fi required, Action/Horror excluded"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "atmospheric genome up, tense/intense genome down"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "slow-paced genome serves 'chill/float'"
+   },
+   {
+    "axis": "visual_style",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "visually-stunning genome for ambient look"
+   },
+   {
+    "axis": "other",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "no 'jump scare' axis; only Horror-exclude + tense de-weight"
+   }
+  ],
+  "holes": [
+   "'No jump scares' isn't modeled \u2014 we can exclude Horror and de-weight tense/creepy genome, but won't catch a startle beat inside a non-horror sci-fi"
+  ],
+  "archetype": "foreign cinema by country",
+  "archetype_idx": 10,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "whats a movie thats good to fall asleep to but not actually boring, like comforting but still watchable if i stay awake",
+  "intent": "Soothing but not dull movie for a sleepy night",
+  "recs": [
+   "The Princess Bride",
+   "Chef",
+   "About Time",
+   "Groundhog Day",
+   "The Grand Budapest Hotel",
+   "Paddington 2"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "comforting/feel-good genome anchors the soothing side"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "comedy/adventure keeps it watchable"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "slow-paced genome exists but 'not boring' engagement unmodeled"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "gentle-but-engaging balance only loosely proxied"
+   },
+   {
+    "axis": "other",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no engagement/watchability-vs-boring signal"
+   }
+  ],
+  "holes": [
+   "No engagement/'not boring' axis \u2014 the soothing-yet-watchable tradeoff is exactly what we cannot score; proxied by comforting genome plus a light plot",
+   "No runtime or rewatchability signal for a fall-asleep pick"
+  ],
+  "archetype": "foreign cinema by country",
+  "archetype_idx": 10,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "ok so i've basically watched every slasher from the 80s golden era, halloween, friday the 13th, sleepaway camp all of it. what are some lesser known ones i probably missed?",
+  "intent": "Wants obscure/deep-cut 1980s slashers beyond the canonical staples",
+  "recs": [
+   "My Bloody Valentine (1981)",
+   "The Slumber Party Massacre (1982)",
+   "Chopping Mall (1986)",
+   "Night of the Creeps (1986)",
+   "April Fool's Day (1986)",
+   "Maniac (1980)"
+  ],
+  "signals": [
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "keyword 'slasher' tags 104 movies; strong subgenre filter"
+   },
+   {
+    "axis": "decade_year",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "release year pins the 1980s window"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "popularity rank orders lesser-known deep cuts"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Halloween/F13/Sleepaway anchors in corpus; exclude as seen"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Horror one-hot present"
+   }
+  ],
+  "holes": [
+   "Truest deep cuts (The Burning, The Prowler, The Mutilator) fall below the 200-rating floor, absent from corpus"
+  ],
+  "archetype": "film-history classics",
+  "archetype_idx": 9,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "give me folk horror. not the obvious midsommar/wicker man stuff, the weird pagan rural dread ones",
+  "intent": "Seeking non-obvious folk horror recommendations",
+  "recs": [
+   "Kill List (2011)",
+   "A Field in England (2013)",
+   "Apostle (2018)",
+   "Witchfinder General (1968)",
+   "The Wailing (2016)",
+   "A Dark Song (2016)"
+  ],
+  "signals": [
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "keyword 'folk horror' tags 21 movies exactly"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'pagan/paganism' keyword only ~4 movies; rural approximated"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "rank filters out the obvious Midsommar/Wicker Man tier"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "named anchors in corpus, excluded via title match"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome 'atmospheric'/'disturbing' verify dread tone"
+   }
+  ],
+  "holes": [
+   "'Pagan rural dread' has no precise axis; leans on a small 21-title folk-horror keyword set"
+  ],
+  "archetype": "film-history classics",
+  "archetype_idx": 9,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "i love found footage but 90% of it is garbage. which ones actually nail the format? already seen rec, blair witch, noroi",
+  "intent": "Wants high-quality found-footage films, excluding ones already seen",
+  "recs": [
+   "Lake Mungo (2009)",
+   "Creep (2014)",
+   "Host (2020)",
+   "One Cut of the Dead (2017)",
+   "The Taking of Deborah Logan (2014)",
+   "Grave Encounters (2011)"
+  ],
+  "signals": [
+   {
+    "axis": "format_bw_silent",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "keyword 'found footage' tags 68 movies as the format"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "TMDB vote_average is only a crowd-quality proxy"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "REC/Blair Witch in corpus; Noroi absent, can't anchor"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Horror one-hot present"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "rank/vote_count separates seen big names"
+   }
+  ],
+  "holes": [
+   "'Actually nail the format' is a craft/quality judgment; we have only crowd vote_average, no critical signal"
+  ],
+  "archetype": "film-history classics",
+  "archetype_idx": 9,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "psychological horror that messes with your head for days after. slow burn is fine, i dont need gore",
+  "intent": "Requesting cerebral slow-burn psychological horror over gore",
+  "recs": [
+   "Session 9 (2001)",
+   "It Comes at Night (2017)",
+   "A Tale of Two Sisters (2003)",
+   "Lake Mungo (2009)",
+   "The Night House (2021)",
+   "Under the Skin (2014)"
+  ],
+  "signals": [
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "keyword 'psychological horror' tags 33 movies"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome 'atmospheric'/'disturbing'/'creepy' verify head-messing tone"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "both",
+    "note": "'slow burn' keyword only 3 movies; no pacing axis"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'gore' keyword excludes 106; absence can't confirm none"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Horror one-hot present"
+   }
+  ],
+  "holes": [
+   "No pacing signal for 'slow burn'",
+   "'No gore' only excludable where gore is keyword-tagged; can't verify true absence"
+  ],
+  "archetype": "film-history classics",
+  "archetype_idx": 9,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "j-horror recs?? like ringu, ju-on era stuff",
+  "intent": "Short request for classic Japanese horror in the Ringu/Ju-on vein",
+  "recs": [
+   "Ring (1998)",
+   "Ju-on: The Grudge (2002)",
+   "Dark Water (2002)",
+   "Pulse (2001)",
+   "One Missed Call (2003)",
+   "Audition (2000)"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "production_country JP reliably marks Japanese horror"
+   },
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "original language 'ja' confirms Japanese films"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'j-horror' keyword thin (3); country+genre+year compensates"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "release year pins the 1998-2005 Ringu/Ju-on era"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Ringu (Ring) and Ju-on both in corpus as anchors"
+   }
+  ],
+  "holes": [],
+  "archetype": "film-history classics",
+  "archetype_idx": 9,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "im doing a giallo deep dive rn. seen most argento and bava. who else should i be watching, some of the deeper italian stuff",
+  "intent": "Exploring giallo beyond the famous directors",
+  "recs": [
+   "Alice, Sweet Alice (1976)",
+   "Dressed to Kill (1980)",
+   "Blow Out (1981)",
+   "Body Double (1984)",
+   "Malignant (2021)"
+  ],
+  "signals": [
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'giallo'/'american giallo' keyword only 12 movies total"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "facet store directors let us exclude Argento/Bava"
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "country IT + language 'it' identifies Italian films"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "rank surfaces deeper cuts over the famous ones"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "learned embedding neighbors to known giallo"
+   }
+  ],
+  "holes": [
+   "Deep Italian giallo (Fulci, Martino, Lenzi) is absent; corpus is ~all Argento plus American neo-giallo"
+  ],
+  "archetype": "film-history classics",
+  "archetype_idx": 9,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "whats a good body horror double feature. thinking cronenberg energy, the fly, videodrome, that kind of thing but maybe something newer too",
+  "intent": "Wants a body-horror double bill blending Cronenberg classics with modern picks",
+  "recs": [
+   "Videodrome (1983)",
+   "Possessor (2020)",
+   "Titane (2021)",
+   "Crimes of the Future (2022)",
+   "Raw (2017)",
+   "Antiviral (2012)"
+  ],
+  "signals": [
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "keyword 'body horror' tags 35 movies"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "facet directors capture Cronenberg (and Brandon) lineage"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "release year pairs a classic with a newer pick"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "The Fly/Videodrome in corpus as embedding anchors"
+   },
+   {
+    "axis": "runtime",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "runtime scraped but unused; can't balance a double bill"
+   }
+  ],
+  "holes": [
+   "'Double feature' implies runtime/pairing logic, but runtime is not wired into serving"
+  ],
+  "archetype": "film-history classics",
+  "archetype_idx": 9,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "need something for a folk-horror-meets-cult vibe night with friends, not too obscure that theyll be bored but not the same 5 movies everyone names",
+  "intent": "Group-friendly folk horror/cult films balancing accessibility and freshness",
+  "recs": [
+   "The Ritual (2017)",
+   "Apostle (2018)",
+   "Kill List (2011)",
+   "Children of the Corn (1984)",
+   "Ready or Not (2019)",
+   "The Wicker Man (1973)"
+  ],
+  "signals": [
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "'folk horror' keyword plus rich 'cult'/'satanic cult' keywords"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "'religious cult'/'cult leader' keywords cover the cult angle"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "rank bands the accessible-but-not-overplayed sweet spot"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "no group/party-night axis; proxied by mid popularity"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "learned embedding neighbors to folk/cult anchors"
+   }
+  ],
+  "holes": [
+   "'Vibe night with friends / group-friendly' is an occasion signal we don't model, only proxied by popularity band"
+  ],
+  "archetype": "film-history classics",
+  "archetype_idx": 9,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "so i've been on a slow burn a24-ish horror kick, hereditary the witch the lighthouse etc. but honestly getting sick of the elevated horror label lol. is there older stuff that did the dread thing before it was a trend",
+  "intent": "Seeking pre-A24 atmospheric dread horror, tired of 'elevated horror'",
+  "recs": [
+   "Don't Look Now (1973)",
+   "The Innocents (1961)",
+   "The Haunting (1963)",
+   "Picnic at Hanging Rock (1975)",
+   "The Changeling (1980)",
+   "Session 9 (2001)"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome 'atmospheric'/'creepy' verify the dread quality"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "release year filters to pre-2010 (pre-A24) titles"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Hereditary/Witch/Lighthouse in corpus; excluded as seen"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "'psychological horror'/'atmospheric' keywords anchor the vibe"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "rank keeps picks recognizable but not overplayed"
+   }
+  ],
+  "holes": [
+   "'A24 / elevated horror' is a studio-label axis we lack; approximated by era + dread affect, not by production house"
+  ],
+  "archetype": "film-history classics",
+  "archetype_idx": 9,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "found footage but the demonic possession / occult subgenre specifically. and no paranormal activity sequels please",
+  "intent": "Occult/possession found-footage recs excluding a specific franchise",
+  "recs": [
+   "The Last Exorcism (2010)",
+   "Grave Encounters (2011)",
+   "The Taking of Deborah Logan (2014)",
+   "As Above, So Below (2014)",
+   "Hell House LLC (2015)",
+   "[REC]\u00b2 (2009)"
+  ],
+  "signals": [
+   {
+    "axis": "format_bw_silent",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "'found footage' keyword tags 68 movies as format"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "'demonic possession' (22), 'occult' (47) keywords present"
+   },
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no franchise field; only title-substring exclusion for Paranormal Activity"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "learned embedding neighbors to occult found-footage"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Horror one-hot present"
+   }
+  ],
+  "holes": [
+   "No franchise membership field; 'no Paranormal Activity sequels' works only via brittle title-string matching (misses The Marked Ones)"
+  ],
+  "archetype": "film-history classics",
+  "archetype_idx": 9,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "korean movies pls. loved parasite and oldboy, want more that hit like that",
+  "intent": "Wants Korean films similar to Parasite/Oldboy",
+  "recs": [
+   "Memories of Murder",
+   "The Handmaiden",
+   "I Saw the Devil",
+   "Mother",
+   "Burning",
+   "Sympathy for Mr. Vengeance"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "production_countries has KR; core backbone filter"
+   },
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "original_language ko confirms Korean-language"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Parasite/Oldboy both in corpus; 128d learned embedding"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "thriller/crime/revenge genres + neo-noir, revenge keywords"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome dark/gritty, atmospheric, twist-ending affect tags"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Bong Joon Ho, Park Chan-wook in people facet store"
+   }
+  ],
+  "holes": [
+   "No violence-intensity or content-rating axis to match Oldboy's extremity"
+  ],
+  "archetype": "friends party movie",
+  "archetype_idx": 6,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "I've been on a huge Japanese cinema kick lately, mostly the older stuff \u2014 Kurosawa, Ozu, that kind of quiet slow-burn thing. But honestly I'm open to newer Japanese films too as long as they're not just anime. What should I watch next?",
+  "intent": "Wants Japanese live-action films, classic auteurs plus modern",
+  "recs": [
+   "Tokyo Story",
+   "Ikiru",
+   "Late Spring",
+   "Still Walking",
+   "Shoplifters",
+   "Drive My Car"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "production_countries JP filter"
+   },
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "original_language ja"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Kurosawa, Ozu resolvable in people facet store"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "release year spans classic 1950s and modern picks"
+   },
+   {
+    "axis": "format_bw_silent",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Animation genre one-hot excludes anime as requested"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no pacing dim; 'slow-burn' keyword only two movies"
+   }
+  ],
+  "holes": [
+   "Cannot verify 'quiet slow-burn' pacing \u2014 no pacing axis, sparse keyword coverage"
+  ],
+  "archetype": "friends party movie",
+  "archetype_idx": 6,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "give me the best french new wave films",
+  "intent": "Wants French New Wave recommendations",
+  "recs": [
+   "The 400 Blows",
+   "Breathless",
+   "Jules and Jim",
+   "Cl\u00e9o from 5 to 7",
+   "Band of Outsiders",
+   "Vivre Sa Vie"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "production_countries FR"
+   },
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "original_language fr"
+   },
+   {
+    "axis": "decade_year",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "late-1950s/1960s window pins the movement era"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Godard, Truffaut, Varda facet \u2014 real movement handle"
+   },
+   {
+    "axis": "genre",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "'french new wave' keyword on one movie; no movement tag"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "vote_average proxy only; no curated critical canon"
+   }
+  ],
+  "holes": [
+   "'New Wave' movement is not a data axis \u2014 approximated via director+decade+country",
+   "No curated critical canon to rank 'best'"
+  ],
+  "archetype": "friends party movie",
+  "archetype_idx": 6,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "any good italian movies? like the neorealism ones, bicycle thieves era. my grandpa used to watch them and i wanna get into it",
+  "intent": "Wants Italian neorealist cinema",
+  "recs": [
+   "Rome, Open City",
+   "Umberto D.",
+   "La Strada",
+   "Two Women",
+   "Rocco and His Brothers",
+   "Mamma Roma"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "production_countries IT"
+   },
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "original_language it"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "1945-1960 postwar window via release year"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "De Sica, Rossellini, Visconti in facet store"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Bicycle Thieves in corpus; learned-embedding neighbors"
+   },
+   {
+    "axis": "genre",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "'neorealism' keyword on two movies; no movement tag"
+   }
+  ],
+  "holes": [
+   "'Neorealism' movement not stored \u2014 approximated by country+era+director list"
+  ],
+  "archetype": "friends party movie",
+  "archetype_idx": 6,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "ok so I watched Am\u00e9lie years ago and just rewatched it and now I really wanna dive into French cinema but like the cozy charming side not the depressing arthouse stuff. romantic, whimsical, pretty. rec me a few?",
+  "intent": "Wants charming/romantic French films, not bleak arthouse",
+  "recs": [
+   "A Very Long Engagement",
+   "The Intouchables",
+   "Micmacs",
+   "The Umbrellas of Cherbourg",
+   "Priceless",
+   "Delicatessen"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "production_countries FR"
+   },
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "original_language fr"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome feel-good/whimsical/heartwarming; can exclude dark/bleak"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Romance/Comedy genres + romcom, lighthearted keywords"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Am\u00e9lie in corpus; embedding + Jeunet director link"
+   },
+   {
+    "axis": "visual_style",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "no cinematography/color-palette axis for Am\u00e9lie's 'pretty' look"
+   }
+  ],
+  "holes": [
+   "No visual-style/cinematography axis to match Am\u00e9lie's saturated 'pretty' aesthetic"
+  ],
+  "archetype": "friends party movie",
+  "archetype_idx": 6,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "recommend me some scandinavian films, swedish or danish, the dark moody kind",
+  "intent": "Wants dark Scandinavian (Swedish/Danish) films",
+  "recs": [
+   "Let the Right One In",
+   "The Girl with the Dragon Tattoo",
+   "The Hunt",
+   "The Celebration",
+   "Border",
+   "The Guilty"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "SE/DK stored; 'Scandinavian' must expand to countries"
+   },
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "original_language sv/da"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome dark/gritty/bleak, atmospheric affect tags"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "crime/thriller/drama genres cover Nordic-noir tone"
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "co-production noise: many titles tagged both SE+DK"
+   }
+  ],
+  "holes": [
+   "'Scandinavian' is a region label \u2014 intake must expand to SE+DK(+NO/IS); no region tag"
+  ],
+  "archetype": "friends party movie",
+  "archetype_idx": 6,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "what are some must watch iranian films? heard so much about the directors there",
+  "intent": "Wants essential Iranian cinema",
+  "recs": [
+   "A Separation",
+   "Taste of Cherry",
+   "Close-Up",
+   "Children of Heaven",
+   "The White Balloon",
+   "The Salesman"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "production_countries IR"
+   },
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "original_language fa (Persian)"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Kiarostami, Farhadi, Panahi, Majidi in facet store"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "vote_average proxy; no Oscar/festival-award axis"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "popularity rank available but tilts toward well-known"
+   }
+  ],
+  "holes": [
+   "Only ~12 Iranian titles clear the 200-rating bar \u2014 many essentials absent from corpus",
+   "No festival-award/canon axis to define 'must-watch'"
+  ],
+  "archetype": "friends party movie",
+  "archetype_idx": 6,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "i'm obsessed with korean thrillers rn. burning, the wailing, memories of murder all blew me away. need more korean stuff thats tense and messes with your head",
+  "intent": "Wants tense, mind-bending Korean thrillers",
+  "recs": [
+   "The Chaser",
+   "I Saw the Devil",
+   "The Handmaiden",
+   "A Tale of Two Sisters",
+   "Decision to Leave",
+   "The Yellow Sea"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "production_countries KR"
+   },
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "original_language ko"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Thriller/Mystery genres + psychological thriller keyword"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome tense/atmospheric, twist-ending, psychological tags"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Burning/Wailing/Memories all in corpus; embedding neighbors"
+   },
+   {
+    "axis": "other",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "dedup named seen titles from recs by movieId"
+   }
+  ],
+  "holes": [],
+  "archetype": "friends party movie",
+  "archetype_idx": 6,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "spanish movies? not from spain necessarily, latin american too. pan's labyrinth vibes or roma vibes both work honestly",
+  "intent": "Wants Spanish-language films from Spain or Latin America",
+  "recs": [
+   "The Devil's Backbone",
+   "Y Tu Mam\u00e1 Tambi\u00e9n",
+   "Amores Perros",
+   "The Secret in Their Eyes",
+   "Wild Tales",
+   "Cronos"
+  ],
+  "signals": [
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "original_language es is the unifying Spain+LatAm axis"
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "ES/MX/AR stored; multi-country region expansion"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "Pan's Labyrinth in corpus; Roma is absent"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "del Toro, Cuaron, Inarritu in facet store"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome dark-fantasy vs intimate-drama affect separation"
+   }
+  ],
+  "holes": [
+   "Roma (2018) is not in corpus \u2014 'Roma vibes' seed cannot be matched by embedding"
+  ],
+  "archetype": "friends party movie",
+  "archetype_idx": 6,
+  "source_model": "opus"
+ },
+ {
+  "prompt": "hong kong action from the 80s and 90s. john woo, wong kar wai, all of it. what am i missing",
+  "intent": "Wants classic Hong Kong action and arthouse cinema",
+  "recs": [
+   "Hard Boiled",
+   "The Killer",
+   "A Better Tomorrow",
+   "Chungking Express",
+   "Fallen Angels",
+   "Police Story"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "production_countries HK"
+   },
+   {
+    "axis": "decade_year",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "release year pins 1980s-1990s window"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "John Woo, Wong Kar-wai in facet store \u2014 explicit handle"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Action genre covers Woo; arthouse Romance covers Wong"
+   },
+   {
+    "axis": "language",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "original_language may not cleanly flag Cantonese vs Mandarin"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "'heroic bloodshed' micro-genre untagged; approx via Woo+Action"
+   }
+  ],
+  "holes": [
+   "Cantonese vs Mandarin not distinguished; many HK-tagged entries are US co-productions (noise)"
+  ],
+  "archetype": "friends party movie",
+  "archetype_idx": 6,
+  "source_model": "opus"
+ }
+]

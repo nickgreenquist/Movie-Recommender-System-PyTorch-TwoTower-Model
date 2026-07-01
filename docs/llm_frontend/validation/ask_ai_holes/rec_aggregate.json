@@ -1,0 +1,3122 @@
+{
+ "n_records": 500,
+ "axis_table": {
+  "genre": {
+   "HAVE": 371,
+   "PARTIAL": 5,
+   "MISSING": 2,
+   "total": 378,
+   "intake": 350,
+   "postfilter": 123
+  },
+  "mood_affect": {
+   "HAVE": 271,
+   "PARTIAL": 76,
+   "MISSING": 7,
+   "total": 354,
+   "intake": 235,
+   "postfilter": 191
+  },
+  "theme_subject": {
+   "HAVE": 65,
+   "PARTIAL": 114,
+   "MISSING": 4,
+   "total": 183,
+   "intake": 154,
+   "postfilter": 61
+  },
+  "similar_to_title": {
+   "HAVE": 129,
+   "PARTIAL": 20,
+   "MISSING": 11,
+   "total": 160,
+   "intake": 136,
+   "postfilter": 56
+  },
+  "tone_maturity": {
+   "HAVE": 9,
+   "PARTIAL": 85,
+   "MISSING": 32,
+   "total": 126,
+   "intake": 64,
+   "postfilter": 71
+  },
+  "popularity_obscurity": {
+   "HAVE": 102,
+   "PARTIAL": 23,
+   "MISSING": 0,
+   "total": 125,
+   "intake": 14,
+   "postfilter": 121
+  },
+  "subgenre": {
+   "HAVE": 19,
+   "PARTIAL": 78,
+   "MISSING": 4,
+   "total": 101,
+   "intake": 90,
+   "postfilter": 34
+  },
+  "pacing": {
+   "HAVE": 3,
+   "PARTIAL": 12,
+   "MISSING": 79,
+   "total": 94,
+   "intake": 54,
+   "postfilter": 44
+  },
+  "occasion_audience": {
+   "HAVE": 0,
+   "PARTIAL": 19,
+   "MISSING": 62,
+   "total": 81,
+   "intake": 79,
+   "postfilter": 10
+  },
+  "nationality_country": {
+   "HAVE": 64,
+   "PARTIAL": 11,
+   "MISSING": 0,
+   "total": 75,
+   "intake": 39,
+   "postfilter": 54
+  },
+  "awards_acclaim": {
+   "HAVE": 2,
+   "PARTIAL": 25,
+   "MISSING": 38,
+   "total": 65,
+   "intake": 10,
+   "postfilter": 64
+  },
+  "character_type": {
+   "HAVE": 5,
+   "PARTIAL": 44,
+   "MISSING": 15,
+   "total": 64,
+   "intake": 36,
+   "postfilter": 29
+  },
+  "person_director": {
+   "HAVE": 58,
+   "PARTIAL": 5,
+   "MISSING": 1,
+   "total": 64,
+   "intake": 49,
+   "postfilter": 29
+  },
+  "plot_structure": {
+   "HAVE": 1,
+   "PARTIAL": 13,
+   "MISSING": 46,
+   "total": 60,
+   "intake": 44,
+   "postfilter": 16
+  },
+  "visual_style": {
+   "HAVE": 5,
+   "PARTIAL": 3,
+   "MISSING": 50,
+   "total": 58,
+   "intake": 36,
+   "postfilter": 24
+  },
+  "setting_location": {
+   "HAVE": 6,
+   "PARTIAL": 48,
+   "MISSING": 3,
+   "total": 57,
+   "intake": 55,
+   "postfilter": 16
+  },
+  "decade_year": {
+   "HAVE": 52,
+   "PARTIAL": 0,
+   "MISSING": 0,
+   "total": 52,
+   "intake": 43,
+   "postfilter": 19
+  },
+  "era_period": {
+   "HAVE": 40,
+   "PARTIAL": 12,
+   "MISSING": 0,
+   "total": 52,
+   "intake": 47,
+   "postfilter": 20
+  },
+  "ending_type": {
+   "HAVE": 2,
+   "PARTIAL": 23,
+   "MISSING": 22,
+   "total": 47,
+   "intake": 12,
+   "postfilter": 37
+  },
+  "content_rating": {
+   "HAVE": 0,
+   "PARTIAL": 0,
+   "MISSING": 40,
+   "total": 40,
+   "intake": 3,
+   "postfilter": 37
+  },
+  "language": {
+   "HAVE": 33,
+   "PARTIAL": 4,
+   "MISSING": 0,
+   "total": 37,
+   "intake": 23,
+   "postfilter": 29
+  },
+  "other": {
+   "HAVE": 1,
+   "PARTIAL": 3,
+   "MISSING": 32,
+   "total": 36,
+   "intake": 23,
+   "postfilter": 16
+  },
+  "runtime": {
+   "HAVE": 0,
+   "PARTIAL": 4,
+   "MISSING": 30,
+   "total": 34,
+   "intake": 15,
+   "postfilter": 31
+  },
+  "franchise_universe": {
+   "HAVE": 0,
+   "PARTIAL": 0,
+   "MISSING": 29,
+   "total": 29,
+   "intake": 18,
+   "postfilter": 11
+  },
+  "person_actor": {
+   "HAVE": 21,
+   "PARTIAL": 0,
+   "MISSING": 1,
+   "total": 22,
+   "intake": 14,
+   "postfilter": 10
+  },
+  "based_on_source": {
+   "HAVE": 7,
+   "PARTIAL": 8,
+   "MISSING": 0,
+   "total": 15,
+   "intake": 11,
+   "postfilter": 11
+  },
+  "streaming_availability": {
+   "HAVE": 0,
+   "PARTIAL": 0,
+   "MISSING": 11,
+   "total": 11,
+   "intake": 4,
+   "postfilter": 7
+  },
+  "format_bw_silent": {
+   "HAVE": 6,
+   "PARTIAL": 2,
+   "MISSING": 3,
+   "total": 11,
+   "intake": 5,
+   "postfilter": 9
+  },
+  "object_prop": {
+   "HAVE": 0,
+   "PARTIAL": 6,
+   "MISSING": 2,
+   "total": 8,
+   "intake": 4,
+   "postfilter": 4
+  },
+  "representation_diversity": {
+   "HAVE": 0,
+   "PARTIAL": 4,
+   "MISSING": 4,
+   "total": 8,
+   "intake": 6,
+   "postfilter": 2
+  },
+  "person_composer": {
+   "HAVE": 0,
+   "PARTIAL": 0,
+   "MISSING": 8,
+   "total": 8,
+   "intake": 5,
+   "postfilter": 3
+  },
+  "cross_media": {
+   "HAVE": 0,
+   "PARTIAL": 0,
+   "MISSING": 7,
+   "total": 7,
+   "intake": 7,
+   "postfilter": 0
+  },
+  "person_writer": {
+   "HAVE": 1,
+   "PARTIAL": 0,
+   "MISSING": 0,
+   "total": 1,
+   "intake": 1,
+   "postfilter": 0
+  }
+ },
+ "gap_axes_ranked": [
+  [
+   "theme_subject",
+   118,
+   183,
+   64
+  ],
+  [
+   "tone_maturity",
+   117,
+   126,
+   93
+  ],
+  [
+   "pacing",
+   91,
+   94,
+   97
+  ],
+  [
+   "mood_affect",
+   83,
+   354,
+   23
+  ],
+  [
+   "subgenre",
+   82,
+   101,
+   81
+  ],
+  [
+   "occasion_audience",
+   81,
+   81,
+   100
+  ],
+  [
+   "awards_acclaim",
+   63,
+   65,
+   97
+  ],
+  [
+   "character_type",
+   59,
+   64,
+   92
+  ],
+  [
+   "plot_structure",
+   59,
+   60,
+   98
+  ],
+  [
+   "visual_style",
+   53,
+   58,
+   91
+  ],
+  [
+   "setting_location",
+   51,
+   57,
+   89
+  ],
+  [
+   "ending_type",
+   45,
+   47,
+   96
+  ],
+  [
+   "content_rating",
+   40,
+   40,
+   100
+  ],
+  [
+   "other",
+   35,
+   36,
+   97
+  ],
+  [
+   "runtime",
+   34,
+   34,
+   100
+  ],
+  [
+   "similar_to_title",
+   31,
+   160,
+   19
+  ],
+  [
+   "franchise_universe",
+   29,
+   29,
+   100
+  ],
+  [
+   "popularity_obscurity",
+   23,
+   125,
+   18
+  ],
+  [
+   "era_period",
+   12,
+   52,
+   23
+  ],
+  [
+   "nationality_country",
+   11,
+   75,
+   15
+  ],
+  [
+   "streaming_availability",
+   11,
+   11,
+   100
+  ],
+  [
+   "based_on_source",
+   8,
+   15,
+   53
+  ],
+  [
+   "object_prop",
+   8,
+   8,
+   100
+  ],
+  [
+   "representation_diversity",
+   8,
+   8,
+   100
+  ],
+  [
+   "person_composer",
+   8,
+   8,
+   100
+  ],
+  [
+   "genre",
+   7,
+   378,
+   2
+  ],
+  [
+   "cross_media",
+   7,
+   7,
+   100
+  ],
+  [
+   "person_director",
+   6,
+   64,
+   9
+  ],
+  [
+   "format_bw_silent",
+   5,
+   11,
+   45
+  ],
+  [
+   "language",
+   4,
+   37,
+   11
+  ],
+  [
+   "person_actor",
+   1,
+   22,
+   5
+  ]
+ ],
+ "hole_themes": [
+  [
+   "exclusion/negation",
+   756
+  ],
+  [
+   "mood/affect-precision",
+   112
+  ],
+  [
+   "quality-floor",
+   90
+  ],
+  [
+   "content-rating/MPAA",
+   74
+  ],
+  [
+   "pacing/tempo",
+   69
+  ],
+  [
+   "occasion/audience",
+   60
+  ],
+  [
+   "soundtrack/composer",
+   57
+  ],
+  [
+   "ending-type",
+   47
+  ],
+  [
+   "streaming-availability",
+   39
+  ],
+  [
+   "runtime/length",
+   38
+  ],
+  [
+   "awards/acclaim",
+   32
+  ],
+  [
+   "object/prop/scene",
+   31
+  ],
+  [
+   "character-type",
+   26
+  ],
+  [
+   "nationality/foreign",
+   25
+  ],
+  [
+   "franchise/universe",
+   25
+  ],
+  [
+   "representation/diversity",
+   18
+  ],
+  [
+   "box-office/budget",
+   15
+  ],
+  [
+   "cross-media",
+   12
+  ],
+  [
+   "true-story/based-on",
+   12
+  ],
+  [
+   "obscurity/hidden-gem",
+   10
+  ],
+  [
+   "set-in vs filmed-in",
+   7
+  ],
+  [
+   "recency/new-release",
+   6
+  ],
+  [
+   "similarity/like-X",
+   5
+  ]
+ ],
+ "hole_theme_examples": {
+  "exclusion/negation": [
+   "No true randomness/serendipity control \u2014 'surprise' collapses to the popularity prior.",
+   "Cold-start Ask-AI has no user history, so the surprise can't be tuned to their taste.",
+   "No streaming-availability data \u2014 can't guarantee the pick is actually on Netflix."
+  ],
+  "streaming-availability": [
+   "No streaming-availability data \u2014 can't guarantee the pick is actually on Netflix.",
+   "No streaming-availability data, so we cannot answer 'watch tonight' with where-to-watch",
+   "No streaming availability for 'tonight'"
+  ],
+  "runtime/length": [
+   "Runtime is not wired into serving \u2014 the 'isnt super long' cap can't be enforced; recs rely on curator knowledge of runtimes.",
+   "Runtime (shorter for short attention) is scraped but not wired into serving",
+   "No pacing axis to gauge continuous energy across a runtime"
+  ],
+  "content-rating/MPAA": [
+   "Corpus floors at >=200 MovieLens ratings \u2014 nothing is truly obscure; only relative hidden gems.",
+   "Popularity is cumulative all-time MovieLens rating counts, not real-time trending.",
+   "No content-rating; 'dumb/raunchy' approximated by comedy genre + crude-humor keywords only"
+  ],
+  "obscurity/hidden-gem": [
+   "Corpus floors at >=200 MovieLens ratings \u2014 nothing is truly obscure; only relative hidden gems.",
+   "Truest deep cuts (The Burning, The Prowler, The Mutilator) fall below the 200-rating floor, absent from corpus",
+   "Cannot distinguish 'deep cut' from 'famous work' within one director's filmography \u2014 relative cultural salience is not a signal"
+  ],
+  "pacing/tempo": [
+   "'Keep my attention' (pacing/engagement) is only approximable via coarse genome fast/slow-paced tags \u2014 no true engagement axis.",
+   "No pacing axis to gauge continuous energy across a runtime",
+   "No pacing/low-stakes axis; stakes can't be measured or ranked."
+  ],
+  "ending-type": [
+   "Popularity is cumulative all-time MovieLens rating counts, not real-time trending.",
+   "'Everyone's ok in the end' leans on a single noisy genome 'happy ending' tag.",
+   "'Found family' keyword is sparse (4 movies); rely on broader family/friendship genome."
+  ],
+  "recency/new-release": [
+   "Corpus frozen ~2023 (no Barbie/Oppenheimer/2024+) \u2014 literal 'these days' is unreachable.",
+   "200-rating corpus threshold may exclude very recent 2022\u20132023 titles still accumulating reviews.",
+   "Corpus ends ~2023; cannot serve any 2026 release \u2014 recency intent is fully unservable."
+  ],
+  "mood/affect-precision": [
+   "Background/second-screen suitability (plot-light, low-attention, no subtitles) isn't a modeled axis \u2014 only proxied by feel-good genome tags.",
+   "'stoner movie' keyword covers only 7 titles; broader net uses 'marijuana' which also tags serious drug dramas",
+   "No cozy/warm axis; only feel-good/heartwarming genome approximates the mood."
+  ],
+  "nationality/foreign": [
+   "Background/second-screen suitability (plot-light, low-attention, no subtitles) isn't a modeled axis \u2014 only proxied by feel-good genome tags.",
+   "'New Wave' movement is not a data axis \u2014 approximated via director+decade+country",
+   "'Neorealism' movement not stored \u2014 approximated by country+era+director list"
+  ],
+  "quality-floor": [
+   "Background/second-screen suitability (plot-light, low-attention, no subtitles) isn't a modeled axis \u2014 only proxied by feel-good genome tags.",
+   "No 'so-bad-it's-good'/camp signal; low vote_average confuses boring-bad with fun-bad",
+   "No 'background-watchable / episodic / plot-light' signal \u2014 the central drop-in/out ask is unservable"
+  ],
+  "object/prop/scene": [
+   "No diversity/MMR objective to guarantee the shortlist actually differs.",
+   "Cannot reliably screen out a single scene that would startle an 8-year-old.",
+   "'Not scary' is only a coarse genome-tag proxy; no rating or per-scene fright grading."
+  ],
+  "occasion/audience": [
+   "No explicit 'party movie' tag \u2014 must proxy via genre plus popularity",
+   "Weather/occasion framing (rainy Sunday, tea) has no corresponding data axis.",
+   "'Found family' keyword is sparse (4 movies); rely on broader family/friendship genome."
+  ],
+  "box-office/budget": [
+   "No budget/indie-scale axis; 'small' films can't be identified as such.",
+   "Production budget not available \u2014 cannot filter explicitly for low-budget indie films",
+   "Blockbuster rental-era cultural context (VHS distribution, Friday-night mainstream) has no signal in pipeline."
+  ],
+  "awards/acclaim": [
+   "'Actually good' only proxied by TMDB vote_average, no awards signal.",
+   "No awards data; 'that good' judged only by TMDB vote average.",
+   "No explicit 'adults enjoy it too' signal; dual appeal is only proxied by wit/acclaim tags."
+  ],
+  "character-type": [
+   "Cannot detect 'a sad character death'; only whole-movie 'sad' affect exists.",
+   "Year range 1929\u20131934 is reachable but the defining characteristic (sexual/moral frankness) is completely unencodable",
+   "Kids-on-bikes visual motif has no axis; character_type only weakly captures child-protagonist suburban adventure."
+  ],
+  "soundtrack/composer": [
+   "No composer or musical-score axis, so the La La Land 'gorgeous soundtrack/musical' pull is lost",
+   "No engagement/'not boring' axis \u2014 the soothing-yet-watchable tradeoff is exactly what we cannot score; proxied by comforting genome plus a light plot",
+   "Cannot score 'beginner-friendliness' or accessibility \u2014 no complexity or impenetrability axis exists in the pipeline"
+  ],
+  "franchise/universe": [
+   "No franchise membership field; 'no Paranormal Activity sequels' works only via brittle title-string matching (misses The Marked Ones)",
+   "No franchise/universe membership signal \u2014 cannot systematically exclude well-known series entries the user has already seen",
+   "Franchise/sequel awareness absent; Before trilogy sequels cannot be surfaced intelligently."
+  ],
+  "set-in vs filmed-in": [
+   "Set-in vs filmed-in distinction absent; production country and language are imperfect proxies",
+   "'Filmed in X' is entirely untrackable; we store production country and set-in keywords, not shooting locations",
+   "'Set in Tokyo' vs 'filmed in Tokyo' is explicitly MISSING; production_country=Japan is too broad and catches non-Tokyo Japanese films."
+  ],
+  "similarity/like-X": [
+   "Visual style (color palette, symmetry, composition) is not a data dimension \u2014 query literally asks for films that LOOK like his.",
+   "Early indie films like Lady Macbeth (2016) may fall below the 200-rating corpus floor and be absent.",
+   "Abandoned architectural setting with dreamlike wrongness is indistinguishable from generic horror setting signals."
+  ],
+  "representation/diversity": [
+   "Occasion (brief solo adult window) has no intake or retrieval representation.",
+   "Occasion context ('first date') has no representation; pipeline cannot surface occasion-appropriate tone.",
+   "Occasion signal ('anniversary couples night', 'cozy') has no structured pipeline representation and cannot personalize for shared-viewing context"
+  ],
+  "cross-media": [
+   "No niche-sport/board-game subgenre axis; retrieval fully depends on keyword hit which yields near-zero candidates.",
+   "Video-game source type is not a tagged axis; pipeline cannot retrieve this category reliably.",
+   "Video-game source type not wired; pipeline has no way to retrieve this category reliably."
+  ],
+  "true-story/based-on": [
+   "Cannot distinguish crime novel vs. true-crime nonfiction vs. original screenplay as source types.",
+   "'Solid book-to-film' quality filter has no structured axis; vote_average is a weak proxy.",
+   "'Not trash' quality gate has no structured signal; vote_average too coarse to separate good from bad adaptations."
+  ]
+ },
+ "unmatched_holes": [
+  "Cold start \u2014 'fun' stays generic; can't tailor to which flavor of fun this user prefers.",
+  "Two-tower can't hard-subtract sad films; 'nothing sad' only enforceable as postfilter.",
+  "'Warm hug' is pure metaphor; only heartwarming genome loosely approximates it.",
+  "'death of father/mother' keywords tag only ~13-23 films each, so recall of this exact theme is thin",
+  "'Long distance' is barely tagged (3 films); recall relies on broader forbidden/star-crossed proxies",
+  "Embedding similarity is co-watch+genome driven; may drift to popularity over shared disturbing intensity",
+  "'Nothing scary' beyond dropping the Horror genre is imprecise \u2014 a tense non-horror thriller can still scare; tense/creepy genome is only a coarse proxy",
+  "Deep Italian giallo (Fulci, Martino, Lenzi) is absent; corpus is ~all Argento plus American neo-giallo",
+  "Body-horror + identity fusion is a niche thematic cluster only partially captured by TMDB keywords",
+  "'Made me cry' maps to heartbreaking genome tag but free-text extraction is unreliable.",
+  "Cinematic tension style is director-level aesthetic taste; only partially captured via co-watch embedding.",
+  "Morocco/Marrakech corpus coverage is sparse; only a handful of well-known films qualify even with perfect retrieval",
+  "'Quintessential' requires editorial/canonical curation; popularity is a weak proxy and misses cult essentials",
+  "When Harry Met Sally (1989) predates the stated 90s filter \u2014 decade boundary edge case the pipeline would handle incorrectly.",
+  "Comedy subgenre (spoof, satire, romcom, mockumentary) is undifferentiated; all tagged identically.",
+  "Profanity, sex, and graphic content have zero direct signals; Animation genre is the entire heuristic, missing all live-action G/PG films.",
+  "Rural vs urban Scotland distinction requires setting granularity beyond city-level TMDB keywords.",
+  "TMDB 'paris' keyword coverage incomplete; untagged Paris-set films reduce recall.",
+  "Paris drama with a romantic subplot may bypass romcom genre exclusion if genre tag is missing or generic.",
+  "User is explicitly city-agnostic; the pipeline must force a specific location query, losing the concept-first intent.",
+  "Southwest desert TMDB location keywords sparse and inconsistent; recall will be low for non-obvious titles.",
+  "TMDB 'new orleans' keyword inconsistently applied; Louisiana-set films outside the city may be missed.",
+  "Genre-level Sci-Fi exclusion over-blocks; TMDB setting keywords are partial and require an inference layer",
+  "Extreme corpus sparsity: fewer than 5 chess-themed films qualify in a 9k corpus; pipeline will exhaust relevant candidates almost immediately.",
+  "'Heist vs scam' sub-type distinction within crime genre is too granular for reliable TMDB keyword separation.",
+  "Survival sub-type (plane crash vs mountain vs sea) too granular; TMDB keyword coverage inconsistent across films.",
+  "Female director filter requires gender tagging on director IDs, which is absent from the data.",
+  "2026 is entirely outside corpus; system will return 2023 films at best \u2014 3-year gap.",
+  "Corpus cutoff means 'nothing old' still returns 2023 films \u2014 3+ years old to the user.",
+  "Corpus cutoff means 'this year' is unservable; best recs are 3 years stale.",
+  "Nonlinear narrative filterable via TMDB keyword but coverage patchy for pre-2000 non-Hollywood titles",
+  "Genre-agnostic brain-rewiring relies solely on embedding similarity; literary drama examples may be missed",
+  "Simulation-theory theme relies on TMDB keyword with uncertain coverage for late-1990s niche titles",
+  "Philosophical personal identity (qualia, continuity of self) too abstract for any wired axis; only embedding proxy",
+  "'Tudor' is a narrow historical sub-period; films tagged only as 'british historical drama' would be retrieved alongside Victorian and Edwardian results",
+  "Gun-fu vs wire-fu vs bare-knuckle subtype distinctions require human curation beyond keyword matching.",
+  "'Nothing that requires thinking' cognitive-accessibility axis unmeasurable; popularity is only a crude proxy",
+  "Enemies-to-lovers as a named romantic arc is only partially covered by TMDB keywords; may miss or dilute results.",
+  "Emotional impact intensity is unquantifiable from any feature in our set.",
+  "Enemies-to-lovers as a named plot beat only partially covered by TMDB keywords; coverage inconsistent.",
+  "Serving this at scale requires a curated female-director entity list or gender ontology on people.",
+  "Authentic Indigenous-directed films are rare in a mainstream 9366-movie corpus; only a handful qualify and most need manual curation.",
+  "Kaiju/giant-scale keyword coverage is sparse; TMDB 'monster' keyword conflates all sizes",
+  "Cerebral genome tag undifferentiated: returns mindfuck thrillers alongside quiet existential dramas equally",
+  "Camera treatment (leering vs. respectful framing) is entirely unmeasurable from any metadata or keyword signal.",
+  "Jazz subgenre relies on TMDB keyword + user-tag coverage, which may miss less-tagged or older titles.",
+  "Episodic long-form investigative format is structurally absent from the feature-film corpus.",
+  "Single-location constraint is a plot structure requirement with zero signal in our data"
+ ],
+ "per_archetype": {
+  "casual surprise-me browser": {
+   "holes": 15,
+   "nonhave": 14,
+   "sig": 30
+  },
+  "solo late-night unwind": {
+   "holes": 16,
+   "nonhave": 22,
+   "sig": 48
+  },
+  "feel-good comfort watch": {
+   "holes": 17,
+   "nonhave": 23,
+   "sig": 46
+  },
+  "family w/ young kids": {
+   "holes": 15,
+   "nonhave": 21,
+   "sig": 43
+  },
+  "dark/bleak/disturbing": {
+   "holes": 12,
+   "nonhave": 13,
+   "sig": 43
+  },
+  "emotional cry/catharsis": {
+   "holes": 13,
+   "nonhave": 17,
+   "sig": 35
+  },
+  "date-night couple": {
+   "holes": 14,
+   "nonhave": 20,
+   "sig": 51
+  },
+  "foreign cinema by country": {
+   "holes": 13,
+   "nonhave": 17,
+   "sig": 46
+  },
+  "film-history classics": {
+   "holes": 10,
+   "nonhave": 10,
+   "sig": 50
+  },
+  "friends party movie": {
+   "holes": 11,
+   "nonhave": 10,
+   "sig": 57
+  },
+  "auteur/arthouse cinephile": {
+   "holes": 20,
+   "nonhave": 22,
+   "sig": 55
+  },
+  "cyberpunk_subgenre": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "hard_sf_realism": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "space_opera_worldbuilding": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "time_travel_logic": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "indie_sf_mindfuck": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "dune_adjacent_obscure": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "vintage_sf_aesthetic": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 6
+  },
+  "first_contact_communication": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "reality_identity_sf": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "slow_burn_dystopia": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "casual-similarity seeker": {
+   "holes": 0,
+   "nonhave": 0,
+   "sig": 5
+  },
+  "enthusiastic fangirl": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "atmospheric sci-fi fan": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "auteur style chaser": {
+   "holes": 1,
+   "nonhave": 1,
+   "sig": 5
+  },
+  "tonal-shift seeker": {
+   "holes": 1,
+   "nonhave": 1,
+   "sig": 6
+  },
+  "action fan": {
+   "holes": 1,
+   "nonhave": 1,
+   "sig": 5
+  },
+  "slow-cinema romantic": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "genre purist": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 7
+  },
+  "animated fantasy fan": {
+   "holes": 0,
+   "nonhave": 0,
+   "sig": 6
+  },
+  "prestige thriller fan": {
+   "holes": 1,
+   "nonhave": 2,
+   "sig": 7
+  },
+  "travel planner": {
+   "holes": 19,
+   "nonhave": 39,
+   "sig": 51
+  },
+  "director fan": {
+   "holes": 16,
+   "nonhave": 21,
+   "sig": 46
+  },
+  "vibe/aesthetic era nostalgia": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "genre+era similar-to-title": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "era+tone nostalgia": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "movies-like-X similarity": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 6
+  },
+  "genre+era best-of": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "subgenre+tone campy horror": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 7
+  },
+  "director-studio+similar-to-title kids adventure": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 8
+  },
+  "actor-pairing+genre romcom": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 6
+  },
+  "era+subculture Gen-X slacker": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "occasion crowd-pleaser nostalgia": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "low-energy short-film night": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 4
+  },
+  "anti-epic under-2-hours": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 3
+  },
+  "tight thriller no-filler": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 3
+  },
+  "timeslot-constrained bedtime viewing": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 3
+  },
+  "short comedy": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 3
+  },
+  "parent's brief free window": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 3
+  },
+  "any-genre short and quality": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 3
+  },
+  "short animated feature": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 3
+  },
+  "in-flight genre film": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 4
+  },
+  "retro anti-bloat short film": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "family-safe all-ages": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "safe suspense mystery": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "sex-scene-free content filter": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "bloodless action spectacle": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "clean rom-com": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "classic gentle family-friendly": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "benign sci-fi": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "cozy gripping mystery": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "wholesome comfort watch": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "mood/vibe match": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "auteur adjacent": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "discovery/obscurity": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "filmography completion": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "formal/stylistic match": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "style blend / cross-reference": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "movement entry point": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "mood/affect": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "auteur discovery": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "national cinema / slow cinema extension": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 5
+  },
+  "live-action location + format exclusion": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "travel mood / location immersion": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 4
+  },
+  "city + era + atmosphere": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "rural sub-national region setting": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "city setting + genre exclusion": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "narrative structure / city-as-protagonist concept": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "landscape / visual atmosphere setting": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "niche national setting / small-town": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "historical-political city + era": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "city setting + music genre bonus": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "actor filmography exhaustion + quality filter": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "actor + lead-role billing filter": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 3
+  },
+  "actor + director co-filter + character archetype": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "actor + prominence/billing filter": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "newly-discovered actor browse": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "actor + streaming urgency": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "actor curation style + arthouse filter + blockbuster exclusion": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "actor + career-phase filter": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "actor filmography curation with depth tiers": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "actor + genre + anchor-based similarity": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 5
+  },
+  "content-sensitivity": {
+   "holes": 17,
+   "nonhave": 22,
+   "sig": 35
+  },
+  "exclusion-driven": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "similar-to-title": {
+   "holes": 4,
+   "nonhave": 5,
+   "sig": 11
+  },
+  "theme-driven": {
+   "holes": 4,
+   "nonhave": 2,
+   "sig": 8
+  },
+  "mood-constrained": {
+   "holes": 4,
+   "nonhave": 5,
+   "sig": 11
+  },
+  "occasion-driven": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "character-type-driven": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "subgenre-driven": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "compositional multi-constraint": {
+   "holes": 20,
+   "nonhave": 33,
+   "sig": 61
+  },
+  "awards/prestige discovery": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "recent critical darlings": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "critic-certified drama": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "multi-award prestige sweep": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "international art cinema / awards": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "star-vehicle Oscar performance": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "critical darling / awards snub": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "elite prestige / canonical": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "critic-approved thriller/mystery": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "auteur director showcase / awards marathon": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "pacing": {
+   "holes": 20,
+   "nonhave": 33,
+   "sig": 45
+  },
+  "popularity_discovery": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "era_genre_obscurity": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 6
+  },
+  "genre_obscurity": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 4
+  },
+  "commercial_failure_quality": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 4
+  },
+  "international_discovery": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 5
+  },
+  "auteur_discovery": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "genre_cult_obscurity": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "seed_similarity": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "era_obscurity": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 5
+  },
+  "ultra_obscurity": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "based-on source": {
+   "holes": 20,
+   "nonhave": 14,
+   "sig": 40
+  },
+  "genre+era+character+constraint": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "occasion+mood+region+era+constraint": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "subgenre+exclusion+tone+rating+aesthetic": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "mood+genre+era+exclusion+format": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "nationality+genre+tone+runtime+format": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "genre+thematic-stance+exclusion+setting+acclaim": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "similarity+aesthetic+tone+exclusion+era": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "occasion+dual-tone+rating+ending+constraint": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "medium+studio-exclusion+technique+tone+origin-exclusion": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "genre+psychological+distributor-vibe+director+runtime": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "recency/new-release": {
+   "holes": 6,
+   "nonhave": 3,
+   "sig": 9
+  },
+  "recency/new-release + genre": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "recency/best-of-year": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 3
+  },
+  "recency/mood-driven": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "recency/what's-playing": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 3
+  },
+  "recency/genre-specific": {
+   "holes": 2,
+   "nonhave": 0,
+   "sig": 4
+  },
+  "recency/trending + theatrical": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 3
+  },
+  "recency/buzz-driven": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 3
+  },
+  "cerebral/mind-bending": {
+   "holes": 6,
+   "nonhave": 7,
+   "sig": 13
+  },
+  "cerebral/philosophical": {
+   "holes": 4,
+   "nonhave": 3,
+   "sig": 8
+  },
+  "cerebral/ambiguous": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 3
+  },
+  "cerebral/simulation": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "existential/contemplative": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 4
+  },
+  "arthouse/meditative": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "cerebral/sci-fi": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "historical_setting": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "historical_setting+perspective": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "historical_setting+mood_tone": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "historical_setting+tone_filter": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "historical_setting+occasion": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "historical_setting+narrative_arc": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "historical_setting+subgenre": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "historical_setting+era_immersion": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "historical_setting+character_drama": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "historical_setting+cultural_immersion": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "feel-good certainty seeker": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "twist completionist": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "ambiguity enthusiast": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 4
+  },
+  "rewatchable comfort": {
+   "holes": 1,
+   "nonhave": 1,
+   "sig": 3
+  },
+  "emotional recovery": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "rewatch revealer": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 4
+  },
+  "closure seeker": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 4
+  },
+  "craft-twist hunter": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "compromise date night": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "haunting melancholy seeker": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "pure-action/spectacle": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "martial-arts/fight-choreography": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "adrenaline/entertainment": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "practical-action/stunt-spectacle": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "heist/crime-thriller": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "survival/disaster": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 4
+  },
+  "deep-cut/discovery": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "spy-thriller/chase": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "breathless/sustained-tension": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 4
+  },
+  "popcorn/social-watch": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "cozy/comfort": {
+   "holes": 11,
+   "nonhave": 8,
+   "sig": 30
+  },
+  "nostalgia/comfort": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 5
+  },
+  "holiday/comfort": {
+   "holes": 1,
+   "nonhave": 1,
+   "sig": 5
+  },
+  "family/crowd-pleaser": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "black comedy moral discomfort": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "political social satire": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "lowbrow slapstick comedy": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "cringe secondhand embarrassment comedy": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "mean-spirited smart comedy": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "crowd-pleasing group comedy": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "bleak power satire Iannucci-style": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "bittersweet tragicomedy": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "absurdist deadpan surreal comedy": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "raunchy R-rated fresh picks": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "cozy magical animation fan": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 6
+  },
+  "emotionally devastated anime seeker": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 5
+  },
+  "mature dark anime aficionado": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "experimental animation aesthete": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "anime gateway for partner": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "director completionist": {
+   "holes": 2,
+   "nonhave": 0,
+   "sig": 4
+  },
+  "obscure arthouse animation hunter": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "action mecha energy seeker": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "western animation adult fan": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "studio trigger style chaser": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "romance/enemies-to-lovers": {
+   "holes": 4,
+   "nonhave": 6,
+   "sig": 10
+  },
+  "romance/slow-burn": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "romance/tragedy": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "romance/comedy": {
+   "holes": 1,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "romance/period-drama": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "romance/action-hybrid": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 4
+  },
+  "romance/character-drama": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "romance/epic": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "romance/cathartic": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "cross-genre/women-directed": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 3
+  },
+  "comedy/romance/sci-fi/Black-led": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "LGBTQ/romance/drama": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "drama/disability-authentic": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 3
+  },
+  "LGBTQ/drama/trans": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "LGBTQ/festival-lineup/intersectional": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "drama/comedy/indigenous-directed": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 3
+  },
+  "comedy/drama/women-ensemble": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "drama/immigrant-family": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "drama/Deaf-culture": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 4
+  },
+  "franchise-universe-driven": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "subgenre-spy + franchise-continuation": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "subgenre-kaiju-driven": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "franchise-universe-driven-generic": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "similar-title + tone-driven": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "franchise-universe + genre-horror": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "franchise-universe + genre-scifi": {
+   "holes": 2,
+   "nonhave": 5,
+   "sig": 6
+  },
+  "franchise-completeness-driven": {
+   "holes": 2,
+   "nonhave": 5,
+   "sig": 6
+  },
+  "franchise-universe + genre-fantasy": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "subgenre-heist + franchise-driven": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "ensemble heist/caper": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "casual/light heist pick": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "caper with plan-unraveling": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "gritty professional crime thriller": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "con-artist grifter": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "tarantino-esque crime ensemble": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "twist-ending heist": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "international/foreign heist": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 5
+  },
+  "vintage classic heist/caper": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "tense bank robbery thriller": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "mood-occasion: low-stakes uplift": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "emotional validation: loneliness": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 4
+  },
+  "motivational catalyst": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "perspective-shift: existential": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "dual-mode emotional occasion": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "faith-restoration": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "mortality comfort": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "cathartic tearjerker": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "redemption / second-chance": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "anxiety-relief: slow comfort viewing": {
+   "holes": 2,
+   "nonhave": 5,
+   "sig": 6
+  },
+  "character-type: flawed-female-protagonist": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "character-type: antihero": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "character-type: found-family-ensemble": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "character-type: morally-gray-protagonist": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "character-type: corruption-arc": {
+   "holes": 2,
+   "nonhave": 5,
+   "sig": 7
+  },
+  "character-type: charming-rogue": {
+   "holes": 1,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "character-type: reluctant-hero": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 5
+  },
+  "character-type: quiet-competent-woman": {
+   "holes": 2,
+   "nonhave": 5,
+   "sig": 7
+  },
+  "character-type: villain-protagonist": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "character-type: sympathetic-transgressor": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "tv_show_crossover": {
+   "holes": 8,
+   "nonhave": 17,
+   "sig": 25
+  },
+  "video_game_crossover": {
+   "holes": 6,
+   "nonhave": 12,
+   "sig": 20
+  },
+  "book_crossover": {
+   "holes": 4,
+   "nonhave": 9,
+   "sig": 14
+  },
+  "cross_media_blend": {
+   "holes": 2,
+   "nonhave": 5,
+   "sig": 7
+  },
+  "seasonal_occasion": {
+   "holes": 18,
+   "nonhave": 24,
+   "sig": 44
+  },
+  "mood_weather": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "cross-media": {
+   "holes": 20,
+   "nonhave": 22,
+   "sig": 54
+  },
+  "seasonal/occasion": {
+   "holes": 20,
+   "nonhave": 39,
+   "sig": 50
+  },
+  "adrenaline-seeker / practical-craft enthusiast": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "intensity-seeker / sports-authenticity craving": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 6
+  },
+  "craft-appreciator / choreography enthusiast": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 7
+  },
+  "puzzle-lover / process-craving": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "spectacle-seeker / military-aviation fan": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 7
+  },
+  "setting-fetishist / contained-world escapism": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "sensory-immersion seeker / claustrophobic tension": {
+   "holes": 2,
+   "nonhave": 1,
+   "sig": 6
+  },
+  "tension-seeker / one-on-one combat drama": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 6
+  },
+  "sensory-pleasure seeker / vicarious-taste escapism": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 6
+  },
+  "urban-adrenaline seeker / night-aesthetic craving": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 7
+  },
+  "prestige-genre/quality-gatekeeper": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "prestige-drama/social-justice": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 8
+  },
+  "caper-comedy/europeanophile": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 6
+  },
+  "slow-burn-cult-horror": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 7
+  },
+  "aesthetic-noir/atmosphere-seeker": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 7
+  },
+  "prestige-thriller/geopolitical": {
+   "holes": 1,
+   "nonhave": 4,
+   "sig": 8
+  },
+  "art-house/existential": {
+   "holes": 2,
+   "nonhave": 5,
+   "sig": 7
+  },
+  "world-cinema/genre-hybrid": {
+   "holes": 2,
+   "nonhave": 2,
+   "sig": 8
+  },
+  "contained-heist-thriller": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 7
+  },
+  "concept-sci-fi/indie-cerebral": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 8
+  },
+  "tone_mood_only": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "meta_quality_filter": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 4
+  },
+  "creature_feature_subgenre_niche": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "meta_quality_guilty_pleasure": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "decade_genre_tone": {
+   "holes": 4,
+   "nonhave": 5,
+   "sig": 10
+  },
+  "franchise_similar_spectacle": {
+   "holes": 2,
+   "nonhave": 3,
+   "sig": 5
+  },
+  "occasion_quality_filter": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  },
+  "subgenre_tone_domestic_thriller": {
+   "holes": 2,
+   "nonhave": 5,
+   "sig": 6
+  },
+  "meta_quality_embarrassing_rewatchable": {
+   "holes": 2,
+   "nonhave": 4,
+   "sig": 5
+  }
+ },
+ "all_holes": [
+  "No true randomness/serendipity control \u2014 'surprise' collapses to the popularity prior.",
+  "Cold-start Ask-AI has no user history, so the surprise can't be tuned to their taste.",
+  "No streaming-availability data \u2014 can't guarantee the pick is actually on Netflix.",
+  "No record of what they already scrolled past, so we may re-suggest rejected titles.",
+  "Runtime is not wired into serving \u2014 the 'isnt super long' cap can't be enforced; recs rely on curator knowledge of runtimes.",
+  "Corpus floors at >=200 MovieLens ratings \u2014 nothing is truly obscure; only relative hidden gems.",
+  "'Haven't heard of' is user-specific; with no history we approximate via global obscurity, which may still be familiar to them.",
+  "No user history \u2014 'tonight' reduces to generic popularity, not a personalized pick.",
+  "'Keep my attention' (pacing/engagement) is only approximable via coarse genome fast/slow-paced tags \u2014 no true engagement axis.",
+  "Popularity is cumulative all-time MovieLens rating counts, not real-time trending.",
+  "Corpus frozen ~2023 (no Barbie/Oppenheimer/2024+) \u2014 literal 'these days' is unreachable.",
+  "Background/second-screen suitability (plot-light, low-attention, no subtitles) isn't a modeled axis \u2014 only proxied by feel-good genome tags.",
+  "Cold start \u2014 'fun' stays generic; can't tailor to which flavor of fun this user prefers.",
+  "No randomness primitive \u2014 'random' degrades to top-popularity.",
+  "No diversity/MMR objective to guarantee the shortlist actually differs.",
+  "Cannot detect 'talk-over-able / won't-miss-anything' \u2014 no narrative-complexity or attention-demand signal",
+  "No content-rating; 'dumb/raunchy' approximated by comedy genre + crude-humor keywords only",
+  "'Loud'/sonic-energy is not an axis; approximated by action+comedy genre and affect genome",
+  "No explicit 'party movie' tag \u2014 must proxy via genre plus popularity",
+  "No content-rating axis to guarantee The Hangover's R-rated raunch level",
+  "'Chaos escalates / gets out of hand' is a plot-shape not encoded; keyword proxy only",
+  "Cannot measure joke density or 'no slow parts' \u2014 the core constraint is unservable",
+  "Runtime (shorter for short attention) is scraped but not wired into serving",
+  "No 'so-bad-it's-good'/camp signal; low vote_average confuses boring-bad with fun-bad",
+  "Cannot distinguish intentional camp from sincere failure \u2014 'psychotronic' keyword is the only weak lever",
+  "'Artsy/arthouse' is not a labeled axis; approximated by popularity + genre, risking false positives",
+  "'stoner movie' keyword covers only 7 titles; broader net uses 'marijuana' which also tags serious drug dramas",
+  "No 'background-watchable / episodic / plot-light' signal \u2014 the central drop-in/out ask is unservable",
+  "No pacing axis to gauge continuous energy across a runtime",
+  "No 'quotability'/meme-lines signal; must proxy via same-creator/same-cast plus comedy similarity to the anchors",
+  "No 'scariness intensity' dial \u2014 can favor Comedy+Horror but can't guarantee 'more funny than scary' beyond genre intersection",
+  "No cozy/warm axis; only feel-good/heartwarming genome approximates the mood.",
+  "Two-tower can't hard-subtract sad films; 'nothing sad' only enforceable as postfilter.",
+  "No seen/watched list; can't actually enforce 'haven't seen' beyond dropping the 3 named anchors.",
+  "No pacing/low-stakes axis; stakes can't be measured or ranked.",
+  "'Everyone's ok in the end' leans on a single noisy genome 'happy ending' tag.",
+  "No rewatchability signal; only popularity/vote counts approximate it.",
+  "Weather/occasion framing (rainy Sunday, tea) has no corresponding data axis.",
+  "No 'easy/low-effort/undemanding' axis; cognitive load can't be ranked.",
+  "'Warm hug' is pure metaphor; only heartwarming genome loosely approximates it.",
+  "No budget/indie-scale axis; 'small' films can't be identified as such.",
+  "'Found family' keyword is sparse (4 movies); rely on broader family/friendship genome.",
+  "No 'cheesy/saccharine/Hallmark' axis; that negative style can't be filtered out.",
+  "'Actually good' only proxied by TMDB vote_average, no awards signal.",
+  "No intensity/pacing axis; 'nothing intense' only inferred from genre + tense genome.",
+  "No content rating; 'nothing scary' approximated by excluding Horror/Thriller genres.",
+  "No content-rating field: cannot guarantee a film is G/PG-safe for a 5yo.",
+  "Cannot reliably screen out a single scene that would startle an 8-year-old.",
+  "'Not scary' is only a coarse genome-tag proxy; no rating or per-scene fright grading.",
+  "No studio metadata: cannot exclude the Pixar catalog the user has exhausted.",
+  "No awards data; 'that good' judged only by TMDB vote average.",
+  "Runtime is not wired into serving: the pipeline cannot filter by length at all.",
+  "Recs rely on curator memory of short titles, not on data the system can query.",
+  "Cannot detect 'a sad character death'; only whole-movie 'sad' affect exists.",
+  "No intensity/rating scale to guarantee a villain isn't too frightening.",
+  "'Ok for kids' relies on Children genre + scary/violence proxy; no content rating.",
+  "No explicit 'adults enjoy it too' signal; dual appeal is only proxied by wit/acclaim tags.",
+  "Embedding neighbors may drift toward co-watch popularity rather than the specific gentle-warm tone shared by both anchors.",
+  "No age-band rating: cannot certify a pick is gentle enough for the 4yo while still holding the 7yo.",
+  "No target-age/'babyish vs older-kid' grading: cannot tell a preschool-only title from one with 9-year-old appeal.",
+  "No rating to confirm irreverent humor stays safe for a 3yo.",
+  "No tearjerker/tears tag; cry-intensity is subjective and unmeasurable, only proxied via sad genome",
+  "No occasion axis for casual couch viewing; can't distinguish easy-cry from demanding arthouse grief",
+  "Separating bittersweet-hopeful from bleak-depressing leans on noisy genome affect, not structured ending valence",
+  "'death of father/mother' keywords tag only ~13-23 films each, so recall of this exact theme is thin",
+  "No animal/pet-death flag to safely exclude on; excluding all 'dog' films would be over-broad and lossy",
+  "No cross-user 'sadness ranking' stored; 'saddest of all time' is approximated by sad-genome times acclaim",
+  "'Warm ending' constraint rests on noisy affect keywords, not structured ending valence",
+  "Pacing (quiet/slow) is not wired, so 'quiet' cannot be filtered",
+  "'Beautiful' cinematography has only a coarse genome proxy, no real visual axis",
+  "'Long distance' is barely tagged (3 films); recall relies on broader forbidden/star-crossed proxies",
+  "Ideal pick Past Lives (2023) is not in corpus",
+  "'Homesickness' keyword covers only 5 films; missing-a-distant-parent is a viewing motive mapped onto mother/family themes",
+  "No explicit 'downer ending' signal; 'bad ending' genome tag is a lossy proxy",
+  "No content-rating field to gate extremity",
+  "'Most' superlative not computable \u2014 no disturbing-intensity magnitude, only relevance ranking",
+  "No 'hopeless' axis \u2014 proxied by depressing/bleak, lossy",
+  "'Ruins your mood for days' (lingering after-affect) is not measurable",
+  "'Feel gross after' is a moral-disgust after-affect with no axis; proxied by disturbing+depravity keywords",
+  "Embedding similarity is co-watch+genome driven; may drift to popularity over shared disturbing intensity",
+  "'Nihilistic' and 'no redemption' are keyword-level only, not recommender axes; no philosophy/theme model",
+  "'Arthouse' has no clean signal \u2014 coarse genome tag only",
+  "Grief/trauma live in TMDB keywords, not the recommender's item tower",
+  "No 'patriotic vs anti-war tone' axis beyond the anti-war tag; excluding jingoistic films is lossy",
+  "'Not jump scares' (execution/craft style) is not detectable \u2014 proxied by excluding slasher/horror, lossy",
+  "Superlative 'bleaker the better' \u2014 no bleakness-intensity scale; can rank relevance, not guarantee maximal",
+  "No streaming-availability data, so we cannot answer 'watch tonight' with where-to-watch",
+  "Recommender is single-user; cannot ingest two people's tastes and compute a true midpoint, only a genre-overlap heuristic",
+  "No composer or musical-score axis, so the La La Land 'gorgeous soundtrack/musical' pull is lost",
+  "No streaming availability for 'tonight'",
+  "'Cozy' is not a real tag (zero genome matches); only inferred from comfort-affect tags",
+  "No streaming-availability data for a stay-home pick",
+  "No content/MPAA rating, so 'sexy but not softcore trash' relies only on acclaim + genre proxies",
+  "No content rating to flag awkward-for-a-new-couple explicit content beyond keyword guesses",
+  "'Seem cool not basic' is a social-signaling judgment with no data axis; only crudely proxied by obscurity + acclaim + style",
+  "No runtime data is wired, so the defining '~90 min' constraint cannot be filtered; recs are runtime-guessed from world knowledge",
+  "Cannot model 'both of us' as two separate tastes",
+  "'Undemanding / low mental effort' is only approximated by inverting cerebral/twist tags; no real cognitive-load axis",
+  "No content/MPAA or gore-level axis to guarantee 'tense but couple-friendly, not too disturbing'",
+  "Cannot model his thriller taste plus shared-appeal as two distinct signals",
+  "No cognitive-load axis; we proxy 'brain-off' with light comedy + feel-good genome, cannot rank by mental effort",
+  "No rewatchability or fall-asleep suitability signal",
+  "No 'low-stakes'/tension-level or cozy axis; feel-good genome + comedy only approximate 'won't stress me out'",
+  "No background-friendliness or plot-complexity signal \u2014 the entire request is unmodeled, proxied by familiar light comedy",
+  "No runtime signal",
+  "The Ask flow is cold \u2014 no personal watch history, so 'beyond the ones you've seen' is guessed from general popularity, not what THIS user watched",
+  "Runtime is not in serving artifacts \u2014 the pipeline literally cannot enforce or rank the 'under 2 hours' constraint; recs rely on curator knowledge",
+  "'Nothing scary' beyond dropping the Horror genre is imprecise \u2014 a tense non-horror thriller can still scare; tense/creepy genome is only a coarse proxy",
+  "'Pretty'/cinematography has no dedicated axis \u2014 the visually-stunning genome tag is a coarse crowd proxy, not a real cinematography rating",
+  "'Cozy' has no dedicated axis; approximated via feel-good/heartwarming genome plus comedy \u2014 decisiveness itself is a UX ranking choice, not a data signal",
+  "'No jump scares' isn't modeled \u2014 we can exclude Horror and de-weight tense/creepy genome, but won't catch a startle beat inside a non-horror sci-fi",
+  "No engagement/'not boring' axis \u2014 the soothing-yet-watchable tradeoff is exactly what we cannot score; proxied by comforting genome plus a light plot",
+  "No runtime or rewatchability signal for a fall-asleep pick",
+  "Truest deep cuts (The Burning, The Prowler, The Mutilator) fall below the 200-rating floor, absent from corpus",
+  "'Pagan rural dread' has no precise axis; leans on a small 21-title folk-horror keyword set",
+  "'Actually nail the format' is a craft/quality judgment; we have only crowd vote_average, no critical signal",
+  "No pacing signal for 'slow burn'",
+  "'No gore' only excludable where gore is keyword-tagged; can't verify true absence",
+  "Deep Italian giallo (Fulci, Martino, Lenzi) is absent; corpus is ~all Argento plus American neo-giallo",
+  "'Double feature' implies runtime/pairing logic, but runtime is not wired into serving",
+  "'Vibe night with friends / group-friendly' is an occasion signal we don't model, only proxied by popularity band",
+  "'A24 / elevated horror' is a studio-label axis we lack; approximated by era + dread affect, not by production house",
+  "No franchise membership field; 'no Paranormal Activity sequels' works only via brittle title-string matching (misses The Marked Ones)",
+  "No violence-intensity or content-rating axis to match Oldboy's extremity",
+  "Cannot verify 'quiet slow-burn' pacing \u2014 no pacing axis, sparse keyword coverage",
+  "'New Wave' movement is not a data axis \u2014 approximated via director+decade+country",
+  "No curated critical canon to rank 'best'",
+  "'Neorealism' movement not stored \u2014 approximated by country+era+director list",
+  "No visual-style/cinematography axis to match Am\u00e9lie's saturated 'pretty' aesthetic",
+  "'Scandinavian' is a region label \u2014 intake must expand to SE+DK(+NO/IS); no region tag",
+  "Only ~12 Iranian titles clear the 200-rating bar \u2014 many essentials absent from corpus",
+  "No festival-award/canon axis to define 'must-watch'",
+  "Roma (2018) is not in corpus \u2014 'Roma vibes' seed cannot be matched by embedding",
+  "Cantonese vs Mandarin not distinguished; many HK-tagged entries are US co-productions (noise)",
+  "Cannot score 'beginner-friendliness' or accessibility \u2014 no complexity or impenetrability axis exists in the pipeline",
+  "Silent-film format requires keyword lookup; not a first-class filter dimension, so silent vs early-sound blurs",
+  "Cannot distinguish 'deep cut' from 'famous work' within one director's filmography \u2014 relative cultural salience is not a signal",
+  "Named already-seen titles (Seven Samurai, Rashomon, Yojimbo) cannot be reliably excluded from output",
+  "Film-movement membership ('neorealism') has no first-class axis; detected only by Italian + 1940s + Drama co-occurrence",
+  "Aesthetic markers defining neorealism (non-professional actors, location shooting) are not encodable signals",
+  "Cannot verify 'acclaimed masterpiece' \u2014 no awards, critics-score, or canonical-status signal in the pipeline",
+  "Cannot score 'actually watchable/fun' vs 'dry canonical film' \u2014 pacing and accessibility axes are entirely missing",
+  "Cannot exclude explicitly named seen titles (Breathless, 400 Blows) from recommendation output \u2014 no negative title filter",
+  "'Must-see / canon' ranking within a movement requires critical-salience data we do not have",
+  "Cannot encode why critics prize Sirk (Brechtian subversion, visual excess, social critique beneath surface) \u2014 interpretive framing is curator-only",
+  "'Melodrama' is not distinct from Drama/Romance in our 20-genre taxonomy; subgenre detection relies on noisy keywords",
+  "Pre-code is defined by permissive content before Hays Code enforcement \u2014 no content-rating or censorship-era signal exists in the pipeline",
+  "Year range 1929\u20131934 is reachable but the defining characteristic (sexual/moral frankness) is completely unencodable",
+  "Historical-flow reasoning between film movements is pure film-education curator knowledge \u2014 no movement-sequence axis exists",
+  "Film-movement membership cannot be reliably tagged; TMDB keywords are partial and no explicit movement taxonomy is wired into the pipeline",
+  "Cannot exclude named titles (Double Indemnity, Maltese Falcon) from output \u2014 no negative title exclusion filter at postfilter stage",
+  "'Beyond the obvious' obscurity ranking within Film-Noir has no precise cutoff in our popularity signal",
+  "Pacing is entirely missing as a filter or ranking axis \u2014 cannot flag or sort by how slow/contemplative a film is",
+  "Cannot rank a director's films by newcomer accessibility; 'best entry point' ordering requires curator judgment not encoded in any signal",
+  "Cannot filter by visual aesthetic (neon/rain) to find stylistically distinct cyberpunk variants",
+  "No axis for philosophical depth to rank PKD-style identity SF above action-cyberpunk",
+  "No scientific accuracy score \u2014 'magic space nonsense' exclusion requires manual curation, not signal",
+  "Cannot distinguish hard-SF from soft-SF by metadata alone; co-watch embedding is only a rough proxy",
+  "Cannot score worldbuilding depth or political complexity \u2014 the core request is a narrative quality we cannot rank",
+  "Alien design originality ('weird aliens') has no signal whatsoever",
+  "Narrative-logic quality ('doesn't fall apart') is completely unmeasurable \u2014 no screenplay-coherence signal exists",
+  "Cannot distinguish fixed-timeline vs branching-timeline rule systems from any available metadata",
+  "Production budget not available \u2014 cannot filter explicitly for low-budget indie films",
+  "Indie/arthouse distribution context has no signal; popularity is only a coarse proxy",
+  "No franchise/universe membership signal \u2014 cannot systematically exclude well-known series entries the user has already seen",
+  "Worldbuilding richness and messianic narrative structure are not scoreable axes",
+  "Practical effects and 'used-future' visual aesthetic have no signal \u2014 decade inference is only an era proxy",
+  "Cannot rank by grittiness or production-design style within the 1970\u20131989 Sci-Fi bucket",
+  "Cannot score alien communication difficulty \u2014 the core filter premise is not a measurable signal",
+  "Cannot exclude invasion/combat SF by subgenre; must rely on genre-minus-Action proxy and embedding proximity",
+  "Art-house register distinguishing Under the Skin from generic thriller has no signal in the pipeline",
+  "Body-horror + identity fusion is a niche thematic cluster only partially captured by TMDB keywords",
+  "Pacing ('slow burn') is completely unmeasurable \u2014 no runtime, cut-frequency, or narrative-density signal exists",
+  "Streaming availability for tonight is unknown \u2014 pipeline has no catalog data and cannot serve the immediacy intent",
+  "No multiverse or parallel-reality filter; genre-blending narrative structure not captured.",
+  "'Made me cry' maps to heartbreaking genome tag but free-text extraction is unreliable.",
+  "Pacing (slow burn vs action-heavy) is not an axis; pipeline cannot filter on it.",
+  "Atmospheric visual quality unservable beyond genome mood tags.",
+  "Visual symmetry and colour-palette style not encoded; pipeline can only approximate via director filter.",
+  "Tonal shift (funny to dark) is a narrative arc property; pipeline has no arc encoding.",
+  "Martial arts and gun-fu choreography style not distinguishable from generic action genre.",
+  "Two-hander/dialogue-driven format not a pipeline axis; cannot filter for chamber-style films.",
+  "Franchise/sequel awareness absent; Before trilogy sequels cannot be surfaced intelligently.",
+  "Practical effects not encoded; pipeline cannot filter by production technique.",
+  "Gore and body horror intensity unquantified; no content-rating filter available.",
+  "Cinematic tension style is director-level aesthetic taste; only partially captured via co-watch embedding.",
+  "Pre-trip excitement intent not wired; cannot rank by 'gets you hyped for a destination'",
+  "Set-in vs filmed-in distinction absent; production country and language are imperfect proxies",
+  "Sub-region specificity (Amalfi vs Sicily) not distinguishable from TMDB keywords",
+  "Visual beauty/'gorgeous cinematography' entirely unscored; cannot rank by scenic quality",
+  "'Filmed in X' is entirely untrackable; we store production country and set-in keywords, not shooting locations",
+  "Top Iceland-showcase films (Walter Mitty, Prometheus) are US productions invisible to production_country filter",
+  "Multi-country itinerary (Thailand AND Vietnam AND Cambodia) cannot be combined; single-axis location only",
+  "War films and backpacker travel films share same location tags; 'travel-as-subject' not distinguishable",
+  "California coast sub-region not distinguishable from generic LA/California settings in keywords",
+  "Road trip as viewing occasion vs road-trip-as-theme not separable; same keyword covers both",
+  "Anniversary occasion context not wired; cannot filter 'appropriate for a romantic trip' beyond genre and mood",
+  "Cultural-immersion intent not extractable; no axis for films that 'explain a place and its culture'",
+  "Morocco/Marrakech corpus coverage is sparse; only a handful of well-known films qualify even with perfect retrieval",
+  "'Quintessential' requires editorial/canonical curation; popularity is a weak proxy and misses cult essentials",
+  "Pre-relocation intent not wired; cannot distinguish 'understand a city before moving' from generic NYC setting",
+  "Honeymoon/couples occasion not wired; cannot distinguish 'suitable for newlyweds' from generic romance",
+  "Scenic visual quality (island aesthetics, blue water) not scored in any available axis",
+  "'Sweeping landscape' is cinematographic quality; entirely unscored across all available axes",
+  "East Africa sub-region (Kenya/Tanzania) not reliably distinguishable from broader Africa in TMDB keywords",
+  "Violence intensity not captured \u2014 no content-rating or violence axis to filter for 'ultra-violent'.",
+  "Soundtrack style has no data axis; person_composer MISSING so cool-music vibe cannot be retrieved.",
+  "Extractor must resolve 'who directed Parasite' to Bong Joon-ho via title-to-director lookup \u2014 an intake reasoning step, not a direct indexed signal.",
+  "Ranking within a filmography by critical merit requires acclaim data (Oscars, critics polls) \u2014 MISSING.",
+  "'Essential for newcomer' ordering cannot be computed; popularity is not a proxy for best entry-point rank.",
+  "Visual style (color palette, symmetry, composition) is not a data dimension \u2014 query literally asks for films that LOOK like his.",
+  "Director visual-aesthetic clustering not tracked; embedding similarity is co-watch/content, not cinematographic.",
+  "Deliberate slow-burn pacing is not a tracked axis; methodical tempo cannot be filtered for.",
+  "Visual coldness/precision not captured \u2014 embedding approximates but misses cinematographic register.",
+  "Intra-director tone filtering (dark/weird vs. light comedy) is unreliable from director ID + genre alone \u2014 risks surfacing The Big Lebowski.",
+  "'He might've missed' requires knowing the recipient's watch history \u2014 impossible without their user profile.",
+  "'Deep cut' within a director needs director-relative popularity ranking; our score is corpus-wide, not per-filmography.",
+  "No mechanism to rank by newcomer accessibility vs. completist value \u2014 popularity does not equal best first-watch.",
+  "'Unhinged creativity' is not a discrete axis; approximated via genome mood tags with no guarantee of surrealist output.",
+  "Ranking within a filmography by critical merit requires acclaim data \u2014 MISSING.",
+  "Completeness check against full canonical filmography not possible; early/low-rated PTA films may fall below 200-rating corpus threshold.",
+  "Synth-soundtrack style has no axis; music genre/score type is entirely absent from the pipeline.",
+  "Cable-TV aesthetic is a cultural-distribution context with no signal mapping in pipeline.",
+  "Brat Pack / John Hughes cinematic universe has no franchise_universe axis; director covers Hughes but not the ensemble brand.",
+  "Classic quality judgment is not filterable beyond popularity proxy.",
+  "Cheesy/not-serious tone has no dedicated axis; genome quirky is a weak and inconsistent proxy.",
+  "Blockbuster rental-era cultural context (VHS distribution, Friday-night mainstream) has no signal in pipeline.",
+  "Franchise/sequel awareness is MISSING; pipeline cannot exclude BTTF sequels already seen.",
+  "Childhood fondness / nostalgia-for-specific-age framing has no axis; model treats it as pure similarity.",
+  "One-liner/quotable-dialogue style has no axis; genome covers grim vs quirky but not wit-density of macho action.",
+  "Content rating R for action violence is MISSING and is a key genre gate for this request.",
+  "B-movie production budget/quality signal is entirely absent; no axis separates intentionally cheap from prestige horror.",
+  "Content rating R for gore/schlock cannot be filtered; it is a defining gate for the late-night B-movie experience.",
+  "Amblin production company has no wired filter; person_director covers Spielberg but misses Zemeckis/Dante/Columbus who made canonical Amblin films.",
+  "Kids-on-bikes visual motif has no axis; character_type only weakly captures child-protagonist suburban adventure.",
+  "Actor-pairing co-starring chemistry (Meg Ryan AND Tom Hanks together) is not queryable; pipeline filters each person separately.",
+  "When Harry Met Sally (1989) predates the stated 90s filter \u2014 decade boundary edge case the pipeline would handle incorrectly.",
+  "Grunge-era soundtrack/music genre has no axis; music genre is entirely absent from the pipeline.",
+  "Gen-X slacker subculture as identity is not directly filterable; keyword partial coverage misses the generational-zeitgeist intent.",
+  "Occasion-based filtering (group viewing, party-watch, crowd-pleaser) is completely absent from the pipeline.",
+  "Not-artsy / anti-arthouse intent has no direct axis; popularity is only a crude proxy and admits prestige dramas.",
+  "Runtime is scraped but unused; no candidate can be filtered or ranked by duration.",
+  "Low-energy/low-commitment occasion has no intake signal or retrieval hook.",
+  "Runtime is unavailable; any candidate surfaced may exceed the stated 2-hour cap.",
+  "Pacing and bloat have no explicit axis; genome cannot reliably distinguish lean vs padded films.",
+  "Runtime filter is the primary constraint and is entirely unavailable in the pipeline.",
+  "Pacing (tight, no-filler) is explicitly demanded but not representable in any serving signal.",
+  "Runtime is unavailable; pipeline cannot guarantee any film fits the stated window.",
+  "Timeslot/occasion context (bedtime, must finish) is not an intake or retrieval concept.",
+  "Runtime cap is the binding constraint and is entirely unservable.",
+  "Comedy subgenre (spoof, satire, romcom, mockumentary) is undifferentiated; all tagged identically.",
+  "Runtime is the entire constraint here and is completely unservable by the pipeline.",
+  "Occasion (brief solo adult window) has no intake or retrieval representation.",
+  "Runtime is the sole explicit filter and is entirely unavailable in the serving pipeline.",
+  "Pacing ('taut') is explicitly demanded and has no axis; genome cannot reliably proxy it.",
+  "Runtime filter is missing; most post-2000 animated features exceed 90 min and cannot be excluded.",
+  "No format axis to narrow animated features from anthology compilations or short-film collections.",
+  "Runtime cap is the binding constraint for the flight scenario and is completely unservable.",
+  "In-flight occasion (single sitting, no cliffhanger endings preferred) has no pipeline signal.",
+  "Runtime filter is unavailable; the core sub-90-min constraint cannot be served at all.",
+  "Pacing frustration (anti-bloat) is a real user preference signal with no axis in the pipeline.",
+  "MPAA/content-rating absent: cannot filter by violence level; genome dark/gritty is a weak proxy that misses many R-rated films outside Horror.",
+  "'Not scary' beyond Horror genre exclusion has no direct signal; creepy R-rated thrillers and dark dramas will slip through.",
+  "Profanity, sex, and graphic content have zero direct signals; Animation genre is the entire heuristic, missing all live-action G/PG films.",
+  "Live-action family films are indistinguishable from R-rated dramas without MPAA content-rating data.",
+  "Jump scares have no signal whatsoever; cannot distinguish atmospheric thriller from slasher Horror within the Thriller genre tag.",
+  "Gore level not quantifiable; gory R-rated thrillers (Se7en, Silence of the Lambs) share identical genre and TMDB keyword tags.",
+  "No signal for sex scene presence whatsoever; this intent is fundamentally unsupported by the pipeline regardless of genre.",
+  "Genre heuristics are weak proxies \u2014 many R-rated non-sex-scene films exist alongside PG-13 films that contain them.",
+  "Gore/blood level has no direct signal; MPAA rating absence is the core gap that makes this prompt only partially servable.",
+  "Franchise membership (MCU, Mission Impossible) that implies restrained gore is not tracked in our pipeline.",
+  "'Not raunchy' has zero signal in our pipeline; MPAA PG-13/R is the obvious missing filter and crude humor is entirely undetectable.",
+  "Clean and raunchy rom-coms share identical genre tags; decade heuristic is the only available (weak) proxy.",
+  "Profanity level has zero signal in our data; no MPAA rating and no language-content axis of any kind.",
+  "Older/senior viewer preference (slower pacing, classic sensibility) has no explicit axis in the pipeline.",
+  "Sci-Fi Horror subgenre not separable from adventurous Sci-Fi using the 20-genre system; TMDB keywords partially help but aren't wired.",
+  "'Dark scary aliens' requires scene-level content knowledge our pipeline lacks entirely; MPAA would only partially help.",
+  "'No graphic torture' is entirely unfiltered; Saw and Knives Out share the Thriller genre tag with no distinguishing signal.",
+  "Serial-killer torture subgenre vs. detective mystery is indistinguishable in our pipeline without content-rating or scene-level data.",
+  "Happy/positive ending cannot be filtered; ending_type has no data in our pipeline and is a key constraint for comfort-watch intent.",
+  "'Nothing nightmarish' beyond genre exclusions has no direct signal; MPAA partially helps but is entirely absent.",
+  "Pacing (slow, hypnotic) is the core ask but has no metadata axis; genome atmosphere tags are too coarse to distinguish trance cinema from merely dark films.",
+  "Landscape-as-character is a cinematographic grammar quality with no equivalent feature in our data.",
+  "Long-take duration as a formal quality has no metadata axis; cannot filter by shot length or cinematographic rhythm.",
+  "True Tarr peers (Angelopoulos, Jancso, Akerman, Lav Diaz) are almost certainly below the 200-rating corpus floor and absent from the corpus.",
+  "Criterion canon membership is not tracked; cannot filter OUT famous-canon titles to operationalize 'beyond Criterion top 50'.",
+  "'Surprise me' with no content anchor is a pure serendipity request; our system requires at least one signal to drive retrieval.",
+  "We can filter by director but cannot exclude films the user has stated they've seen; the LLM must subtract viewed titles from its own filmography knowledge.",
+  "Minor early Kie\u015blowski (Camera Buff, No End, Personnel) likely fall below the 200-rating corpus floor and will be absent.",
+  "Camera movement (static vs mobile) is a cinematographic axis entirely absent from our metadata; 'camera never moves' cannot be matched or filtered.",
+  "Akerman's own key films (Jeanne Dielman, News from Home) are very likely below the 200-rating floor, so the named reference titles may not be serveable.",
+  "Intersecting two stylistically opposite auteur styles to find a midpoint is not a native retrieval operation; item embeddings blend co-watch signal, not style axes.",
+  "Color palette and cinematographic warmth (the core WKW quality) have no metadata axis and cannot be matched or filtered on candidates.",
+  "Film movement membership ('Romanian New Wave') is not tagged; country+era+director proxy works but cannot guarantee aesthetic/political coherence of results.",
+  "Several essentials (Police Adjective, 12:08 East of Bucharest, Sieranevada) likely fall below the 200-rating corpus floor and may be absent entirely.",
+  "'No plot machinery' (low narrative eventfulness) is not captured; we retrieve grief dramas but cannot filter out thriller-paced or plot-heavy examples.",
+  "Quietness and tempo have no metadata axis; 'just people and time passing' is a structural pacing signal we cannot score.",
+  "'Nobody's talking about' requires social-buzz / Letterboxd-cult-score metadata we do not have; raw popularity cannot distinguish hype from genuine obscurity.",
+  "Truly underground contemporary auteurs will be below the 200-rating corpus floor; the most obscure recommendations are systematically excluded by the corpus.",
+  "'Glacial' pacing is the defining Slow Cinema quality and has no metadata axis; nationality+embedding finds Asian arthouse but not the speed dimension.",
+  "Tsai's own deep catalogue and truest peers (Hou Hsiao-hsien deep cuts, Apichatpong) very likely fall below the 200-rating corpus floor.",
+  "'Set in Tokyo' vs 'filmed in Tokyo' is explicitly MISSING; production_country=Japan is too broad and catches non-Tokyo Japanese films.",
+  "Anime exclusion via Animation genre tag misses live-action Japanese titles with anime-adjacent style or mislabeled genre.",
+  "Trip-prep / travel-mood occasion is invisible to the pipeline; no occasion_audience axis exists.",
+  "TMDB 'rome' inconsistently applied; Italy production_country too broad, catches non-Rome Italian films.",
+  "Release-year as setting-era proxy breaks for modern films set in 1970s NYC; no dedicated setting_decade field exists.",
+  "'Gritty subway crime era' neighborhood-vibe granularity is beyond city-level TMDB keyword coverage.",
+  "UK production_country cannot isolate Scotland; no sub-national region field exists in the pipeline.",
+  "Rural vs urban Scotland distinction requires setting granularity beyond city-level TMDB keywords.",
+  "TMDB 'paris' keyword coverage incomplete; untagged Paris-set films reduce recall.",
+  "Paris drama with a romantic subplot may bypass romcom genre exclusion if genre tag is missing or generic.",
+  "'City as character' is a structural/auteur concept with no tag or axis; pipeline cannot represent this intent directly.",
+  "User is explicitly city-agnostic; the pipeline must force a specific location query, losing the concept-first intent.",
+  "'Empty highway vibe' is a visual/cinematographic/pacing signal the pipeline has no axis to encode.",
+  "Southwest desert TMDB location keywords sparse and inconsistent; recall will be low for non-obvious titles.",
+  "Corpus (>=200 MovieLens ratings) contains almost no Icelandic films; confirmed absences include Rams (2015) and Woman at War (2018) \u2014 prompt is nearly unservable.",
+  "'Small town' sub-national granularity is impossible; location data is country-level at best for niche nations.",
+  "'Divided Berlin' East/West political concept not consistently TMDB-tagged; 'cold war' keyword helps but is partial coverage.",
+  "Grandfather personal-context framing (family occasion, generational tone sensitivity) is invisible to the pipeline.",
+  "Jazz as a soundtrack/score feature is completely absent from the pipeline; the 'bonus if there's jazz' condition cannot be served.",
+  "TMDB 'new orleans' keyword inconsistently applied; Louisiana-set films outside the city may be missed.",
+  "Cannot filter direct-to-video releases from theatrical: no distribution-channel field in pipeline.",
+  "vote_average is a blunt quality proxy; no split between critical acclaim and commercial reception.",
+  "Cannot reliably distinguish lead from prominent supporting: no billing-position rank in cast data.",
+  "Person_actor filter returns all films she appears in; 'lead' requires a postfilter we cannot compute.",
+  "'Being a badass' character archetype has no dedicated axis; nearest proxies are genre and genome tone tags.",
+  "Non-Kurosawa Mifune films lack discoverable markers beyond person_actor alone; no 'samurai genre' TMDB keyword cluster is reliable.",
+  "Billing position not stored as a ranked integer; cannot reliably filter 'small side role' from top-billed lead.",
+  "PSH has many ensemble films where screen prominence depends on runtime share, not detectable from metadata.",
+  "'Best stuff' ideally ranks by critical acclaim or awards context; vote_average is a noisy proxy.",
+  "Early indie films like Lady Macbeth (2016) may fall below the 200-rating corpus floor and be absent.",
+  "'Tonight' urgency implies streaming availability; that signal is entirely missing from the pipeline.",
+  "Cannot distinguish Gary Oldman lead roles from scene-stealing supporting or brief cameos without billing data.",
+  "No franchise_universe flag: cannot explicitly exclude Doctor Strange / MCU entries from Tilda's filmography.",
+  "'Arthouse' has no dedicated axis; low-popularity + non-genre proxy is unreliable and misses mid-budget festival films.",
+  "'Before he was famous' is actor-career-arc data we do not have; release year is only a coarse proxy.",
+  "No signal for Denzel's billing order or role prominence at time of filming; early works where he leads vs supports look identical.",
+  "'Essential vs deep cut' distinction has no direct signal; vote_count is a noisy cultural-penetration proxy.",
+  "Cannot infer which films are considered career-defining by critics vs overlooked; awards data is absent.",
+  "'Thriller' subgenre (psychological vs action vs crime) has no reliable splitter; genre tag is too coarse.",
+  "Cannot filter by MPAA content rating to match the R-rated intensity of Nightcrawler and Prisoners.",
+  "Horror genre exclusion works but no gore/violence-intensity signal; horror-adjacent dark action slips through",
+  "Jump-scare and atmospheric-horror exclusions require scene-level content tags we do not have",
+  "Cannot filter 'dying dog' or 'cancer plot' \u2014 no scene-level tragedy tags exist in any data layer",
+  "feel-good genome tag is a positive signal but cannot guarantee absence of tragic subplots",
+  "Films with significant musical sequences not formally classified as Musical genre may still surface",
+  "No MPAA/content rating \u2014 cannot guarantee absence of sex scenes or heavy violence on any candidate",
+  "Family-occasion intent is unlearned; genre and mood are poor substitutes for content-rating hard filters",
+  "No crude/gross-out comedy subtype tag \u2014 witty vs frat-humor separation requires learned subgenre signal we lack",
+  "Co-watch embedding may cluster smart comedies but cannot explain or guarantee the tonal split",
+  "Superhero is not a MovieLens genre \u2014 TMDB keyword 'superhero' has inconsistent coverage and may miss entries",
+  "Franchise/cinematic-universe membership (MCU/DCU) MISSING; cannot exclude full interconnected slate",
+  "Pacing/intensity MISSING \u2014 can exclude non-English but cannot identify genuinely chill films among English-language candidates",
+  "Runtime MISSING from pipeline \u2014 the user's only hard constraint (<2 hours) cannot be enforced at serving time",
+  "'Set in space' is a setting filter not a genre \u2014 excluder must distinguish Earth sci-fi (Arrival) from space opera",
+  "Genre-level Sci-Fi exclusion over-blocks; TMDB setting keywords are partial and require an inference layer",
+  "Pacing MISSING \u2014 cannot filter slow-burn arthouse from engaging drama; narrative density is unquantified",
+  "'Arthouse' subgenre has no axis or tag; mood genome is a positive signal only, not an exclusion filter",
+  "Cannot reliably distinguish tonal grit (Raging Bull realism) from inspirational crowd-pleasers; no pacing or narrative-stance axis exists.",
+  "Negative-seed exclusion via item embedding pushes away from Rocky's title not its formula; gritty calibration must fall on coarse genome mood tag.",
+  "Chef (warm comedy) and The Menu (dark horror-satire) have opposing tones; similar_to_title seeds pull item embeddings in conflicting directions with no resolution signal.",
+  "No food-centrality axis to distinguish films where cuisine is the narrative subject vs an incidental backdrop.",
+  "Extreme corpus sparsity: fewer than 5 chess-themed films qualify in a 9k corpus; pipeline will exhaust relevant candidates almost immediately.",
+  "No niche-sport/board-game subgenre axis; retrieval fully depends on keyword hit which yields near-zero candidates.",
+  "Cannot filter 'not preachy': no axis for absence of moralizing stance; recovery-narrative and raw-spiral films share identical keywords and genome mood tags.",
+  "Emotional arc shape (person falling apart, no redemption) has no signal; sad/emotional genome tag does not distinguish descending arc from bittersweet-recovery arc.",
+  "Cannot distinguish investigative-procedural plot structure (chasing a story, step by step) from journalism biopics or press-freedom dramas sharing the same keywords.",
+  "No pacing axis: slow-burn procedural tension that defines the requested vibe is invisible to the pipeline; satirical journalism films (Network) and investigative procedurals (Spotlight) rank identically.",
+  "Cannot filter 'not flag-waving hero stuff': no axis for anti-propaganda narrative stance; glorified vs unglamorized Vietnam films share genre and keyword signals.",
+  "Social viewing context (watching with a veteran who served) is entirely unrepresented; audience sensitivity and emotional stakes cannot be factored in.",
+  "Extreme corpus sparsity for chess films means the pipeline will exhaust qualifying results at 3-4 titles with no meaningful ranking to do.",
+  "Child-prodigy as a character archetype is not a structured field; keyword coverage is uncertain and may miss relevant titles entirely.",
+  "Cannot rank heist films by narrative cleverness; 'clever not dumb' has no axis and the pipeline cannot distinguish complex-caper from straightforward-robbery structure.",
+  "Crew-assembly-and-planning as a specific plot sub-structure is not captured; heist keyword fires on all heist films regardless of structural sophistication.",
+  "No food-centrality axis: we can find food-themed films but cannot rank by degree to which cuisine drives the narrative vs is incidental backdrop.",
+  "Cross-format unified ranking (best food docs + best food narratives together) is not natively supported; genre filter splits them into separate pools.",
+  "Washed-up career state + comeback trajectory is a specific plot arc not captured as a structured field; boxing keyword alone returns all boxing films.",
+  "'A little sad' as a calibrated emotional register cannot be tuned; genome sad/emotional tag fires on both mildly melancholy and devastatingly tragic films equally.",
+  "Cannot filter by visual lighting style (neon, rain-slick streets); genre and mood_affect are the only proxies.",
+  "Synth-score soundtrack aesthetic has no composer or musical-style axis in the pipeline.",
+  "Seasonal setting (autumn, falling leaves) is not a retrievable filter; no season-tagged metadata exists.",
+  "Visual warmth / color temperature (warm kitchen light) has no signal anywhere in the pipeline.",
+  "Liminal/uncanny-space is a post-2019 internet aesthetic concept; no tag or keyword captures it directly.",
+  "Abandoned architectural setting with dreamlike wrongness is indistinguishable from generic horror setting signals.",
+  "Narrative density ('plot barely matters') has no signal; pacing and plot-structure axes are both missing.",
+  "Impressionistic/memory-haze is a cinematographic quality not captured by any current metadata tag.",
+  "Film grain and sun-bleached color palette are cinematographic traits with no signal in the pipeline.",
+  "Nostalgic-melancholy vibe only loosely proxied by genome mood tags; no era-mood crossover axis exists.",
+  "Color palette ('everything-is-blue') has no signal; visual tone is entirely absent from the pipeline.",
+  "Slow/quiet pacing as a filter is missing; only mood_affect can weakly hint at contemplative films.",
+  "Time-of-day atmosphere ('3am', late-night) is not a metadata axis; mood_affect can only weakly proxy it.",
+  "Specific setting type (convenience store, fluorescent interior) has no TMDB keyword or tag coverage.",
+  "Folk music as a soundtrack characteristic has no signal; composer and musical-style axes are missing.",
+  "'Cottagecore' is a modern aesthetic term not directly mappable to any genre or keyword combination.",
+  "Color palette (pastel, soft pink light) is entirely absent from the pipeline; visual aesthetic cannot be filtered.",
+  "Narrative density ('not really a story') has no signal; cannot filter for vibe-first low-plot films.",
+  "Brutalist architecture as a visual style has no dedicated tag; genre, nationality, and era are the only proxies.",
+  "Cannot surface the 'oppressive and beautiful' aesthetic contrast; no axis captures architectural grandeur vs. bleakness.",
+  "Cannot filter by Best Picture winner status \u2014 award metadata does not exist in pipeline.",
+  "User exclusion list (Godfather, Schindler's, Parasite) cannot be resolved to corpus IDs from prompt text.",
+  "No critic-specific score (Metacritic, RT); TMDB vote_average mixes audience and critic signals.",
+  "200-rating corpus threshold may exclude very recent 2022\u20132023 titles still accumulating reviews.",
+  "Certified Fresh (RT \u226575% critics) is not stored; pipeline cannot enforce this as a hard filter.",
+  "Critic approval and audience vote_average diverge substantially for drama; using the latter loses the intent.",
+  "Multi-ceremony win logic (Cannes AND Oscars AND Golden Globes) is impossible without award metadata.",
+  "Cannes Palme d'Or and Hollywood awards circuits rarely overlap; pipeline cannot distinguish them.",
+  "International Oscar winner status is not stored; pipeline cannot filter to actual award recipients.",
+  "Only language/country signals reliably serve this prompt; the prestige quality axis is absent.",
+  "Lead-actor Oscar win is not stored; pipeline cannot surface this without external award metadata.",
+  "No way to distinguish Best Actor (lead) from Supporting Actor, or nominee from winner.",
+  "Defining 'snub' requires Oscar nomination history plus win/loss outcome \u2014 both are fully MISSING.",
+  "No critic-vs-audience divergence signal to surface films beloved by critics but ignored by the Academy.",
+  "Metacritic score and best-of-decade list membership are not stored; pipeline cannot rank on either.",
+  "No critic-vs-audience split means 'no popcorn' cannot be enforced; high-vote blockbusters intrude.",
+  "Certified Fresh threshold (RT 75%+) is not stored; pipeline cannot guarantee critic-score compliance.",
+  "Critic-specific praise diverges from audience vote_average especially for thrillers and genre fare.",
+  "Best Director Oscar win is not stored; pipeline cannot identify winners without external award metadata.",
+  "Marathon and couples-viewing occasion context has no matching signal in the pipeline.",
+  "No pacing axis: cannot distinguish slow-burn from fast thrillers; all score equally.",
+  "Genome atmospheric/tense signals affect, not tempo \u2014 slow burn is still under-served.",
+  "Pacing intensity (relentless vs. measured action) has no signal; Die Hard and Fury Road score equally.",
+  "Negative content filters (no romance, no dialogue-heavy scenes) cannot be extracted or applied.",
+  "No tight-editing or narrative-efficiency signal exists; can't distinguish Gravity from a bloated blockbuster.",
+  "Runtime scraped but unused \u2014 cannot programmatically prefer 90-min films over 150-min films.",
+  "Slow-burn modifier is the whole differentiator but has no axis; returns generic thriller list.",
+  "Pipeline cannot rank thriller candidates by pacing; slow and fast thrillers score equally.",
+  "Runtime scraped but not wired in \u2014 can't prefer 85-min films over 150-min films programmatically.",
+  "Lean/tight narrative quality (no padding) has no signal equivalent anywhere in the feature set.",
+  "Ending type (cathartic payoff) and narrative arc shape (slow build) are both entirely absent from the pipeline.",
+  "Genome emotional tags capture affect but not arc position \u2014 can't distinguish front-loaded from back-loaded films.",
+  "Opening-hook intensity (grabs you in first 5 min) has no signal; pipeline can't rank by first-act momentum.",
+  "Sustained pace throughout full runtime not capturable \u2014 no per-scene or act-level pacing data.",
+  "Jump-scare vs. atmospheric-dread horror sub-style has no signal; pipeline cannot filter for slow-creep horror.",
+  "Slow-burn pacing absent even within horror genre; atmospheric genome tag is affect, not tempo.",
+  "Constant pacing throughout runtime is completely unmeasurable \u2014 no per-act or aggregate pacing signal exists.",
+  "Dead-air / lull detection requires scene-level data the pipeline has no access to.",
+  "No-filler editing quality has no signal equivalent; pipeline cannot filter for narratively efficient films.",
+  "Ambivalent pacing preference requires in-session speed calibration the pipeline has no mechanism for.",
+  "Cannot filter out franchise films \u2014 no distributor or franchise membership field exists.",
+  "Oscar-bait exclusion is impossible without production company prestige or awards-campaign data.",
+  "Cannot exclude user-named titles by inversion; popularity floor is the only exclusion lever.",
+  "Historical-burial signal missing \u2014 low popularity today conflates original flop with later rediscovery.",
+  "Production budget is entirely MISSING \u2014 'low budget' constraint cannot be enforced.",
+  "'Under 20k ratings' is an external platform metric; our TMDB vote_count field is not equivalent.",
+  "Box-office revenue is entirely MISSING \u2014 the core defining signal for this intent cannot be served.",
+  "Cannot cross-reference 'critically loved but commercially failed'; gap metric does not exist in our data.",
+  "'Same 10 movies' suppression is not computable \u2014 no canonical-mainstream ranking flag exists to invert.",
+  "Streaming availability MISSING \u2014 recommended foreign obscurities may be practically inaccessible.",
+  "Auteur ranking by underappreciation is impossible \u2014 no metric crosses director career quality with mainstream reach.",
+  "LLM must generate underrated director names from training knowledge; corpus cannot surface them autonomously.",
+  "Cannot filter by distributor \u2014 'not A24' exclusion is entirely impossible without production company data.",
+  "'Cult' is not a measurable axis; low popularity is the only proxy and frequently misfires.",
+  "Item embeddings capture co-watch patterns but may not encode 'tiny/micro-budget feel' specifically.",
+  "No production-scale field; 'tiny movie' aesthetic cannot be enforced beyond low-popularity proxy.",
+  "No way to distinguish films overlooked at 1990s release vs merely niche now \u2014 historical obscurity unmeasurable.",
+  "Prompt is underspecified for genre/mood; LLM must infer diversity rather than derive from signal.",
+  "'Weird endings' is entirely MISSING \u2014 no ending-type classification exists in the pipeline.",
+  "Films with ~3000 total ratings may fall below the ML \u2265200-rating corpus floor and be unreachable entirely.",
+  "No axis captures 'shocking because true' reveal quality; pipeline cannot rank by truth-is-stranger-than-fiction factor.",
+  "Cannot filter out dramatized-composite films that are only loosely fact-based.",
+  "Cannot distinguish crime novel vs. true-crime nonfiction vs. original screenplay as source types.",
+  "'Solid book-to-film' quality filter has no structured axis; vote_average is a weak proxy.",
+  "Video-game source type is not a tagged axis; pipeline cannot retrieve this category reliably.",
+  "'Not trash' quality gate has no structured signal; vote_average too coarse to separate good from bad adaptations.",
+  "'Rise and fall arc' narrative structure cannot be filtered; no plot_structure axis in pipeline.",
+  "Content-rating suitability for family viewing is MISSING; MPAA not in pipeline.",
+  "'True crime' vs fictional crime requires 'based on true events' postfilter, which is unreliable for dramatized composites.",
+  "'Heist vs scam' sub-type distinction within crime genre is too granular for reliable TMDB keyword separation.",
+  "'Faithful adaptation' quality is not measurable; no fidelity-to-source axis exists in pipeline.",
+  "'Classic/canonical literature' prestige tier is untagged; TMDB keywords cannot rank source material quality.",
+  "Survival sub-type (plane crash vs mountain vs sea) too granular; TMDB keyword coverage inconsistent across films.",
+  "'Based on real events' filter cannot exclude fictionalized survival films without reliable source-type tags.",
+  "Video-game source type not wired; pipeline has no way to retrieve this category reliably.",
+  "'Film not TV series' is not a filterable axis; LLM extractor is not told the corpus is film-only.",
+  "'Based on true story' vs 'historically inspired fiction' boundary is fuzzy; composite-character war films appear in both.",
+  "No signal ranks 'most grounded in documented fact'; all war films score similarly on true-story keyword.",
+  "'Faithful to source / doesn't cut the story' is not measurable; no fidelity-to-source axis exists.",
+  "'Better than the book' quality judgment is purely subjective; no signal separates acclaimed adaptations from mediocre ones.",
+  "Cannot filter gore level: no MPAA rating or violence/gore intensity signal exists in the data.",
+  "Female lead is undetectable: people facet has cast IDs but no gender or prominence-role tagging.",
+  "Violence limit is unenforceable: no content rating or violence-intensity signal in the data.",
+  "Runtime shortness cannot be filtered; runtime field is scraped but not wired into the pipeline.",
+  "R-rating is unenforceable: no MPAA content rating in the data.",
+  "Visual quality ('visually stunning not cheap looking') has no signal; production budget is absent.",
+  "Gross-out humor exclusion is impossible: no humor-subtype signal exists in the data.",
+  "Ensemble cast size cannot be inferred; people facet lists cast IDs but not cast breadth.",
+  "Runtime constraint (<2hrs) is unenforceable: runtime field is scraped but not used in the pipeline.",
+  "Standalone movie vs. series-adaptation cannot be detected; no format or franchise metadata in data.",
+  "Anti-canonical exclusion ('not the obvious ones') is not computable: no canonicity or familiarity signal.",
+  "Critical acclaim filter is absent: no awards, Rotten Tomatoes, or Metacritic data in the pipeline.",
+  "Sequel/remake exclusion is impossible: no franchise membership or sequel flag in the data.",
+  "Neon aesthetic is at best a weak TMDB keyword signal; no dedicated visual-style axis exists.",
+  "PG-13 and happy-ending are both absent from data; two of the four explicit constraints are unenforceable.",
+  "Occasion context ('first date') has no representation; pipeline cannot surface occasion-appropriate tone.",
+  "Studio exclusion (not Disney/Pixar) is impossible: no studio or distributor field exists in the data.",
+  "Animation technique (hand-drawn vs CG vs stop-motion) is not tagged; cannot honor the hand-drawn preference.",
+  "A24 distributor vibe is unresolvable: no studio or distributor field; cannot filter by label identity.",
+  "Female director filter requires gender tagging on director IDs, which is absent from the data.",
+  "Corpus ends ~2023; cannot serve any 2026 release \u2014 recency intent is fully unservable.",
+  "No live release calendar; cannot distinguish currently playing vs. recently streaming.",
+  "Corpus ends ~2023; best recs are still 3 years old \u2014 fails the 'actually new' test.",
+  "Extractor must parse recency rejection ('not from 5 years ago') as a hard year lower-bound.",
+  "Cannot verify 'still kinda buzzy' in real-time; popularity score is static, not live.",
+  "Streaming/theatrical availability MISSING \u2014 'tonight' intent requires platform data.",
+  "2026 is entirely outside corpus; system will return 2023 films at best \u2014 3-year gap.",
+  "Awards/critical acclaim axis is MISSING; 'best' film often equals award-season darling.",
+  "Last-couple-months window (2026) is entirely outside corpus; no match possible.",
+  "'Drop' implies a streaming platform release date \u2014 a MISSING signal entirely.",
+  "Corpus cutoff means 'nothing old' still returns 2023 films \u2014 3+ years old to the user.",
+  "Couples/date-night occasion is not a structured pipeline axis; occasion_audience is PARTIAL.",
+  "'Actually out right now' requires live theatrical/streaming calendar \u2014 fully MISSING.",
+  "Cannot distinguish still-in-theaters vs. home-available; both need platform data.",
+  "'The newer the better' means 2026 horror \u2014 none in corpus; best available is 2023.",
+  "Cannot distinguish theatrical vs. VOD horror drops \u2014 streaming_availability MISSING.",
+  "'Trending' requires live data (social/box-office); static popularity is a stale proxy.",
+  "Theatrical status ('still in theaters') is completely MISSING \u2014 cannot filter at all.",
+  "Corpus cutoff means 'this year' is unservable; best recs are 3 years stale.",
+  "'Everyone's talking about' = live social/cultural buzz \u2014 no such signal in pipeline.",
+  "No complexity/difficulty axis for 'need a chart'; only proxy is genome cerebral tag",
+  "Nonlinear narrative filterable via TMDB keyword but coverage patchy for pre-2000 non-Hollywood titles",
+  "Language-as-theme / linguistic relativity has no dedicated genome or TMDB axis",
+  "Genre-agnostic brain-rewiring relies solely on embedding similarity; literary drama examples may be missed",
+  "Free will / determinism is not a named genome tag; TMDB keyword coverage unreliable for older titles",
+  "Philosophical anxiety mood ('lay awake at night') has no wired affective axis beyond generic cerebral",
+  "Ambiguous vs closed ending is not a wired signal; genome 'twist-ending' conflates twist with ambiguity",
+  "Debate-worthiness / interpretive openness has no axis; co-watch embedding is only indirect proxy",
+  "Negative title exclusion ('NOT the matrix') is not implemented; pipeline has no exclude-by-title filter",
+  "Simulation-theory theme relies on TMDB keyword with uncertain coverage for late-1990s niche titles",
+  "Composite tone (dark AND hopeful simultaneously) requires multi-axis AND-intersection not currently supported",
+  "Redemptive counterweight / 'not hopeless' constraint has no dedicated axis; inferred from embedding proximity only",
+  "Pacing (slow-burn / meditative) is completely unwired; no runtime, shot-length proxy, or explicit pacing axis",
+  "Visual / cinematographic style not captured; 'Tarkovsky vibes' must rely entirely on director embedding similarity",
+  "Memory-alteration / identity-copy as a subgenre not directly filterable; TMDB keyword coverage sparse",
+  "Philosophical personal identity (qualia, continuity of self) too abstract for any wired axis; only embedding proxy",
+  "Pipeline produces ranked titles only; per-title explanatory justifications are not generated or stored",
+  "No explanation / reasoning-transparency output layer exists; LLM front-end must synthesize all WHY text from scratch",
+  "Smart vs cheesy time-loop distinction requires tone axis not wired; comedy genre exclusion is a coarse proxy only",
+  "Subgenre anti-filter (exclude rom-com time-loop) requires tone-by-subgenre intersection not implemented",
+  "Sub-intent distinction (political Rome vs gladiatorial spectacle) is not disambiguatable from TMDB keywords alone",
+  "No dedicated historical-era field; recall depends entirely on TMDB 'ancient rome' keyword coverage quality",
+  "Narrative perspective (German/Soviet POV vs Allied POV) is not a queryable axis; language/country proxies it but misses English-language non-American framings",
+  "Resistance-fighter sub-theme requires TMDB keyword match; omitted tags cause films like Army of Shadows to be under-retrieved",
+  "Pacing (talky tradecraft vs action-heavy) is not a queryable signal; pipeline would surface action spy films alongside slow-burn ones",
+  "'Le Carre vibes' is an auteur-style anchor with no structured mapping; must rely on co-watch similarity or LLM semantic understanding",
+  "Cannot positively filter 'historically grounded' vs 'fantasy medieval'; excluding Fantasy genre misses pseudo-historical films and Braveheart-style epics tagged as Drama",
+  "Grittiness/realism is a tone signal only approximable via genome mood tags; no structured 'realism' axis exists",
+  "Occasion signal ('anniversary couples night', 'cozy') has no structured pipeline representation and cannot personalize for shared-viewing context",
+  "'Cozy' is a composite affect with no genome or TMDB equivalent; 'atmospheric' is the closest but has different valence",
+  "Pipeline has no plot_structure signal; 'civilization collapse arc' as a narrative concept is not queryable and requires LLM-level understanding",
+  "Cross-empire OR-query (Rome OR Ottoman OR Mayan OR Chinese) requires multi-keyword fan-out that the extractor is not currently taught to issue",
+  "WWI vs WWII distinction requires TMDB keyword filtering; no dedicated war-era axis means precision depends entirely on tagging completeness",
+  "'Lost generation' literary-cultural theme is not a structured signal and cannot be queried",
+  "'Early 1800s Europe' is a narrow era slice; recall depends on whether films are TMDB-tagged 'napoleonic wars' or only 'historical drama'",
+  "Costume/aesthetic markers ('powdered wigs', court pomp) have no structured signal; pipeline cannot confirm period-accurate visual style",
+  "'Tudor' is a narrow historical sub-period; films tagged only as 'british historical drama' would be retrieved alongside Victorian and Edwardian results",
+  "Execution/court-drama intensity (beheadings, power betrayal) cannot be confirmed as a postfilter; no structured dramatic-tone axis",
+  "Honor/bushido as a cultural-ethical theme has no structured representation; must rely on co-watch similarity or LLM extraction",
+  "Feudal era boundary (pre-Meiji) is not a computable filter; 'samurai' TMDB keyword is reliable but era precision depends on tagging completeness",
+  "Happy ending is not a tagged attribute; feel-good genome misses dramas that end happily but score tonally dark throughout.",
+  "No filter for 'not bittersweet' -- feel-good-scored films can still carry tragic secondary arcs or bittersweet undercurrents.",
+  "Pipeline cannot exclude titles the user names as already-seen -- no negative-title filter exists at intake.",
+  "Recency-of-twist (final minutes vs mid-film reveal) is a plot_structure nuance with no signal in our feature set.",
+  "Ambiguous ending is not a tagged or filterable dimension; cerebral genome is the only weak proxy and misses many examples.",
+  "Discussion/debate value ('argue about what happened') has no axis anywhere in our feature set.",
+  "Happy ending is not tagged; feel-good genome will surface tonally warm films that may still end ambiguously or with loss.",
+  "Hopeful ending within heavy drama is not filterable; sad/emotional genome and feel-good genome conflict on the same films.",
+  "Session context (user just finished depressing films) has no pipeline representation -- intake treats each request stateless.",
+  "Recontextualizing twist (whole-film reframe) vs simple surprise reveal is a plot_structure sub-type with no signal; all mindfuck films treated equally.",
+  "Rewatch value / 'everything means something different on rewatch' is not a dimension we track or expose.",
+  "Open ending is not a negative-filterable signal; we cannot exclude ambiguous films from the candidate set.",
+  "'Wraps up properly' is a structural-completeness judgment with no pipeline axis.",
+  "Earned vs cheap twist is a craft-quality distinction with no pipeline signal; all twist-tagged films are treated equally.",
+  "Foreshadowing density (rewatch-payoff quality) is not tracked anywhere in our feature set.",
+  "Multi-user / split-taste context (two people with different preferences) has no representation in our single-vector pipeline.",
+  "Not-cheesy, not-predictable is a qualitative craft filter with no analog in any of our feature axes.",
+  "Ambiguous/sad ending is not filterable; genre + dark/cerebral mood genome is only an imperfect proxy.",
+  "Lingering quality ('sticks with you for days') is a meta-attribute beyond our entire feature space.",
+  "Pacing and scene-density are unscored; slow-burn action films surface equally alongside relentless ones.",
+  "No dialogue-to-action ratio signal; 'no talky parts' preference is completely unservable.",
+  "Choreography quality and density are not signals; all action films are indistinct on this axis.",
+  "Gun-fu vs wire-fu vs bare-knuckle subtype distinctions require human curation beyond keyword matching.",
+  "No streaming or rental availability signal; 'for tonight' spontaneous viewing is unservable.",
+  "Pacing unscored; slow-burn thrillers surface alongside relentless picks with equal mood scores.",
+  "Practical-vs-CGI is fully unserved; no metadata axis distinguishes stunt-heavy from VFX-driven action.",
+  "Release year is a poor proxy: excludes great modern practical films and includes CGI-heavy older titles.",
+  "Heist is a TMDB keyword not a genre; retrieval may surface crime dramas without heist structure.",
+  "Sustained pacing throughout can't be confirmed; several picks have slow deliberate first acts.",
+  "Survival/disaster served only via loose keyword matching; some picks are slow-burn prestige films.",
+  "Pacing preference is unservable; The Revenant and The Grey both drag by some viewers' standards.",
+  "No quality or critic-score axis: low popularity cannot distinguish underrated gems from merely bad films.",
+  "'Seen all the big ones' requires user watch-history exclusion; LLM extractor cannot enumerate seen films.",
+  "Chase-scene density is not scored; spy films heavy on intrigue and low on action surface equally.",
+  "Gritty grounded Bourne tone vs Bond glamour gap is not captured by genre or keyword signals.",
+  "Sustained breathlessness vs. tension-with-release cycles cannot be distinguished from mood tags alone.",
+  "Pacing axis is fully absent; ranking films by intensity continuity requires editorial judgment.",
+  "Group-watch and occasion context have no signal; pipeline can't prefer rewatchable crowd-pleasers.",
+  "Intentional camp and cheese ('dumb fun') is untagged; genome feel-good does not capture schlocky tone.",
+  "Rewatchability is not tracked \u2014 popularity is a weak proxy for repeat-view appeal, not equivalent.",
+  "Rainy-day/occasion context is not an intake signal the extractor is taught to surface.",
+  "'Comfort' is an abstract cluster; genome feel-good tags partially cover it but miss soft nostalgia and safe-stakes nuance.",
+  "Named-seed co-watch embedding is strong but 'throw on any night' ease-of-entry intent has no separate encoding.",
+  "Cannot hard-filter OUT sad or dark tone \u2014 genome scores exist for both poles but pipeline only ranks positive mood, no exclusion gate.",
+  "No 'stakes-free' or low-tension pacing axis to eliminate stressful thrillers that also score feel-good.",
+  "Rewatchability is not tracked at all \u2014 popularity and feel-good genome are weak proxies, not equivalent to repeat-view rate.",
+  "Annual rewatch traditions (Elf every Christmas, Die Hard every holiday) require occasion metadata we don't have.",
+  "No 'background-watchable' or low-attention-demand axis exists; pipeline cannot distinguish plot-dense from episodic/light fare.",
+  "Runtime is scraped but not wired \u2014 relevant here since shorter or episodically structured films suit background use.",
+  "Content rating (PG/family-safe) is MISSING \u2014 decade+genre can't exclude R-rated 90s films from the comfort cluster.",
+  "'Nostalgic' as an affect axis isn't in genome; decade + named seeds approximate it but won't exclude non-nostalgic 90s picks.",
+  "Specific 'charming self-deprecating British wit' subgenre tone not separable from generic rom-com in our genre/genome signals.",
+  "'Holiday-ish but not strictly Christmas' nuance can't be served \u2014 TMDB christmas keyword is binary and over-anchors on literal holiday films.",
+  "Content rating (G/PG) for family-appropriateness is MISSING \u2014 genre+genome cannot exclude R-rated crowd-pleasers.",
+  "Group-occasion signal (family movie night) is not extracted; pipeline has no audience-type or viewing-context targeting.",
+  "No signal for moral discomfort \u2014 'feel bad for laughing' guilt-affect axis absent from genome",
+  "Cannot distinguish In Bruges existential-bleak register from generic dark comedy",
+  "No satire subgenre tag; relies entirely on TMDB keyword co-occurrence and co-watch signal",
+  "Cannot measure sharpness or incisiveness of critique \u2014 quality axis is absent",
+  "No slapstick or physical-comedy subgenre tag; retrieval relies on co-watch clustering alone",
+  "Pacing/gag-density axis is completely absent \u2014 'turn brain off' cognitive-load intent unmeasurable",
+  "Cringe/secondhand-embarrassment is a distinct register with no genome affect tag; only co-watch can serve it",
+  "Extractor must map 'cringe comedy' intent \u2014 pipeline has no signal to verify this quality on candidates",
+  "'Smart meanness vs lazy meanness' is a craft quality axis \u2014 completely unmeasurable in our pipeline",
+  "No wit or intelligence-of-comedy signal; genre + mood_affect can retrieve dark comedy but not selective on craft",
+  "Social/group viewing occasion is completely absent from pipeline \u2014 no occasion_audience signal exists",
+  "'Nothing that requires thinking' cognitive-accessibility axis unmeasurable; popularity is only a crude proxy",
+  "In the Loop (2009) \u2014 the most precise stylistic match \u2014 may be below 200-rating corpus threshold",
+  "Fast-dialogue Iannucci style and 'bleakness register' have no pacing or tonal-blend signal to filter on",
+  "Bittersweet blend requires sad+funny scores to co-occur \u2014 genome scores them independently, cannot detect the mix",
+  "Extractor must parse 'punches you' as emotional gut-punch intent, not a literal signal we can verify on candidates",
+  "No deadpan or absurdist subgenre tag; quirky genome tag covers too broad a range to be selective",
+  "Surrealism degree is not indexed \u2014 cannot rank by 'how weird' within the absurdist cluster",
+  "MPAA content rating completely absent \u2014 cannot filter R-rated vs PG-13 without it",
+  "'Haven't seen a million times' requires personal watch-history filter we do not have; popularity inversion is a crude proxy",
+  "Studio Ghibli as a studio/label filter is not wired; director person ids only partially cover Ghibli output.",
+  "'Cozy magical feeling' requires mood extraction; genome feel-good/heartwarming is close but doesn't capture magical-realism specifically.",
+  "Cannot exclude titles user has already seen; no query-time watch-history exclusion filter.",
+  "'Absolutely destroy me' intensity gradient not captured; genome sad tag does not rank devastation degree.",
+  "Cannot filter by MPAA content rating; 'not kids stuff' has no hard exclusion gate in pipeline.",
+  "Seinen demographic target has no direct axis; approximated only via dark mood + adult-themed TMDB keywords.",
+  "Visual/animation style (painterly, rotoscoped, experimental) has no axis; item embedding is the only weak approximation.",
+  "Animation technique metadata absent from pipeline; cannot distinguish production-method-based queries at all.",
+  "Gateway/accessibility for non-anime-fans not wired; pipeline cannot score on newcomer-friendliness.",
+  "'Not too weird' requires narrative-complexity signal that doesn't exist; genre and mood only loosely approximate.",
+  "Bare-name prompt requires extractor to interpret 'makoto shinkai' as director-lookup intent, not keyword search.",
+  "Short Shinkai films (Voices of a Distant Star, She and Her Cat) likely absent from 200-rating MovieLens corpus.",
+  "Arthouse/artsy aesthetic label has no axis; pipeline cannot distinguish arthouse from mainstream by style.",
+  "Negation intent (exclude isekai/generic) is not wired; extractor cannot express genre-exclusion constraints.",
+  "Pacing/energy level ('hype me up', 'action packed') has no direct axis; epic genome tag only partially covers.",
+  "Mecha is not a top-level genre; TMDB keyword coverage is partial and not guaranteed across all candidates.",
+  "Cannot filter by MPAA content rating to exclude children's animation; only genre and mood loosely approximate.",
+  "'As good as anime' quality bar has no wired signal; vote_average is the closest proxy but uncalibrated for this.",
+  "Studio Trigger as a production studio filter is not wired; cannot retrieve by studio label at all.",
+  "Loud/colorful/over-the-top visual style has no axis; item embedding similarity is the only weak approximation.",
+  "Enemies-to-lovers as a named romantic arc is only partially covered by TMDB keywords; may miss or dilute results.",
+  "Rain scene is a scene-level visual trope with no stored analog in any feature layer.",
+  "Pacing axis is entirely MISSING; cannot distinguish slow-burn from fast-burn romance films.",
+  "Romantic arc timeline structure (when first kiss occurs) is not stored in any feature layer.",
+  "Ending type (tragic/unhappy) is not an explicit stored field; must be inferred from mood tags.",
+  "Emotional impact intensity is unquantifiable from any feature in our set.",
+  "Occasion/audience context (girls night, group viewing) cannot be extracted or used for filtering.",
+  "Yearning/longing as a specific affect axis does not exist in genome tags; only approximated by adjacent tags.",
+  "Author-level entity filtering (Jane Austen adaptations specifically) is not a stored axis.",
+  "Couples-watch context (dual-taste household) cannot be modeled; requires simultaneous two-person preference input.",
+  "Partner's implicit action preference is session-context only, not a film metadata signal.",
+  "Pacing and dialogue-density axis MISSING; cannot filter talkative character-study films from plot-driven ones.",
+  "Formulaic vs. authentic quality distinction is not stored; no reliable proxy beyond indie genre tag.",
+  "Character archetype pairing (grumpy/sunshine) is not stored in any feature layer; no personality-type axis exists.",
+  "Enemies-to-lovers as a named plot beat only partially covered by TMDB keywords; coverage inconsistent.",
+  "Runtime is scraped but not wired; cannot filter for 2h+ epics vs. shorter films.",
+  "Multi-continent narrative scope requires story-geography data distinct from production country.",
+  "User's emotional state (post-breakup, undecided) is session-context with no film metadata analog.",
+  "Dual-mood intent (hopeful vs. cathartic) requires clarification or mixed retrieval, not standard ranking.",
+  "Cannot filter directors by gender; person records carry IDs only, no gender attribute.",
+  "Serving this at scale requires a curated female-director entity list or gender ontology on people.",
+  "No race/ethnicity attribute on cast or director; 'Black-led' cannot be computed from our data.",
+  "Exclusion of trauma/slavery themes requires negative-keyword logic or a classifier we do not have.",
+  "ending_type is not in our data; cannot filter for happy vs tragic LGBTQ outcomes.",
+  "LGBTQ keyword coverage is sparse; mood_affect is only a loose proxy for narrative resolution.",
+  "Cannot distinguish authentic disabled casting from able-bodied simulation; no actor-disability attribute exists.",
+  "Most Hollywood disability films in our corpus use able-bodied actors; authentic set is tiny and must be curated manually.",
+  "Trans character/theme keyword coverage in TMDB is sparse; many trans films may not surface via keyword retrieval.",
+  "Cannot distinguish authentic trans casting (Tangerine, A Fantastic Woman) from cis actor in trans role (The Danish Girl).",
+  "LGBTQ subtype (lesbian vs trans vs gay-male) not stored as distinct signals; each slot cannot be filled programmatically.",
+  "Cast diversity (non-white representation) is not computable from our data; must be curated manually.",
+  "No ethnicity or heritage attribute on directors; cannot identify Indigenous filmmakers as a class from our data.",
+  "Authentic Indigenous-directed films are rare in a mainstream 9366-movie corpus; only a handful qualify and most need manual curation.",
+  "Bechdel test compliance is not a data attribute; cannot filter or rank candidates by it.",
+  "'Women talking about things besides men' is a qualitative narrative criterion with no computable proxy in our feature set.",
+  "Narrative POV (told from the daughter's perspective) is not a computable filter in our data.",
+  "Female protagonist detection is partial at best; no explicit protagonist-gender label exists.",
+  "Deaf culture (capital-D community identity) vs hearing-loss drama distinction is not capturable from TMDB keywords or genome tags.",
+  "TMDB deaf keyword coverage is sparse; many relevant films may not surface via keyword-based retrieval alone.",
+  "Franchise/universe membership not tracked; cannot separate MCU from DCEU or X-Men in retrieval",
+  "Teamup/cross-film continuity narrative structure is not a modeled signal at any layer",
+  "Cannot filter by franchise membership or sequence films within a series for a binge path",
+  "No signal distinguishes gritty realistic spy (Bourne) from campy action spy (XXX)",
+  "Cannot exclude already-watched Monsterverse films; franchise membership entirely absent",
+  "Kaiju/giant-scale keyword coverage is sparse; TMDB 'monster' keyword conflates all sizes",
+  "Intent requires franchise-level indexing (series length, continuity) which is entirely absent from film-level data",
+  "No anchor title means embedding retrieval cannot fire; prompt is effectively unservable by the current pipeline",
+  "Sequel count / franchise longevity ('sequels for days') cannot be filtered or sorted on",
+  "Spectacle-level / over-the-top pacing tone is not an explicit pipeline axis",
+  "Shared-universe/recurring-villain franchise membership entirely missing; core prompt cannot be served",
+  "Cannot distinguish Conjuring Universe vs Halloween vs Elm Street as separate continuity chains",
+  "Cannot identify or sort films by franchise series membership or installment order",
+  "Space-opera vs hard-SF tonal distinction only partially addressable with available tags",
+  "Trilogy membership and whether a series has a definitive ending are not tracked signals",
+  "Total trilogy runtime (binge feasibility) cannot be computed; runtime scraped but wired into nothing",
+  "Franchise runtime sum (~20 hours) not computable; runtime scraped but not wired into retrieval",
+  "Cannot exclude LOTR/HP universe films already seen; franchise membership tracking absent",
+  "Heist franchise membership (which heist films have sequels) not tracked; most heist films are standalones",
+  "Pipeline will surface excellent solo heist films without distinguishing sequel availability",
+  "Cannot identify sequel/franchise membership \u2014 Ocean's Twelve and Thirteen are invisible without a series-filter axis.",
+  "No plot-structure signal for 'crew-assembly + planning montage' \u2014 must rely entirely on item-embedding proximity.",
+  "Streaming availability is entirely absent \u2014 'for tonight' watchability is unserviceable by our pipeline.",
+  "Runtime not wired; cannot prefer a shorter, lower-commitment film over a longer one.",
+  "No plot-structure axis \u2014 'plan goes sideways' is a mid-film narrative beat invisible to every signal we have.",
+  "Cannot separate chaotic-comedy improvisation from thriller improvisation; genre + tone is the only proxy.",
+  "Cannot exclude glossy-Vegas style explicitly \u2014 can only push toward gritty via genome tags, not hard-filter the other pole.",
+  "'Professional code / honor among thieves' character-type is not a formalizable signal beyond embedding proximity.",
+  "'Vault vs talk' distinction (physical heist vs social manipulation) is not a structured axis; TMDB con-artist keyword coverage is sparse.",
+  "No way to hard-exclude vault-cracking heists \u2014 only approximate via embedding proximity to known con films.",
+  "No plot-structure axis for 'interwoven overlapping storylines' \u2014 Magnolia-style multi-strand narrative is invisible to our data.",
+  "Group/occasion context not captured; cannot bias toward crowd-pleasing ensemble picks over solo-watch films.",
+  "Twist-ending genome tag coverage is sparse \u2014 many well-known twist films will not score highly on this axis.",
+  "No awards/critical-acclaim filter to separate genuinely clever twists from gimmicky ones.",
+  "Corpus thins sharply for non-English heist films at the 200-rating threshold \u2014 genuine foreign-language picks are few.",
+  "production_countries is filming location, not story setting; some US-produced foreign-set films pass the filter incorrectly.",
+  "'Rat Pack' is a person-group entity we cannot directly filter on \u2014 can only approximate via individual actor IDs.",
+  "Corpus coverage of early-1960s titles may be thin; obscure 60s capers may not clear the 200-rating threshold.",
+  "No pacing axis \u2014 sustained vs episodic tension (tense throughout vs one set-piece) is invisible to our signals.",
+  "MPAA rating is entirely missing; R-rating is a meaningful proxy for 'real stakes' tone that we cannot use.",
+  "Pipeline has no 'not too heavy' filter; cannot exclude emotionally demanding films that are also feel-good",
+  "Happy/hopeful ending is unverifiable; ending_type axis is absent from the pipeline entirely",
+  "Cannot distinguish comforting portrayals of loneliness from bleak ones; same genome tags score both",
+  "Extractor not taught 'validating' emotional register; lonely + feel-good combination is ambiguous to the pipeline",
+  "No 'motivational' genome tag; must proxy via genre+underdog keyword which misses many qualifying films",
+  "Plot arc (triumph vs. defeat) is unresolvable; pipeline cannot guarantee the protagonist actually wins",
+  "Cerebral genome tag undifferentiated: returns mindfuck thrillers alongside quiet existential dramas equally",
+  "No intensity-of-shift axis; pipeline cannot modulate between gently thought-provoking and fully destabilizing",
+  "Pipeline cannot hold two conflicting intents simultaneously; must commit to one mood signal",
+  "Breakup-as-occasion is emotional state context; extractor is not taught to route on this trigger",
+  "No 'faith-in-humanity' semantic axis; feel-good proxy returns light comedies as readily as humanist dramas",
+  "News-fatigue occasion is an external emotional state; pipeline has no occasion or context-state signal at all",
+  "Aging-valence axis is absent: Amour and Up both center aging but one terrifies; pipeline cannot distinguish",
+  "No mortality-comfort axis; pipeline cannot differentiate reassuring from heartbreaking death-adjacent films",
+  "Genome sad/heartbreaking does not imply guaranteed sob; no cry-probability ranking is possible",
+  "Pipeline cannot prioritize peak-emotional-impact films over merely sad-adjacent dramas with same tags",
+  "No comeback/redemption arc axis; pipeline cannot confirm narrative trajectory ends hopefully rather than tragically",
+  "Personal failure as emotional context is an occasion signal; entirely absent from intake and postfilter stages",
+  "Pacing is MISSING: 'slow and quiet' is the core ask and no pacing axis exists anywhere in the pipeline",
+  "No tension-level or stakes axis; cannot algorithmically exclude thrillers or high-drama films from results",
+  "We cannot detect whether a female character drives the plot vs. is a love-interest or sidekick.",
+  "Flawed-and-prickly personality is not a filterable tone signal; genome affect tags are too coarse.",
+  "No antihero tag or moral-stance field exists; pipeline conflates antihero with crime/action broadly.",
+  "Terse prompt provides no seed title for embedding-based retrieval to anchor on.",
+  "Found-family as a narrative trope is not reliably covered by TMDB keywords or genome tags.",
+  "Ensemble misfit dynamics (outsiders slowly bonding) cannot be inferred from any available metadata field.",
+  "No axis captures whether a film moralizes about its protagonist vs. withholds judgment for the viewer.",
+  "Ambiguous ending type is not tracked; films with tidy redemption arcs would not be filtered out.",
+  "The reference title is a TV show \u2014 no embedding anchor exists in our movie corpus to bootstrap retrieval.",
+  "Moral-corruption arc (gradual self-rationalization) is a narrative pattern we have no signal for.",
+  "Charisma and audience-rooting-for-a-criminal are affective qualities we cannot measure or filter for.",
+  "Reluctant-hero arc and grumpy-personality tone are not filterable; genre+actor seeding casts too wide a net.",
+  "Protagonist personality (grumpy, resistant) cannot be extracted from any metadata or keyword in our data.",
+  "Camera treatment (leering vs. respectful framing) is entirely unmeasurable from any metadata or keyword signal.",
+  "Actor age at time of filming is not tracked; 'older lead is fine' cannot function as a filter.",
+  "Villain-as-protagonist POV is a narrative stance not captured by any metadata field or keyword.",
+  "Audience complicity ('on board with them') is an affective response we cannot predict from available signals.",
+  "Audience moral-sympathy with the transgressor is not detectable \u2014 revenge films vary widely in how justified the act feels.",
+  "The 'you'd probably do the same' quality depends on motivation depth we cannot measure from any signal.",
+  "Succession is a TV show, not in corpus; no anchor for similar_to_title signal",
+  "Sharp-dialogue wit quality has no axis; must be inferred from genre and co-watch embeddings",
+  "Dark is a TV show, not in corpus; no similar_to_title anchor available",
+  "Multi-generational family-tree narrative complexity has no corresponding axis",
+  "Video game RDR2 not in corpus; mood and genre must be inferred without a title anchor",
+  "Slow-burn pacing and landscape cinematography have no axes; cannot filter for deliberate rhythm",
+  "Dual converging storyline narrative structure has no axis; cannot filter for this shape",
+  "Visual beauty (lush cinematography) is not capturable by any available axis",
+  "Video game Hollow Knight not in corpus; mood must be expressed as tags without title anchor",
+  "Visual beauty and art direction quality have no axis; gorgeous aesthetic is unfilterble",
+  "Pacing and editing intensity (frenetic kitchen chaos rhythm) has no axis at all",
+  "The Bear is a TV show; similar_to_title unavailable and found-family theme only weakly covered",
+  "Content rating not wired; cannot filter out sanitized fantasy to ensure mature dark tone",
+  "Monster-hunter protagonist archetype not directly filterable by any metadata axis",
+  "Video game Disco Elysium not in corpus; political philosophy plus absurdism not directly expressible",
+  "Dialogue-density and philosophical-RPG texture have no film axis equivalent",
+  "Fourth-wall-breaking as a narrative device has no axis; cannot filter for it",
+  "Fleabag is a TV show; messy-woman protagonist archetype only partially covered by metadata",
+  "Both reference works (TV show and novel) not in corpus; cannot anchor to either for similar_to_title",
+  "Literary quiet pacing vs action-driven apocalypse indistinguishable without a pacing axis",
+  "Cannot filter 'not Hallmark-y' \u2014 no production-quality, studio-tier, or prestige axis exists.",
+  "Group roommate occasion (December night in) is invisible; system treats all viewing contexts identically.",
+  "No explicit jump-scare axis \u2014 'not just jump scares' negative constraint cannot be operationalized.",
+  "Halloween occasion context is purely conversational; the pipeline has no seasonal calendar awareness.",
+  "No production-budget or spectacle axis; can't reliably distinguish true theatrical blockbusters from smaller action films.",
+  "'Nothing that makes me think' tone preference has no genome or keyword representation.",
+  "Runtime constraint ('don't wanna move for 3 hours') cannot be served \u2014 runtime field is scraped but unused.",
+  "Pacing signal absent; 'slow and comforting' requires an axis the pipeline does not have.",
+  "MPAA/content rating missing \u2014 cannot guarantee PG-safe content for little cousins without human verification.",
+  "'Grandma AND little cousins simultaneously' multi-generational appeal has no data axis; inferred only from genre and popularity.",
+  "NYE occasion is purely conversational framing; the system has no calendar or seasonal awareness.",
+  "Solo-viewing-with-wine context (wanting something companionable, escapist) has no data axis.",
+  "No axis distinguishing nuanced romance from Hallmark-style saccharine \u2014 'not sappy' is a tone filter we cannot compute.",
+  "Valentine's Day occasion and solo-viewing framing are invisible to the pipeline.",
+  "MPAA/content rating missing \u2014 cannot filter to age-appropriate content for young kids without manual verification.",
+  "Child-energy-level framing ('bouncing off walls') has no equivalent pacing or tone axis in data.",
+  "Cannot filter 'no gore' \u2014 MPAA rating is missing and no gore-intensity axis exists in genome or keywords.",
+  "Autumn-cozy-creepy is a tonal blend (spooky yet warm) with no direct genome or keyword representation.",
+  "Pipeline returns a ranked single list; it cannot curate a 'two-film program' with one comedy and one discussion piece.",
+  "Group holiday setting (lake house, Labor Day) is invisible; social-occasion context has no data representation.",
+  "Genre=Musical lumps upbeat dance spectacles with quiet chamber musicals; no dance-intensity or spectacle-scale signal.",
+  "No occasion or crowd-energy filter to distinguish singalong crowd-pleasers from introspective musical dramas.",
+  "Pipeline cannot filter out cheesy TV-movie quality \u2014 no awards, budget, or distributor/release-type signal exists.",
+  "vote_average is the only quality proxy and conflates theatrical releases with direct-to-TV biopics.",
+  "No signal for needle-drop soundtrack design \u2014 music supervisor is a key creative role absent from the pipeline.",
+  "Item embedding only indirectly captures soundtrack salience via co-watch; not a queryable standalone dimension.",
+  "Pipeline cannot distinguish concert-film format from talking-head music docs \u2014 both are Documentary+Music.",
+  "'Feel of being at the show' is an experiential quality with no genome or keyword proxy in the pipeline.",
+  "Moody/smoky atmosphere is loosely approximated by genome affect tags but not precisely filterable at query time.",
+  "Jazz subgenre relies on TMDB keyword + user-tag coverage, which may miss less-tagged or older titles.",
+  "Cannot reliably filter by specific music subculture (punk vs. hip-hop vs. 70s rock) \u2014 TMDB keyword coverage is inconsistent.",
+  "No semantic concept for 'music scene as protagonist'; pipeline conflates individual biopics with scene-ensemble films.",
+  "No 'jukebox musical' tag \u2014 genre=Musical lumps original-score and pre-existing-catalog musicals indiscriminately.",
+  "Cannot query which music catalog (ABBA, Beatles, Queen) a jukebox musical is built around \u2014 no IP or catalog tracking.",
+  "Soundtrack quality is entirely absent as a pipeline signal \u2014 no composer axis, no soundtrack-award data exists.",
+  "'Playlist-worthy pop/rock tracks' vs. orchestral-score distinction is unqueryable; all music-forward films conflated.",
+  "Earworm or memorable-song quality has no pipeline representation \u2014 cannot distinguish singalong hits from forgettable scores.",
+  "Production scale and grandeur ('feels big') are not encoded signals; genome epic tag is a very loose proxy.",
+  "Fictional vs. real-artist film is not a queryable facet \u2014 genre=Music conflates biopics and fictional-band comedies.",
+  "Original song quality (the bonus criterion) has no pipeline representation; no soundtrack-quality or music-award signal.",
+  "Cannot distinguish reenactment-heavy docs from archival/observational ones; style preference is entirely unservable.",
+  "No craft/quality signal beyond crowd rating to identify docs that 'actually hold up'.",
+  "Reference titles are multi-episode Netflix docuseries, almost certainly absent from movie corpus; similar_to_title anchor is lost.",
+  "Episodic long-form investigative format is structurally absent from the feature-film corpus.",
+  "'Unfamiliar subject' requires modeling user's prior-knowledge domain, which is impossible without history.",
+  "No quality/craft signal; 'well-made' depends on critic score or awards, neither wired.",
+  "Corpus has very few cult-focused docs with 200+ ratings; best titles (The Vow, Escaping Twin Flames) are series.",
+  "Seen-title exclusion fails because reference titles are docuseries not in corpus; cannot exclude them from results.",
+  "No explicit non-violent filter; pipeline cannot guarantee excluding murder-focused titles from results.",
+  "White-collar/fraud subgenre untouched by genre tags; match depends on sparse TMDB keyword hits.",
+  "No 'unsolved/open-ending' filter; pipeline cannot distinguish cases where perpetrator was never caught.",
+  "'Haunts you' requires lasting-impact signal; no metric exists beyond genome affect approximation.",
+  "Cannot filter for redemptive or hopeful arc; ending_type and narrative resolution entirely absent from signals.",
+  "No content-intensity or grim-level signal; MPAA rating and violence tone not wired.",
+  "'Perspective-shifting' is a subjective lasting-impact quality; we have no metric for it.",
+  "Awards and critical acclaim not wired; vote_average alone is insufficient to surface transcendent docs.",
+  "No 'based on true crime' feature in signal set; must rely on sparse TMDB keyword match.",
+  "'Feels like a documentary' = pacing and visual style; both axes are entirely absent from the pipeline.",
+  "Multi-episode docuseries format is structurally absent from our feature-film corpus; the core ask cannot be served.",
+  "Streaming availability not wired; cannot confirm what is actually watchable tonight.",
+  "No practical-vs-CGI production flag; cannot filter out CGI-heavy action films at all",
+  "Cannot score prominence or count of car-chase sequences per film; keyword signals presence only",
+  "Cannot distinguish brutal/realistic fight choreography from stylized Hollywood boxing; no realism metric",
+  "Fight-scene quality or in-ring authenticity has no signal; genre+tone proxies are imprecise",
+  "Choreography quality entirely absent from signals; cannot rank by craft of fight sequences",
+  "Style subtype (rapier vs katana vs broadsword) only loosely separated via nationality and era signals",
+  "Cannot distinguish planning-dominant heists from action-dominant ones; plot-phase weighting absent",
+  "Safecracking centrality vs incidental scene cannot be scored; TMDB keyword signals presence only",
+  "Cannot score how much of the film is aerial combat vs ground story; dogfight prominence undetectable",
+  "Practical in-cockpit filming vs CGI aerial sequences share no distinguishing signal",
+  "Screen-time centrality of train cannot be measured; keyword signals are presence/absence only",
+  "'Set on a train throughout' vs 'has one train scene' conflation; setting prominence is unscored",
+  "Underwater scene prominence vs incidental scenes unscored; keyword signals indicate presence only",
+  "Sensory immersion ('feel the pressure') depends on cinematography quality which is entirely unmeasurable",
+  "Cannot identify films where prolonged standoff is the primary tension vs action-heavy sniper films",
+  "Sustained waiting/dread plot structure (one rooftop, whole city) has no extractable signal",
+  "Cannot score how prominently cooking scenes are featured vs character drama; scene-centrality absent",
+  "'Loving detail' of culinary sequences is a visual/cinematographic quality signal \u2014 completely absent",
+  "'At night in the rain' visual aesthetic is entirely absent from feature space; no weather or time-of-day signal",
+  "Cannot distinguish motorcycle-centric films from general vehicle action; no dedicated vehicle-type filter",
+  "No production budget or quality-tier signal; 'not cheesy' exclusion cannot be directly filtered",
+  "MPAA rating absent; R-rated prestige vs PG-13 schlock indistinguishable on that axis",
+  "'Set in American South' as sub-national region is not reliably filterable; keyword coverage spotty",
+  "Racial injustice thematic lens has no structured axis; relies solely on TMDB keyword approximation",
+  "'Set in Paris' vs 'filmed in Paris' distinction unreliable; European production country is a weak setting proxy",
+  "Comedic heist as combined subgenre not directly indexed; multi-signal intersection may miss niche caper films",
+  "'Slow burn' pacing completely absent from our data; atmosphere genome tags are an imprecise proxy",
+  "'Folk horror' subgenre is not a first-class TMDB category; pipeline cannot filter for it directly",
+  "Visual aesthetic (neon, rain, nighttime) has no data axis; cinematographic style is completely missing",
+  "'Morally grey detective' character archetype is not a structured filterable signal in our data",
+  "US-vs-Soviet geopolitical framing not a structured signal; production country + 'cold war' keyword is best available proxy",
+  "Existential/philosophical tone has no explicit signal; genome mood tags are an imprecise approximation",
+  "Negative filter ('not wacky comedy') relies on crude genre exclusion; tone nuance within drama indistinguishable",
+  "Romance-to-action balance within a film not capturable; 'woven in' ratio has no data signal",
+  "Wuxia subgenre not reliably distinguished from generic martial arts by TMDB keywords alone",
+  "Single-location constraint is a plot structure requirement with zero signal in our data",
+  "Near-real-time / unity-of-time pacing is irretrievable; the core ask cannot be served by filters",
+  "Production budget (low/indie) is not a data signal; popularity is an imperfect proxy for production scale",
+  "'Two people in a room' minimal-cast or containment constraint has no structured signal in our data",
+  "Cannot filter by dialogue quality or one-liner density \u2014 signal entirely missing",
+  "'Mindless' is only approximated via inverse of genome cerebral score, not a direct axis",
+  "So-bad-its-good is a meta-quality social judgment with zero data axis in the pipeline",
+  "Cannot distinguish unintentionally bad films from intentionally campy ones",
+  "No creature-feature subgenre tag; depends on TMDB keyword 'shark' which misses edge cases",
+  "Camp quality filter ('cheesy nonsense') unavailable \u2014 cannot rank creature films by campiness",
+  "No critic score data \u2014 'objectively garbage' low critical reception cannot be filtered",
+  "Rewatchability has no measurable data axis in the pipeline",
+  "Cannot filter bad-quality rom-coms from well-reviewed ones \u2014 no quality gradient axis",
+  "'Wine and comfort food energy' is a social occasion signal with no corresponding data axis",
+  "Sweaty/dumb production-quality descriptor has no data axis \u2014 decade+action does all the work",
+  "Cheesy 80s tone not distinguishable from prestige 80s action within genre+decade filter",
+  "Franchise membership not tracked \u2014 cannot surface other F&F installments or sister franchises",
+  "'Stupid and glorious' spectacle quality is an unmeasured tone signal the extractor cannot route",
+  "Riffable/mockable quality cannot be distinguished from good horror \u2014 no quality tier signal",
+  "Social occasion context (movie night with friends) is not a recommendable signal in the pipeline",
+  "Lifetime-channel is a distribution/tone register with no corresponding data axis at all",
+  "Cannot filter domestic thrillers by trashy vs prestige quality tier \u2014 no quality gradient available",
+  "Guilty-pleasure / social-embarrassment signal has no data axis \u2014 pipeline cannot serve this intent",
+  "Cannot rank films by rewatchability or shame-factor; only genre+popularity approximate it"
+ ]
+}

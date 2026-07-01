@@ -1,0 +1,427 @@
+{
+ "n_lenses": 6,
+ "synthesis": [
+  {
+   "lens": "MISSING-DATA axes: signals prompts need that we store NO data for (or have scraped but not wired into the serving pipeline)",
+   "findings": [
+    {
+     "hole": "No pacing/tempo axis is queryable. 'Slow burn', 'quiet', 'don't drag', 'chill', 'fast-paced' are the core constraint in 91 prompts. The pipeline has genome tags 'slow paced' and 'fast paced' (tag IDs exist in the 1128-tag genome) but they are never surfaced as a scalar field, never wired to an intake slot, and never used for candidate filtering or ranking. Genre and mood_affect are the only proxies, and they conflate tone with tempo (e.g., Horror genre ranks equally for atmospheric slow-burn and jump-scare slasher).",
+     "frequency": "pacing axis: 91/500 prompts used, 91 gaps (97% gap rate); appears as a blocker in at least 18 of the 50 archetypes",
+     "fix": "Derive a pacing scalar from existing genome scores: compute a weighted average of 'slow paced' (genome tag ~699) minus 'fast paced' scores per movie during data-build and store in feature_store.pt. Add a `pacing` intake slot ('slow'/'fast'/'any') that filters or re-ranks candidates via the scalar. Cost: FREE \u2014 no new scraping; genome data already present.",
+     "layer": "data-build",
+     "priority": "high"
+    },
+    {
+     "hole": "MPAA/content-rating is entirely absent from the feature store. 40 prompts directly cite it (100% gap rate) and it is the structural blocker for tone_maturity (117 gaps, 93% gap rate). 'Nothing too scary', 'PG-13 please', 'no gore', 'not raunchy', 'safe for my 6-year-old', and 'ultra-violent' are unenforceable constraints. The genome dark/gritty tag is a weak proxy that misses many R-rated films outside Horror and cannot distinguish R-for-sex from R-for-gore.",
+     "frequency": "content_rating: 40/500 prompts, 40 gaps (100% gap); also primary driver of tone_maturity: 117/500, 117 gaps (93% gap)",
+     "fix": "TMDB movie-details endpoint already returns a `release_dates` object containing regional certifications (US MPAA: G/PG/PG-13/R/NC-17). We already call TMDB for poster URLs \u2014 extend the same scrape pass to persist `certification_us` per movie into feature_store.pt. Add `require_max_rating` intake slot. Cost: CHEAP \u2014 same API, no new key; one additional field per movie response.",
+     "layer": "data-build",
+     "priority": "high"
+    },
+    {
+     "hole": "Runtime is scraped from TMDB but not wired into feature_store.pt or any serving artifact. 34 prompts (100% gap) impose explicit time constraints: 'under 90 minutes', 'brain is fried / can't commit to a 3-hour epic', 'don't wanna move for 3 hours', 'first date / nothing too long'. The pipeline currently cannot filter or rank candidates by duration at all.",
+     "frequency": "runtime axis: 34/500 prompts, 34 gaps (100% gap rate)",
+     "fix": "Wire the already-scraped runtime (minutes) field from TMDB into feature_store.pt during export (src/export.py). Add `max_runtime_minutes` intake slot that hard-filters candidates before ranking. Cost: FREE \u2014 data already exists in the scrape output; this is a two-line addition to export and one intake extraction slot.",
+     "layer": "data-build",
+     "priority": "high"
+    },
+    {
+     "hole": "Ending type is entirely unclassified. 45 prompts (96% gap) depend on it: 'happy ending', 'nothing sad', 'twist ending', 'jaw drops in the last 5 minutes', 'no sad character deaths', 'no ambiguous endings'. Pipeline has zero structured signal for whether a film ends happily, tragically, ambiguously, or with a reframe twist. Genome sad/emotional tag fires on whole-film affect, not on ending valence specifically.",
+     "frequency": "ending_type axis: 47/500 prompts used, 45 gaps (96% gap rate); blocks comfort-watch, first-date, and family-with-kids archetypes entirely",
+     "fix": "One-time LLM batch classification: prompt Haiku with plot summary per movie to return ending_valence (happy/bittersweet/sad/ambiguous) and has_twist_ending (bool). Store as two fields in feature_store.pt. At ~9,366 movies x ~200 tokens = ~1.9M input tokens total; at Haiku pricing this is approximately $0.25. Add `require_ending` and `exclude_ending` intake slots; wire has_twist_ending as a postfilter gate.",
+     "layer": "data-build",
+     "priority": "high"
+    },
+    {
+     "hole": "Occasion and viewing-context ('first date', 'watching with my veteran dad', 'party of 6 drinking', 'rainy Sunday solo', 'trip prep for Rome') have no representation anywhere. 81 prompts (100% gap) use occasion framing. The pipeline treats all requests as content-preference queries and ignores social context, audience composition, emotional occasion, and viewing environment entirely. This is a compounded hole: the intake slot is missing, but even if added, it depends on MPAA (family), pacing (party), and ending_type (first-date) data that are also absent.",
+     "frequency": "occasion_audience axis: 81/500 prompts, 81 gaps (100% gap rate); second-highest absolute gap count in the table",
+     "fix": "Add `occasion` intake slot to LLM extraction (values: 'family-kids', 'date-night', 'party-group', 'solo-comfort', 'travel-prep', etc.) and map each to derived constraints: family\u2192max_rating=PG, date-night\u2192ending=happy+max_rating=PG-13, party\u2192pacing=fast+exclude_sad. This fix is approximately 30% effective in isolation; full effectiveness requires the MPAA, runtime, pacing, and ending_type data-build fixes above to be deployed first.",
+     "layer": "intake",
+     "priority": "high"
+    },
+    {
+     "hole": "Awards and critical-canon signals are absent beyond vote_average, which is miscalibrated for niche vs mainstream. 53 prompts (96% gap) require: Oscar winner for a specific acting category, Criterion canon membership, 'best' within a movement, critical-consensus masterpiece status, 'beyond the ones everyone recommends'. vote_average does not distinguish Best Picture winners from well-liked genre films, and cannot operationalize 'NOT the famous-canon titles' to surface genuine deep cuts.",
+     "frequency": "awards_acclaim axis: 55/500 prompts used, 53 gaps (96% gap rate)",
+     "fix": "Two tiers: (1) FREE \u2014 Academy Awards public dataset (Oscars CSV from Kaggle/IMDB) gives winner/nominee per category per film; join on title+year to add `oscar_wins`, `oscar_nominations`, `best_picture_winner` boolean to feature_store.pt. (2) MODERATE cost \u2014 Metacritic and Rotten Tomatoes scores via TMDB's content-ratings endpoint or a one-time scrape; adds a `metacritic_score` field. Add `require_acclaim` intake slot ('oscar-winner', 'critically-acclaimed', 'cult-obscure'). The FREE Oscar tier alone resolves the highest-frequency use cases.",
+     "layer": "data-build",
+     "priority": "medium"
+    },
+    {
+     "hole": "Franchise and cinematic-universe membership is entirely untracked. 29 prompts (100% gap) need it: exclude MCU/DCU to avoid superhero fatigue, surface only standalone films from a series, identify installment order, or exclude Paranormal Activity sequels. TMDB keyword 'superhero' has inconsistent coverage and misses entire interconnected slates. The pipeline has no concept of a film belonging to a named series.",
+     "frequency": "franchise_universe axis: 29/500 prompts, 29 gaps (100% gap rate)",
+     "fix": "TMDB movie-details response already returns `belongs_to_collection` (collection_id, collection_name). Extend the existing TMDB scrape to persist `collection_id` and `collection_name` per movie into feature_store.pt. Add `exclude_franchise` intake slot (maps 'no MCU' \u2192 exclude collection_ids in {MCU collection id list}). Cost: CHEAP \u2014 same API call, already in the response payload; one additional field.",
+     "layer": "data-build",
+     "priority": "medium"
+    },
+    {
+     "hole": "Visual and cinematographic style (color palette, lighting aesthetic, camera movement, aspect ratio, B&W vs color) has no structured data axis. 53 prompts (91% gap) request 'neon-soaked', 'rain-slick streets', 'Kubrick symmetry', 'visually stunning', 'camera never moves', 'B&W'. The genome has one coarse 'visually stunning' tag; everything else (color temperature, lighting style, camera movement) is entirely absent from our metadata.",
+     "frequency": "visual_style axis: 58/500 prompts used, 53 gaps (91% gap rate)",
+     "fix": "Two tiers by cost: (1) CHEAP partial \u2014 TMDB technical details returns `color_info` (color vs B&W) and sometimes aspect ratio; add these to feature_store.pt. Also surface TMDB keywords like 'neon', 'rain', 'cinematography' that are already in the 17,820-keyword set but not wired as a queryable axis. (2) EXPENSIVE for high-quality \u2014 LLM extraction from plot+review text to classify cinematography style tags (8-10 coarse categories); requires a new extraction pass. The cheap tier resolves B&W and a few aesthetic keywords; the full visual axis requires the LLM batch pass.",
+     "layer": "data-build",
+     "priority": "medium"
+    },
+    {
+     "hole": "Soundtrack composer is absent from the people store. 8 prompts (100% gap) request films with synth scores, jazz soundtracks, cool/memorable music, or 'that Tarantino needle-drop energy'. The people store has top-billed cast + director + writer but no composer. This is a real missing-data gap since composer fundamentally defines the aesthetic identity of many auteur films (Morricone, Bernard Herrmann, Jonny Greenwood, John Carpenter scoring his own films).",
+     "frequency": "person_composer axis: 8/500 prompts, 8 gaps (100% gap rate)",
+     "fix": "TMDB crew endpoint returns all crew with `job` field; filter `job == 'Original Music Composer'` per movie and add composer_id/composer_name to people_facet store alongside director. Cost: CHEAP \u2014 same TMDB crew API call already made for directors/writers; just extend the filter. Then `require_people` intake slot can accept composer names.",
+     "layer": "data-build",
+     "priority": "low"
+    },
+    {
+     "hole": "Streaming availability is absent. 11 prompts (100% gap) explicitly cite a platform ('nothing sounds good on Netflix', 'stay-home pick', 'what's on a streaming service right now'). Cannot guarantee any recommended film is actually watchable on the user's subscribed services.",
+     "frequency": "streaming_availability axis: 11/500 prompts, 11 gaps (100% gap rate)",
+     "fix": "JustWatch API or TMDB 'watch providers' endpoint returns per-region streaming availability. Cost: EXPENSIVE in practice \u2014 data goes stale in days, requires continuous refresh, has licensing constraints. TMDB watch-providers is the cheapest entry point (free tier, already using TMDB) but adds an ongoing maintenance burden. Given low frequency (11/500 = 2.2%), this is the lowest ROI fix relative to the maintenance cost.",
+     "layer": "data-build",
+     "priority": "low"
+    }
+   ]
+  },
+  {
+   "lens": "Partial/lossy approximation failures: where a hard filter misfires (location conflation, superhero keyword gaps, mood exclusion inversion), where a soft anchor drifts (genome mood intensity uncalibrated, tense/creepy bleeds into feel-good queries), and what is structurally absent (pacing, MPAA, endings, occasions). Priority ordered by: (gap count * gap%) as a severity signal, then whether the fix is cheap vs expensive.",
+   "findings": [
+    {
+     "hole": "Pacing axis entirely absent from pipeline \u2014 no metadata for slow-burn vs fast-cut, quiet vs tense, restful vs demanding. Genome fast-paced/slow-paced tags exist but are not wired as a queryable signal. Prompts like 'slow and quiet that lets me breathe', 'slow burn is fine', 'nothing that makes me think too hard', and 'I hate movies that drag' all hit the same dead end. Drift risk: pacing-soft-anchor queries fall through to genre+mood which conflates Gravity (tight) with a bloated blockbuster, or routes 'quiet' to Horror-free Drama with no further discrimination.",
+     "frequency": "pacing: 91/500 gaps, 97% gap rate (94 prompts), 51 intake / 41 postfilter. runtime: 34/500, 100% gap rate \u2014 runtime already scraped but not exported. Combined, the pacing+runtime cluster is the single largest unserved hole.",
+     "fix": "Two-part: (1) Wire runtime from scraped movie metadata into feature_store.pt during export \u2014 trivial code change, data already exists, covers 'under 90 min' and 'not a 3-hour epic' queries cold. Add intake slot `max_runtime_minutes`. (2) Map intake pacing signal ('slow burn', 'quiet', 'chill') to genome fast-paced/slow-paced relevance scores as soft candidate ranking \u2014 no new data, just routing logic. Neither step requires retraining.",
+     "layer": "data-build",
+     "priority": "high"
+    },
+    {
+     "hole": "MPAA content rating completely absent. 'PG-13 only', 'nothing too bloody', 'nothing intense for a 6-year-old', 'not raunchy', 'gore level' queries have zero data signal to map to. The postfilter LLM cannot enforce a content-rating constraint it cannot look up, and the intake LLM has no structured slot to output to. Hard filter risk: family-with-kids and date-night queries can surface R-rated material; genome dark/gritty is a weak, indirect proxy that misses many R-rated films outside Horror.",
+     "frequency": "content_rating: 40/500 prompts, 100% gap rate, 37 at postfilter. tone_maturity (partially the same root cause): 117/500, 93% gap, 68 postfilter.",
+     "fix": "Scrape MPAA rating from OMDb API (free tier, ~9k calls, hours of work, ~90% coverage). Add to feature_store.pt as a filterable field. Add `max_content_rating` intake slot (maps user phrasing like 'nothing too mature' \u2192 PG-13 ceiling). Immediately enables postfilter hard-exclude of R-rated candidates for family/kids occasions and soft-rank for date-night. Cheapest high-impact fix on the list.",
+     "layer": "data-build",
+     "priority": "high"
+    },
+    {
+     "hole": "Mood/tone exclusion gate inverted \u2014 genome has both 'sad/emotional' and 'feel-good/heartwarming' scores but the pipeline only soft-ranks toward the positive pole; there is no hard-exclude gate for the negative pole. 'Nothing sad or stressful', 'no plot twists', 'no scary villains', 'can't filter OUT dark tone' all rely on positive ranking toward comfort, which leaves tense or dark-scoring films eligible if they also score feel-good (e.g., a bittersweet drama). Second drift: genome 'sad/emotional' fires identically on mildly melancholy films and devastating tragedies \u2014 'a little sad' cannot be calibrated.",
+     "frequency": "mood_affect: 82/500 gaps (23% of the 351-prompt axis \u2014 the largest absolute use count; 41 postfilter). tone_maturity exclusion: contributes to the 68-postfilter tone_maturity gaps. The gap rate is lower here because the positive-ranking path works; the hole is in the exclusion / intensity-calibration direction.",
+     "fix": "Add negative genome exclusion gate at postfilter: if tense/creepy or sad/emotional genome score exceeds a threshold (e.g., >0.5) AND intake flagged comfort/family/feel-good intent, hard-exclude candidate. For intensity calibration, band genome sad/emotional into low (0.2\u20130.45) / medium (0.45\u20130.65) / high (>0.65) tiers and let intake slot `mood_intensity` select a tier. No new data needed \u2014 pure postfilter logic over existing genome scores.",
+     "layer": "postfilter",
+     "priority": "high"
+    },
+    {
+     "hole": "Occasion/audience context fully unrepresented \u2014 'date night', 'watching with my veteran dad', 'young kids 6 years old', 'dumb party movie you can talk over', 'solo late-night unwind', 'cozy night in with partner' are social and contextual signals that the intake LLM reads but has no structured slot to output. Without an occasion slot, there is no mechanism to propagate these constraints downstream to candidate filtering or postfilter re-ranking. These occasions each imply compound constraints (family = MPAA G/PG + low scare genome; party = pacing-permissive + comedy + high energy; date-night = runtime ceiling + romantic arc + not-devastating).",
+     "frequency": "occasion_audience: 81/500 prompts, 100% gap rate, 79 at intake. Every single occurrence is a gap.",
+     "fix": "Add `occasion_audience` intake extraction slot with a small taxonomy: {family_kids, date_night, party_group, solo_comfort, background_viewing}. Map each value to a compound rule: family_kids \u2192 MPAA<=PG + tense_genome<0.3; date_night \u2192 runtime<130 + romantic keyword boost; party_group \u2192 deprioritize subtitled + pacing-high; solo_comfort \u2192 feel-good genome boost + tone exclusion gate. No new data required \u2014 orchestrates existing MPAA + genome + runtime signals that are being built in adjacent fixes.",
+     "layer": "intake",
+     "priority": "high"
+    },
+    {
+     "hole": "Franchise/cinematic-universe membership absent. 'No superhero movies', 'exclude MCU', 'Ocean's sequels I haven't seen', 'Star Wars expanded universe', 'no Paranormal Activity sequels' all require franchise-aware filtering. TMDB keyword 'superhero' has inconsistent coverage and misses MCU entries that aren't individually tagged; title-string matching is brittle (misses The Marked Ones, alternate titles). Hard filter misfire: genre exclusion (Animation, Action) is too broad and excludes non-superhero entries while passing poorly-tagged MCU films.",
+     "frequency": "franchise_universe: 29/500 prompts, 100% gap rate, 18 intake / 11 postfilter.",
+     "fix": "Scrape TMDB `belongs_to_collection` field \u2014 already a standard TMDB attribute, same API calls already being made for keywords/crew. Maps each film to its franchise/collection ID and name. Build a `franchise_name` field in feature_store.pt. Add intake slot `exclude_franchise` (e.g., 'MCU', 'DC', 'Mission Impossible'). Cheap: no new API, one extra field per movie.",
+     "layer": "data-build",
+     "priority": "medium"
+    },
+    {
+     "hole": "Ending type absent \u2014 no happy/sad/ambiguous/twist classification exists anywhere in the pipeline. 'PG-13 and PLEASE no sad endings', 'twist ending movies where jaw drops in the last 5 minutes', 'no plot twists', 'weird endings'. Postfilter LLM has world knowledge about endings but has no structured field to filter or rank on, so it must rely on its own parametric knowledge, which is inconsistent for less-well-known films and cannot be verified against stored data.",
+     "frequency": "ending_type: 45/500 prompts, 96% gap rate, 35 postfilter / 12 intake.",
+     "fix": "Short-term (no new data): expose ending_type as explicit LLM postfilter reasoning task \u2014 instruct postfilter to score each candidate on ending valence from its training knowledge and hard-exclude sad/twist when flagged. Medium-term: LLM-extract `ending_type` field (happy/bittersweet/sad/ambiguous/twist) for all 9k movies from plot summaries at data-build time. TMDB keywords ('twist ending', 'happy ending') cover maybe 20% of cases as a bootstrap. Moderate LLM inference cost.",
+     "layer": "postfilter",
+     "priority": "medium"
+    },
+    {
+     "hole": "Awards/acclaim metadata absent \u2014 no Oscars, no critics scores, no Criterion membership. 'Recommend movies where the lead actor won an Oscar', 'critically acclaimed masterpieces', 'beyond the Criterion top 50', 'docs that actually hold up'. Postfilter LLM has this knowledge in weights but can't retrieve on it. vote_average is a crowd proxy, not a critical-prestige signal, and conflates blockbuster crowd-pleasers with art-house awards films. No way to distinguish Best Actor from Supporting, winner from nominee.",
+     "frequency": "awards_acclaim: 53/500 prompts, 96% gap rate, 52 at postfilter \u2014 almost entirely a postfilter retrieval problem.",
+     "fix": "OMDb API (free tier) returns awards text ('Won 3 Oscars...') per movie \u2014 parse into structured fields: oscar_wins, oscar_nominations, major_award_wins. Criterion collection is a finite ~1000-film list, scrapable once from criterion.com. Metacritic and RT scores also available from OMDb. Wire as filterable/rankable fields in feature_store.pt. Add intake slot `require_acclaim` (oscar_winner / critic_acclaimed / criterion). Moderate effort but OMDb API is cheap and widely used.",
+     "layer": "data-build",
+     "priority": "medium"
+    },
+    {
+     "hole": "Set-in vs filmed-in conflation: production_countries captures filming location, not story setting. 'Films set in Rome' returns US-produced films shot in Rome (correct) but also Italy-produced films set elsewhere (wrong), and misses American films set in Rome but shot on a lot. TMDB location keywords (e.g., 'rome', 'tokyo', 'vietnam') are the right signal but are inconsistently applied (~70% recall) and the intake has no mechanism to combine multi-city queries (Thailand AND Vietnam AND Cambodia). Hard filter misfire: country hard-filter is both too broad and too narrow simultaneously \u2014 over-includes and under-includes.",
+     "frequency": "setting_location: 51/500 prompts, 89% gap rate, 49 at intake. Routing to country filter is the current implicit behavior; TMDB keyword routing is the fix.",
+     "fix": "Add explicit `setting_location` intake extraction slot that maps user city/country phrasing to TMDB location keyword search (already have 17820 keywords indexed) rather than production_country filter. Implement OR-combination for multi-city queries (fan out to multiple keyword anchors, union candidates). Treat as soft anchor not hard filter given ~70% keyword recall \u2014 postfilter LLM can verify setting. Drop production_country as a setting proxy; retain only for nationality/language queries.",
+     "layer": "intake",
+     "priority": "medium"
+    },
+    {
+     "hole": "Subgenre taxonomy too coarse: the 20-genre system cannot distinguish satire from comedy, space opera from hard sci-fi, survival horror from supernatural horror, investigative procedural from journalism drama, B-movie from prestige horror, or dialogue-driven chamber piece from plot-driven drama. TMDB keywords partially cover these but the intake LLM has no structured subgenre slot to extract into, so subgenre intent gets collapsed into genre + mood which is too coarse. Soft anchor drift: 'space opera' query pulls Interstellar and The Martian (hard sci-fi) alongside Guardians.",
+     "frequency": "subgenre: 82/500 prompts, 81% gap rate, 73 at intake \u2014 heavily an intake routing failure.",
+     "fix": "Build a curated subgenre \u2192 TMDB keyword cluster mapping (e.g., satire=['satire','political satire']; space-opera=['space opera']; survival-horror=['survival horror','creature feature']; procedural=['investigative journalism','detective fiction']). Add `subgenre` as an intake extraction slot. Moderate curation effort (~30-50 subgenre entries cover the long tail). Coverage will be 60-80% due to TMDB keyword inconsistency \u2014 route as soft anchor, not hard filter.",
+     "layer": "intake",
+     "priority": "medium"
+    },
+    {
+     "hole": "Plot structure entirely absent \u2014 no rise/fall arc, nonlinear narrative, crew-assembly, interwoven storylines, or procedural structure axis. 59/500, 98% gap rate. 'Rise and fall arc with musician', 'crew-assembly + planning montage heist', 'movies where storylines weave together', 'nonlinear timeline'. TMDB keywords cover nonlinear minimally; no other plot pattern is indexable. Without this, the pipeline cannot distinguish investigative procedurals from journalism biopics (both get 'journalism' keyword) or heist films that feature planning-montage from generic robberies.",
+     "frequency": "plot_structure: 59/500 prompts, 98% gap rate, 44 intake / 15 postfilter.",
+     "fix": "LLM extraction from TMDB plot summaries for the 5-6 highest-frequency patterns (nonlinear, ensemble-interwoven, rise-and-fall, assembly/heist-planning, procedural-investigation, redemption-arc) into structured boolean fields at data-build time. ~9k summaries, moderate LLM cost. Short-term: route to LLM postfilter knowledge for ranking \u2014 LLM can re-rank candidates by structural fit. TMDB keyword 'nonlinear timeline' usable as a bootstrap for one pattern today.",
+     "layer": "multiple",
+     "priority": "medium"
+    },
+    {
+     "hole": "TV show and cross-media reference as intake anchor: 'like Breaking Bad', 'just finished Succession', 'bounced off Citizen Kane'. TV series referenced as similarity anchors have no embedding anchor in the movie corpus. 7/500, 100% gap. The intake LLM understands the reference but cannot create a retrieval vector because the title doesn't exist in the corpus. Also: corpus floor (200+ ML ratings) systematically excludes the most obscure films that users in 20+ prompts explicitly request \u2014 niche auteur films (Akerman, Tsai, Romanian New Wave) and small-nationality corpora (Icelandic, Indigenous) are structurally absent.",
+     "frequency": "cross_media: 7/500, 100% gap, all intake. Corpus floor absences: referenced explicitly in ~15 sample records and dozens of deduped holes (Rams, Woman at War, Jeanne Dielman, Police Adjective confirmed absent).",
+     "fix": "TV-to-movie bridge: build a curated lookup table of 100-200 popular TV shows \u2192 3-5 semantically similar movie anchors (one-time LLM curation, maintainable). Corpus floor: add a curated 'canon extension' list of ~200 well-known arthouse/foreign films below the 200-rating floor with manually curated metadata \u2014 particularly for nationality queries that are otherwise nearly unservable. Corpus extension is moderate effort but high impact for cinephile prompts.",
+     "layer": "intake",
+     "priority": "low"
+    },
+    {
+     "hole": "Streaming availability entirely absent \u2014 'actually on Netflix', 'something I can watch right now', 'stay-home pick'. 11/500, 100% gap. Unlike other holes, this data is genuinely expensive to maintain: streaming rights change weekly by title and region, requiring a live API integration (JustWatch, Watchmode, or similar) with ongoing sync. The data cannot be baked into a static feature_store.pt.",
+     "frequency": "streaming_availability: 11/500 prompts, 100% gap rate, 4 intake / 7 postfilter.",
+     "fix": "Not recommended at this stage: 11/500 prompts does not justify the maintenance cost of a live streaming-availability API. Postfilter LLM can add a disclaimer ('as of last check, available on X, but verify'). If prioritized, Watchmode API (paid) or JustWatch scraping provides real-time data but requires a nightly sync job and is region-specific. Defer until corpus and postfilter quality saturates on higher-frequency gaps.",
+     "layer": "data-build",
+     "priority": "low"
+    }
+   ]
+  },
+  {
+   "lens": "INTAKE-MAPPING gaps: intents the extraction LLM is not taught to pull, given today's schema {liked_titles, liked_people, require/exclude genres+people, require_country/language/location/keywords, mood}",
+   "findings": [
+    {
+     "hole": "No intake slot for viewing occasion; first-date, family-with-kids, party-group, trip-prep, and solo-unwind each demand different content-rating proxies, tone weights, and popularity calibration, but the extractor has no field to capture any of them \u2014 they fall through as free text and are silently ignored",
+     "frequency": "occasion_audience 81/500 prompts, 100% gap, 79/81 gaps at intake (highest intake-gap rate of any axis with >20 uses)",
+     "fix": "Add `occasion_audience` enum slot (solo | couple | family_kids | group_party | trip_prep); route family_kids \u2192 exclude adult genome tag anchors; group_party \u2192 popularity\u2191; couple \u2192 romantic/feel-good genome; trip_prep \u2192 setting-location emphasis; no new data needed",
+     "layer": "intake",
+     "priority": "high"
+    },
+    {
+     "hole": "Subgenre vocabulary not translated to TMDB keywords: `require_keywords` exists but the extractor is not taught to canonicalize 'space opera', 'heist', 'slasher', 'found footage', 'satire', 'B-movie', 'mockumentary' into TMDB keyword clusters; intent collapses to the coarse 20-genre system, losing all specificity",
+     "frequency": "subgenre 101/500 prompts, 81% gap, 73/82 gaps at intake",
+     "fix": "Teach the extraction prompt to emit TMDB keyword clusters for subgenre terms; TMDB keywords (17820 already wired) reliably cover 'space opera', 'heist', 'found footage', 'satire', 'creature feature'; no new data needed \u2014 instruction + schema change only",
+     "layer": "intake",
+     "priority": "high"
+    },
+    {
+     "hole": "theme_subject keyword emission too sparse: `require_keywords` captures one or two terms per prompt but the extractor is not generating exhaustive keyword fans for compound subjects ('journalists chasing a story' \u2192 investigative journalism + newsroom + political scandal; 'cold-war spy tradecraft' \u2192 cold war + spy + paranoia + period); 97 of 117 theme gaps are at intake \u2014 the single largest intake-gap count in the table",
+     "frequency": "theme_subject 181/500 prompts, 65% gap, 97/117 at intake (largest absolute intake gap count across all axes)",
+     "fix": "Prompt the extractor to emit a ranked list of \u22653 TMDB keywords per theme intent and issue an OR-union candidate fetch before re-ranking; data already in pipeline; instruction change only",
+     "layer": "intake",
+     "priority": "high"
+    },
+    {
+     "hole": "Mood negation not extracted: today's `mood` slot captures positive anchors only; 'nothing intense', 'nothing scary', 'not too dark', 'no sad endings', 'not preachy', 'no jump scares' are suppression constraints that fall through as free text and are inconsistently honored; genome tag infrastructure for negative weighting already exists but has no intake hook",
+     "frequency": "mood_affect 54/82 intake gaps; pacing 51/91 at intake (negation dominates both axes \u2014 the unfixed residual after the mood slot was added)",
+     "fix": "Add `exclude_affect` list to extraction schema parallel to `mood`; map each term to genome tag penalty weights (dark/gritty, tense/creepy, sad/emotional, crude-humor, explicit-violence); cheap instruction + schema change, no new data",
+     "layer": "intake",
+     "priority": "high"
+    },
+    {
+     "hole": "Pacing not extracted despite genome signal existing: genome 1128 tags include slow-paced, fast-paced, deliberate, atmospheric \u2014 but no extraction slot routes 'slow burn', 'quiet', 'nothing that drags', 'tight editing zero filler' to those anchors; this is the defining unfulfilled signal in comfort-watch and cinephile archetypes",
+     "frequency": "pacing 94/500 prompts, 97% gap, 51/91 at intake",
+     "fix": "Add `pacing` field to extraction schema (slow | moderate | fast); map to genome soft anchors (slow \u2192 atmospheric + deliberate; fast \u2192 fast-paced + tense); data exists \u2014 instruction + schema change only",
+     "layer": "intake",
+     "priority": "high"
+    },
+    {
+     "hole": "No `exclude_titles` slot: `liked_titles` exists but explicit negations ('not Double Indemnity or Maltese Falcon', 'skip the ones I named', 'no Paranormal Activity sequels', 'exclude movies I have already seen from this filmography') appear across director-fan, twist-ending, heist-repeat, and filmography-exploration archetypes; unextracted negations cannot be honored at postfilter",
+     "frequency": "cited in 5+ distinct sample archetypes across the 50 records (no single axis, cross-cutting); directly produces re-recommendation of explicitly rejected titles",
+     "fix": "Add `exclude_titles` list to extraction schema parallel to `liked_titles`; postfilter removes by movieId using title\u2192movieId map already in feature_store; trivial data and code cost",
+     "layer": "intake",
+     "priority": "high"
+    },
+    {
+     "hole": "Runtime constraint neither extracted nor wired: no `max_runtime_minutes` slot exists, AND runtime is scraped from TMDB but absent from serving/feature_store.pt \u2014 so even if the extractor captured 'under 90 minutes', 'not a 3-hour epic', 'something I can finish tonight', the postfilter has no field to enforce it",
+     "frequency": "runtime 34/500 prompts, 100% gap, 15/34 at intake, 31/34 at postfilter",
+     "fix": "(a) Add `max_runtime_minutes` and `min_runtime_minutes` int fields to extraction schema; (b) add runtime to serving/feature_store.pt and wire a postfilter guard; runtime is already in the TMDB scrape \u2014 cheap on both sides; both parts needed together or neither works",
+     "layer": "multiple",
+     "priority": "high"
+    },
+    {
+     "hole": "TV-show and cross-media references fail silently: 'I just finished Breaking Bad / Succession / Night Stalker' \u2192 `liked_titles` issues a corpus lookup \u2192 no movie match \u2192 retrieval has no anchor and falls back to random popular picks; the show's genre+vibe is the actual signal but is fully discarded",
+     "frequency": "cross_media 7/500, 100% gap, all 7 at intake",
+     "fix": "Add `liked_shows` list to extraction schema; intake LLM uses world knowledge to extract genre/tone from the show name (Breaking Bad \u2192 crime + dark + character-study \u2192 genome anchors) rather than attempting a corpus match; no new data needed; recognizably distinct from `liked_titles` so routing is clean",
+     "layer": "intake",
+     "priority": "medium"
+    },
+    {
+     "hole": "Plot-structure / narrative-shape not extracted: 'rise and fall arc', 'crew-assembly heist with everyone having a specialty', 'nonlinear narrative', 'interwoven overlapping storylines' are shape queries that partially map to TMDB keywords ('nonlinear narrative', 'ensemble cast', 'rise and fall') but no slot in the schema exists; extractor absorbs them into genre noise or drops them",
+     "frequency": "plot_structure 60/500 prompts, 98% gap, 44/59 at intake",
+     "fix": "Add `plot_keywords` extraction slot; extractor fills from TMDB keyword vocabulary; partially serviceable with existing data for the most common patterns (nonlinear, ensemble, heist-planning); instruction + schema change with no new data for the well-covered tail",
+     "layer": "intake",
+     "priority": "medium"
+    },
+    {
+     "hole": "Serendipity / no-anchor mode produces hallucinated extractions: 'staring at Netflix for 40 minutes, nothing sounds good', 'surprise me beyond Criterion', 'nothing in particular, just something good' \u2014 pure serendipity prompts provide no positive signal; since all retrieval paths require at least one positive seed, the extractor fabricates anchors or returns undifferentiated popular picks; also surfaces for 'deep cuts' requests where the extractor misreads obscurity as a genre",
+     "frequency": "appears in 3+ sample archetypes (casual-browser, popularity_obscurity deep-cuts, exclusion-driven variants); no dedicated axis but spills into other 35/36 at 97% gap and occasion_audience",
+     "fix": "Add `serendipity_mode` boolean to extraction schema; when set with no positive anchors, bypass nearest-neighbor retrieval and diversity-sample across embedding cluster centroids weighted by Menon-corrected popularity; optionally combine with `popularity_tier` (obscure | mainstream) extracted in the same turn; no new data needed",
+     "layer": "intake",
+     "priority": "medium"
+    }
+   ]
+  },
+  {
+   "lens": "POST-FILTER gaps: what the filter LLM needs to verify on candidates but cannot, due to absent or unwired data fields.",
+   "findings": [
+    {
+     "hole": "MPAA content-rating and violence/sex/language descriptors are entirely absent from feature_store. Filter LLM cannot enforce 'PG-13', 'no gore', 'not raunchy', 'nothing intense/violent', or 'family-friendly' on any retrieved candidate. MPAA is the single most requested hard-filter that is structurally unenforceable \u2014 not approximable via genre or genome; gore-level and crude-humor signals are zero.",
+     "frequency": "content_rating axis: 40/500 prompts, 100% gap, 37 of 40 are postfilter-side. tone_maturity axis: 117/500 prompts (93% gap), 68 of those are postfilter gaps. Combined ~105 postfilter-side failures \u2014 highest among all axes.",
+     "fix": "OMDb API (free tier, ~9k calls, same HTTP call adds MPAA + content descriptors + Metacritic score). Parse Rated field (G/PG/PG-13/R/NC-17) and content advisory (violence/language/sex flags). Bake into feature_store.pt at export. Postfilter hard-gates on MPAA level and descriptor presence. Realistic and cheap: one data-build run, stable per-movie field.",
+     "layer": "multiple",
+     "priority": "high"
+    },
+    {
+     "hole": "Runtime is already scraped into TMDB data but never exported to serving artifacts or feature_store.pt. Filter LLM cannot enforce 'under 90 minutes', 'not a 3-hour epic', or 'something I can commit to tonight'. Every runtime-constrained prompt fails at postfilter even though the raw number already exists in the scrape.",
+     "frequency": "runtime axis: 34/500 prompts (100% gap), 31 of 34 are postfilter-side. Cheapest 100%-gap axis in the entire table.",
+     "fix": "Add runtime_minutes field to feature_store.pt in src/export.py. Re-run export (no retraining, no new data pull). Postfilter applies min/max duration check. Zero new data cost \u2014 it is already in the scrape and must simply be wired through.",
+     "layer": "data-build",
+     "priority": "high"
+    },
+    {
+     "hole": "Ending-type classification does not exist anywhere in the pipeline. Filter LLM cannot check 'happy ending required', 'no character deaths', 'twist ending', or 'nothing bittersweet' on candidates. No proxy exists \u2014 genome sad/emotional tag fires equally on mildly melancholy and devastating endings; ending_type has zero data representation.",
+     "frequency": "ending_type axis: 47/500 prompts, 96% gap, 35 of 45 postfilter-side. Appears in first-date, family, anxiety/comfort, and mind-bending archetypes \u2014 all cases where the ending is an explicit hard constraint.",
+     "fix": "Batch LLM classification (Haiku, ~9k calls, ~$3) over TMDB plot summaries at data-build time. Store ending_type enum (happy / ambiguous / sad / twist-reframe) per movie in feature_store.pt. Postfilter hard-gates or demotes by ending class. Obtainable and cheap; TMDB synopses already in scrape.",
+     "layer": "multiple",
+     "priority": "high"
+    },
+    {
+     "hole": "Awards and critical-canon data are entirely absent. Filter LLM cannot verify 'lead actor won an Oscar', 'Best Picture winner', 'critically acclaimed', or 'beyond the Criterion top 50'. vote_average (crowd score) is the only quality proxy and is uncalibrated for any of these distinctions. Cannot distinguish nominee from winner, lead from supporting, or canon membership from general acclaim.",
+     "frequency": "awards_acclaim axis: 55/500 prompts, 96% gap, 52 of 53 gaps are postfilter-side \u2014 the highest postfilter-side ratio of any axis. Affects auteur, cinephile, actor-fan, and quality-seeking archetypes.",
+     "fix": "OMDb API (same call as MPAA fix) returns structured awards string ('Won 2 Oscars. Another 68 wins') and Metacritic score per movie. Parse award-win count and category flags (Best Picture / Best Actor / Best Actress / Best Director). Store in feature_store.pt. Postfilter verifies win/nominee status. Realistic, cheap, same data-build pass as the MPAA fix.",
+     "layer": "multiple",
+     "priority": "high"
+    },
+    {
+     "hole": "Genome mood-affect scores exist for both poles (sad/dark/tense AND feel-good/heartwarming) but the pipeline has no hard-exclude gate \u2014 it only ranks toward the positive side. Candidates with high sad, dark/gritty, or tense/creepy genome scores pass through unchanged when the user says 'nothing sad', 'nothing scary', 'nothing stressful', or 'no dark tone'. The pipeline cannot reject a candidate on affect grounds, only prefer better-scoring ones.",
+     "frequency": "mood_affect axis: 82/500 gap prompts (23% overall gap rate on 351 uses), 41 of those are postfilter-side. Specifically present in anxiety/comfort, feel-good, family, and late-night unwind archetypes. This is a logic gap, not a data gap \u2014 genome data already exists in feature_store.",
+     "fix": "Define composite genome exclude-score: sad + dark/gritty + tense/creepy (weighted). When intake extracts a negative-mood constraint ('nothing intense/sad/scary'), postfilter hard-rejects any candidate whose composite exceeds a calibrated threshold (tune against comfort-watch canary set). Uses existing genome data already in feature_store \u2014 no new data, no retraining. Wire threshold as a config knob.",
+     "layer": "postfilter",
+     "priority": "high"
+    },
+    {
+     "hole": "No pacing signal exists on candidates. Filter LLM cannot verify 'slow burn', 'nothing that drags', 'quiet and unhurried', 'tight editing, no filler', or 'talk-over-able'. Genome fast-paced and atmospheric tags exist but are too coarse to distinguish slow-cinema from merely dark films, or efficient procedurals from bloated blockbusters. Pipeline surfaces The Revenant alongside Run Lola Run for 'something pacy' with equal confidence.",
+     "frequency": "pacing axis: 91/500 prompts (97% gap rate), 41 of those are postfilter-side. Third-highest gap count of any axis. Recurs across spy/procedural, comfort-watch, arthouse, and action archetypes.",
+     "fix": "Short-term: wire scraped runtime as a coarse postfilter proxy (films >140 min flagged 'likely slow-paced'; already in scrape \u2014 see runtime fix above). Medium-term: batch LLM pacing classifier (slow / medium / fast) over TMDB synopsis at data-build time, stored in feature_store. Genome fast-paced and tense/creepy tags usable immediately as weak supplement. Full fix requires data-build LLM pass (~9k calls, same Haiku batch as ending_type).",
+     "layer": "multiple",
+     "priority": "high"
+    },
+    {
+     "hole": "Franchise and cinematic-universe membership is entirely absent. Filter LLM cannot exclude 'no MCU', 'no superhero movies', 'no Paranormal Activity sequels', or surface 'full Star Wars saga in order'. TMDB keyword 'superhero' has inconsistent coverage and misses entire franchise blocs (MCU films without the keyword). No series_id, installment_number, or collection_name field exists anywhere in the pipeline.",
+     "frequency": "franchise_universe axis: 29/500 prompts (100% gap), 11 of 29 are postfilter-side (the other 18 are intake-side where exclusion intent is understood but un-executable). Appears in superhero-fatigue, heist, sci-fi saga, arthouse exclusion, and sequel-avoidance archetypes.",
+     "fix": "TMDB movie API already returns belongs_to_collection object (collection_id + collection_name) in the existing movie detail call \u2014 add it to the scrape. Data-build step stores series_id and installment_number per movie in feature_store.pt. Postfilter can exclude entire collection by ID or re-rank by installment order. Cheap one-time addition to existing scrape logic; no new API key needed.",
+     "layer": "multiple",
+     "priority": "medium"
+    },
+    {
+     "hole": "Streaming availability is entirely absent and is structurally unfixable at build time. Filter LLM cannot verify 'on Netflix', 'available to stream tonight', or distinguish currently-streaming from catalog-only titles. Streaming rights change daily per region and cannot be baked into a static feature_store.",
+     "frequency": "streaming_availability axis: 11/500 prompts (100% gap), 7 of 11 are postfilter-side. Lowest absolute count among 100%-gap axes.",
+     "fix": "Watchmode or JustWatch API (subscription, ~$50-200/mo, region-specific, stale within days). Not worth wiring for 11/500 prompts against a 9k-movie cold-start corpus deployed on Streamlit Cloud. Best handled by a postfilter pass-through with a static user-facing disclaimer ('Availability not tracked \u2014 verify on your streaming service'). Mark as genuinely expensive/perishable; deprioritize unless usage grows.",
+     "layer": "postfilter",
+     "priority": "low"
+    }
+   ]
+  },
+  {
+   "lens": "WHOLE INTENT CLASSES omitted by the plan: occasion/audience, cross-media transfer, streaming availability, recency, zero-anchor 'surprise me', and self-help/emotional-need negative exclusion. Analyzed against axis coverage table (500 prompts) and 50 sample records; data-inventory constraints applied strictly.",
+   "findings": [
+    {
+     "hole": "No `occasion` intake slot. The LLM extractor never produces an audience-context signal (date night, kids, party, group viewing, first date), so candidate retrieval treats 'I need a movie for my 6-year-old' identically to 'give me a solo late-night unwind pick'. Content-rating enforcement (MPAA PG/PG-13/R) is the co-dependent missing gate: families and first-date users explicitly request PG-13 or kids-safe, and the pipeline has zero way to honor it. content_rating shows 40/500 prompts with 100% gap, 37 of those gaps at postfilter \u2014 meaning the answer is almost always available in principle but unenforceable without the field.",
+     "frequency": "occasion_audience 81/500, 100% gap (79 gaps at intake, 10 at postfilter). content_rating 40/500, 100% gap (3 intake, 37 postfilter). These two axes are co-present in first-date, kids, and party archetypes.",
+     "fix": "Add `occasion` as an LLM extraction slot (enum: solo / date_night / family_kids / group_party / background). Map to surrogate routing: kids \u2192 require Animation genre + exclude Horror/Thriller + content_rating <= PG; date_night \u2192 prefer rom-com/comedy + content_rating <= PG-13 surrogate; party \u2192 popularity top-tercile + comedy/action. Wire TMDB content_rating (already scraped per the inventory notes, static, free) as a hard postfilter gate. This closes content_rating's 40-prompt gap as a byproduct. The `occasion` slot itself requires only intake extraction logic; content_rating wire-up is a one-time data-build step adding a column to feature_store.pt.",
+     "layer": "multiple",
+     "priority": "high"
+    },
+    {
+     "hole": "No defined fallback when LLM extraction yields zero anchors (no liked_titles, no mood, no keywords). The decision-paralysis case \u2014 'I've been staring at Netflix for 40 minutes and nothing sounds good' \u2014 produces an empty intake signal, and the retrieval pipeline has no entry point. The plan's three engines (membership filters, vibe anchors, demoted plot) all require at least one non-null extraction slot to fire. Explicitly confirmed in sample holes: 'Surprise me with no content anchor is a pure serendipity request; our system requires at least one signal to drive retrieval.'",
+     "frequency": "Appears as a distinct archetype ('casual surprise-me browser') and recurs across other/mood_affect gaps. other axis: 36/500, 97% gap (23 intake, 15 postfilter). popularity_obscurity: 125/500, 18% gap. Zero-anchor pure-serendipity prompts conservatively span 25-35 of the 500.",
+     "fix": "Define a zero-anchor fallback path at intake: when all extraction slots are empty after LLM parsing, do not error \u2014 instead trigger a popularity-stratified diversity draw: stratify the 9366-movie corpus by the 20 genres, sample ~3 titles per genre from the top-600 by vote_count, yield ~20 diverse candidates, then route through the LLM postfilter for quality-diversity ranking. No new data needed; this is a pure intake-routing + postfilter logic addition. Optionally add a single follow-up question ('Any genre or vibe you're feeling tonight?') before triggering the fallback.",
+     "layer": "multiple",
+     "priority": "high"
+    },
+    {
+     "hole": "Negative-affect exclusion gate is missing. The plan routes positive mood (feel-good, sad, tense) to genome-tag anchors, but has no mechanism to hard-exclude the opposing affect. Emotional-need and self-help users ('nothing sad', 'nothing scary', 'nothing stressful', 'my anxiety is off the charts') get retrieval that ranks the right positive mood but leaves high-opposite-affect candidates eligible. Genome scores for both poles exist in feature_store.pt; the gap is postfilter logic only. Confirmed: 'Cannot hard-filter OUT sad or dark tone \u2014 genome scores exist for both poles but pipeline only ranks positive mood, no exclusion gate.'",
+     "frequency": "mood_affect 351/500 prompts, 82/351 still gap (23% residual gap rate). The negative-exclusion sub-case is present in comfort-watch, anxiety-unwind, feel-good archetypes \u2014 conservatively 40-50 prompts of the 82 residual mood gaps involve exclusion rather than positive routing failures.",
+     "fix": "At postfilter: add a genome-threshold exclusion gate. When the LLM extracts an `exclude_mood` slot (values: dark/sad/tense/scary/stressful/violent), filter out candidates where the corresponding genome tag score exceeds a threshold (genome[sad_emotional] > 0.65 or genome[tense_creepy_atmospheric] > 0.65 or genome[dark_gritty_bleak] > 0.65). Genome scores are already present in serving/feature_store.pt \u2014 this is a zero-data-build postfilter logic change. Add `exclude_mood` as an explicit LLM extraction slot alongside the existing `mood` slot.",
+     "layer": "postfilter",
+     "priority": "high"
+    },
+    {
+     "hole": "Cross-media transfer fails silently. When the user's reference anchor is a TV show (Breaking Bad, Succession, Night Stalker) or game, no item embedding exists in the 9366-movie corpus. The `liked_titles` extractor passes the title verbatim; anchor resolution fails and retrieval loses its primary signal with no fallback. The failure is silent \u2014 the user gets back a degraded response with no explanation.",
+     "frequency": "cross_media axis: 7/500, 100% gap (7 at intake, 0 postfilter). This undercounts actual incidence: TV-show references also surface inside similar_to_title (160/500, 19% gap) when the user gives a show name as their seed. Combined exposure is likely 15-20 prompts.",
+     "fix": "Add a cross-media classification step at intake before anchor resolution: check if a liked_title resolves to a movie in the corpus; if not, classify it as TV/game/book and route to LLM-synthesized proxy anchors (the LLM names 2-3 movie analogs from its knowledge to substitute as liked_titles). The synthesized-anchor pattern is already established for mood\u2192genome-anchor; apply the same mechanism here. No new data or corpus expansion needed \u2014 purely an intake routing change. Log the substitution in the response so the user understands the mapping.",
+     "layer": "intake",
+     "priority": "medium"
+    },
+    {
+     "hole": "Recency intent is fully unservable for 2024+ content and has no intake-layer disclosure. The corpus is frozen at MovieLens >=200-rating movies through ~2023. Prompts like 'what came out this year' or 'haven't been to the movies in a while' return stale results without disclosure, which erodes trust.",
+     "frequency": "No standalone axis, but the 'recency/new' archetype is a confirmed gap sample. decade_year axis: 52/500 prompts, 0% gap for historical decade queries \u2014 the contrast shows the system handles era well for the past but has no handling for the forward-recency case. Estimated 15-25 prompts of the 500 carry explicit recency intent.",
+     "fix": "At intake, detect recency signals ('this year', '2024', '2025', '2026', 'new releases', 'currently playing', 'just came out') and route to an explicit corpus-boundary disclosure: state the ~2023 cutoff, then surface the highest vote_count films from 2020-2023 as a 'most recent in my catalog' fallback. No new data needed. This is a pure intake classifier + disclosure routing addition. Separately, the plan could consider a semi-annual corpus refresh (re-running preprocess/features/dataset on an updated MovieLens snapshot) if recency demand is high.",
+     "layer": "intake",
+     "priority": "medium"
+    },
+    {
+     "hole": "Streaming platform intent has no intake handling and no data. 'I'm staring at Netflix' or 'cozy night in \u2014 what's on streaming' signals a platform-constrained search the pipeline cannot honor. Streaming availability is explicitly MISSING from the data inventory. Eleven prompts in the 500 anchor on a specific platform; all gap 100% (4 at intake, 7 at postfilter).",
+     "frequency": "streaming_availability 11/500, 100% gap (4 intake, 7 postfilter). Co-present in occasion_audience and comfort-watch archetypes.",
+     "fix": "JustWatch API or TMDB watch-provider endpoint provides streaming availability per region, but the data changes weekly and requires either a licensing arrangement or a scraping/refresh pipeline \u2014 realistically obtainable but operationally expensive. Near-term cheapest fix: detect platform-anchored intake at extraction and append a disclosure ('I cannot verify what is currently on [platform]; here are the best thematic matches from my catalog'). Do not build the streaming data pipeline unless a refresh cadence and source are confirmed. Long-term: store a weekly-refreshed streaming_availability lookup keyed by movieId as an optional column in serving/feature_store.pt, gated by a config flag.",
+     "layer": "multiple",
+     "priority": "low"
+    }
+   ]
+  },
+  {
+   "lens": "COMPOSITION & THIN-POOL: prompts stacking 3+ constraints or needing near-empty intersections in a 9,366-movie corpus \u2014 how intake should mark soft-vs-hard, and how retrieval should degrade instead of empty/popularity.",
+   "findings": [
+    {
+     "hole": "No constraint-priority metadata output from intake. When 3+ constraints compose, the system has no defined relaxation order and no signal about which constraints have real data backing vs. which are silently dropped. Evidence: 'first date + PG-13 + under 90 min + happy ending' stacks 4 constraints, 3 of which have zero pipeline data (content_rating 100% gap, runtime 100% gap, ending_type 96% gap). When candidates are thin, the postfilter has no ordering to relax them: it either silently drops all unenforceable constraints (returning popularity-sorted results that violate stated intent) or hard-blocks and returns empty. The same collapse pattern appears in 'anxious + slow + quiet + no twist + warm' (pacing 97% gap, ending_type 96% gap).",
+     "frequency": "Implicit in all multi-constraint prompts. Axes with \u226590% gap that appear together in typical stacks: pacing 91/94 (97%), ending_type 45/47 (96%), plot_structure 59/60 (98%), content_rating 40/40 (100%), occasion_audience 81/81 (100%) \u2014 these five axes collectively fire in the majority of compound prompts and all have near-zero data coverage.",
+     "fix": "Intake LLM should emit a 3-tier classification alongside every extracted slot: required (has data, user stated as dealbreaker), preferred (has data, soft), cannot_enforce (no data \u2014 pacing, ending_type, content_rating until fixed). Postfilter applies required as hard filters, preferred as ranked boosts, cannot_enforce as LLM-judgment-only. When pool < 10 candidates after required filtering, relaxation order: (1) drop cannot_enforce slots entirely, (2) soften preferred slots one at a time in order of lowest data coverage first, (3) never drop genre or people hard-filters last.",
+     "layer": "intake",
+     "priority": "high"
+    },
+    {
+     "hole": "Runtime is scraped but never written into serving/feature_store.pt. Any prompt with an explicit runtime constraint ('under 90 min', 'dont wanna move for 3 hours', 'need something short') is unenforceable \u2014 the pipeline has zero data at retrieval or postfilter time. This is the cheapest missing hard constraint: the data exists in TMDB (already used for poster fetches), just not exported. In thin-pool compositions, runtime is especially dangerous because it is often the one constraint users state as a hard dealbreaker, not a preference.",
+     "frequency": "34/500 prompts (100% gap). Confirmed in sample records: runtime-constrained prompt ('brain is fried, cant commit to a 3 hour epic') \u2192 Toy Story, Run Lola Run returned with no runtime check. Pacing prompt ('zero filler') and couch-blanket prompt ('slow and comforting, 3 hours') both cite runtime:MISS in gaps.",
+     "fix": "Add runtime_minutes to the feature_store.pt export (src/export.py FeatureStore bundle). Wire into postfilter as a hard-cap slot: require_runtime_under / require_runtime_over. Intake extracts numeric minutes from natural-language cues ('under 90', 'not super long' \u2192 cap 110, '3-hour epic' \u2192 floor 150). Cost: TMDB runtime field is already in the scrape pipeline; one export-stage addition.",
+     "layer": "multiple",
+     "priority": "high"
+    },
+    {
+     "hole": "Negative tone and mood exclusion have no pipeline gate. Intake can add soft-positive genome anchors (feel-good, heartwarming) but cannot create a hard exclusion for 'nothing sad', 'nothing scary', 'nothing intense', 'no gore'. Genome scores exist for both poles (sad/emotional, tense/creepy, dark/gritty) but are only applied as positive boosts toward the desired tone \u2014 never as hard-exclude thresholds against the undesired one. In comfort-watch compositions ('warm + slow + nothing intense + no twists'), all four signals become soft-positive boosts that compete instead of filtering, so high-tension dramas that also score mildly feel-good remain in the pool.",
+     "frequency": "mood_affect 351/500 total prompts (23% gap rate, 82 gaps). tone_maturity 126/500 (93% gap, 117 gaps). The 82 + 117 = 199 gap instances are disproportionately the negative-exclusion half: 'nothing sad', 'nothing scary', 'no dark tone', 'nothing stressful' \u2014 the positive side is partially served by genome anchors already. Separate distinct holes confirm: 'Cannot hard-filter OUT sad or dark tone' and 'No filter for not bittersweet'.",
+     "fix": "Intake extracts an exclude_tone list alongside mood (e.g., exclude_tone: ['dark','scary','intense','sad','stressful']). Postfilter applies genome thresholds as soft-hard gates: if tense/creepy genome > 0.35 AND exclude_tone contains 'scary' \u2192 exclude candidate. If dark/gritty genome > 0.4 AND exclude_tone contains 'intense' \u2192 downrank heavily. These are not binary filters (genome scores are continuous) so implement as a scored penalty that blocks candidates above a threshold. No new data needed \u2014 genome scores are already in feature_store.pt.",
+     "layer": "multiple",
+     "priority": "high"
+    },
+    {
+     "hole": "Occasion and audience context (first date, family with young kids, friends drinking, solo unwind) fires as a 100% gap signal, but the deeper composition risk is that each occasion implies a BUNDLE of derived hard constraints that are all simultaneously dropped. 'First date movie' implies: no horror, no sad ending, comfortable runtime (~100 min), PG-13 or light R, no extremely dark tone \u2014 four derived constraints from one input signal. Without occasion\u2192bundle expansion, the intake extracts nothing actionable and all four derived constraints are missing from downstream filtering.",
+     "frequency": "occasion_audience 81/500 prompts, 100% gap (79 of 81 gap at intake layer per axis table). Sample: first-date prompt gaps include occasion_audience:MISS, content_rating:MISS, runtime:MISS, ending_type:MISS \u2014 all four derived from one occasion signal. Family prompt and friends-party prompt show identical pattern.",
+     "fix": "Add an occasion_context slot to intake extraction. Intake LLM maps known occasions to derived constraint bundles (expansion rule table): 'first date' \u2192 {exclude_genre:[Horror,Thriller], exclude_tone:[dark,sad], prefer_ending:happy, require_runtime_under:120}; 'family + young kids' \u2192 {content_rating_max:PG, exclude_tone:[scary,intense,sad-death]}; 'party/group drinking' \u2192 {prefer_tone:comedic, prefer_pacing:light, exclude:subtitles_required}. These derived constraints then flow into the normal constraint-priority tier as 'preferred' (not 'required', since the user stated occasion not the derived constraints explicitly).",
+     "layer": "intake",
+     "priority": "high"
+    },
+    {
+     "hole": "MPAA content rating is entirely absent from data. For multi-constraint compositions involving family suitability, age-appropriateness, or explicit-content exclusion ('no gore', 'PG-13', 'nothing too scary for a 6-year-old', 'not raunchy'), there is zero enforcement mechanism. genre=Animation is the only current heuristic, which misses all live-action G/PG films and incorrectly includes adult animation. In multi-constraint stacks with content rating as one of 3+ constraints, not having it means the intersection pool always appears larger than it actually is for the user's intent.",
+     "frequency": "content_rating 40/500 prompts, 100% gap (37 of 40 gaps at postfilter layer). Appears in family prompt, first-date prompt, comfort-watch prompt, friends-party prompt, B-movie prompt. Distinct holes confirm: 'Profanity, sex, and graphic content have zero direct signals' and 'MPAA/content-rating absent: cannot filter by violence level'.",
+     "fix": "MPAA ratings are available via TMDB API releases endpoint (certification field per country). Cost: one additional API pass over the ~9,366-movie corpus, feasible and cheap alongside the existing poster fetch. Wire MPAA (US certification: G, PG, PG-13, R, NC-17) into feature_store.pt. Add content_rating_max intake slot and apply as a hard postfilter. Also enables: content_rating_min for users explicitly seeking R-rated material.",
+     "layer": "multiple",
+     "priority": "high"
+    },
+    {
+     "hole": "Pacing has no data axis (97% gap) but intake currently receives it as an ordinary constraint alongside filterable axes. When stacked with genre + location or genre + nationality (e.g., 'slow-burn Italian arthouse', 'talky cold-war spy thriller not action-heavy'), the pacing constraint silently fails while the genre/location filters succeed \u2014 narrowing the pool to a thin slice and then failing to apply the constraint that most characterizes the user's intent. There is no mechanism signaling that pacing was dropped, so the retrieval returns genre-correct but pace-incorrect results with no explanation.",
+     "frequency": "pacing 94/500 prompts (97% gap, 91 gaps total \u2014 51 at intake, 41 at postfilter). Second-highest gap rate among all axes with significant volume. Appears across: horror subgenres, spy/thriller, sci-fi, romance, comfort-watch, documentary prompts.",
+     "fix": "Intake must classify pacing as always-soft and always-cannot_enforce (given current data). Route pacing signals to genome tag boosts only: 'slow/quiet' \u2192 boost genome[slow-paced, atmospheric, quiet]; 'fast/tight/no filler' \u2192 boost genome[fast-paced, tense]; 'hypnotic/contemplative' \u2192 boost genome[atmospheric, cerebral]. Postfilter must never apply pacing as a hard filter. Crucially, intake should tag pacing as part of cannot_enforce so that the relaxation logic (Finding 1) knows it is always a soft signal and never blocks on it. No new data needed \u2014 genome coverage of pace-adjacent tags is partial but real.",
+     "layer": "intake",
+     "priority": "high"
+    },
+    {
+     "hole": "Franchise and cinematic-universe membership is entirely absent (100% gap), causing two distinct thin-pool failures in opposite directions. (1) Exclusion: 'no superhero movies' and 'no MCU' cannot be enforced \u2014 TMDB keyword 'superhero' has inconsistent coverage and brittle title-string matching misses entries like The Marked Ones. In a multi-constraint stack ('action + not superhero + under 2h + not a sequel'), all three qualifying constraints fail. (2) Inclusion and ordering: sequel/series requests ('Before trilogy', 'Ocean's sequels', 'Alien franchise') cannot be sorted by installment order or have entries matched by series membership.",
+     "frequency": "franchise_universe 29/500 prompts, 100% gap. Distinct holes: 'No franchise membership field; no Paranormal Activity sequels works only via brittle title-string matching', 'Cannot identify sequel/franchise membership \u2014 Ocean's Twelve and Thirteen invisible without series-filter axis', 'Superhero is not a MovieLens genre \u2014 TMDB keyword superhero has inconsistent coverage'.",
+     "fix": "TMDB belongs_to_collection field provides franchise/series membership and installment number for all entries in their database. Cost: single additional field in the existing TMDB fetch. Build a franchise_id + franchise_position table in feature_store.pt. Wire into: (a) require_franchise / exclude_franchise intake slots; (b) postfilter exclusion gate for exclude_franchise; (c) series-sort mode when user requests a franchise in order. This is genuinely cheap data \u2014 one field per movie already being fetched.",
+     "layer": "multiple",
+     "priority": "high"
+    },
+    {
+     "hole": "TV shows and docuseries used as similar_to_title anchors produce a complete retrieval collapse with no fallback. When a user cites Breaking Bad, Succession, or the Night Stalker docuseries as a reference title, the similar_to_title pathway finds no item embedding in the 9,366-movie corpus. Intake has no detection logic and no fallback: it passes the title to the retrieval engine as if it were a movie, the anchor lookup fails silently, and the embedding path either contributes nothing or errors. This is particularly damaging in compositions where the TV anchor is the primary retrieval signal and genre/keywords are the only remaining constraints \u2014 a thin base for the intended vibe.",
+     "frequency": "cross_media 7/500 prompts (100% gap). But the actual exposure is higher: similar_to_title fires in 160/500 prompts (19% gap rate, 31 gaps) and an unknown fraction of those 160 are TV anchors that pass silently. Distinct holes: 'Reference titles are multi-episode Netflix docuseries, almost certainly absent from movie corpus; similar_to_title anchor is lost' and 'Succession is a TV show, not in corpus; no anchor for similar_to_title signal'.",
+     "fix": "Intake LLM should detect when a reference title is a TV series (not a film) and switch extraction mode: instead of emitting it as a liked_title anchor, decompose it into theme/character/tone/narrative slots (e.g., Breaking Bad \u2192 character_type:['moral_corruption_arc'], theme_subject:['crime','drug_trade'], tone:'dark gritty'). Discard the TV title anchor entirely. Route to keyword + genome path. Additionally, emit a note into the LLM postfilter context ('user referenced TV show X; these are films with similar narrative DNA') so the postfilter can provide a coherent explanation. No new data needed.",
+     "layer": "intake",
+     "priority": "medium"
+    },
+    {
+     "hole": "200-rating corpus floor creates systematic thin-pool collapse for obscurity + niche-nationality + arthouse stacks, with no degradation path or early warning. Confirmed absences: Rams (2015, Iceland), Woman at War (2018, Iceland), Jeanne Dielman (Akerman), Police Adjective (Romania), 12:08 East of Bucharest, True Tarr peers (Angelopoulos, Jancso, Lav Diaz), Tsai Ming-liang deep cuts. When a user stacks 'obscure' + small-country + arthouse movement, the intersecting pool can reach 0-3 titles. The pipeline has no mechanism to signal this thin-pool state, so it either returns popularity-padded results (violating the obscurity constraint) or returns near-empty with no explanation of why.",
+     "frequency": "popularity_obscurity 125/500 prompts (18% gap, 23 gaps). nationality_country 74/500 (11% gap \u2014 low overall but gap concentrates in small-corpus countries). Arthouse/film-movement compositions appear in 8+ distinct holes with confirmed corpus absences named. The obscurity+nationality combination is the highest-risk thin-pool composition.",
+     "fix": "(a) Intake should detect high-corpus-risk compositions: if require_country is a low-representation country (Iceland, Romania, Senegal, etc.) AND popularity_obscurity slot is 'obscure/hidden gem', pre-compute estimated pool size from the corpus country distribution and emit a warn flag. (b) Retrieval degradation order for this specific combo: relax obscurity constraint first (it has the weakest data grounding \u2014 popularity is a crude proxy), keep nationality hard. (c) Postfilter should surface a caveat: 'Our corpus of ~9,366 films (MovieLens \u2265200 ratings) has limited coverage of [country] arthouse cinema; these are the closest matches we can serve.' No new data needed \u2014 this is a degradation-routing change.",
+     "layer": "multiple",
+     "priority": "medium"
+    },
+    {
+     "hole": "production_countries is filming location, not narrative setting. City-level 'set in X' intent gets country-level contamination. 'Films set in Rome' queries with production_country=Italy return all Italian films, many not set in Rome. 'Set in Tokyo' passes through Japanese films shot elsewhere or shot in Tokyo but set in fictional/unspecified locations. In compositions where setting is the primary constraint (travel-prep, location-vibe, historical city), this contaminates an already-thin pool with off-target results and the intake has no routing logic to prefer TMDB city keywords over production_country.",
+     "frequency": "setting_location 57/500 prompts (89% gap, 51 gaps). Distinct holes: 'Set in Tokyo vs filmed in Tokyo is explicitly MISSING; production_country=Japan is too broad' and 'TMDB rome inconsistently applied; Italy production_country too broad, catches non-Rome Italian films'.",
+     "fix": "Intake should distinguish city-level vs country-level location intent. For city-level ('set in Rome', 'set in Tokyo', 'set in Bangkok'): emit require_keywords=['rome','tokyo','bangkok','set in X'] and do NOT emit require_country. For country-level ('French films', 'Korean cinema'): emit require_country. The city\u2192keyword routing already works against TMDB keyword corpus (17,820 keywords) \u2014 intake just needs to be taught the distinction. As a secondary fix, document the known-coverage gaps in the intake prompt so the LLM can note them (e.g., 'rome' keyword is sparsely applied pre-1980 TMDB entries).",
+     "layer": "intake",
+     "priority": "medium"
+    }
+   ]
+  }
+ ]
+}

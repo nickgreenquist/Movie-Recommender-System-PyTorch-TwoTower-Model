@@ -1,0 +1,4883 @@
+[
+ {
+  "prompt": "movies that completely mess with your head like memento or primer. bonus points if i need a chart to understand it after",
+  "intent": "Wants puzzle-box/nonlinear films that reward re-watching and note-taking",
+  "recs": [
+   "Inception",
+   "Donnie Darko",
+   "The Prestige",
+   "Mulholland Drive",
+   "12 Monkeys",
+   "Dark City"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Memento and Primer as explicit anchor seeds"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "genome 'mindfuck/cerebral' tags strong signal"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'nonlinear narrative' keyword; not genome"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "genome 'twist-ending' proxies but conflates types"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "puzzle-box not explicit label; inferred from genre combo"
+   }
+  ],
+  "holes": [
+   "No complexity/difficulty axis for 'need a chart'; only proxy is genome cerebral tag",
+   "Nonlinear narrative filterable via TMDB keyword but coverage patchy for pre-2000 non-Hollywood titles"
+  ],
+  "archetype": "cerebral/mind-bending",
+  "archetype_idx": 30,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "ok so i just watched arrival and haven't stopped thinking about it for like 3 days. i want more stuff that makes you question how you experience time and memory and language, doesn't have to be sci fi honestly just something that rewires your brain a little",
+  "intent": "Loved Arrival's ideas on time/language/perception; wants more genre-agnostic brain-rewiring films",
+  "recs": [
+   "Eternal Sunshine of the Spotless Mind",
+   "Interstellar",
+   "Memento",
+   "Being John Malkovich",
+   "The Butterfly Effect"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Arrival as explicit seed; embedding captures thematic cluster"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "time/memory in TMDB keywords; language perception missing"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "genome 'cerebral' tag covers 'rewires brain' intent"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "genre-agnostic ask; used as soft filter only"
+   }
+  ],
+  "holes": [
+   "Language-as-theme / linguistic relativity has no dedicated genome or TMDB axis",
+   "Genre-agnostic brain-rewiring relies solely on embedding similarity; literary drama examples may be missed"
+  ],
+  "archetype": "cerebral/mind-bending",
+  "archetype_idx": 30,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "what should i watch if i keep laying awake wondering whether free will is even real lol",
+  "intent": "Wants films exploring determinism / free will, framed via a personal existential itch",
+  "recs": [
+   "Minority Report",
+   "A Clockwork Orange",
+   "The Adjustment Bureau",
+   "Donnie Darko",
+   "2001: A Space Odyssey",
+   "Blade Runner"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "free will / determinism in TMDB keywords; sparse coverage"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "sci-fi and drama genres anchor the set well"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "genome 'cerebral/mindfuck' tags relevant"
+   },
+   {
+    "axis": "other",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "lay-awake existential urgency has no affective axis"
+   }
+  ],
+  "holes": [
+   "Free will / determinism is not a named genome tag; TMDB keyword coverage unreliable for older titles",
+   "Philosophical anxiety mood ('lay awake at night') has no wired affective axis beyond generic cerebral"
+  ],
+  "archetype": "cerebral/philosophical",
+  "archetype_idx": 30,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "give me something with an ambiguous ending. the kind where you and your friend argue for an hour about what actually happened",
+  "intent": "Seeks films with deliberately open/interpretive endings that spark debate",
+  "recs": [
+   "Inception",
+   "No Country for Old Men",
+   "Mulholland Drive",
+   "Black Swan",
+   "The Shining",
+   "Birdman"
+  ],
+  "signals": [
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "genome 'twist-ending' is insufficient; ambiguous differs from twist"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "genome cerebral/mindfuck correlates with debate-worthy films"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "interpretive/open ending not a named TMDB theme"
+   }
+  ],
+  "holes": [
+   "Ambiguous vs closed ending is not a wired signal; genome 'twist-ending' conflates twist with ambiguity",
+   "Debate-worthiness / interpretive openness has no axis; co-watch embedding is only indirect proxy"
+  ],
+  "archetype": "cerebral/ambiguous",
+  "archetype_idx": 30,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "films about simulation theory / are we real. NOT the matrix ive seen it a hundred times",
+  "intent": "Wants simulated-reality themed films while explicitly excluding the obvious pick",
+  "recs": [
+   "The Truman Show",
+   "Dark City",
+   "eXistenZ",
+   "Vanilla Sky",
+   "Total Recall"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "simulation / virtual reality in TMDB keywords; patchy"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "sci-fi genre filters well for this theme"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Matrix embedding siblings retrieved after explicit exclude"
+   },
+   {
+    "axis": "other",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "negative title-exclude ('NOT the matrix') not wired"
+   }
+  ],
+  "holes": [
+   "Negative title exclusion ('NOT the matrix') is not implemented; pipeline has no exclude-by-title filter",
+   "Simulation-theory theme relies on TMDB keyword with uncertain coverage for late-1990s niche titles"
+  ],
+  "archetype": "cerebral/simulation",
+  "archetype_idx": 30,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "im in a weird headspace and kind of want a movie that stares straight into the void about death and mortality but doesn't leave me feeling completely hopeless. is that a contradiction",
+  "intent": "Wants existential mortality films with some redemptive/hopeful counterweight",
+  "recs": [
+   "The Seventh Seal",
+   "Ikiru",
+   "About Time",
+   "American Beauty",
+   "Big Fish",
+   "Awakenings"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "death / mortality in TMDB keywords; hope less covered"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "genome 'heartwarming' AND 'heartbreaking' needed; AND-combo unwired"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "dark-but-redemptive composite tone not a named tag"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "drama genre anchors existential mortality films"
+   }
+  ],
+  "holes": [
+   "Composite tone (dark AND hopeful simultaneously) requires multi-axis AND-intersection not currently supported",
+   "Redemptive counterweight / 'not hopeless' constraint has no dedicated axis; inferred from embedding proximity only"
+  ],
+  "archetype": "existential/contemplative",
+  "archetype_idx": 30,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "whats a good slow burn philosophical movie. tarkovsky vibes, something meditative i can just sit with",
+  "intent": "Wants slow, contemplative art cinema in a Tarkovsky mold",
+  "recs": [
+   "2001: A Space Odyssey",
+   "The Tree of Life",
+   "Synecdoche, New York",
+   "Persona",
+   "Melancholia",
+   "Wings of Desire"
+  ],
+  "signals": [
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Tarkovsky as director seed for style-similar retrieval"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "slow-burn / meditative pacing entirely unwired"
+   },
+   {
+    "axis": "visual_style",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "contemplative cinematography not captured anywhere"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "genome 'atmospheric' tag; not specifically meditative"
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "European arthouse signal via production country filter"
+   }
+  ],
+  "holes": [
+   "Pacing (slow-burn / meditative) is completely unwired; no runtime, shot-length proxy, or explicit pacing axis",
+   "Visual / cinematographic style not captured; 'Tarkovsky vibes' must rely entirely on director embedding similarity"
+  ],
+  "archetype": "arthouse/meditative",
+  "archetype_idx": 30,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "movies about identity and consciousness. like what makes you *you* if your memories change or get copied",
+  "intent": "Wants films probing personal identity, memory, and consciousness",
+  "recs": [
+   "Eternal Sunshine of the Spotless Mind",
+   "Blade Runner",
+   "Being John Malkovich",
+   "Total Recall",
+   "Ex Machina",
+   "Moon"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "identity / consciousness in TMDB keywords; sparse"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "sci-fi genre strong signal for consciousness theme"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "genome cerebral/mindfuck tags relevant"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "128-d embedding captures memory-alteration film cluster"
+   }
+  ],
+  "holes": [
+   "Memory-alteration / identity-copy as a subgenre not directly filterable; TMDB keyword coverage sparse",
+   "Philosophical personal identity (qualia, continuity of self) too abstract for any wired axis; only embedding proxy"
+  ],
+  "archetype": "cerebral/philosophical",
+  "archetype_idx": 30,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "recommend me a mind bender but explain WHY each one is going to break my brain, don't just list titles",
+  "intent": "Wants reasoned recommendations with per-title justification, not a bare list",
+  "recs": [
+   "The Prestige",
+   "Interstellar",
+   "Inception",
+   "12 Monkeys",
+   "Looper",
+   "Source Code"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "genome mindfuck/cerebral tags strong retrieval signal"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'nonlinear narrative' keyword partial coverage"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "twist-ending genome tag correlates with brain-breakers"
+   },
+   {
+    "axis": "other",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "per-title WHY explanation not generated by pipeline"
+   }
+  ],
+  "holes": [
+   "Pipeline produces ranked titles only; per-title explanatory justifications are not generated or stored",
+   "No explanation / reasoning-transparency output layer exists; LLM front-end must synthesize all WHY text from scratch"
+  ],
+  "archetype": "cerebral/mind-bending",
+  "archetype_idx": 30,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "time loop movies but the smart existential kind not the cheesy rom com kind pls",
+  "intent": "Wants intelligent, philosophically-inclined time-loop films over comedic ones",
+  "recs": [
+   "Edge of Tomorrow",
+   "Source Code",
+   "12 Monkeys",
+   "Run Lola Run",
+   "Happy Death Day"
+  ],
+  "signals": [
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "time-loop as TMDB keyword; not in genome, limited coverage"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "'not cheesy rom-com' tone exclusion; no direct axis"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "genome cerebral/existential-adjacent tags help filter"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "comedy genre exclusion possible as postfilter"
+   }
+  ],
+  "holes": [
+   "Smart vs cheesy time-loop distinction requires tone axis not wired; comedy genre exclusion is a coarse proxy only",
+   "Subgenre anti-filter (exclude rom-com time-loop) requires tone-by-subgenre intersection not implemented"
+  ],
+  "archetype": "cerebral/sci-fi",
+  "archetype_idx": 30,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "i'm obsessed with anything set in ancient rome, gladiators senators togas all of it. what should i watch",
+  "intent": "Wants ancient Rome-set films",
+  "recs": [
+   "Gladiator (2000)",
+   "Spartacus (1960)",
+   "Ben-Hur (1959)",
+   "Cleopatra (1963)",
+   "Pompeii (2014)"
+  ],
+  "signals": [
+   {
+    "axis": "setting_location",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "TMDB keyword 'ancient rome' directly covers this"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "No dedicated era field; inferred via TMDB keywords only"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Historical, action-adventure, drama genres present"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "Gladiators/senate/empire via TMDB keywords; noisy coverage"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Gladiator/senator/emperor via TMDB keywords; incomplete"
+   }
+  ],
+  "holes": [
+   "Sub-intent distinction (political Rome vs gladiatorial spectacle) is not disambiguatable from TMDB keywords alone",
+   "No dedicated historical-era field; recall depends entirely on TMDB 'ancient rome' keyword coverage quality"
+  ],
+  "archetype": "historical_setting",
+  "archetype_idx": 31,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "Looking for a good WWII movie but honestly I'm burnt out on the American D-Day stuff. Something from the German or Soviet side maybe? Or resistance fighters. Just want a different angle on the war than the usual",
+  "intent": "WWII films from non-American/less common perspectives",
+  "recs": [
+   "Das Boot (1981)",
+   "Downfall (2004)",
+   "The Pianist (2002)",
+   "Life is Beautiful (1997)",
+   "Come and See (1985)"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Production country filters German/Soviet/French/Italian films"
+   },
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Original language (German/Russian) proxies non-US perspective"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "War, Drama genres apply"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'resistance fighter', 'eastern front' keywords exist"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Genome 'dark/gritty/bleak' captures tone of these films"
+   },
+   {
+    "axis": "other",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Narrative POV/perspective direction has no structured signal"
+   }
+  ],
+  "holes": [
+   "Narrative perspective (German/Soviet POV vs Allied POV) is not a queryable axis; language/country proxies it but misses English-language non-American framings",
+   "Resistance-fighter sub-theme requires TMDB keyword match; omitted tags cause films like Army of Shadows to be under-retrieved"
+  ],
+  "archetype": "historical_setting+perspective",
+  "archetype_idx": 31,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "cold war spy stuff pls. le carre vibes, everyone in trenchcoats not trusting each other, no explosions just paranoia",
+  "intent": "Slow-burn Cold War espionage, tradecraft over action",
+  "recs": [
+   "Tinker Tailor Soldier Spy (2011)",
+   "The Spy Who Came in from the Cold (1965)",
+   "Bridge of Spies (2015)",
+   "The Lives of Others (2006)",
+   "Three Days of the Condor (1975)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Thriller genre; spy subgenre via TMDB keywords"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'cold war', 'espionage', 'double agent' keywords exist"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Genome 'tense/creepy/atmospheric' covers paranoia tone well"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "Slow-burn vs action-spy pacing not a queryable axis"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'cold war' keyword covers era; no dedicated field"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Co-watch similarity partially captures le Carre style"
+   }
+  ],
+  "holes": [
+   "Pacing (talky tradecraft vs action-heavy) is not a queryable signal; pipeline would surface action spy films alongside slow-burn ones",
+   "'Le Carre vibes' is an auteur-style anchor with no structured mapping; must rely on co-watch similarity or LLM semantic understanding"
+  ],
+  "archetype": "historical_setting+mood_tone",
+  "archetype_idx": 31,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "Any films that really nail the medieval period? and I mean the mud and the plague and the grime, not the shiny fantasy castle version",
+  "intent": "Gritty, historically grounded medieval settings",
+  "recs": [
+   "Braveheart (1995)",
+   "Kingdom of Heaven (2005)",
+   "The Name of the Rose (1986)",
+   "The 13th Warrior (1999)",
+   "Black Death (2010)"
+  ],
+  "signals": [
+   {
+    "axis": "era_period",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'medieval', 'middle ages' keywords cover era broadly"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Historical Drama; can exclude Fantasy genre as proxy"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Genome 'dark/gritty/bleak' tags grim-realism films"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Fantasy genre exclusion only rough anti-fantasy filter"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "TMDB 'plague', 'crusades' partial; 'grime/squalor' absent"
+   }
+  ],
+  "holes": [
+   "Cannot positively filter 'historically grounded' vs 'fantasy medieval'; excluding Fantasy genre misses pseudo-historical films and Braveheart-style epics tagged as Drama",
+   "Grittiness/realism is a tone signal only approximable via genome mood tags; no structured 'realism' axis exists"
+  ],
+  "archetype": "historical_setting+tone_filter",
+  "archetype_idx": 31,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "my wife loves those victorian era dramas, big dresses, london fog, corsets, maybe a murder. anniversary is coming up what do you recommend for a cozy night in",
+  "intent": "Victorian-era period drama for a couples movie night",
+  "recs": [
+   "Crimson Peak (2015)",
+   "Victoria & Abdul (2017)",
+   "From Hell (2001)",
+   "Sherlock Holmes (2009)",
+   "Sense and Sensibility (1995)"
+  ],
+  "signals": [
+   {
+    "axis": "era_period",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'victorian england'; Regency/Victorian conflated in practice"
+   },
+   {
+    "axis": "setting_location",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "TMDB 'london' + UK production country narrows geography"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Drama, Romance, Mystery genres apply"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Couples/anniversary viewing context not queryable"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Genome 'atmospheric' exists; 'cozy' affect has no mapping"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'murder mystery', 'period romance' keywords partial"
+   }
+  ],
+  "holes": [
+   "Occasion signal ('anniversary couples night', 'cozy') has no structured pipeline representation and cannot personalize for shared-viewing context",
+   "'Cozy' is a composite affect with no genome or TMDB equivalent; 'atmospheric' is the closest but has different valence"
+  ],
+  "archetype": "historical_setting+occasion",
+  "archetype_idx": 31,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "give me something set during the fall of an empire. rome, ottomans, whatever. i love watching a civilization slowly collapse",
+  "intent": "Films about the decline/collapse of historical empires",
+  "recs": [
+   "Gladiator (2000)",
+   "Downfall (2004)",
+   "The Last Emperor (1987)",
+   "Apocalypto (2006)",
+   "Lawrence of Arabia (1962)"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Empire collapse as narrative arc has no structured signal"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Decline-arc plot type is not a queryable field"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Historical Drama, Epic genres provide a broad filter"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "Various historical eras each need separate keyword matching"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Genome 'epic' partially captures scale; tragic arc less so"
+   }
+  ],
+  "holes": [
+   "Pipeline has no plot_structure signal; 'civilization collapse arc' as a narrative concept is not queryable and requires LLM-level understanding",
+   "Cross-empire OR-query (Rome OR Ottoman OR Mayan OR Chinese) requires multi-keyword fan-out that the extractor is not currently taught to issue"
+  ],
+  "archetype": "historical_setting+narrative_arc",
+  "archetype_idx": 31,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "WWI. not 2. the trenches, the whole lost generation thing. underrated compared to ww2 movies imo",
+  "intent": "World War I / trench-warfare films specifically",
+  "recs": [
+   "1917 (2019)",
+   "All Quiet on the Western Front (2022)",
+   "Paths of Glory (1957)",
+   "Gallipoli (1981)",
+   "War Horse (2011)"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'world war i', 'trench warfare' keywords cover this"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Setting era inferred from TMDB keywords; no dedicated field"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "War, Drama genres apply"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Genome 'sad/emotional', 'dark/gritty' fit WWI tone"
+   },
+   {
+    "axis": "setting_location",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "TMDB 'western front', 'gallipoli' partial; coverage uneven"
+   }
+  ],
+  "holes": [
+   "WWI vs WWII distinction requires TMDB keyword filtering; no dedicated war-era axis means precision depends entirely on tagging completeness",
+   "'Lost generation' literary-cultural theme is not a structured signal and cannot be queried"
+  ],
+  "archetype": "historical_setting+subgenre",
+  "archetype_idx": 31,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "ok weird ask but i just finished a big biography of napoleon and now i want to marinate in that early 1800s europe period. wars, court intrigue, powdered wigs, the works. anything set right around then?",
+  "intent": "Napoleonic-era / early 19th-century Europe films",
+  "recs": [
+   "Barry Lyndon (1975)",
+   "Master and Commander: The Far Side of the World (2003)",
+   "Napoleon (2023)",
+   "The Duellists (1977)",
+   "Waterloo (1970)"
+  ],
+  "signals": [
+   {
+    "axis": "era_period",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'napoleonic wars', 'napoleon' keywords cover the era"
+   },
+   {
+    "axis": "setting_location",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "TMDB 'europe', 'france' cover geographic scope"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'court intrigue', 'warfare' partially queryable"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Historical Drama, War genres apply"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Kubrick, Scott, Lean retrievable by director filter"
+   },
+   {
+    "axis": "visual_style",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "Powdered-wigs/period-costume aesthetic not a queryable axis"
+   }
+  ],
+  "holes": [
+   "'Early 1800s Europe' is a narrow era slice; recall depends on whether films are TMDB-tagged 'napoleonic wars' or only 'historical drama'",
+   "Costume/aesthetic markers ('powdered wigs', court pomp) have no structured signal; pipeline cannot confirm period-accurate visual style"
+  ],
+  "archetype": "historical_setting+era_immersion",
+  "archetype_idx": 31,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "tudor england movies? henry viii, elizabeth, all the beheadings and court drama",
+  "intent": "Tudor-period English royal court dramas",
+  "recs": [
+   "Elizabeth (1998)",
+   "Elizabeth: The Golden Age (2007)",
+   "The Other Boleyn Girl (2008)",
+   "A Man for All Seasons (1966)",
+   "Shakespeare in Love (1998)"
+  ],
+  "signals": [
+   {
+    "axis": "era_period",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'tudor period', 'tudor dynasty', 'henry viii' keywords"
+   },
+   {
+    "axis": "setting_location",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "England + UK production country filter applies"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "TMDB 'royal court', 'monarchy', 'execution' partially covered"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Historical Drama genre applies"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "King/queen/courtier via TMDB keyword lookup only"
+   },
+   {
+    "axis": "person_actor",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Cate Blanchett, Eric Bana retrievable by people filter"
+   }
+  ],
+  "holes": [
+   "'Tudor' is a narrow historical sub-period; films tagged only as 'british historical drama' would be retrieved alongside Victorian and Edwardian results",
+   "Execution/court-drama intensity (beheadings, power betrayal) cannot be confirmed as a postfilter; no structured dramatic-tone axis"
+  ],
+  "archetype": "historical_setting+character_drama",
+  "archetype_idx": 31,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "something set in feudal japan would be perfect right now. samurai, honor, that kind of thing",
+  "intent": "Feudal Japan / samurai-era films",
+  "recs": [
+   "Seven Samurai (1954)",
+   "Rashomon (1950)",
+   "Ran (1985)",
+   "Yojimbo (1961)",
+   "The Last Samurai (2003)",
+   "Kagemusha (1980)"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Japan production country directly filters Japanese cinema"
+   },
+   {
+    "axis": "language",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Japanese language filter applies; Last Samurai is English"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'samurai', 'feudal japan' keywords cover the era"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Action, Drama, Historical genres apply"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Bushido/honor not a genome or TMDB structured axis"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Kurosawa films surfaced via director filter"
+   }
+  ],
+  "holes": [
+   "Honor/bushido as a cultural-ethical theme has no structured representation; must rely on co-watch similarity or LLM extraction",
+   "Feudal era boundary (pre-Meiji) is not a computable filter; 'samurai' TMDB keyword is reliable but era precision depends on tagging completeness"
+  ],
+  "archetype": "historical_setting+cultural_immersion",
+  "archetype_idx": 31,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "i need a movie with an actual happy ending tonight, no bittersweet stuff, no everyone dies at the end. just something that leaves me feeling good",
+  "intent": "Wants a genuinely happy, feel-good ending with no downer twist.",
+  "recs": [
+   "The Princess Bride",
+   "Ratatouille",
+   "Legally Blonde",
+   "About Time",
+   "Paddington 2"
+  ],
+  "signals": [
+   {
+    "axis": "ending_type",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "happy ending not a tagged corpus dimension; must be proxied"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "feel-good/heartwarming genome tag is the best available proxy"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy/family genre loosely predicts happy outcomes"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "no bittersweet-exclusion axis exists in pipeline"
+   }
+  ],
+  "holes": [
+   "Happy ending is not a tagged attribute; feel-good genome misses dramas that end happily but score tonally dark throughout.",
+   "No filter for 'not bittersweet' -- feel-good-scored films can still carry tragic secondary arcs or bittersweet undercurrents."
+  ],
+  "archetype": "feel-good certainty seeker",
+  "archetype_idx": 32,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "give me your best twist ending movies. like the kind where your jaw drops in the last 5 minutes and you have to sit there for a sec. i've already seen Sixth Sense and Fight Club and Usual Suspects so dont say those",
+  "intent": "Wants shocking twist-ending films excluding the obvious famous ones.",
+  "recs": [
+   "Oldboy",
+   "The Prestige",
+   "Shutter Island",
+   "Gone Girl",
+   "The Others",
+   "Knives Out"
+  ],
+  "signals": [
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "genome mindfuck/twist-ending tag partially covers this category"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "mindfuck/cerebral genome strongly signals twist-heavy films"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "thriller/mystery genre filters the candidate pool"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "named titles usable as seeds but not as exclusions"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "twist landing in final 5 minutes not a measurable structure"
+   }
+  ],
+  "holes": [
+   "Pipeline cannot exclude titles the user names as already-seen -- no negative-title filter exists at intake.",
+   "Recency-of-twist (final minutes vs mid-film reveal) is a plot_structure nuance with no signal in our feature set."
+  ],
+  "archetype": "twist completionist",
+  "archetype_idx": 32,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "are there any good movies that end ambiguously? i actually love when it doesnt spell everything out and you get to argue about what really happened",
+  "intent": "Wants films with deliberately open/ambiguous endings.",
+  "recs": [
+   "No Country for Old Men",
+   "Inception",
+   "Mulholland Drive",
+   "2001: A Space Odyssey",
+   "Annihilation",
+   "The Thing"
+  ],
+  "signals": [
+   {
+    "axis": "ending_type",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "ambiguous ending is not a tagged dimension in corpus"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "cerebral/mindfuck genome loosely proxies open narrative style"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "thriller/mystery/sci-fi genre clusters toward ambiguity"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "open vs closed narrative structure not a pipeline signal"
+   }
+  ],
+  "holes": [
+   "Ambiguous ending is not a tagged or filterable dimension; cerebral genome is the only weak proxy and misses many examples.",
+   "Discussion/debate value ('argue about what happened') has no axis anywhere in our feature set."
+  ],
+  "archetype": "ambiguity enthusiast",
+  "archetype_idx": 32,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "something with a happy ending pls",
+  "intent": "Short request for a movie with a happy ending.",
+  "recs": [
+   "Notting Hill",
+   "Crazy Rich Asians",
+   "Enchanted",
+   "Billy Elliot",
+   "Paddington"
+  ],
+  "signals": [
+   {
+    "axis": "ending_type",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "happy ending not a corpus tag; feel-good genome proxies it"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "feel-good/heartwarming genome is the primary available signal"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy/romance/family genre filters candidate pool"
+   }
+  ],
+  "holes": [
+   "Happy ending is not tagged; feel-good genome will surface tonally warm films that may still end ambiguously or with loss."
+  ],
+  "archetype": "rewatchable comfort",
+  "archetype_idx": 32,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "ok so i just watched a bunch of really depressing films back to back and i'm kinda wrecked lol. can you recommend something that's still a good movie, maybe some drama or emotional stuff but PLEASE let it end on a hopeful note. i can't take another gut punch tonight",
+  "intent": "Wants an emotional but hopeful/uplifting-ending film after a run of bleak ones.",
+  "recs": [
+   "The Shawshank Redemption",
+   "Billy Elliot",
+   "Room",
+   "Big Fish",
+   "Silver Linings Playbook"
+  ],
+  "signals": [
+   {
+    "axis": "ending_type",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "hopeful ending not a direct tag; no distinct corpus proxy"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "feel-good + sad/emotional genome both needed; creates tension"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "drama genre is explicitly stated"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "emotional-but-not-devastating nuance hard to isolate"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "post-bleak-session recovery context not a pipeline hook"
+   }
+  ],
+  "holes": [
+   "Hopeful ending within heavy drama is not filterable; sad/emotional genome and feel-good genome conflict on the same films.",
+   "Session context (user just finished depressing films) has no pipeline representation -- intake treats each request stateless."
+  ],
+  "archetype": "emotional recovery",
+  "archetype_idx": 32,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "movies where the ending completely reframes the whole thing you just watched. i want to immediately rewatch it because everything means something different now",
+  "intent": "Wants twist endings that recontextualize the entire film for a rewatch.",
+  "recs": [
+   "Arrival",
+   "The Prestige",
+   "Atonement",
+   "Oldboy",
+   "Shutter Island",
+   "Memento"
+  ],
+  "signals": [
+   {
+    "axis": "ending_type",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "recontextualizing twist not a tagged corpus dimension"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "whole-film reframe vs mere surprise not distinguishable"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "mindfuck/cerebral genome partially captures reframe-type twists"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "thriller/drama/mystery genre as loose candidate filter"
+   }
+  ],
+  "holes": [
+   "Recontextualizing twist (whole-film reframe) vs simple surprise reveal is a plot_structure sub-type with no signal; all mindfuck films treated equally.",
+   "Rewatch value / 'everything means something different on rewatch' is not a dimension we track or expose."
+  ],
+  "archetype": "rewatch revealer",
+  "archetype_idx": 32,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "i hate when a movie just cuts to black and leaves you hanging like the sopranos. dont give me anything like that. i want closure, wrap it up properly",
+  "intent": "Wants films with clear, definitive resolution, avoiding open endings.",
+  "recs": [
+   "The Lord of the Rings: The Return of the King",
+   "Toy Story 3",
+   "The Shawshank Redemption",
+   "Forrest Gump",
+   "Avengers: Endgame",
+   "Rocky"
+  ],
+  "signals": [
+   {
+    "axis": "ending_type",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "closed/resolved ending not a tagged corpus dimension"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "open-ending exclusion is not computable on candidates"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "action/adventure/family genres trend strongly toward closure"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "feel-good genome loosely correlates with resolved endings"
+   }
+  ],
+  "holes": [
+   "Open ending is not a negative-filterable signal; we cannot exclude ambiguous films from the candidate set.",
+   "'Wraps up properly' is a structural-completeness judgment with no pipeline axis."
+  ],
+  "archetype": "closure seeker",
+  "archetype_idx": 32,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "whats a thriller with a great twist that you did NOT see coming but also isnt cheap? like it has to actually be set up earlier so it makes sense on rewatch",
+  "intent": "Wants a well-earned, foreshadowed twist thriller rather than a cheap gotcha.",
+  "recs": [
+   "The Prestige",
+   "Prisoners",
+   "Knives Out",
+   "Memento",
+   "Gone Girl"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "thriller genre is the explicit core filter"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "twist-ending genome tag partially covers the category"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "mindfuck/cerebral genome is the strongest reachable proxy"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "earned/foreshadowed vs cheap twist not distinguishable"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "craft quality of foreshadowing setup not measurable"
+   }
+  ],
+  "holes": [
+   "Earned vs cheap twist is a craft-quality distinction with no pipeline signal; all twist-tagged films are treated equally.",
+   "Foreshadowing density (rewatch-payoff quality) is not tracked anywhere in our feature set."
+  ],
+  "archetype": "craft-twist hunter",
+  "archetype_idx": 32,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "date night. she likes happy endings i lean darker. is there a movie that ends happy but isnt cheesy or predictable? meet me in the middle here",
+  "intent": "Wants a satisfying happy-ending film that isn't saccharine, for a couple with differing tastes.",
+  "recs": [
+   "Silver Linings Playbook",
+   "About Time",
+   "Big Fish",
+   "Almost Famous",
+   "The Secret Life of Walter Mitty"
+  ],
+  "signals": [
+   {
+    "axis": "ending_type",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "happy-but-not-cheesy ending not a direct tagged attribute"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "feel-good + some dark/gritty genome tension both needed"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "date-night couple with split tastes not a pipeline signal"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "romance/drama genre as baseline candidate filter"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "not-cheesy / not-predictable quality not measurable"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "popularity can downweight the most obvious safe choices"
+   }
+  ],
+  "holes": [
+   "Multi-user / split-taste context (two people with different preferences) has no representation in our single-vector pipeline.",
+   "Not-cheesy, not-predictable is a qualitative craft filter with no analog in any of our feature axes."
+  ],
+  "archetype": "compromise date night",
+  "archetype_idx": 32,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "i kind of love a sad or ambiguous ending honestly. the ones that stick with you for days. recommend something that doesnt give you an easy answer, mystery or scifi ideally",
+  "intent": "Wants haunting, unresolved/melancholy-ending films in mystery or sci-fi.",
+  "recs": [
+   "Annihilation",
+   "Blade Runner 2049",
+   "2001: A Space Odyssey",
+   "Arrival",
+   "No Country for Old Men",
+   "Mulholland Drive"
+  ],
+  "signals": [
+   {
+    "axis": "ending_type",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "sad/ambiguous ending not a tagged corpus dimension"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "sad/emotional + dark/bleak + cerebral genome all relevant"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "sci-fi and mystery both explicitly requested; both in corpus"
+   },
+   {
+    "axis": "other",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "lingering emotional resonance not a measurable pipeline axis"
+   }
+  ],
+  "holes": [
+   "Ambiguous/sad ending is not filterable; genre + dark/cerebral mood genome is only an imperfect proxy.",
+   "Lingering quality ('sticks with you for days') is a meta-attribute beyond our entire feature space."
+  ],
+  "archetype": "haunting melancholy seeker",
+  "archetype_idx": 32,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "need something that goes HARD. non stop action, car chases, gunfights, no boring talky parts. what you got",
+  "intent": "Wants relentless, high-intensity action with minimal slow scenes.",
+  "recs": [
+   "The Raid: Redemption (2011)",
+   "Mad Max: Fury Road (2015)",
+   "Crank (2006)",
+   "Speed (1994)",
+   "Shoot 'Em Up (2007)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Action genre directly matches request"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "car chases gunfights via TMDB keywords only"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "genome tense/atmospheric proxies high intensity"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "no axis for action density or downtime ratio"
+   }
+  ],
+  "holes": [
+   "Pacing and scene-density are unscored; slow-burn action films surface equally alongside relentless ones.",
+   "No dialogue-to-action ratio signal; 'no talky parts' preference is completely unservable."
+  ],
+  "archetype": "pure-action/spectacle",
+  "archetype_idx": 33,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "loved john wick and the raid. give me movies with that same insane hand to hand fight choreography",
+  "intent": "Seeking martial-arts/gun-fu films with elite fight choreography like John Wick and The Raid.",
+  "recs": [
+   "Ip Man (2008)",
+   "Kill Bill: Vol. 1 (2003)",
+   "Atomic Blonde (2017)",
+   "Crouching Tiger, Hidden Dragon (2000)",
+   "Hard Boiled (1992)"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "John Wick Raid as co-watch embedding anchors"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "martial arts via TMDB keyword not a genre"
+   },
+   {
+    "axis": "visual_style",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "choreography quality has no scored axis"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "directors Yuen Woo-ping etc filter by style"
+   }
+  ],
+  "holes": [
+   "Choreography quality and density are not signals; all action films are indistinct on this axis.",
+   "Gun-fu vs wire-fu vs bare-knuckle subtype distinctions require human curation beyond keyword matching."
+  ],
+  "archetype": "martial-arts/fight-choreography",
+  "archetype_idx": 33,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "whats a good adrenaline movie for tonight, something that'll get my heart pumping",
+  "intent": "Casual ask for a single heart-pounding pick to watch tonight.",
+  "recs": [
+   "Speed (1994)",
+   "Gravity (2013)",
+   "Edge of Tomorrow (2014)",
+   "Mission: Impossible - Fallout (2018)",
+   "Dunkirk (2017)"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "genome tense/atmospheric maps to heart-pumping"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Action Thriller genre bucket"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "relentless pace vs slow-burn unscored"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "tonight casual spontaneous context ignored"
+   }
+  ],
+  "holes": [
+   "No streaming or rental availability signal; 'for tonight' spontaneous viewing is unservable.",
+   "Pacing unscored; slow-burn thrillers surface alongside relentless picks with equal mood scores."
+  ],
+  "archetype": "adrenaline/entertainment",
+  "archetype_idx": 33,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "i want practical stunts, real explosions, none of that cgi garbage. mad max fury road type energy",
+  "intent": "Prefers practical-effects, stunt-heavy action in the vein of Mad Max: Fury Road.",
+  "recs": [
+   "The Dark Knight (2008)",
+   "Heat (1995)",
+   "Mission: Impossible - Ghost Protocol (2011)",
+   "Terminator 2: Judgment Day (1991)",
+   "Die Hard (1988)"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Mad Max as anchor in item embedding"
+   },
+   {
+    "axis": "visual_style",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "no practical-vs-CGI axis anywhere in pipeline"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Action genre broad filter"
+   },
+   {
+    "axis": "decade_year",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "pre-CGI era weak proxy excludes modern practical picks"
+   }
+  ],
+  "holes": [
+   "Practical-vs-CGI is fully unserved; no metadata axis distinguishes stunt-heavy from VFX-driven action.",
+   "Release year is a poor proxy: excludes great modern practical films and includes CGI-heavy older titles."
+  ],
+  "archetype": "practical-action/stunt-spectacle",
+  "archetype_idx": 33,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "recommend me a heist thriller thats tense the whole way through, like i cant relax type of movie",
+  "intent": "Wants a nonstop tense heist thriller.",
+  "recs": [
+   "Heat (1995)",
+   "Inside Man (2006)",
+   "The Town (2010)",
+   "Thief (1981)",
+   "No Country for Old Men (2007)",
+   "Sicario (2015)"
+  ],
+  "signals": [
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "heist via TMDB keyword not a genre bucket"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "genome tense/atmospheric is a strong signal here"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Crime Thriller genre filters broadly"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "sustained tension whole runtime unverifiable"
+   }
+  ],
+  "holes": [
+   "Heist is a TMDB keyword not a genre; retrieval may surface crime dramas without heist structure.",
+   "Sustained pacing throughout can't be confirmed; several picks have slow deliberate first acts."
+  ],
+  "archetype": "heist/crime-thriller",
+  "archetype_idx": 33,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "ok so im in the mood for like a survival disaster thing?? plane crash mountain climbing shark whatever, man vs nature but intense. or honestly any high stakes life or death movie works im not picky as long as it doesnt drag",
+  "intent": "Rambling request for high-stakes survival/disaster or any life-or-death thriller that stays fast.",
+  "recs": [
+   "The Revenant (2015)",
+   "127 Hours (2010)",
+   "Alive (1993)",
+   "Gravity (2013)",
+   "The Grey (2011)"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB keywords: survival wilderness plane crash shark"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "survival disaster not a first-class genre bucket"
+   },
+   {
+    "axis": "setting_location",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "mountains ocean space via TMDB keywords"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "doesnt drag preference is fully unscored"
+   }
+  ],
+  "holes": [
+   "Survival/disaster served only via loose keyword matching; some picks are slow-burn prestige films.",
+   "Pacing preference is unservable; The Revenant and The Grey both drag by some viewers' standards."
+  ],
+  "archetype": "survival/disaster",
+  "archetype_idx": 33,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "underrated action flicks nobody talks about. seen all the big ones already",
+  "intent": "Looking for lesser-known action deep cuts beyond the mainstream hits.",
+  "recs": [
+   "Dredd (2012)",
+   "Upgrade (2018)",
+   "Haywire (2011)",
+   "Equilibrium (2002)",
+   "District B13 (2004)"
+  ],
+  "signals": [
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "popularity score filters low-profile titles"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Action genre baseline filter"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "quality signal needed; low pop doesnt mean good"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "co-watch embedding finds stylistic neighbors"
+   }
+  ],
+  "holes": [
+   "No quality or critic-score axis: low popularity cannot distinguish underrated gems from merely bad films.",
+   "'Seen all the big ones' requires user watch-history exclusion; LLM extractor cannot enumerate seen films."
+  ],
+  "archetype": "deep-cut/discovery",
+  "archetype_idx": 33,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "gimme a spy movie with sick chase scenes. bourne vibes",
+  "intent": "Wants a Bourne-style spy thriller built around chase sequences.",
+  "recs": [
+   "The Bourne Ultimatum (2007)",
+   "Kingsman: The Secret Service (2015)",
+   "Skyfall (2012)",
+   "Salt (2010)",
+   "Atomic Blonde (2017)"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Bourne as anchor in co-watch item embedding"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "spy via TMDB keyword; not a dedicated genre"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "chase sequences via TMDB keywords; density unscored"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Action Thriller genre broad match"
+   }
+  ],
+  "holes": [
+   "Chase-scene density is not scored; spy films heavy on intrigue and low on action surface equally.",
+   "Gritty grounded Bourne tone vs Bond glamour gap is not captured by genre or keyword signals."
+  ],
+  "archetype": "spy-thriller/chase",
+  "archetype_idx": 33,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "movie so intense you forget to breathe. go",
+  "intent": "Challenge to name the single most breathless, edge-of-seat film.",
+  "recs": [
+   "No Country for Old Men (2007)",
+   "Sicario (2015)",
+   "Gravity (2013)",
+   "Dunkirk (2017)",
+   "1917 (2019)"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "genome tense/atmospheric directly maps here"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "edge-of-seat density and continuity unscored"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "genome dark/gritty partial proxy; MPAA MISSING"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "cathartic vs bleak endings untagged"
+   }
+  ],
+  "holes": [
+   "Sustained breathlessness vs. tension-with-release cycles cannot be distinguished from mood tags alone.",
+   "Pacing axis is fully absent; ranking films by intensity continuity requires editorial judgment."
+  ],
+  "archetype": "breathless/sustained-tension",
+  "archetype_idx": 33,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "my buddies coming over with beers, need a loud dumb fun action movie we can yell at the screen to nothing serious",
+  "intent": "Wants a loud, fun, popcorn action movie for a group hangout, not a serious one.",
+  "recs": [
+   "The Rock (1996)",
+   "Con Air (1997)",
+   "Predator (1987)",
+   "Bad Boys (1995)",
+   "Die Hard (1988)"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "genome feel-good/quirky partial proxy for fun tone"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Action genre baseline"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "group watch party context not a pipeline signal"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "campy over-the-top not tagged; content_rating MISSING"
+   }
+  ],
+  "holes": [
+   "Group-watch and occasion context have no signal; pipeline can't prefer rewatchable crowd-pleasers.",
+   "Intentional camp and cheese ('dumb fun') is untagged; genome feel-good does not capture schlocky tone."
+  ],
+  "archetype": "popcorn/social-watch",
+  "archetype_idx": 33,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "ok it's raining, i've got tea, i want to put on something i've seen a million times but never get sick of. what should i watch",
+  "intent": "Wants a familiar rewatch for a cozy rainy day",
+  "recs": [
+   "The Princess Bride",
+   "Groundhog Day",
+   "You've Got Mail",
+   "Forrest Gump",
+   "Home Alone",
+   "Sleepless in Seattle"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "feel-good/heartwarming genome tags cover cozy warm tone"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "high popularity is proxy for culturally ubiquitous titles"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy/romance/family genres cluster around comfort viewing"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "rainy-day cozy occasion not a trained extractor signal"
+   }
+  ],
+  "holes": [
+   "Rewatchability is not tracked \u2014 popularity is a weak proxy for repeat-view appeal, not equivalent.",
+   "Rainy-day/occasion context is not an intake signal the extractor is taught to surface."
+  ],
+  "archetype": "cozy/comfort",
+  "archetype_idx": 34,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "recommend me some good comfort movies pls",
+  "intent": "Broad ask for comfort films",
+  "recs": [
+   "The Princess Bride",
+   "Toy Story",
+   "Forrest Gump",
+   "When Harry Met Sally...",
+   "Elf",
+   "Finding Nemo"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "feel-good/heartwarming genome tags are the primary lever"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy/family/romance cluster reliably maps to comfort"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "well-known titles preferred for comfort familiarity"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "genome captures light tone but no explicit maturity axis"
+   }
+  ],
+  "holes": [
+   "'Comfort' is an abstract cluster; genome feel-good tags partially cover it but miss soft nostalgia and safe-stakes nuance."
+  ],
+  "archetype": "cozy/comfort",
+  "archetype_idx": 34,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "I love movies like The Princess Bride, Groundhog Day and You've Got Mail \u2014 the kind you can throw on any night and just feel good. give me more in that lane",
+  "intent": "Wants more titles matching named comfort classics",
+  "recs": [
+   "Sleepless in Seattle",
+   "Notting Hill",
+   "When Harry Met Sally...",
+   "Enchanted",
+   "Love Actually",
+   "About a Boy"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "item embeddings capture co-watch signal for all three named seeds"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "feel-good/heartwarming genome reinforces the comfort cluster"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy and romance genres pulled from seed titles"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "light warm tone partially captured via genome, no clean axis"
+   }
+  ],
+  "holes": [
+   "Named-seed co-watch embedding is strong but 'throw on any night' ease-of-entry intent has no separate encoding."
+  ],
+  "archetype": "cozy/comfort",
+  "archetype_idx": 34,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "feeling kinda down today and i just want something warm and familiar. nothing sad or stressful, basically a movie hug",
+  "intent": "Low-stakes feel-good film for a bad mood",
+  "recs": [
+   "Paddington 2",
+   "School of Rock",
+   "Ratatouille",
+   "The Secret Life of Walter Mitty",
+   "Elf",
+   "Toy Story"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "feel-good/heartwarming genome tags cover the positive pole"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "genome has sad/dark tags but pipeline can't hard-filter them out"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy/family genre signals support low-stress picks"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "low-stakes/tension-free pacing not a tracked axis"
+   }
+  ],
+  "holes": [
+   "Cannot hard-filter OUT sad or dark tone \u2014 genome scores exist for both poles but pipeline only ranks positive mood, no exclusion gate.",
+   "No 'stakes-free' or low-tension pacing axis to eliminate stressful thrillers that also score feel-good."
+  ],
+  "archetype": "cozy/comfort",
+  "archetype_idx": 34,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "whats the most rewatchable movie of all time in your opinion? like the ones people put on every single year",
+  "intent": "Wants the ultimate rewatch-value pick",
+  "recs": [
+   "The Princess Bride",
+   "Elf",
+   "Home Alone",
+   "Die Hard",
+   "Groundhog Day",
+   "The Wizard of Oz"
+  ],
+  "signals": [
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "high popularity approximates cultural ubiquity of iconic titles"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "feel-good/heartwarming genome marks crowd-pleasing tone"
+   },
+   {
+    "axis": "decade_year",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "older classic releases skew higher on long-run repeat viewing"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "cultural-classic or canonical status not derivable from our signals"
+   }
+  ],
+  "holes": [
+   "Rewatchability is not tracked at all \u2014 popularity and feel-good genome are weak proxies, not equivalent to repeat-view rate.",
+   "Annual rewatch traditions (Elf every Christmas, Die Hard every holiday) require occasion metadata we don't have."
+  ],
+  "archetype": "cozy/comfort",
+  "archetype_idx": 34,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "need something to have on in the background while i clean the apartment. comfort watch i already know by heart so i dont have to actually follow the plot",
+  "intent": "Half-watchable familiar background movie",
+  "recs": [
+   "Home Alone",
+   "Elf",
+   "Clueless",
+   "Grease",
+   "The Lion King",
+   "Forrest Gump"
+  ],
+  "signals": [
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "very high popularity approximates culturally memorised titles"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "feel-good/heartwarming genome marks low-stress ambient tone"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy/family clusters match light non-demanding viewing"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "passive-watchable / low narrative density not a tracked axis"
+   },
+   {
+    "axis": "runtime",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "runtime scraped but unused; relevant for background session length"
+   }
+  ],
+  "holes": [
+   "No 'background-watchable' or low-attention-demand axis exists; pipeline cannot distinguish plot-dense from episodic/light fare.",
+   "Runtime is scraped but not wired \u2014 relevant here since shorter or episodically structured films suit background use."
+  ],
+  "archetype": "cozy/comfort",
+  "archetype_idx": 34,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "give me cozy 90s/early 2000s stuff. i grew up on Mrs Doubtfire and Home Alone and i kinda miss that feeling",
+  "intent": "Nostalgic comfort picks from a specific era",
+  "recs": [
+   "Aladdin",
+   "The Lion King",
+   "Toy Story",
+   "Clueless",
+   "Matilda",
+   "You've Got Mail"
+  ],
+  "signals": [
+   {
+    "axis": "decade_year",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "1990-2003 release year filter is exact and reliable"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Mrs. Doubtfire and Home Alone seed item embeddings"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "family/comedy genre cluster covers the era tone"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "feel-good/heartwarming genome maps to nostalgic warmth"
+   },
+   {
+    "axis": "content_rating",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "PG/family-safe MPAA filter requires data we don't have"
+   }
+  ],
+  "holes": [
+   "Content rating (PG/family-safe) is MISSING \u2014 decade+genre can't exclude R-rated 90s films from the comfort cluster.",
+   "'Nostalgic' as an affect axis isn't in genome; decade + named seeds approximate it but won't exclude non-nostalgic 90s picks."
+  ],
+  "archetype": "nostalgia/comfort",
+  "archetype_idx": 34,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "my go-to is Notting Hill and ive honestly seen it like 20 times lol. what else scratches that same itch",
+  "intent": "Wants films that hit the same note as a beloved favorite",
+  "recs": [
+   "Four Weddings and a Funeral",
+   "Love Actually",
+   "Bridget Jones's Diary",
+   "About a Boy",
+   "Sleepless in Seattle",
+   "When Harry Met Sally..."
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Notting Hill item embedding is the single strongest lever here"
+   },
+   {
+    "axis": "person_writer",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Richard Curtis links Four Weddings, Love Actually, About a Boy"
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "British rom-com cluster via production_countries GB"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Romance/Comedy genre pair cleanly defines the cluster"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "feel-good/heartwarming genome reinforces warm romantic tone"
+   }
+  ],
+  "holes": [
+   "Specific 'charming self-deprecating British wit' subgenre tone not separable from generic rom-com in our genre/genome signals."
+  ],
+  "archetype": "cozy/comfort",
+  "archetype_idx": 34,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "its not even december yet but im in the mood for a cozy heartwarming movie i can rewatch, maybe a lil holiday-ish",
+  "intent": "Off-season cozy/holiday comfort watch",
+  "recs": [
+   "Elf",
+   "Home Alone",
+   "A Christmas Story",
+   "The Holiday",
+   "Love Actually",
+   "It's a Wonderful Life"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "TMDB keywords 'christmas'/'holiday' cover most canonical picks"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "feel-good/heartwarming genome tags are the core signal"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy/family/romance genres anchor the holiday cluster"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "classic holiday titles have very high popularity scores"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "'lil holiday-ish' is fuzzy; keyword match over-indexes on literal Christmas"
+   }
+  ],
+  "holes": [
+   "'Holiday-ish but not strictly Christmas' nuance can't be served \u2014 TMDB christmas keyword is binary and over-anchors on literal holiday films."
+  ],
+  "archetype": "holiday/comfort",
+  "archetype_idx": 34,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "sunday movie night with the family, we want a feel good crowd pleaser that everyone's probably seen before and always enjoys",
+  "intent": "Crowd-pleasing familiar film for a family group watch",
+  "recs": [
+   "The Lion King",
+   "Toy Story",
+   "The Princess Bride",
+   "Home Alone",
+   "Finding Nemo",
+   "Forrest Gump"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "feel-good/heartwarming genome is the primary crowd-pleaser lever"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "very high popularity maps to 'everyone's seen it before'"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "family/adventure/comedy genres target crowd-pleasing fare"
+   },
+   {
+    "axis": "content_rating",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "G/PG family-appropriateness filter requires MPAA data"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "family-group Sunday-night occasion not a trained intake signal"
+   }
+  ],
+  "holes": [
+   "Content rating (G/PG) for family-appropriateness is MISSING \u2014 genre+genome cannot exclude R-rated crowd-pleasers.",
+   "Group-occasion signal (family movie night) is not extracted; pipeline has no audience-type or viewing-context targeting."
+  ],
+  "archetype": "family/crowd-pleaser",
+  "archetype_idx": 34,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "ok i need something PITCH BLACK funny. like the kind of comedy where you feel bad for laughing. In Bruges energy. hit me",
+  "intent": "Wants dark comedy in the vein of In Bruges",
+  "recs": [
+   "Bad Santa (2003)",
+   "Burn After Reading (2008)",
+   "Fargo (1996)",
+   "The War of the Roses (1989)",
+   "Heathers (1988)"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "In Bruges co-watch embedding clusters dark-comedy crime films"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome dark/gritty + quirky/funny both elevated"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy + crime genre filter"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "no explicit black-comedy subgenre tag in genome"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "moral-weight guilt register not captured"
+   }
+  ],
+  "holes": [
+   "No signal for moral discomfort \u2014 'feel bad for laughing' guilt-affect axis absent from genome",
+   "Cannot distinguish In Bruges existential-bleak register from generic dark comedy"
+  ],
+  "archetype": "black comedy moral discomfort",
+  "archetype_idx": 35,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "give me a good satire that actually rips into something. politics, media, whatever. Dr Strangelove made me realize i love this stuff",
+  "intent": "Seeking sharp political/social satire like Dr. Strangelove",
+  "recs": [
+   "Network (1976)",
+   "Wag the Dog (1997)",
+   "Being There (1979)",
+   "Thank You for Smoking (2005)",
+   "Idiocracy (2006)",
+   "Election (1999)"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Dr. Strangelove item embedding anchors retrieval well"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB keywords cover political/media themes partially"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy genre filter"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "no explicit satirical affect in genome"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "satire is not a discrete genre tag"
+   }
+  ],
+  "holes": [
+   "No satire subgenre tag; relies entirely on TMDB keyword co-occurrence and co-watch signal",
+   "Cannot measure sharpness or incisiveness of critique \u2014 quality axis is absent"
+  ],
+  "archetype": "political social satire",
+  "archetype_idx": 35,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "i just want to turn my brain off and watch people fall down and hit each other with stuff lol. good dumb slapstick?",
+  "intent": "Wants lowbrow physical/slapstick comedy",
+  "recs": [
+   "Airplane! (1980)",
+   "Dumb and Dumber (1994)",
+   "Home Alone (1990)",
+   "The Naked Gun: From the Files of Police Squad! (1988)",
+   "Tommy Boy (1995)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy genre filter"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "slapstick not an explicit genome tag"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome feel-good + quirky/funny signal"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "gag density / rapid-fire pacing not tracked"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "co-watch clusters physical comedy films reliably"
+   }
+  ],
+  "holes": [
+   "No slapstick or physical-comedy subgenre tag; retrieval relies on co-watch clustering alone",
+   "Pacing/gag-density axis is completely absent \u2014 'turn brain off' cognitive-load intent unmeasurable"
+  ],
+  "archetype": "lowbrow slapstick comedy",
+  "archetype_idx": 35,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "movies that make me want to crawl out of my skin from secondhand embarrassment. cringe comedy. love/hate it",
+  "intent": "Requesting cringe / secondhand-embarrassment comedy",
+  "recs": [
+   "Borat: Cultural Learnings of America for Make Benefit Glorious Nation of Kazakhstan (2006)",
+   "Meet the Parents (2000)",
+   "Best in Show (2000)",
+   "Napoleon Dynamite (2004)",
+   "Bridesmaids (2011)",
+   "The Disaster Artist (2017)"
+  ],
+  "signals": [
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "cringe comedy not a discrete genre tag"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "awkward/uncomfortable affect absent from genome"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy genre filter"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "co-watch clusters cringe/mockumentary films"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "social awkwardness not indexed in TMDB keywords"
+   }
+  ],
+  "holes": [
+   "Cringe/secondhand-embarrassment is a distinct register with no genome affect tag; only co-watch can serve it",
+   "Extractor must map 'cringe comedy' intent \u2014 pipeline has no signal to verify this quality on candidates"
+  ],
+  "archetype": "cringe secondhand embarrassment comedy",
+  "archetype_idx": 35,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "whats a comedy thats mean spirited in a smart way not a lazy way, you know? something with an actual edge to it",
+  "intent": "Wants dark/edgy comedy with wit, not lazy meanness",
+  "recs": [
+   "Election (1999)",
+   "The Cable Guy (1996)",
+   "To Die For (1995)",
+   "American Psycho (2000)",
+   "Dirty Rotten Scoundrels (1988)"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome dark/gritty elevated on candidates"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "wit vs lazy meanness is a craft axis not tagged"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy genre filter"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "dark comedy only partially captured in genome"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "embedding clusters sharp-edged dark comedies"
+   }
+  ],
+  "holes": [
+   "'Smart meanness vs lazy meanness' is a craft quality axis \u2014 completely unmeasurable in our pipeline",
+   "No wit or intelligence-of-comedy signal; genre + mood_affect can retrieve dark comedy but not selective on craft"
+  ],
+  "archetype": "mean-spirited smart comedy",
+  "archetype_idx": 35,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "me and my friends are hammered and want to laugh our asses off. nothing that requires thinking. just funny funny",
+  "intent": "Wants an easy crowd-pleasing broad comedy for a group",
+  "recs": [
+   "The Hangover (2009)",
+   "Step Brothers (2008)",
+   "Anchorman: The Legend of Ron Burgundy (2004)",
+   "Old School (2003)",
+   "Superbad (2007)",
+   "Billy Madison (1995)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy genre filter"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome feel-good + quirky/funny elevated"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "high-popularity films surface reliably"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "group / social viewing context not tracked"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "broad/accessible vs cerebral not tagged"
+   }
+  ],
+  "holes": [
+   "Social/group viewing occasion is completely absent from pipeline \u2014 no occasion_audience signal exists",
+   "'Nothing that requires thinking' cognitive-accessibility axis unmeasurable; popularity is only a crude proxy"
+  ],
+  "archetype": "crowd-pleasing group comedy",
+  "archetype_idx": 35,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "i loved The Death of Stalin and Thick of It. more stuff thats bleakly hilarious about horrible people in power pls",
+  "intent": "Wants Armando Iannucci-style bleak power satire",
+  "recs": [
+   "Primary Colors (1998)",
+   "Vice (2018)",
+   "Don't Look Up (2021)",
+   "Bob Roberts (1992)",
+   "The Big Short (2015)"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "The Death of Stalin embedding anchors power-satire cluster"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Iannucci director id resolvable via people store"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "political power themes in TMDB keywords"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome dark/gritty/bleak elevated on candidates"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "'horrible people in power' character type not indexed"
+   }
+  ],
+  "holes": [
+   "In the Loop (2009) \u2014 the most precise stylistic match \u2014 may be below 200-rating corpus threshold",
+   "Fast-dialogue Iannucci style and 'bleakness register' have no pacing or tonal-blend signal to filter on"
+  ],
+  "archetype": "bleak power satire Iannucci-style",
+  "archetype_idx": 35,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "is there a comedy thats actually kinda sad underneath all the jokes? like it makes you laugh then punches you",
+  "intent": "Seeking bittersweet dark comedy that mixes humor and melancholy",
+  "recs": [
+   "Little Miss Sunshine (2006)",
+   "Sideways (2004)",
+   "The Royal Tenenbaums (2001)",
+   "About Schmidt (2002)",
+   "The Truman Show (1998)",
+   "Hunt for the Wilderpeople (2016)"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "genome has sad/emotional AND feel-good but not bittersweet-blend"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy-drama genre filter"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "bittersweet tonal blend not a discrete genome axis"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "co-watch clusters tragicomedy films reliably"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "emotional gut-punch structure not captured"
+   }
+  ],
+  "holes": [
+   "Bittersweet blend requires sad+funny scores to co-occur \u2014 genome scores them independently, cannot detect the mix",
+   "Extractor must parse 'punches you' as emotional gut-punch intent, not a literal signal we can verify on candidates"
+  ],
+  "archetype": "bittersweet tragicomedy",
+  "archetype_idx": 35,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "deadpan absurd weird humor. i dont care if it makes sense. the weirder the better honestly",
+  "intent": "Wants absurdist / deadpan surreal comedy",
+  "recs": [
+   "Monty Python and the Holy Grail (1975)",
+   "The Big Lebowski (1998)",
+   "Being John Malkovich (1999)",
+   "Brazil (1985)",
+   "Sorry to Bother You (2018)"
+  ],
+  "signals": [
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome quirky tag elevated on absurdist films"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "absurdist / surreal not discrete genome tags"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy genre filter"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "co-watch clusters absurdist surreal films well"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "'weirder the better' implies preference for obscure"
+   }
+  ],
+  "holes": [
+   "No deadpan or absurdist subgenre tag; quirky genome tag covers too broad a range to be selective",
+   "Surrealism degree is not indexed \u2014 cannot rank by 'how weird' within the absurdist cluster"
+  ],
+  "archetype": "absurdist deadpan surreal comedy",
+  "archetype_idx": 35,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "need a raunchy R rated comedy for a wednesday night, something i havent seen a million times already though",
+  "intent": "Wants a fresh raunchy R-rated comedy, not the obvious picks",
+  "recs": [
+   "Observe and Report (2009)",
+   "Blockers (2018)",
+   "Hot Tub Time Machine (2010)",
+   "Good Boys (2019)",
+   "Bad Moms (2016)"
+  ],
+  "signals": [
+   {
+    "axis": "content_rating",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "MPAA R-rating not wired into pipeline"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "comedy genre filter"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "raunchy humor in TMDB keywords, inconsistently tagged"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "invert popularity to avoid overexposed titles"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "co-watch clusters raunchy comedies together"
+   }
+  ],
+  "holes": [
+   "MPAA content rating completely absent \u2014 cannot filter R-rated vs PG-13 without it",
+   "'Haven't seen a million times' requires personal watch-history filter we do not have; popularity inversion is a crude proxy"
+  ],
+  "archetype": "raunchy R-rated fresh picks",
+  "archetype_idx": 35,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "i just finished watching Spirited Away for like the 5th time lol. what else is like that? more ghibli vibes or anything with that cozy magical feeling",
+  "intent": "Wants Ghibli-adjacent cozy magical-realism animated films after rewatching Spirited Away.",
+  "recs": [
+   "My Neighbor Totoro (1988)",
+   "Howl's Moving Castle (2004)",
+   "Kiki's Delivery Service (1989)",
+   "Princess Mononoke (1997)",
+   "Nausica\u00e4 of the Valley of the Wind (1984)",
+   "The Secret World of Arrietty (2010)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Animation genre directly implied by context."
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Spirited Away seeds 128-d item embedding lookup."
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "feel-good/heartwarming genome tags match cozy."
+   },
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Miyazaki director id captures most Ghibli films."
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Japanese production country confirms Ghibli-sphere."
+   },
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Studio Ghibli as studio label not wired."
+   }
+  ],
+  "holes": [
+   "Studio Ghibli as a studio/label filter is not wired; director person ids only partially cover Ghibli output.",
+   "'Cozy magical feeling' requires mood extraction; genome feel-good/heartwarming is close but doesn't capture magical-realism specifically."
+  ],
+  "archetype": "cozy magical animation fan",
+  "archetype_idx": 36,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "give me anime movies that will absolutely destroy me emotionally. saw your name and a silent voice already, need the next cry",
+  "intent": "Seeking emotionally devastating anime films beyond the popular ones they've seen.",
+  "recs": [
+   "Grave of the Fireflies (1988)",
+   "The Wind Rises (2013)",
+   "Wolf Children (2012)",
+   "When Marnie Was There (2014)",
+   "5 Centimeters per Second (2007)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Animation genre clearly implied by anime reference."
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Anime implies Japanese production country."
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "sad/emotional/heartbreaking genome tags core signal."
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Your Name and A Silent Voice seed embedding."
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Loss/grief theme partially in TMDB keywords."
+   }
+  ],
+  "holes": [
+   "Cannot exclude titles user has already seen; no query-time watch-history exclusion filter.",
+   "'Absolutely destroy me' intensity gradient not captured; genome sad tag does not rank devastation degree."
+  ],
+  "archetype": "emotionally devastated anime seeker",
+  "archetype_idx": 36,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "adult animation recs pls. not kids stuff. thinking like Akira, Perfect Blue, Ghost in the Shell",
+  "intent": "Wants mature, dark/cyberpunk-leaning animated films in the vein of classic seinen anime movies.",
+  "recs": [
+   "Paprika (2006)",
+   "Millennium Actress (2001)",
+   "Tokyo Godfathers (2003)",
+   "Ninja Scroll (1993)",
+   "Vampire Hunter D: Bloodlust (2000)",
+   "Metropolis (2001)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Animation genre directly stated by user."
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Akira/Perfect Blue/Ghost in Shell seed embeddings."
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "dark/gritty/bleak genome tags match requested tone."
+   },
+   {
+    "axis": "content_rating",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Not kids = MPAA R/adult rating, not wired."
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Cyberpunk partially covered in TMDB keywords."
+   }
+  ],
+  "holes": [
+   "Cannot filter by MPAA content rating; 'not kids stuff' has no hard exclusion gate in pipeline.",
+   "Seinen demographic target has no direct axis; approximated only via dark mood + adult-themed TMDB keywords."
+  ],
+  "archetype": "mature dark anime aficionado",
+  "archetype_idx": 36,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "whats good in the spider-verse art style? i loved how experimental and painterly it looked, want more animated movies that feel visually crazy and different",
+  "intent": "Looking for visually experimental, stylized animation like Spider-Verse.",
+  "recs": [
+   "Fantastic Planet (1973)",
+   "The Triplets of Belleville (2003)",
+   "Persepolis (2007)",
+   "Waltz with Bashir (2008)",
+   "Waking Life (2001)",
+   "A Scanner Darkly (2006)"
+  ],
+  "signals": [
+   {
+    "axis": "visual_style",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Painterly/experimental animation style not wired."
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Animation genre implied throughout prompt."
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Spider-Verse item embedding weakly approximates style."
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "quirky/cerebral genome tags loosely relevant."
+   },
+   {
+    "axis": "other",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Animation technique (rotoscope, watercolor) not tracked."
+   }
+  ],
+  "holes": [
+   "Visual/animation style (painterly, rotoscoped, experimental) has no axis; item embedding is the only weak approximation.",
+   "Animation technique metadata absent from pipeline; cannot distinguish production-method-based queries at all."
+  ],
+  "archetype": "experimental animation aesthete",
+  "archetype_idx": 36,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "my gf isnt into anime but i wanna show her something. maybe a good gateway movie? something romantic-ish and not too weird",
+  "intent": "Wants an accessible, romantic anime film to introduce a non-anime-fan partner.",
+  "recs": [
+   "Whisper of the Heart (1995)",
+   "The Girl Who Leapt Through Time (2006)",
+   "Kiki's Delivery Service (1989)",
+   "Wolf Children (2012)",
+   "Castle in the Sky (1986)",
+   "When Marnie Was There (2014)"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Anime implies Japanese production country."
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Animation + romance genre both available."
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "feel-good/heartwarming genome tags aid selection."
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Gateway/newcomer-accessible intent not wired."
+   },
+   {
+    "axis": "content_rating",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "Not too weird = family-safe; MPAA filter absent."
+   }
+  ],
+  "holes": [
+   "Gateway/accessibility for non-anime-fans not wired; pipeline cannot score on newcomer-friendliness.",
+   "'Not too weird' requires narrative-complexity signal that doesn't exist; genre and mood only loosely approximate."
+  ],
+  "archetype": "anime gateway for partner",
+  "archetype_idx": 36,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "makoto shinkai",
+  "intent": "Wants recommendations related to director Makoto Shinkai's films.",
+  "recs": [
+   "5 Centimeters per Second (2007)",
+   "The Garden of Words (2013)",
+   "Children Who Chase Lost Voices (2011)",
+   "Weathering with You (2019)",
+   "The Girl Who Leapt Through Time (2006)",
+   "Wolf Children (2012)"
+  ],
+  "signals": [
+   {
+    "axis": "person_director",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Shinkai director id directly addressable by name."
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "His known films seed 128-d item embedding lookup."
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Japanese production confirms anime-sphere results."
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "sad/romantic longing in genome tags matches style."
+   }
+  ],
+  "holes": [
+   "Bare-name prompt requires extractor to interpret 'makoto shinkai' as director-lookup intent, not keyword search.",
+   "Short Shinkai films (Voices of a Distant Star, She and Her Cat) likely absent from 200-rating MovieLens corpus."
+  ],
+  "archetype": "director completionist",
+  "archetype_idx": 36,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "im so tired of the isekai and the same generic stuff, are there any weird artsy animated films that arent the mainstream picks? like the ones nobody talks about",
+  "intent": "Seeking obscure, arthouse animated films outside mainstream anime trends.",
+  "recs": [
+   "Fantastic Planet (1973)",
+   "Millennium Actress (2001)",
+   "Tokyo Godfathers (2003)",
+   "The Triplets of Belleville (2003)",
+   "Paprika (2006)",
+   "Waltz with Bashir (2008)"
+  ],
+  "signals": [
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Low popularity score gates obscure picks."
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Animation genre clearly implied by context."
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "mindfuck/cerebral/quirky genome tags for weird."
+   },
+   {
+    "axis": "visual_style",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Artsy/arthouse aesthetic has no wired axis."
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Isekai not in our 20 genres; negation not supported."
+   }
+  ],
+  "holes": [
+   "Arthouse/artsy aesthetic label has no axis; pipeline cannot distinguish arthouse from mainstream by style.",
+   "Negation intent (exclude isekai/generic) is not wired; extractor cannot express genre-exclusion constraints."
+  ],
+  "archetype": "obscure arthouse animation hunter",
+  "archetype_idx": 36,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "need something to watch tonight thats animated but action packed. mecha, fights, cool sci fi stuff. hype me up",
+  "intent": "Wants high-energy action/mecha/sci-fi animated films for tonight.",
+  "recs": [
+   "Akira (1988)",
+   "Ghost in the Shell (1995)",
+   "Redline (2009)",
+   "Steamboy (2004)",
+   "The End of Evangelion (1997)",
+   "Ninja Scroll (1993)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Animation + action + sci-fi all available genres."
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Mecha in TMDB keywords, not a top-level genre."
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "epic genome tag captures hype/action energy."
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Action-packed/high-energy pacing axis not wired."
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Japanese implied by mecha/anime framing."
+   }
+  ],
+  "holes": [
+   "Pacing/energy level ('hype me up', 'action packed') has no direct axis; epic genome tag only partially covers.",
+   "Mecha is not a top-level genre; TMDB keyword coverage is partial and not guaranteed across all candidates."
+  ],
+  "archetype": "action mecha energy seeker",
+  "archetype_idx": 36,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "are there any western animated movies that are actually as good as anime? like i mostly watch japanese stuff but open to recs if theyre not for children",
+  "intent": "Wants non-childish Western animation that matches the quality of the anime they usually watch.",
+  "recs": [
+   "The Triplets of Belleville (2003)",
+   "Waltz with Bashir (2008)",
+   "Persepolis (2007)",
+   "Waking Life (2001)",
+   "A Scanner Darkly (2006)",
+   "Fantastic Planet (1973)"
+  ],
+  "signals": [
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Western = non-Japanese production country filter."
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Animation genre directly stated by user."
+   },
+   {
+    "axis": "content_rating",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Not for children = adult MPAA rating, not wired."
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "Quality/acclaim benchmark has no awards axis."
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Adult/mature tone via dark/gritty genome tags only."
+   }
+  ],
+  "holes": [
+   "Cannot filter by MPAA content rating to exclude children's animation; only genre and mood loosely approximate.",
+   "'As good as anime' quality bar has no wired signal; vote_average is the closest proxy but uncalibrated for this."
+  ],
+  "archetype": "western animation adult fan",
+  "archetype_idx": 36,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "ok so i love studio trigger, that whole loud colorful over the top energy, klk and promare were amazing. what movies scratch that same itch",
+  "intent": "Seeking films matching Studio Trigger's loud, colorful, over-the-top style.",
+  "recs": [
+   "Redline (2009)",
+   "The End of Evangelion (1997)",
+   "Akira (1988)",
+   "Paprika (2006)",
+   "Ninja Scroll (1993)",
+   "Ghost in the Shell (1995)"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Promare item embedding seeds lookup directly."
+   },
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Studio Trigger as studio label not wired."
+   },
+   {
+    "axis": "visual_style",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Loud/colorful/over-the-top visual style not wired."
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "epic genome tag captures over-the-top energy."
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Animation + action genre filters available."
+   }
+  ],
+  "holes": [
+   "Studio Trigger as a production studio filter is not wired; cannot retrieve by studio label at all.",
+   "Loud/colorful/over-the-top visual style has no axis; item embedding similarity is the only weak approximation."
+  ],
+  "archetype": "studio trigger style chaser",
+  "archetype_idx": 36,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "ok i need a good enemies to lovers movie where they hate each other at the start and youre like THERE IS NO WAY these two end up together and then they do. bonus if theres one scene in the rain lol",
+  "intent": "Wants an enemies-to-lovers romance with a strong bickering-to-passion arc and classic tropes.",
+  "recs": [
+   "10 Things I Hate About You (1999)",
+   "You've Got Mail (1998)",
+   "Pride & Prejudice (2005)",
+   "The Proposal (2009)",
+   "How to Lose a Guy in 10 Days (2003)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Romance genre clearly stated by user"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Enemies-to-lovers arc; TMDB kw partially covers"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Happy ending implied; no explicit stored tag"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Feel-good genome tag applies"
+   },
+   {
+    "axis": "object_prop",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "Rain scene trope not stored anywhere"
+   }
+  ],
+  "holes": [
+   "Enemies-to-lovers as a named romantic arc is only partially covered by TMDB keywords; may miss or dilute results.",
+   "Rain scene is a scene-level visual trope with no stored analog in any feature layer."
+  ],
+  "archetype": "romance/enemies-to-lovers",
+  "archetype_idx": 37,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "give me something slow burn. not a movie where they kiss in the first 10 min, i want the whole thing to be tension and longing glances until the very end",
+  "intent": "Seeking a slow-burn romance built on prolonged tension rather than an immediate relationship.",
+  "recs": [
+   "Before Sunrise (1995)",
+   "Lost in Translation (2003)",
+   "In the Mood for Love (2000)",
+   "Carol (2015)",
+   "Atonement (2007)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Romance/Drama genre implied"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Slow-burn pacing axis not tracked"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Longing/tension genome tags available"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Delayed-relationship timeline not stored"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Late resolution implied; no explicit tag"
+   }
+  ],
+  "holes": [
+   "Pacing axis is entirely MISSING; cannot distinguish slow-burn from fast-burn romance films.",
+   "Romantic arc timeline structure (when first kiss occurs) is not stored in any feature layer."
+  ],
+  "archetype": "romance/slow-burn",
+  "archetype_idx": 37,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "i want to CRY. like a tragic love story where it does not end well and im wrecked for a week. hit me",
+  "intent": "Wants a devastating tragic romance with an unhappy ending.",
+  "recs": [
+   "Atonement (2007)",
+   "Blue Valentine (2010)",
+   "The Fault in Our Stars (2014)",
+   "Eternal Sunshine of the Spotless Mind (2004)",
+   "La La Land (2016)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Romance + Drama genre"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Sad/heartbreaking genome tag covers well"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Unhappy ending not explicit; genome proxy"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Dark/bleak genome tone tag available"
+   }
+  ],
+  "holes": [
+   "Ending type (tragic/unhappy) is not an explicit stored field; must be inferred from mood tags.",
+   "Emotional impact intensity is unquantifiable from any feature in our set."
+  ],
+  "archetype": "romance/tragedy",
+  "archetype_idx": 37,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "whats a rom com i can throw on with my girls and wine friday night. funny, cute, nothing too sad",
+  "intent": "Looking for a light feel-good rom-com for a casual group night.",
+  "recs": [
+   "Bridesmaids (2011)",
+   "Crazy Rich Asians (2018)",
+   "The Proposal (2009)",
+   "Legally Blonde (2001)",
+   "My Best Friend's Wedding (1997)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Romantic Comedy genre explicit"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Feel-good/funny genome tags match well"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Light non-sad tone; genome partially covers"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Girls-night social context not tracked"
+   }
+  ],
+  "holes": [
+   "Occasion/audience context (girls night, group viewing) cannot be extracted or used for filtering."
+  ],
+  "archetype": "romance/comedy",
+  "archetype_idx": 37,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "loved pride and prejudice (2005) sooo much. the hand flex. anything else with that yearning period drama vibe??",
+  "intent": "Wants period-drama romances similar to the 2005 Pride & Prejudice with intense yearning.",
+  "recs": [
+   "Sense and Sensibility (1995)",
+   "Atonement (2007)",
+   "Little Women (2019)",
+   "Emma (1996)",
+   "Jane Eyre (2011)"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "128-d item embedding finds P&P 2005 neighbors"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "19th century period via TMDB keywords"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Period Drama/Romance genre"
+   },
+   {
+    "axis": "based_on_source",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Literary adaptation; TMDB kw partial"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Yearning/longing not an explicit genome tag"
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "UK production country available"
+   }
+  ],
+  "holes": [
+   "Yearning/longing as a specific affect axis does not exist in genome tags; only approximated by adjacent tags.",
+   "Author-level entity filtering (Jane Austen adaptations specifically) is not a stored axis."
+  ],
+  "archetype": "romance/period-drama",
+  "archetype_idx": 37,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "me and my bf have very different taste, hes into action i love romance. is there a movie thats romantic but also has like a plot he wont fall asleep during",
+  "intent": "Needs a romance that also appeals to an action-leaning partner for a couples watch.",
+  "recs": [
+   "Mr. & Mrs. Smith (2005)",
+   "True Lies (1994)",
+   "Romancing the Stone (1984)",
+   "Knight and Day (2010)",
+   "The Bounty Hunter (2010)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Romance + Action dual genre"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Action-romance hybrid via TMDB keywords"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Funny and exciting genome tags available"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Couples-watch context not tracked"
+   }
+  ],
+  "holes": [
+   "Couples-watch context (dual-taste household) cannot be modeled; requires simultaneous two-person preference input.",
+   "Partner's implicit action preference is session-context only, not a film metadata signal."
+  ],
+  "archetype": "romance/action-hybrid",
+  "archetype_idx": 37,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "why is every romance movie these days so cheesy and fake. i want one that actually feels real, like two messy adults figuring it out. more Before Sunrise less hallmark",
+  "intent": "Wants a grounded realistic character-driven romance over formulaic romcoms.",
+  "recs": [
+   "Before Sunrise (1995)",
+   "Before Sunset (2004)",
+   "Before Midnight (2013)",
+   "Blue Valentine (2010)",
+   "500 Days of Summer (2009)",
+   "Marriage Story (2019)"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Before Sunrise item embedding finds close neighbors"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Drama/Romance genre"
+   },
+   {
+    "axis": "pacing",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Dialogue-driven character pacing not tracked"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Grounded realistic tone not an explicit genome tag"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Indie/mumblecore subgenre not stored explicitly"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Anti-formulaic vibe not a genome dimension"
+   }
+  ],
+  "holes": [
+   "Pacing and dialogue-density axis MISSING; cannot filter talkative character-study films from plot-driven ones.",
+   "Formulaic vs. authentic quality distinction is not stored; no reliable proxy beyond indie genre tag."
+  ],
+  "archetype": "romance/character-drama",
+  "archetype_idx": 37,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "enemies to lovers but make it grumpy x sunshine plz",
+  "intent": "Wants an enemies-to-lovers romance with a grumpy/sunshine dynamic, stated tersely.",
+  "recs": [
+   "The Proposal (2009)",
+   "10 Things I Hate About You (1999)",
+   "Enchanted (2007)",
+   "You've Got Mail (1998)",
+   "Hitch (2005)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Romance/Comedy genre"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Enemies-to-lovers trope via TMDB kw partial"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Grumpy/sunshine personality archetype not stored"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Funny/feel-good genome tags apply"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Happy ending assumed; no explicit tag"
+   }
+  ],
+  "holes": [
+   "Character archetype pairing (grumpy/sunshine) is not stored in any feature layer; no personality-type axis exists.",
+   "Enemies-to-lovers as a named plot beat only partially covered by TMDB keywords; coverage inconsistent."
+  ],
+  "archetype": "romance/enemies-to-lovers",
+  "archetype_idx": 37,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "so its my anniversary next week and i wanna surprise my wife with a movie night at home. she loves those sweeping epic love stories, the kind that span years and continents. what should i pick",
+  "intent": "Seeking an epic sweeping romance for an anniversary movie night.",
+  "recs": [
+   "The English Patient (1996)",
+   "Out of Africa (1985)",
+   "Titanic (1997)",
+   "Casablanca (1942)",
+   "Doctor Zhivago (1965)",
+   "Atonement (2007)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Epic Romance + Drama genre"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Epic/sweeping genome tag available"
+   },
+   {
+    "axis": "setting_location",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Multi-continent scope; TMDB kw partial"
+   },
+   {
+    "axis": "runtime",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "Long runtime signals epic; not wired"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Historical period via TMDB keywords"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Anniversary context not tracked"
+   }
+  ],
+  "holes": [
+   "Runtime is scraped but not wired; cannot filter for 2h+ epics vs. shorter films.",
+   "Multi-continent narrative scope requires story-geography data distinct from production country."
+  ],
+  "archetype": "romance/epic",
+  "archetype_idx": 37,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "i just got out of a bad breakup and i dont know if i want something that makes me believe in love again or something that lets me wallow. maybe both?? just something romantic",
+  "intent": "Emotionally seeking a romance, undecided between hopeful and cathartic/sad.",
+  "recs": [
+   "Eternal Sunshine of the Spotless Mind (2004)",
+   "500 Days of Summer (2009)",
+   "About Time (2013)",
+   "Crazy, Stupid, Love (2011)",
+   "When Harry Met Sally (1989)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Romance genre clearly stated"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Heartbreaking + heartwarming dual genome tags"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Happy vs. sad ending; genome proxy only"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Post-breakup emotional state not tracked"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Breakup/healing theme; TMDB kw partial"
+   }
+  ],
+  "holes": [
+   "User's emotional state (post-breakup, undecided) is session-context with no film metadata analog.",
+   "Dual-mood intent (hopeful vs. cathartic) requires clarification or mixed retrieval, not standard ranking."
+  ],
+  "archetype": "romance/cathartic",
+  "archetype_idx": 37,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "can you rec me some good movies directed by women? tired of every film i watch being some dude's vision lol",
+  "intent": "Wants films directed by women",
+  "recs": [
+   "Lost in Translation (2003)",
+   "The Hurt Locker (2008)",
+   "Lady Bird (2017)",
+   "Little Women (2019)",
+   "Zero Dark Thirty (2012)",
+   "Selma (2014)"
+  ],
+  "signals": [
+   {
+    "axis": "person_director",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "have director person IDs but no gender attribute on people records"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "drama/war/biopic labels available; secondary to director-gender intent"
+   },
+   {
+    "axis": "representation_diversity",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "no gender label on people records; cannot filter by it"
+   }
+  ],
+  "holes": [
+   "Cannot filter directors by gender; person records carry IDs only, no gender attribute.",
+   "Serving this at scale requires a curated female-director entity list or gender ontology on people."
+  ],
+  "archetype": "cross-genre/women-directed",
+  "archetype_idx": 38,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "Looking for Black cinema that isn't just about trauma and slavery. I want joy, romance, sci-fi, comedy \u2014 Black people just living their lives",
+  "intent": "Wants Black-led films outside the trauma genre",
+  "recs": [
+   "Black Panther (2018)",
+   "Love & Basketball (2000)",
+   "Do the Right Thing (1989)",
+   "Sorry to Bother You (2018)",
+   "Coming to America (1988)",
+   "Friday (1995)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Comedy, Romance, Sci-Fi all present; user specified genres explicitly"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome feel-good/heartwarming tags as proxy for joy signal"
+   },
+   {
+    "axis": "person_director",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "can match specific known Black directors by ID, not by race class"
+   },
+   {
+    "axis": "representation_diversity",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "no race/ethnicity attribute on cast or crew"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "TMDB keywords lack a 'Black joy' or 'Black-led' label"
+   }
+  ],
+  "holes": [
+   "No race/ethnicity attribute on cast or director; 'Black-led' cannot be computed from our data.",
+   "Exclusion of trauma/slavery themes requires negative-keyword logic or a classifier we do not have."
+  ],
+  "archetype": "comedy/romance/sci-fi/Black-led",
+  "archetype_idx": 38,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "give me queer movies with a happy ending pls. i cannot handle another one where the gay couple dies or gets separated",
+  "intent": "Wants LGBTQ films with happy endings",
+  "recs": [
+   "Love, Simon (2018)",
+   "The Kids Are All Right (2010)",
+   "Pride (2014)",
+   "But I'm a Cheerleader (1999)",
+   "Moonlight (2016)"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB keywords include lgbt/gay/homosexuality but sparsely and imprecisely"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "happy vs tragic ending is not a stored attribute anywhere"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome feel-good/heartwarming as weak proxy for positive resolution"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Comedy genre correlates weakly with happy endings but not reliably"
+   }
+  ],
+  "holes": [
+   "ending_type is not in our data; cannot filter for happy vs tragic LGBTQ outcomes.",
+   "LGBTQ keyword coverage is sparse; mood_affect is only a loose proxy for narrative resolution."
+  ],
+  "archetype": "LGBTQ/romance/drama",
+  "archetype_idx": 38,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "my book club is doing a month on disability and we want to watch a film that actually stars disabled actors, not able bodied people pretending. any ideas?",
+  "intent": "Wants films authentically starring disabled actors",
+  "recs": [
+   "Children of a Lesser God (1986)",
+   "The Peanut Butter Falcon (2019)",
+   "Murderball (2005)",
+   "Crip Camp (2020)"
+  ],
+  "signals": [
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB keywords cover disability themes but not whether actor is disabled"
+   },
+   {
+    "axis": "representation_diversity",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "cannot verify if actor is disabled vs able-bodied simulation"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "disability-related TMDB keywords present but inconsistently tagged"
+   }
+  ],
+  "holes": [
+   "Cannot distinguish authentic disabled casting from able-bodied simulation; no actor-disability attribute exists.",
+   "Most Hollywood disability films in our corpus use able-bodied actors; authentic set is tiny and must be curated manually."
+  ],
+  "archetype": "drama/disability-authentic",
+  "archetype_idx": 38,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "trans stories?",
+  "intent": "Wants films centering trans characters",
+  "recs": [
+   "Tangerine (2015)",
+   "Boys Don't Cry (1999)",
+   "The Danish Girl (2015)",
+   "A Fantastic Woman (2017)",
+   "The Adventures of Priscilla, Queen of the Desert (1994)"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB may have 'transgender' keyword but coverage across corpus is thin"
+   },
+   {
+    "axis": "person_actor",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "cannot filter by trans identity of actor or character role"
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Chilean, Australian, US origin available for geographic variety"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome dark/gritty vs feel-good for tonal range across recs"
+   }
+  ],
+  "holes": [
+   "Trans character/theme keyword coverage in TMDB is sparse; many trans films may not surface via keyword retrieval.",
+   "Cannot distinguish authentic trans casting (Tangerine, A Fantastic Woman) from cis actor in trans role (The Danish Girl)."
+  ],
+  "archetype": "LGBTQ/drama/trans",
+  "archetype_idx": 38,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "I'm putting together a little home festival for pride and I want a mix \u2014 something classic and foundational, something recent, maybe a lesbian romance and a trans coming of age, ideally not all white casts. Help me build a lineup of like 5 or 6",
+  "intent": "Wants a curated LGBTQ+ intersectional festival lineup",
+  "recs": [
+   "Philadelphia (1993)",
+   "Moonlight (2016)",
+   "Carol (2015)",
+   "Tangerine (2015)",
+   "Portrait of a Lady on Fire (2019)",
+   "Love, Simon (2018)"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "LGBTQ TMDB keywords available but lesbian/trans subtype not distinct signals"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "classic vs recent separable by release year filter"
+   },
+   {
+    "axis": "decade_year",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "release year used to balance temporal variety across lineup"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "lesbian romance vs trans coming-of-age not stored as distinct subgenre tags"
+   },
+   {
+    "axis": "representation_diversity",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "cast racial diversity is not computable from our attributes"
+   }
+  ],
+  "holes": [
+   "LGBTQ subtype (lesbian vs trans vs gay-male) not stored as distinct signals; each slot cannot be filled programmatically.",
+   "Cast diversity (non-white representation) is not computable from our data; must be curated manually."
+  ],
+  "archetype": "LGBTQ/festival-lineup/intersectional",
+  "archetype_idx": 38,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "what are some great films by indigenous or native filmmakers",
+  "intent": "Wants films by Indigenous/Native directors",
+  "recs": [
+   "Smoke Signals (1998)",
+   "Atanarjuat: The Fast Runner (2001)",
+   "Hunt for the Wilderpeople (2016)",
+   "Jojo Rabbit (2019)"
+  ],
+  "signals": [
+   {
+    "axis": "person_director",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "have director IDs but no ethnicity or heritage attribute on people records"
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "production country does not distinguish Indigenous vs settler filmmaker"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "indigenous-setting TMDB keywords exist but don't confirm director identity"
+   }
+  ],
+  "holes": [
+   "No ethnicity or heritage attribute on directors; cannot identify Indigenous filmmakers as a class from our data.",
+   "Authentic Indigenous-directed films are rare in a mainstream 9366-movie corpus; only a handful qualify and most need manual curation."
+  ],
+  "archetype": "drama/comedy/indigenous-directed",
+  "archetype_idx": 38,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "need something for a girls night that passes the bechdel test and actually has women who talk to each other about literally anything besides men",
+  "intent": "Wants woman-centered films passing the Bechdel test",
+  "recs": [
+   "Bridesmaids (2011)",
+   "Legally Blonde (2001)",
+   "Mean Girls (2004)",
+   "Hidden Figures (2016)",
+   "Steel Magnolias (1989)",
+   "Thelma & Louise (1991)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "Comedy and Drama well-covered for girls-night tone request"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome feel-good/funny/quirky available for occasion matching"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "female-led films partially inferrable from cast top-billing but not labeled"
+   },
+   {
+    "axis": "occasion_audience",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Bechdel test compliance is not a stored attribute anywhere"
+   }
+  ],
+  "holes": [
+   "Bechdel test compliance is not a data attribute; cannot filter or rank candidates by it.",
+   "'Women talking about things besides men' is a qualitative narrative criterion with no computable proxy in our feature set."
+  ],
+  "archetype": "comedy/drama/women-ensemble",
+  "archetype_idx": 38,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "recommend movies about immigrant families, especially told from the daughters perspective. loved the farewell and minari",
+  "intent": "Wants immigrant-family stories from women's POV, similar to named films",
+  "recs": [
+   "The Joy Luck Club (1993)",
+   "Bend It Like Beckham (2002)",
+   "Real Women Have Curves (2002)",
+   "Brooklyn (2015)",
+   "The Namesake (2006)"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "128-d item embeddings for The Farewell and Minari available as anchors"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "TMDB keywords include immigration, immigrant family, cultural identity"
+   },
+   {
+    "axis": "nationality_country",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "production country and language available for ethnic/cultural matching"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "female protagonist not explicitly labeled; partially inferrable from cast"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "daughter's narrative POV is not a stored or inferrable attribute"
+   }
+  ],
+  "holes": [
+   "Narrative POV (told from the daughter's perspective) is not a computable filter in our data.",
+   "Female protagonist detection is partial at best; no explicit protagonist-gender label exists."
+  ],
+  "archetype": "drama/immigrant-family",
+  "archetype_idx": 38,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "are there any good deaf or Deaf culture films besides CODA lol everyone always says CODA",
+  "intent": "Wants Deaf-culture films beyond the obvious mainstream pick",
+  "recs": [
+   "Children of a Lesser God (1986)",
+   "Sound of Metal (2019)",
+   "Mr. Holland's Opus (1995)",
+   "Hush (2016)"
+  ],
+  "signals": [
+   {
+    "axis": "similar_to_title",
+    "coverage": "HAVE",
+    "layer": "intake",
+    "note": "128-d embedding similarity to CODA available as a retrieval anchor"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "TMDB 'deaf' keyword exists but covers only a thin subset of relevant films"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "deaf protagonist keyword present in some but not all relevant titles"
+   },
+   {
+    "axis": "mood_affect",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "genome tense/atmospheric vs heartwarming for tonal variety across recs"
+   }
+  ],
+  "holes": [
+   "Deaf culture (capital-D community identity) vs hearing-loss drama distinction is not capturable from TMDB keywords or genome tags.",
+   "TMDB deaf keyword coverage is sparse; many relevant films may not surface via keyword-based retrieval alone."
+  ],
+  "archetype": "drama/Deaf-culture",
+  "archetype_idx": 38,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "ok so i've watched every single Marvel movie like 3 times, what else is out there that scratches that same itch? big connected universe, teamups, that kinda thing",
+  "intent": "Wants more interconnected superhero-style franchises after exhausting the MCU",
+  "recs": [
+   "Wonder Woman (2017)",
+   "Batman v Superman: Dawn of Justice (2016)",
+   "X-Men: Days of Future Past (2014)",
+   "Deadpool (2016)",
+   "Logan (2017)",
+   "Aquaman (2018)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Action/adventure genre tags cover superhero films broadly"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Superhero/comic-book adaptation TMDB keywords available"
+   },
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Cannot tag MCU vs DCEU vs X-Men universe membership"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Hero ensemble loosely inferred from TMDB keywords"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Cross-film universe continuity spanning films not modeled"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "128-d embedding clusters superhero co-watches loosely"
+   }
+  ],
+  "holes": [
+   "Franchise/universe membership not tracked; cannot separate MCU from DCEU or X-Men in retrieval",
+   "Teamup/cross-film continuity narrative structure is not a modeled signal at any layer"
+  ],
+  "archetype": "franchise-universe-driven",
+  "archetype_idx": 39,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "spy franchises pls. done all the Bond ones and the Mission Impossibles",
+  "intent": "Short request for spy-franchise recommendations beyond Bond and MI",
+  "recs": [
+   "The Bourne Identity (2002)",
+   "The Bourne Supremacy (2004)",
+   "The Bourne Ultimatum (2007)",
+   "Kingsman: The Secret Service (2015)",
+   "Kingsman: The Golden Circle (2017)",
+   "XXX (2002)"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Espionage/secret agent TMDB keywords well covered"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "Spy thriller subgenre partially via genre+keyword combo"
+   },
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Cannot identify series membership or installment ordering"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Bond/MI embeddings cluster spy films co-watch loosely"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Secret agent protagonist partially via TMDB keywords"
+   }
+  ],
+  "holes": [
+   "Cannot filter by franchise membership or sequence films within a series for a binge path",
+   "No signal distinguishes gritty realistic spy (Bourne) from campy action spy (XXX)"
+  ],
+  "archetype": "subgenre-spy + franchise-continuation",
+  "archetype_idx": 39,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "I'm really into monster movies, like Godzilla and King Kong and that whole Monsterverse. give me a list of giant creature ones I can binge",
+  "intent": "Seeking kaiju/giant-monster movies in the vein of the Monsterverse",
+  "recs": [
+   "Jaws (1975)",
+   "Cloverfield (2008)",
+   "The Host (2006)",
+   "Pacific Rim (2013)",
+   "Tremors (1990)",
+   "The Meg (2018)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Horror/sci-fi/action genre tags cover monster films broadly"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Monster/creature TMDB keywords available and well populated"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "Kaiju subgenre partially via TMDB keywords; sparse coverage"
+   },
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Cannot exclude Monsterverse entries already watched"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Godzilla/Kong embeddings cluster creature features"
+   },
+   {
+    "axis": "object_prop",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Giant scale/size not explicitly tracked as attribute"
+   }
+  ],
+  "holes": [
+   "Cannot exclude already-watched Monsterverse films; franchise membership entirely absent",
+   "Kaiju/giant-scale keyword coverage is sparse; TMDB 'monster' keyword conflates all sizes"
+  ],
+  "archetype": "subgenre-kaiju-driven",
+  "archetype_idx": 39,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "which franchise should i start next? i love when there's a bunch of movies that all tie together and build up to something huge",
+  "intent": "Undecided viewer wants a long interconnected film franchise to begin",
+  "recs": [
+   "Harry Potter and the Sorcerer's Stone (2001)",
+   "Pirates of the Caribbean: The Curse of the Black Pearl (2003)",
+   "Rise of the Planet of the Apes (2011)",
+   "Batman Begins (2005)",
+   "The Matrix (1999)"
+  ],
+  "signals": [
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Core ask: franchise length and narrative payoff not tracked"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Cross-film escalating stakes arc not modeled"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Popular franchise entries identified by vote/popularity scores"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "No anchor title given; embedding retrieval inapplicable"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "Cannot rank franchises by critical quality of payoff"
+   }
+  ],
+  "holes": [
+   "Intent requires franchise-level indexing (series length, continuity) which is entirely absent from film-level data",
+   "No anchor title means embedding retrieval cannot fire; prompt is effectively unservable by the current pipeline"
+  ],
+  "archetype": "franchise-universe-driven-generic",
+  "archetype_idx": 39,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "gimme stuff like Fast and Furious. dumb fun, cars, crews, sequels for days",
+  "intent": "Wants over-the-top action-crew franchises similar to Fast & Furious",
+  "recs": [
+   "Gone in 60 Seconds (2000)",
+   "The Transporter (2002)",
+   "The Italian Job (2003)",
+   "The Expendables (2010)",
+   "Crank (2006)",
+   "Need for Speed (2014)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Action genre clearly tagged"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "F&F embedding clusters high-octane action co-watches"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Cars/street racing/crew TMDB keywords available"
+   },
+   {
+    "axis": "tone_maturity",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Dumb fun/popcorn tone partially in genome affect tags"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Crew/ensemble partially inferred from TMDB keywords"
+   },
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Sequel count and franchise longevity not tracked"
+   }
+  ],
+  "holes": [
+   "Sequel count / franchise longevity ('sequels for days') cannot be filtered or sorted on",
+   "Spectacle-level / over-the-top pacing tone is not an explicit pipeline axis"
+  ],
+  "archetype": "similar-title + tone-driven",
+  "archetype_idx": 39,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "is there a horror version of a cinematic universe? like a shared world with recurring villains i can follow across a bunch of films",
+  "intent": "Looking for a connected horror franchise/shared universe",
+  "recs": [
+   "The Conjuring (2013)",
+   "Halloween (1978)",
+   "A Nightmare on Elm Street (1984)",
+   "Child's Play (1988)",
+   "Freddy vs. Jason (2003)",
+   "Evil Dead (1981)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Horror genre clearly tagged"
+   },
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Shared-world/crossover franchise not tracked at all"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Iconic slasher villain partially via TMDB keywords"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Recurring villain continuity across films not modeled"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Embedding clusters horror franchise films loosely"
+   }
+  ],
+  "holes": [
+   "Shared-universe/recurring-villain franchise membership entirely missing; core prompt cannot be served",
+   "Cannot distinguish Conjuring Universe vs Halloween vs Elm Street as separate continuity chains"
+  ],
+  "archetype": "franchise-universe + genre-horror",
+  "archetype_idx": 39,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "Star Wars and Star Trek are basically my whole personality lol. what other big space/sci-fi sagas with multiple movies should i get into",
+  "intent": "Space-opera franchise fan wants another sprawling sci-fi film series",
+  "recs": [
+   "Alien (1979)",
+   "Aliens (1986)",
+   "The Terminator (1984)",
+   "Terminator 2: Judgment Day (1991)",
+   "Rise of the Planet of the Apes (2011)",
+   "Prometheus (2012)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Sci-fi genre clearly tagged"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "Space opera subgenre partially via TMDB keywords"
+   },
+   {
+    "axis": "setting_location",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "Outer space setting via TMDB keywords, partial coverage"
+   },
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Multi-film saga membership and ordering not tracked"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Star Wars/Trek embeddings cluster space-opera loosely"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Sprawling multi-entry saga arc not captured"
+   }
+  ],
+  "holes": [
+   "Cannot identify or sort films by franchise series membership or installment order",
+   "Space-opera vs hard-SF tonal distinction only partially addressable with available tags"
+  ],
+  "archetype": "franchise-universe + genre-scifi",
+  "archetype_idx": 39,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "need a good trilogy for the weekend. something with a proper beginning middle and end, not one of those franchises that never finishes",
+  "intent": "Wants a self-contained, well-regarded movie trilogy for a weekend",
+  "recs": [
+   "Batman Begins (2005)",
+   "Shaun of the Dead (2004)",
+   "The Godfather (1972)",
+   "Back to the Future (1985)",
+   "The Matrix (1999)",
+   "A Fistful of Dollars (1964)"
+  ],
+  "signals": [
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Trilogy membership and completeness not tracked per film"
+   },
+   {
+    "axis": "plot_structure",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Complete 3-act arc across trilogy films not modeled"
+   },
+   {
+    "axis": "ending_type",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "Resolved vs open ending for a series not tracked"
+   },
+   {
+    "axis": "awards_acclaim",
+    "coverage": "MISSING",
+    "layer": "postfilter",
+    "note": "Critical standing/Oscar wins not directly tracked"
+   },
+   {
+    "axis": "popularity_obscurity",
+    "coverage": "HAVE",
+    "layer": "postfilter",
+    "note": "Vote average provides weak proxy for quality"
+   },
+   {
+    "axis": "runtime",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Total trilogy runtime (~6-9h) not computable; unused"
+   }
+  ],
+  "holes": [
+   "Trilogy membership and whether a series has a definitive ending are not tracked signals",
+   "Total trilogy runtime (binge feasibility) cannot be computed; runtime scraped but wired into nothing"
+  ],
+  "archetype": "franchise-completeness-driven",
+  "archetype_idx": 39,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "so i just finished the Wizarding World stuff and the LOTR + Hobbit movies... what's the next big fantasy franchise i can sink like 20 hours into",
+  "intent": "Fantasy-franchise fan seeking another epic multi-film saga to binge",
+  "recs": [
+   "The Chronicles of Narnia: The Lion, the Witch and the Wardrobe (2005)",
+   "The Hunger Games (2012)",
+   "Divergent (2014)",
+   "Pirates of the Caribbean: The Curse of the Black Pearl (2003)",
+   "The Mummy (1999)",
+   "Maze Runner (2014)"
+  ],
+  "signals": [
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Fantasy/adventure genre clearly tagged"
+   },
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Cannot identify franchise length, entry count, or runtime"
+   },
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Magic, quest, mythical creatures via TMDB keywords"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "LOTR/HP embeddings cluster epic fantasy well"
+   },
+   {
+    "axis": "runtime",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "20-hour binge target requires franchise runtime sum"
+   },
+   {
+    "axis": "era_period",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Medieval/high-fantasy setting via genome and TMDB keywords"
+   }
+  ],
+  "holes": [
+   "Franchise runtime sum (~20 hours) not computable; runtime scraped but not wired into retrieval",
+   "Cannot exclude LOTR/HP universe films already seen; franchise membership tracking absent"
+  ],
+  "archetype": "franchise-universe + genre-fantasy",
+  "archetype_idx": 39,
+  "source_model": "sonnet"
+ },
+ {
+  "prompt": "heist franchises?? like the Oceans movies, love a good crew pulling off a job across sequels",
+  "intent": "Wants heist/crew franchises in the style of the Ocean's films",
+  "recs": [
+   "Now You See Me (2013)",
+   "Now You See Me 2 (2016)",
+   "The Italian Job (2003)",
+   "Heat (1995)",
+   "Inside Man (2006)",
+   "Logan Lucky (2017)"
+  ],
+  "signals": [
+   {
+    "axis": "theme_subject",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Heist/robbery/ensemble crew TMDB keywords available"
+   },
+   {
+    "axis": "subgenre",
+    "coverage": "PARTIAL",
+    "layer": "both",
+    "note": "Heist subgenre partially via TMDB keywords"
+   },
+   {
+    "axis": "similar_to_title",
+    "coverage": "PARTIAL",
+    "layer": "intake",
+    "note": "Ocean's embedding clusters heist-crew films"
+   },
+   {
+    "axis": "character_type",
+    "coverage": "PARTIAL",
+    "layer": "postfilter",
+    "note": "Crew/ensemble loosely inferred from TMDB keywords"
+   },
+   {
+    "axis": "franchise_universe",
+    "coverage": "MISSING",
+    "layer": "intake",
+    "note": "Sequel availability per heist film not tracked"
+   },
+   {
+    "axis": "genre",
+    "coverage": "HAVE",
+    "layer": "both",
+    "note": "Crime/thriller genre clearly tagged"
+   }
+  ],
+  "holes": [
+   "Heist franchise membership (which heist films have sequels) not tracked; most heist films are standalones",
+   "Pipeline will surface excellent solo heist films without distinguishing sequel availability"
+  ],
+  "archetype": "subgenre-heist + franchise-driven",
+  "archetype_idx": 39,
+  "source_model": "sonnet"
+ }
+]
