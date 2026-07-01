@@ -8,10 +8,11 @@ PURPOSE
 
         extraction JSON (from the LLM — see tools/llm_frontend_prompt.py)
           → resolve named titles to catalog titles (Mode 1, fuzzy)
+          → resolve named people to TMDB person IDs (scraped-facet store)
           → synthesize a Mode-2 query: genome tags → representative anchor movies
           → build the user embedding via the real serving model (src/inference.py)
           → rank the whole corpus (raw dot product == cosine; both L2-normed)
-          → apply v1 post-filters (year + genre)
+          → apply post-filters (year + genre + people)
           → top-N recommendations (never raw LLM output).
 
     This module is imported by BOTH consumers so the logic lives in exactly one place:
@@ -24,7 +25,7 @@ PURPOSE
     functions take a FrontendContext (built once from the loaded artifacts) so the
     Streamlit app can feed its @st.cache_resource Artifacts straight in.
 
-LOCKED-IN v1 POLICY (validated in the Claude Code test loop — see docs/plans/plan.md
+LOCKED-IN v1 POLICY (validated in the Claude Code test loop — see docs/llm_frontend/llm_frontend_plan.md
 "v1 Build Handoff" and memory project_llm_frontend_v1):
     Subordinated hybrid. Pure Mode 2 (no named titles) → 5 anchors/tag at weight 1.0
     (the anchors ARE the query). With named titles → ≤1 anchor/tag, cap 3 total, at
@@ -144,12 +145,18 @@ class FrontendContext(NamedTuple):
     title_index:        dict          # normalized-title → [canonical catalog titles]
     pop_rank:           dict          # canonical title → popularity rank (tie-break / fallback)
     genome_name_to_idx: dict          # genome tag NAME → 0-based column in the genome vector
+    facets:             dict          # scraped-facet store (people tables) or None if unbaked
 
 
-def build_frontend_context(model, fs, all_ids, all_embs, ts_inference) -> FrontendContext:
+def build_frontend_context(model, fs, all_ids, all_embs, ts_inference, facets=None) -> FrontendContext:
     """Bundle the loaded serving artifacts into a FrontendContext, deriving the title-resolution
     index, popularity rank, and genome-name→column lookups from fs. Call once after loading (the
-    harness does it in Serving; the Streamlit tab builds it from its cached Artifacts)."""
+    harness does it in Serving; the Streamlit tab builds it from its cached Artifacts).
+
+    `facets` is the scraped-facet store (movieId_to_people / person_name_to_ids / …, baked into
+    serving/feature_store.pt by export); pass it through so recommend() can resolve and filter on
+    people. None (an old serving artifact without the bake) degrades gracefully: people facets in
+    an extraction are simply reported unresolved and dropped, leaving the rest of the query intact."""
     gn, gi = fs['genome_tag_names'], fs['genome_tag_to_i']
     return FrontendContext(
         model=model,
@@ -160,6 +167,7 @@ def build_frontend_context(model, fs, all_ids, all_embs, ts_inference) -> Fronte
         title_index=_build_title_index(fs),
         pop_rank={t: i for i, t in enumerate(fs['popularity_ordered_titles'])},
         genome_name_to_idx={gn[tid]: gi[tid] for tid in gi},
+        facets=facets,
     )
 
 
@@ -286,7 +294,7 @@ def resolve_title(raw, ctx):
 # into the facet-store tables (person_name_to_ids / person_id_to_name / person_id_to_film_count)
 # that the export step bakes into serving/. resolve_person mirrors resolve_title but is simpler:
 # canonical TMDB person IDs disambiguate same-name people for free, so an exact normalized-name
-# hit suffices — no fuzzy-year guard. See docs/plans/facet_store_plan.md.
+# hit suffices — no fuzzy-year guard. See docs/llm_frontend/facet_store_plan.md.
 _PERSON_PUNCT_RE = re.compile(r'[^a-z0-9]+')
 
 
@@ -364,10 +372,15 @@ def anchors_for(ctx, genome_tags, exclude, per_tag=ANCHORS_PER_TAG, max_total=No
     return anchor_titles, unresolved
 
 
-# ── v1 post-filter (year + genre only; director/rating deferred to v1.5) ─────
-def _passes_constraints(mid, fs, hc):
+# ── Post-filter (year + genre + people; rating/runtime/studio deferred) ──────
+def _passes_constraints(mid, fs, hc, movieId_to_people=None):
     """True if movie `mid` satisfies the hard constraints. Unknown/non-numeric year
-    passes the year gate (no info to filter on)."""
+    passes the year gate (no info to filter on).
+
+    People constraints use `require_people_ids` / `exclude_people_ids` — TMDB person IDs already
+    resolved upstream in recommend() — checked against `movieId_to_people` (the facet store).
+    Membership unions a film's actors+directors+writers, so "Tom Hanks movies" matches whether he
+    acted, directed, or wrote; require = ALL of them present (mirrors require_genres), exclude = ANY."""
     if not hc:
         return True
     year_min, year_max = hc.get('year_min'), hc.get('year_max')
@@ -388,6 +401,16 @@ def _passes_constraints(mid, fs, hc):
         return False
     if exclude and any(g in genres for g in exclude):
         return False
+    require_p = hc.get('require_people_ids') or []
+    exclude_p = hc.get('exclude_people_ids') or []
+    if require_p or exclude_p:
+        roles = (movieId_to_people or {}).get(mid)
+        people = (set(roles['actors']) | set(roles['directors']) | set(roles['writers'])
+                  if roles else set())
+        if require_p and not all(p in people for p in require_p):
+            return False
+        if exclude_p and any(p in people for p in exclude_p):
+            return False
     return True
 
 
@@ -416,6 +439,23 @@ def recommend(ctx, extraction, top_n=TOP_N):
         resolution_log['disliked'].append((raw, canon, note))
         if canon:
             disliked_resolved.append(canon)
+
+    # 1b. Resolve people facets (Phase 1: HARD require/exclude only). Names → canonical TMDB
+    #     person IDs via the facet store; unresolved names (or no facet store at all) are reported
+    #     and dropped, so the rest of the query still runs. The model has no person concept, so
+    #     people are expressed purely as a post-filter on the corpus (see _passes_constraints).
+    people_log = {'require': [], 'exclude': []}
+    require_pids, exclude_pids = [], []
+    for key, raws in (('require', hc.get('require_people') or []),
+                      ('exclude', hc.get('exclude_people') or [])):
+        for raw in raws:
+            # No facet store (an old serving artifact without the bake) → report every name as
+            # unresolved so the drop is visible, rather than silently skipping the loop.
+            pid, note = resolve_person(raw, ctx.facets) if ctx.facets else (None, 'no facet store')
+            people_log[key].append((raw, pid, note))
+            if pid is not None:
+                (require_pids if key == 'require' else exclude_pids).append(pid)
+    hc = {**hc, 'require_people_ids': require_pids, 'exclude_people_ids': exclude_pids}
 
     # 2. Mode-2 synthesis: genome tags → anchor movies (exclude already-named seeds).
     #    When the user named real titles (Mode 1) the anchors are subordinated so they refine
@@ -464,6 +504,7 @@ def recommend(ctx, extraction, top_n=TOP_N):
     #    surface the canonical westerns it anchored on; a future facet seed like Tom Hanks →
     #    Cast Away should be recommendable). So anchors stay eligible for the output.
     seed_titles = set(liked_resolved) | set(disliked_resolved)
+    movieId_to_people = ctx.facets['movieId_to_people'] if ctx.facets else None
     recs, kept, filtered = [], 0, 0
     if fallback:
         ranked_titles = fs['popularity_ordered_titles']
@@ -472,7 +513,7 @@ def recommend(ctx, extraction, top_n=TOP_N):
             mid = title_to_mid.get(title)
             if mid is None or title in seed_titles:
                 continue
-            if not _passes_constraints(mid, fs, hc):
+            if not _passes_constraints(mid, fs, hc, movieId_to_people):
                 filtered += 1
                 continue
             recs.append((title, fs['movieId_to_genres'].get(mid, []), fs['movieId_to_year'].get(mid), None))
@@ -488,7 +529,7 @@ def recommend(ctx, extraction, top_n=TOP_N):
             title = fs['movieId_to_title'][mid]
             if title in seed_titles:
                 continue
-            if not _passes_constraints(mid, fs, hc):
+            if not _passes_constraints(mid, fs, hc, movieId_to_people):
                 filtered += 1
                 continue
             recs.append((title, fs['movieId_to_genres'].get(mid, []),
@@ -498,6 +539,7 @@ def recommend(ctx, extraction, top_n=TOP_N):
     return {
         'extraction': extraction,
         'resolution': resolution_log,
+        'people_resolution': people_log,
         'anchors': anchors,
         'anchor_weight': anchor_weight,
         'unresolved_tags': unresolved_tags,

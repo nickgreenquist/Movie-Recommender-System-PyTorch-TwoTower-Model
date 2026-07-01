@@ -4,7 +4,7 @@ LLM conversational front-end (v1).
 
 The LLM's ONLY job is to translate a free-text movie request into the structured query
 that the two-tower model's user tower consumes (see src/llm_frontend.py and
-docs/plans/plan.md). It never recommends; the trained model does retrieval. This module
+docs/llm_frontend/llm_frontend_plan.md). It never recommends; the trained model does retrieval. This module
 holds the system prompt, the JSON schema (for Claude tool use / structured outputs), and
 helpers that inject the live vocabularies from serving/feature_store.pt.
 
@@ -76,6 +76,13 @@ def build_schema(genres=None, fs=None):
                                        'description': 'HARD filter: every result must have all of these.'},
                     'exclude_genres': {'type': 'array', 'items': genre_enum,
                                        'description': 'HARD filter: drop any result with any of these.'},
+                    'require_people':  {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD filter: every result must involve ALL of '
+                                        'these people (matched as actor, director, or writer). Full '
+                                        'names as free strings — "Tom Hanks", "Christopher Nolan".'},
+                    'exclude_people':  {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD filter: drop any result involving any of '
+                                        'these people. Full names as free strings.'},
                 },
             },
         },
@@ -114,21 +121,25 @@ restate-a-genre tags are FORBIDDEN in any mode (they pull off-target): "comedy",
 "thriller", "epic", "funny", "romantic", "action", "scary", "dramatic", "adventure". Prefer \
 specific, evocative ones like "quirky", "neo-noir", "atmospheric", "surreal", "stylized", \
 "dreamlike". HOW MANY depends on whether the user named any titles:
-    • NO titles given: decide require_genres / year FIRST — whether a HARD constraint defines the \
-request determines how to handle tags.
-        – PURE VIBE or SOFT-GENRE TASTE (no require_genres and no year limit — "I love a good \
-romance", "something dreamy and melancholy", "big fan of war movies", "into crime and mystery"): \
+    • NO titles given: decide require_genres / require_people / year FIRST — whether a HARD \
+constraint defines the request determines how to handle tags.
+        – PURE VIBE or SOFT-GENRE TASTE (no require_genres, no require_people, and no year limit — \
+"I love a good romance", "something dreamy and melancholy", "big fan of war movies", "into crime \
+and mystery"): \
 the tags ARE the query, so ALWAYS emit 3–5 specific mood/style tags — even when you also set a SOFT \
 liked_genres. A bare taste preference is a weak signal on its own, so add concrete vibe tags \
 (romance → "intimate", "heartfelt", "bittersweet"; crime → "noir", "detective", "hardboiled"; war \
 → "anti-war", "visceral", "harrowing"). Never leave genome_tags empty for a pure-vibe/taste request.
-        – HARD-CONSTRAINT request (a genre is the head noun → require_genres, and/or an explicit \
-era/year — "comedies from the 80s", "show me horror movies", "recent thrillers"): the CONSTRAINT is \
-the query, not a vibe. Set require_genres / year_min / year_max, and emit mood tags ONLY for a \
-GENUINE extra vibe stated beyond the category ("dark gritty westerns" → require ["Western"] + \
+        – HARD-CONSTRAINT request (a genre is the head noun → require_genres, a named person → \
+require_people, and/or an explicit era/year — "comedies from the 80s", "show me horror movies", \
+"Tom Hanks movies", "recent thrillers"): the CONSTRAINT is \
+the query, not a vibe. Set require_genres / require_people / year_min / year_max, and emit mood tags \
+ONLY for a GENUINE extra vibe stated beyond the category ("dark gritty westerns" → require ["Western"] + \
 "gritty"). For a plain category(+era) request — "comedies from the 80s" → require ["Comedy"] + \
 year_min 1980 / year_max 1989, NO invented tags — do NOT manufacture quirky/campy/atmospheric-type \
-tags: an invented vibe tag pulls results off the required genre. When unsure here, prefer NO tag.
+tags: an invented vibe tag pulls results off the required genre. When unsure here, prefer NO tag. \
+A named-person request ("Tom Hanks movies", "I like Tom Hanks movies" → require_people ["Tom Hanks"]) \
+is likewise defined by that person, NOT a vibe — emit NO mood tags unless a genuine extra vibe is stated.
     • Titles GIVEN in liked_items: the named titles are the real query and they already encode \
 tone, intensity, and era — so use FEW tags (0–2), and only when they add something the titles \
 don't. Decide by HOW the user frames the mood:
@@ -151,6 +162,15 @@ requested — the head noun of the ask — not just a taste aside: "only western
 and ALSO "comedies from the 80s" → ["Comedy"], "show me horror movies" → ["Horror"], \
 "documentaries about nature" → ["Documentary"]. Every result must contain all of these.
     • exclude_genres: HARD genre exclusion ("absolutely no horror" → ["Horror"]).
+    • require_people: HARD filter on PEOPLE — every result must involve ALL named people (matched \
+as actor, director, or writer). Use it whenever the request names a person whose films are wanted, \
+in ANY phrasing: "movies with Tom Hanks", "Tom Hanks movies", "I like Tom Hanks movies", "starring \
+Denzel", "directed by Sofia Coppola", "by Tarantino", "a Scorsese film", "only Christopher Nolan". \
+Emit each person's FULL NAME as a free string ("Tom Hanks", not "Hanks"; "Christopher Nolan", not \
+"Nolan"). Naming a person whose films you want is ALWAYS a HARD membership constraint — never a soft \
+taste, and never a genome_tag. (The model has no person concept, so this is the only way people work.)
+    • exclude_people: HARD people exclusion → list the full names. "no Nolan films", "nothing with \
+Tom Cruise", "I'm sick of Nolan / show me other..." → exclude_people ["Christopher Nolan"] etc.
   Distinguish SOFT vs HARD by the genre's ROLE, not just keywords: a genre that IS the thing \
 being requested (the head noun — "show me comedies", "I want a western", "horror movies") is \
 HARD → require_genres; a genre mentioned as a side preference ("I'm into sci-fi", "I usually \
@@ -158,11 +178,11 @@ like crime stuff") is SOFT → liked_genres. Absolutes ("only", "must be", "noth
 always HARD. A hard "no X" goes in exclude_genres. A genre you put in require_genres may also go \
 in liked_genres so the model leans toward it, but a SOFT preference must NEVER go in require_genres.
 
-NOT SUPPORTED IN v1 — silently ignore these, do not invent fields for them: constraints about \
-specific directors, actors, studios, or content/age ratings ("no Nolan films", "nothing with \
-Tom Cruise", "rated PG"). Still capture the rest of such a request (e.g. "I'm sick of Nolan, \
-show me other smart sci-fi" → liked_genres ["Sci-Fi"] + fitting genome_tags; just drop the \
-Nolan exclusion).
+NOT SUPPORTED — silently ignore these, do not invent fields for them: constraints about specific \
+studios / production companies, content or age ratings, and runtime ("rated PG", "A24 films", \
+"nothing over two hours"). Still capture the rest of such a request. (Actors, directors, and \
+writers ARE supported now — route a named person to require_people / exclude_people above, never \
+to genome_tags.)
 
 GENRES (closed list — the only valid values for any genre field):
 {genres}
@@ -198,7 +218,10 @@ FEWSHOT_EXAMPLES = [
     ('I liked Inception and Interstellar but I\'m sick of Nolan, show me other smart sci-fi',
      {'liked_items': ['Inception (2010)', 'Interstellar (2014)'],
       'liked_genres': ['Sci-Fi'],
-      'genome_tags': ['cerebral', 'thought-provoking', 'mindfuck']}),
+      'genome_tags': ['cerebral', 'thought-provoking', 'mindfuck'],
+      'hard_constraints': {'exclude_people': ['Christopher Nolan']}}),
+    ('Movies with Tom Hanks',
+     {'hard_constraints': {'require_people': ['Tom Hanks']}}),
     ('A family-friendly animated adventure from the last ten years, nothing scary',
      {'liked_genres': ['Animation', 'Adventure', 'Children'],
       'hard_constraints': {'year_min': CURRENT_YEAR - 10, 'exclude_genres': ['Horror']}}),

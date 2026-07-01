@@ -256,7 +256,10 @@ def load_artifacts() -> Artifacts:
     # Conversational ("Ask") tab: the natural-language pipeline reuses this exact loaded model +
     # corpus. Build the shared FrontendContext once here (cheap lookups over fs) so the tab never
     # reloads serving/ — it ranks against the same prod model the manual Recommend tab uses.
-    frontend_ctx = build_frontend_context(model, fs, all_ids, all_embs, ts_inference)
+    # fs['facets'] (people facet store, baked by export) powers people filters ("Tom Hanks movies");
+    # absent on an old serving artifact → recommend() reports people unresolved and drops them.
+    frontend_ctx = build_frontend_context(
+        model, fs, all_ids, all_embs, ts_inference, facets=fs.get('facets'))
 
     poster_path = 'serving/posters.json'
     if os.path.exists(poster_path):

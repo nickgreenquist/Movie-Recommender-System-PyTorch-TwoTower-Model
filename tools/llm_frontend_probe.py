@@ -3,7 +3,7 @@ tools/llm_frontend_probe.py — v1 test harness for the LLM conversational front
 
 PURPOSE
     Validate the natural-language → two-tower pipeline END-TO-END *before* any hosted
-    API or Streamlit wiring (see docs/plans/plan.md → "Testing In Claude Code Before
+    API or Streamlit wiring (see docs/llm_frontend/llm_frontend_plan.md → "Testing In Claude Code Before
     Any API"). The flow under test:
 
         free-text utterance
@@ -101,7 +101,17 @@ class Serving:
         ts_inference = torch.bucketize(
             torch.tensor([float(bins[-1].item())]), bins, right=False)
 
-        self.ctx = build_frontend_context(model, self.fs, all_ids, all_embs, ts_inference)
+        # Scraped-facet store (people tables). Prefer the baked serving copy (fs['facets'], written
+        # by export); fall back to the local build artifact for dev before the bake exists. The
+        # deployed app only ever sees fs['facets'] — this disk fallback is harness-only.
+        facets = self.fs.get('facets')
+        if facets is None:
+            fp = os.path.join(_REPO_ROOT, 'llm_features', 'cache', 'facet_store.pt')
+            if os.path.exists(fp):
+                facets = torch.load(fp, weights_only=False)
+
+        self.ctx = build_frontend_context(
+            model, self.fs, all_ids, all_embs, ts_inference, facets=facets)
 
 
 # ── Reporting ────────────────────────────────────────────────────────────────
@@ -129,6 +139,11 @@ def print_report(report, utterance=None):
     for raw, canon, note in report['resolution']['disliked']:
         arrow = f'→ {canon}' if canon else '→ (UNRESOLVED, dropped)'
         print(f"  dislike {raw!r:<32} {arrow}  [{note}]")
+    pr = report.get('people_resolution') or {}
+    for key in ('require', 'exclude'):
+        for raw, pid, note in pr.get(key, []):
+            arrow = f'→ person #{pid}' if pid is not None else '→ (UNRESOLVED, dropped)'
+            print(f"  {key+' ppl':<8}{raw!r:<32} {arrow}  [{note}]")
     if report['anchors']:
         print(f"  genome anchors (Mode-2 synthesis, weight {report['anchor_weight']}):")
         for t in report['anchors']:
@@ -138,7 +153,7 @@ def print_report(report, utterance=None):
     if report['unknown_genres']:
         print(f"  ⚠ genre names NOT in model vocab (ignored): {report['unknown_genres']}")
     if report['fallback']:
-        print('  ⚠ empty extraction → POPULARITY fallback')
+        print('  ⚠ no embedding signal → POPULARITY ranking (within any hard constraints)')
     print('-' * 72)
 
     n = len(report['recs'])
@@ -169,6 +184,7 @@ _SMOKE_CASES = [
     {'liked_items': ['The Matrix'], 'genome_tags': ['post-apocalyptic'],  # mixed + constraints
      'disliked_genres': ['Horror'],
      'hard_constraints': {'year_min': 2000, 'exclude_genres': ['Horror']}},
+    {'hard_constraints': {'require_people': ['Tom Hanks']}},              # people facet filter (Phase 1)
 ]
 
 

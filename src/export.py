@@ -33,6 +33,7 @@ from src.features import FEATURES_VERSION
 from src.train import build_model, get_config
 
 SERVING_DIR = 'serving'
+FACET_STORE_PATH = os.path.join('llm_features', 'cache', 'facet_store.pt')
 
 
 def _center_3d(xyz: np.ndarray) -> np.ndarray:
@@ -265,6 +266,21 @@ def run_export(data_dir: str = 'data', checkpoint_path: str = None,
         feature_store['llm_feature_buffer'] = model.llm_feature_buffer.cpu()
         feature_store['llm_feature_len']    = int(model.llm_feature_buffer.shape[1])
         print(f"  + llm_feature_buffer {tuple(model.llm_feature_buffer.shape)} baked into feature_store")
+
+    # ── Scraped-facet store (people facets) ──────────────────────────────────
+    # The front-end resolves/filters people ("Tom Hanks movies") against the facet store built by
+    # llm_features/build_facet_store.py from the TMDB credits scrape (cache absent on Streamlit
+    # Cloud), so bake its tables into serving here — mirroring llm_feature_buffer above. It's
+    # optional: if the build artifact is missing (no scrape), skip with a warning rather than fail.
+    if os.path.exists(FACET_STORE_PATH):
+        facets = torch.load(FACET_STORE_PATH, weights_only=False)
+        feature_store['facets'] = facets
+        meta = facets.get('meta', {})
+        print(f"  + facets baked into feature_store "
+              f"({meta.get('n_persons', '?')} persons, {meta.get('n_movies_covered', '?')} movies)")
+    else:
+        print(f"  ! {FACET_STORE_PATH} absent — people facets NOT baked "
+              f"(run: python llm_features/build_facet_store.py)")
 
     fs_path = os.path.join(SERVING_DIR, 'feature_store.pt')
     torch.save(feature_store, fs_path)
