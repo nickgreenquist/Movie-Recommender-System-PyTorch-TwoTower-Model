@@ -16,7 +16,7 @@ This is a deliberate demonstration of a production pattern, NOT a claim that the
 
 Keep this framing in the README. Do not claim the architecture "saves money" at demo scale — it doesn't, and any sharp reader will catch that. Frame it as demonstrating the pattern that scales.
 
-**Grounding reference:** [`hybrid_llm_recommender_research.md`](./hybrid_llm_recommender_research.md) — a transcribed Gemini Deep Research survey of this exact hybrid LLM-front-end + two-tower pattern (closed-vocabulary parsing, anchor resolution, HNSW retrieval, logit-level re-rank, semantic caching, plus Spotify/Netflix/DoorDash/Airbnb/Pinterest production case studies). Use it as the prior-art / design-rationale source for this plan.
+**Grounding reference:** [`hybrid_llm_recommender_research.md`](./research/hybrid_llm_recommender_research.md) — a transcribed Gemini Deep Research survey of this exact hybrid LLM-front-end + two-tower pattern (closed-vocabulary parsing, anchor resolution, HNSW retrieval, logit-level re-rank, semantic caching, plus Spotify/Netflix/DoorDash/Airbnb/Pinterest production case studies). Use it as the prior-art / design-rationale source for this plan.
 
 ---
 

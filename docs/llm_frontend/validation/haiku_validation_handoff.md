@@ -1,7 +1,12 @@
 # Handoff — mass Haiku validation of the LLM front-end (do before any real API key)
 
+> **✅ DONE / ARCHIVED (2026-06-30).** This is the resume prompt for the v1→v5 mass-Haiku validation,
+> which is **complete** — results live in the sibling `llm_frontend_haiku_validation.md` (and memory
+> `project_llm_frontend_validation`). Kept for provenance; not an active task. The current front-end
+> work is the facet store (`../facet_store_plan.md`) and the paused Ask-AI holes run (`ask_ai_holes/`).
+
 **Paste this to start the new session:**
-> Read `docs/plans/llm_frontend_haiku_validation_handoff.md` and execute it. We are stress-testing the
+> Read `docs/llm_frontend/validation/haiku_validation_handoff.md` and execute it. We are stress-testing the
 > conversational front-end's extraction prompt + end-to-end recommendations at scale using Claude Code
 > Haiku subagents (no real API key yet), to find and fix failure modes before wiring the hosted key.
 
@@ -21,7 +26,7 @@ v1 of the LLM conversational front-end is **built and verified, NOT committed**.
   — forced-tool Claude Haiku `claude-haiku-4-5`, `max_tokens=300`). `streamlit_app.py` has an **Ask** tab
   reusing cached `load_artifacts()` via `art.frontend_ctx`, with `.streamlit/secrets.toml` + per-session cap.
 
-Full plan + locked-in policy: `docs/plans/plan.md` (esp. "v1 Build Handoff"). Memory: `project_llm_frontend_v1`.
+Full plan + locked-in policy: `docs/llm_frontend/llm_frontend_plan.md` (esp. "v1 Build Handoff"). Memory: `project_llm_frontend_v1`.
 
 **This task = the plan's "Testing In Claude Code Before Any API" loop, scaled to hundreds of agents.**
 Goal: drive extraction quality and recommendation quality as high as possible, find systematic failure
@@ -142,7 +147,7 @@ Write the returned summary to `$SP/judge_summary.json`.
 3. Regression: re-run Stage 1 on JUST the failing utterances with the improved prompt, then Stage 2 + a
    quick spot-check (or a small judge re-run), confirm the failure cluster shrinks without regressing the
    passing cases. Iterate.
-4. Produce a findings write-up (e.g. `docs/llm_frontend_validation/…`), and consider committing a curated
+4. Produce a findings write-up (e.g. `docs/llm_frontend/validation/…`), and consider committing a curated
    eval utterance set + a `--eval` mode on the harness as a portfolio artifact.
 
 ## Known failure modes (from prior loop — target these)
@@ -172,5 +177,5 @@ NEW: `src/llm_frontend.py`, `src/llm_frontend_extraction.py`, `.streamlit/secret
 MOVED: `tools/llm_frontend_prompt.py` → `src/llm_frontend_prompt.py`.
 EDITED: `streamlit_app.py` (Ask tab + folded `build_serving_model` + `frontend_ctx`), `tools/llm_frontend_probe.py`
 (now imports the core), `requirements.txt` (+`anthropic==0.105.2`), `.gitignore` (+`.streamlit/secrets.toml`),
-`README.md`, `docs/plans/plan.md`. (Unrelated pre-existing change: `docs/multipool_…linkedin_post.txt`.)
+`README.md`, `docs/llm_frontend/llm_frontend_plan.md`. (Unrelated pre-existing change: `docs/multipool_…linkedin_post.txt`.)
 ```

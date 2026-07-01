@@ -15,9 +15,9 @@ soft-vibe vs hard-constraint. Validated on the **32-case subset** where the gate
 
 ## Steps to finish
 1. Save the extraction workflow `result` → `extractions_v5_subset.json` (list of {id,cat,text,extraction}).
-2. **Recommend (local, no agents):** `python docs/llm_frontend_validation/v5/run_recommend_v5.py docs/llm_frontend_validation/v5` → writes `cases_v5/case_*.json`.
-3. **Judge (32 sonnet):** `Workflow(scriptPath: "docs/llm_frontend_validation/v5/wf_judge_v5.js")`; save its `result` for compare.
-4. **Compare:** `python docs/llm_frontend_validation/v5/compare_v5.py docs/llm_frontend_validation/v4_resume docs/llm_frontend_validation/v5 <v5_judge_output>` → writes `judge_summary_v5_subset.json`, prints v1/v3/v4/v5 per-category recs + v4→v5 deltas.
+2. **Recommend (local, no agents):** `python docs/llm_frontend/validation/v5/run_recommend_v5.py docs/llm_frontend/validation/v5` → writes `cases_v5/case_*.json`.
+3. **Judge (32 sonnet):** `Workflow(scriptPath: "docs/llm_frontend/validation/v5/wf_judge_v5.js")`; save its `result` for compare.
+4. **Compare:** `python docs/llm_frontend/validation/v5/compare_v5.py docs/llm_frontend/validation/v4_resume docs/llm_frontend/validation/v5 <v5_judge_output>` → writes `judge_summary_v5_subset.json`, prints v1/v3/v4/v5 per-category recs + v4→v5 deltas.
 5. **Finalize:** fold the v5 subset result into `../llm_frontend_haiku_validation.md` + memory `[[project_llm_frontend_validation]]`.
 
 ## Regenerate if lost

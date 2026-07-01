@@ -6,7 +6,7 @@ consumes, via a single forced-tool-use call to a small, fast hosted Claude model
 the ONLY component that talks to the Anthropic API; everything downstream — title resolution,
 Mode-2 anchor synthesis, retrieval, post-filtering — is the local trained two-tower model. The LLM
 is the interface, never the recommender, and its output is consumed internally and never shown to
-the user (see docs/plans/plan.md → "Critical Design Constraint").
+the user (see docs/llm_frontend/llm_frontend_plan.md → "Critical Design Constraint").
 
 Structured output is enforced via tool use: build_schema() is passed as a tool input_schema and the
 tool is forced with tool_choice, so the model must return a parseable object with the expected
@@ -14,7 +14,7 @@ fields — the single most important protection (the pipeline never breaks on ma
 §Protections). max_tokens is capped (~300) since the extraction JSON is tiny.
 
 The prompt + schema were tuned against a Haiku subagent in the in-repo Claude Code test loop, so the
-same model family here transfers with no re-tuning (docs/plans/plan.md → "v1 Build Handoff").
+same model family here transfers with no re-tuning (docs/llm_frontend/llm_frontend_plan.md → "v1 Build Handoff").
 """
 
 from src.llm_frontend_prompt import build_schema, build_system_prompt

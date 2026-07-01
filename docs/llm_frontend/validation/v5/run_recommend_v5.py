@@ -4,7 +4,7 @@ Mirror of v4_resume/run_recommend_v4_full.py for the v5 subset. Loads serving/ O
 validated harness Serving loader, runs the real shared pipeline (src/llm_frontend.recommend)
 over every extracted case, and writes one cases_v5/case_<id>.json per case for the judge.
 
-    python docs/llm_frontend_validation/v5/run_recommend_v5.py <SP>   # SP = the v5/ dir
+    python docs/llm_frontend/validation/v5/run_recommend_v5.py <SP>   # SP = the v5/ dir
 """
 import sys, os, json
 

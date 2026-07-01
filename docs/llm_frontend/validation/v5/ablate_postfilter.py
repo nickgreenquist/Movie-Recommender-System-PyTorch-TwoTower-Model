@@ -7,7 +7,7 @@ For each case: run recommend() with the hard post-filter ON and OFF, and measure
                         — i.e. how many wrong items the filter had to remove)
   - on/off overlap     (how much the filter changes the surfaced list)
 
-Run: python docs/llm_frontend_validation/v5/ablate_postfilter.py
+Run: python docs/llm_frontend/validation/v5/ablate_postfilter.py
 """
 import sys, os, json
 sys.path.insert(0, os.getcwd())
@@ -28,7 +28,7 @@ def has_hard(hc):
 def pool_size(hc):
     return sum(1 for mid in fs['top_movies'] if real_passes(mid, fs, hc))
 
-exts = json.load(open('docs/llm_frontend_validation/v5/extractions_v5_subset.json'))
+exts = json.load(open('docs/llm_frontend/validation/v5/extractions_v5_subset.json'))
 rows = []
 for c in exts:
     if c.get('error'):
@@ -38,7 +38,7 @@ for c in exts:
 
     L._passes_constraints = real_passes                  # ON
     on = recommend(ctx, ex, top_n=15)
-    L._passes_constraints = lambda mid, fs, hc: True     # OFF
+    L._passes_constraints = lambda mid, fs, hc, *_: True  # OFF (*_ absorbs movieId_to_people)
     off = recommend(ctx, ex, top_n=15)
     L._passes_constraints = real_passes
 

@@ -5,8 +5,8 @@ PURPOSE
     Distill the person→movie facet tables that let the LLM conversational front-end serve
     people-facet requests ("Tom Hanks movies", "directed by Sofia Coppola") — the entire
     `unsupported` request class the extraction prompt currently drops, leaving an empty query
-    that falls back to popularity. See docs/plans/facet_store_plan.md (this builder is Phase 0)
-    and the residual list in docs/llm_frontend_validation/llm_frontend_haiku_validation.md.
+    that falls back to popularity. See docs/llm_frontend/facet_store_plan.md (this builder is Phase 0)
+    and the residual list in docs/llm_frontend/validation/llm_frontend_haiku_validation.md.
 
     The two-tower model has no actor/director concept; these facets come entirely from the TMDB
     credits we already scraped for the LLM-feature pipeline (llm_features/scrape.py) but never

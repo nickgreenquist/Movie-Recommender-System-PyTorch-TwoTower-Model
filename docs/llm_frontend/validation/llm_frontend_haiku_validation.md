@@ -394,7 +394,7 @@ is harness-side anchor re-weighting, not another prompt.
 4. **Single-title sparsity.** One title = one anchor = noisy retrieval regardless of resolution.
 5. **Coverage gaps** the genome vocab can't express: "silent films", non-English *setting* /
    nationality ("Japanese horror" keeps Horror but can't enforce country) — these are the v1.5
-   genome-facet / scraped-facet store territory (see `docs/plans/plan.md` → Post-Retrieval Filtering).
+   genome-facet / scraped-facet store territory (see `docs/llm_frontend/llm_frontend_plan.md` → Post-Retrieval Filtering).
 6. **`require_genres` calibration** is a two-sided knob: v1→v3 it strongly helped (E.T.→Ghostbusters
    for "80s comedies", constraint +1.00), but v4 showed it can *under*-fire (regressing constraint
    −0.60); watch both over-reach (pool-shrink on rare genre combos) and under-reach (head noun not
@@ -407,7 +407,7 @@ Scripts (session scratchpad, not committed): `wf_extract.js` (Stage 1), `run_rec
 lives in `wf_extract.js`. Consider committing a curated subset + a `--eval` mode on
 `tools/llm_frontend_probe.py` as a portfolio artifact.
 
-The **full v4 run is durably preserved** in `docs/llm_frontend_validation/v4_resume/`:
+The **full v4 run is durably preserved** in `docs/llm_frontend/validation/v4_resume/`:
 `extractions_v4_full.json` (Stage 1), `cases_v4_full/case_*.json` (Stage 2, 160 cases),
 `wf_judge_v4_full.js` + `judge_summary_v4_full.json` (Stage 3), `compare_v4.py` (the 3-way diff), and
 `judge_summary{,_v1,_v3_full}.json` for v1/v3. Re-judge: `Workflow(scriptPath:

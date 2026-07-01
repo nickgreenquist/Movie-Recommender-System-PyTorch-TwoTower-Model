@@ -153,7 +153,7 @@ A few deliberate choices:
 
 The extraction prompt was tuned and validated **entirely in-repo against the trained model** before any API wiring — the reusable harness is [`tools/llm_frontend_probe.py`](tools/llm_frontend_probe.py) (`python tools/llm_frontend_probe.py --smoke`), and the shared retrieval pipeline both it and the app import is [`src/llm_frontend.py`](src/llm_frontend.py).
 
-**Rollout:** v1 (shipped) — titles + mood + year/genre filters. v1.5 — richer post-retrieval filters (director, content rating, runtime, *"actually set in Paris"*) from a baked facet store. v2 — explanations, multi-turn. See [`docs/plans/plan.md`](docs/plans/plan.md).
+**Rollout:** v1 (shipped) — titles + mood + year/genre filters. v1.5 — richer post-retrieval filters (director, content rating, runtime, *"actually set in Paris"*) from a baked facet store. v2 — explanations, multi-turn. See [`docs/llm_frontend/llm_frontend_plan.md`](docs/llm_frontend/llm_frontend_plan.md).
 
 ### Enabling it locally
 

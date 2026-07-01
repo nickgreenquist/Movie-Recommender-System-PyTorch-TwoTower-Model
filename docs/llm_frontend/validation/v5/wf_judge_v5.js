@@ -4,7 +4,7 @@ export const meta = {
   phases: [{ title: 'Judge', detail: 'one sonnet agent per case, reads its case JSON' }],
 }
 
-const DIR = '/Users/nickgreenquist/Documents/Movie-Recommender-System-PyTorch-TwoTower-Model/docs/llm_frontend_validation/v5/cases_v5'
+const DIR = '/Users/nickgreenquist/Documents/Movie-Recommender-System-PyTorch-TwoTower-Model/docs/llm_frontend/validation/v5/cases_v5'
 // Case ids written by Stage 2 (0..159 minus 17, whose extraction errored). Embedded directly
 // so the run does not depend on args plumbing.
 const IDS = [45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 143, 144, 145]

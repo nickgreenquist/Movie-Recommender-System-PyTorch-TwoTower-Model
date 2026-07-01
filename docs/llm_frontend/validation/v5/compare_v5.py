@@ -1,6 +1,6 @@
 """v5 subset comparison vs v1/v3/v4 on the same cases.
 
-  python docs/llm_frontend_validation/v5/compare_v5.py <V4DIR> <V5DIR> <v5_judge_output>
+  python docs/llm_frontend/validation/v5/compare_v5.py <V4DIR> <V5DIR> <v5_judge_output>
 
 V4DIR = the v4_resume dir (holds judge_summary{,_v3_full,_v4_full}.json + cases_v4_full for cats).
 V5DIR = the v5 dir (holds cases_v5; receives judge_summary_v5_subset.json).
