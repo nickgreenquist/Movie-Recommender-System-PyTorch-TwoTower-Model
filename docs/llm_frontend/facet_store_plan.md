@@ -160,6 +160,49 @@ exist; the LLM may also emit it.
 > the work into **three engines**, not one keyword-vocab phase. Measurement scripts + judge outputs:
 > memory `project_facet_expansion_measurement`; scratchpad `m1*.py`/`m2_*.py`/`actions.py`/`queries.py`.
 
+> ### ▶ RESUME HERE — non-API build campaign, step B (2026-07-01)
+> **Active workstream: maximize non-API-key / non-Streamlit features before wiring the hosted extractor +
+> Ask tab.** Everything on the retrieval/filter/data/resolver side is buildable AND deterministically
+> verifiable now by feeding hand-authored extraction JSON to `recommend()` — the API is only the last-mile
+> free-text→JSON step. A deterministic eval harness exists: `tools/llm_frontend_eval.py` over
+> `docs/llm_frontend/validation/retrieval_eval/eval_cases.json` (70 subagent-authored cases → recommend() →
+> machine-checkable assertions; no API). **Win #1 (uncommitted):** soft genome re-rank
+> `GENOME_RERANK_LAMBDA=0.5`. Full detail + the ranked backlog are in **"Non-API build campaign"** below.
+>
+> **Win #2 — step A · F1 structured facets — BUILT + verified + adversarially reviewed (uncommitted, 2026-07-01).**
+> content-rating (US MPAA cert), runtime, franchise/collection (require/exclude incl. a curated MCU/DCEU
+> universe-alias table), composer, and a `min_vote_average` quality floor. All from the on-disk scrape, no LLM,
+> no model change. `_passes_constraints` now reads the baked facet tables (absent metadata passes, mirroring the
+> year gate). The eval gained faithful facet-membership assertion types (`max_runtime`/`max_rating`/
+> `excludes_franchise`) + an independent `oracle` ground-truth assertion — before, its genre proxies didn't gate
+> on the facet. **A 4-lens adversarial review (9 confirmed findings) then hardened it**, all fixed:
+>   • **composer resolution is role-aware** — composers live in a SEPARATE `composer_name_to_ids` namespace so
+>     "movies with John Williams" (actor) never shadows to the prolific same-named composer; `require_composers`
+>     resolves composer-only, `require_people` is billed-preferred with a composer fallback.
+>   • **franchise matching is contiguous-token, not raw substring** — kills 'Saw'→Texas Chainsaw, 'The Ring'→LotR,
+>     'It'→65 collections. Universe aliases tightened ('spider man'→'spider man mcu' spares Sony Spider-Man;
+>     dropped dead 'incredible hulk'/'green lantern'/'justice league'); documented as a broad family heuristic
+>     (standalone films TMDB gives no collection can't be caught by name — precise collection-id/movieId roster
+>     deferred to F3).
+>   • **runtime/vote gates coerce stringified LLM bounds** (`max_runtime:"90"`) instead of crashing.
+>   • **eval no longer passes vacuously** on an empty/all-unknown pool; built facets carry `built:true` so they
+>     move into the must-stay-green REGRESSION bucket (were hiding in SPEC, skipped by `--only-regression`).
+> **Final: facet-correctness 100%; the 11 built-facet cases (rating/runtime/franchise/composer + oracle +
+> adversarial low-ceiling-rating) are guarded REGRESSIONs, all green; 0 new regressions** (the 10 REGRESSION
+> failures are pre-existing genre-coherence cases with no facet assertions — step-B). 2 `max_runtime` cases stay
+> SPEC on genre-count (runtime filter is correct; `liked_genres`-only retrieval under-supplies the genre → step B).
+> Snapshot: `retrieval_eval/report_facets_f1.txt` (34/44 reg, 19/28 spec). Files: `llm_features/build_facet_store.py`,
+> `src/llm_frontend.py`, `tools/llm_frontend_eval.py` + augmented cases. Export bakes the whole facet_store dict
+> already, so **no `src/export.py` change** — canonical `python main.py export <PROD α=0.5 ckpt>` reproduces the
+> `facets` key (this session re-baked it surgically into `serving/` for the eval).
+>
+> **CONTINUE AT → step B · retrieval quality:** `resolve_mood` (mood phrase → genome-tag set → feeds the
+> re-rank/anchors), a `require_genome_tags` **HARD floor** for emphatic "*only* set in Paris", and **Mode-1.5
+> title-genome injection** (inject a liked title's own top genome tags as re-rank tags to kill era-drift on
+> pure-title requests). Step B is what unblocks the 2 retrieval-limited max_runtime cases + the mood/genome SPEC group.
+>
+> ---
+>
 > ### ▶ Ask-AI holes measurement — DONE (2026-07-01)
 > The "Ask-AI holes" run is **complete**: 500 realistic prompts (50 archetypes × 10) were oracle-recommended
 > and coverage-tagged on **Sonnet** (batch 00 = 100 reused Opus records; batches 01–04 = 400 fresh Sonnet,
@@ -498,6 +541,59 @@ the composition degradation rule. Beyond confirmation, it sharpened the plan on 
 **Not adopted (noted for the record):** OMDb for content-rating (our verified `release_dates` on disk beats it);
 a full visual-style LLM pass (stays Engine-3-demoted — only B&W via `color_info` is cheap); corpus refresh /
 sub-200-rating canon-extension list (a larger project, out of scope for this plan).
+
+### Non-API build campaign — deterministic eval + genome re-rank (2026-07-01)
+
+**Goal:** build + measure every retrieval / filter / data / resolver feature that needs **no API key** (hosted
+Haiku extraction) and **no Streamlit tab** — verified by feeding hand-authored extraction JSON straight into
+`recommend()`. The API is only the last-mile free-text→JSON step; everything else is buildable + measurable now.
+
+**Ruler (built):** `tools/llm_frontend_eval.py` — deterministic no-API regression+spec eval (the residual-listed
+portfolio artifact). Reads `docs/llm_frontend/validation/retrieval_eval/eval_cases.json` — **70 cases** authored by a
+10-agent Sonnet sweep (one per failure mode), each = utterance → extraction JSON → machine-checkable assertions
+(`contains_genre` / `max_genre` / `excludes_genre` / `*_title_substr` / `all|none_have_person` / `rank_above` /
+`min_genome`). Split **REGRESSION** (`needs_feature=none`, must stay green) vs **SPEC** (expected-fail until the named
+feature lands — the eval measures build progress). Snapshots: `retrieval_eval/baseline_report.txt` (λ=0),
+`report_rerank_lambda0.5.txt`.
+
+**Diagnosis (overturned residual #1's proposed fix).** The anchor failures are NOT "dilution fixed by boosting the
+soft-genre signal" — measured, `liked_genres` barely pulls genre and can make results *worse*. Real mechanisms:
+(1) item-embedding **era/co-watch drift** — correct western anchors still rank 80s-action neighbours first (→ 0
+westerns); (2) **tag→arthouse skew** — `intimate`/`heartfelt` peak on Bergman/Tarkovsky.
+
+**Win #1 (landed, uncommitted): soft genome re-rank ("Source A").** In `src/llm_frontend.py`: after cosine scoring,
+`score += GENOME_RERANK_LAMBDA * mean_genome_relevance(genome_tags ∪ require_genome_tags)`. Additive (cosine is
+signed), soft (never a hard filter — the pool never empties). Swept λ → **0.5** best: **+12 cases / 0 regressions**,
+plateaus after (regression 18→23, spec 18→25). Fixes the western/Pulp-Fiction era-drift, unlocks setting facets
+(courtroom/time-travel/Paris-class via `require_genome_tags`), helps mood routing. **Not** fixed: romance→arthouse
+tag-skew (separate — abstract mood tags are inherently arthouse-heavy).
+
+**Ranked non-API backlog / where to continue:**
+- **A · F1 structured facets — ✅ DONE (uncommitted, 2026-07-01).** content-rating (US MPAA cert from
+  `release_dates`, 82% non-empty US cert), runtime (`tmdb.runtime`, 99.4%), franchise (`belongs_to_collection`,
+  22% = 2,062 films; require/exclude, incl. a curated `FRANCHISE_UNIVERSE_ALIASES` map so "skip the MCU/DCEU"
+  resolves across per-series collections), composer (`crew[Original Music Composer]`, folded into the people
+  store — e.g. Hans Zimmer pid 947 / 112 credits), and a `min_vote_average` quality floor (`tmdb.vote_average`,
+  99.4%). Built: extended `llm_features/build_facet_store.py` to emit the tables; `src/export.py` already bakes
+  the whole facet_store dict (**no export change**); extended `_passes_constraints` (`require_max_rating` /
+  `max_runtime`/`min_runtime` / `require_franchise`/`exclude_franchise` / `min_vote_average`; composer =
+  `require_composers`/`exclude_composers` → `require_people` extension) with absent-metadata-passes semantics;
+  gave the eval faithful facet-membership assertion types. Verified via `tools/llm_frontend_eval.py`:
+  **facet-correctness 100% (11/11, 0 violations); 9/11 SPEC green; 0 regressions.** Remaining 2 = max_runtime
+  cases whose runtime filter is correct but genre retrieval lags (a step-B lever). Not built here: schema/prompt
+  slots for the hosted extractor (deferred to the API-wiring phase — this is the non-API campaign) and
+  country/language/studio facets (a sibling F1 resolver — step C `resolve_facet`).
+- **B · Retrieval quality (NEXT).** `resolve_mood` (mood phrase → genome-tag set → feeds the re-rank/anchors); a
+  `require_genome_tags` **HARD floor** for emphatic "*only* set in Paris"; **Mode-1.5 title-genome injection** (inject a
+  liked title's own top genome tags as re-rank tags to kill era-drift on pure-title requests).
+- **C · Resolvers/routing + validation sweeps** (`resolve_facet` country/format, a facet-correctness sweep,
+  constraint-priority degradation for thin pools).
+
+**Uncommitted surface (this campaign):** `src/llm_frontend.py` (genome re-rank + F1 facet gates),
+`llm_features/build_facet_store.py` (F1 facet tables + composers), `tools/llm_frontend_eval.py` (facet
+assertion types), `docs/llm_frontend/validation/retrieval_eval/` (augmented cases + `report_facets_f1.txt`),
+and `serving/feature_store.pt` (surgically re-baked `facets`; the canonical `main.py export <PROD>` reproduces
+it). Commit, a real canary eyeball on the re-rank, and the canonical re-export are the user's call.
 
 ## Validation approach (mirror the v1→v5 harness)
 

@@ -1,0 +1,150 @@
+[
+  {
+    "utterance": "French heist films from the 70s",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": ["Crime", "Thriller"],
+      "disliked_genres": [],
+      "genome_tags": ["heist"],
+      "hard_constraints": {
+        "year_min": 1970,
+        "year_max": 1979,
+        "require_genres": ["Crime"],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": [],
+        "require_country": "France"
+      }
+    },
+    "assertions": [
+      {"type": "min_genome", "tag": "heist", "k": 10, "min_score": 0.45, "min": 4},
+      {"type": "contains_genre", "genre": "Crime", "k": 10, "min": 5},
+      {"type": "excludes_genre", "genre": "Animation", "k": 10}
+    ],
+    "needs_feature": "require_country",
+    "note": "year+country stack thins pool; heist genome must persist after country-fallback"
+  },
+  {
+    "utterance": "a feel-good movie about cooking",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": ["Comedy", "Drama"],
+      "disliked_genres": ["Horror", "Thriller"],
+      "genome_tags": ["food"],
+      "hard_constraints": {
+        "exclude_genres": ["Horror", "Thriller"],
+        "mood": "feel-good"
+      }
+    },
+    "assertions": [
+      {"type": "min_genome", "tag": "food", "k": 10, "min_score": 0.4, "min": 5},
+      {"type": "excludes_genre", "genre": "Horror", "k": 10},
+      {"type": "max_genre", "genre": "Action", "k": 10, "max": 2}
+    ],
+    "needs_feature": "resolve_mood",
+    "note": "food genome must anchor; absent mood slot risks grim food films or comfort-genre flood"
+  },
+  {
+    "utterance": "epic space opera but more mature, not the kiddie stuff",
+    "extraction": {
+      "liked_items": ["Interstellar", "2001: A Space Odyssey"],
+      "disliked_items": [],
+      "liked_genres": ["Sci-Fi", "Adventure"],
+      "disliked_genres": ["Animation", "Family"],
+      "genome_tags": ["space opera", "epic"],
+      "hard_constraints": {
+        "require_genres": ["Sci-Fi"],
+        "exclude_genres": ["Animation", "Family"]
+      }
+    },
+    "assertions": [
+      {"type": "contains_genre", "genre": "Sci-Fi", "k": 10, "min": 6},
+      {"type": "min_genome", "tag": "space opera", "k": 10, "min_score": 0.5, "min": 4},
+      {"type": "excludes_genre", "genre": "Animation", "k": 10}
+    ],
+    "needs_feature": "none",
+    "note": "space opera genome and Animation exclusion must jointly hold; genre-only fallback loses space opera signal"
+  },
+  {
+    "utterance": "horror comedies please, nothing too gory",
+    "extraction": {
+      "liked_items": ["Shaun of the Dead"],
+      "disliked_items": [],
+      "liked_genres": ["Horror", "Comedy"],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_genres": ["Horror", "Comedy"],
+        "require_max_rating": "PG-13"
+      }
+    },
+    "assertions": [
+      {"type": "contains_genre", "genre": "Horror", "k": 10, "min": 3},
+      {"type": "contains_genre", "genre": "Comedy", "k": 10, "min": 3},
+      {"type": "max_genre", "genre": "Drama", "k": 10, "max": 4}
+    ],
+    "needs_feature": "require_max_rating",
+    "note": "dual-genre thin pool: collapse to Comedy-only or Horror-only is the primary failure"
+  },
+  {
+    "utterance": "romantic movie set in Paris, more French New Wave than Hollywood",
+    "extraction": {
+      "liked_items": ["Amélie"],
+      "disliked_items": [],
+      "liked_genres": ["Romance", "Drama"],
+      "disliked_genres": [],
+      "genome_tags": ["paris"],
+      "hard_constraints": {
+        "require_country": "France"
+      }
+    },
+    "assertions": [
+      {"type": "contains_genre", "genre": "Romance", "k": 10, "min": 3},
+      {"type": "contains_genre", "genre": "Drama", "k": 10, "min": 5},
+      {"type": "max_genre", "genre": "Action", "k": 10, "max": 1}
+    ],
+    "needs_feature": "require_country",
+    "note": "without require_country Hollywood romances flood results; paris genome alone insufficient"
+  },
+  {
+    "utterance": "slick action heist with a big ensemble cast like Ocean's Eleven",
+    "extraction": {
+      "liked_items": ["Ocean's Eleven"],
+      "disliked_items": [],
+      "liked_genres": ["Crime", "Action"],
+      "disliked_genres": [],
+      "genome_tags": ["heist"],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {"type": "min_genome", "tag": "heist", "k": 10, "min_score": 0.5, "min": 5},
+      {"type": "contains_genre", "genre": "Crime", "k": 10, "min": 5},
+      {"type": "max_genre", "genre": "Sci-Fi", "k": 10, "max": 1}
+    ],
+    "needs_feature": "none",
+    "note": "anchor must not dilute heist genome toward generic blockbusters; heist must dominate top-10"
+  },
+  {
+    "utterance": "[HOLE] superhero film but nothing from the MCU or DC Extended Universe",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": ["Action", "Sci-Fi"],
+      "disliked_genres": [],
+      "genome_tags": ["superhero"],
+      "hard_constraints": {
+        "require_genres": ["Action"],
+        "exclude_franchise": ["Marvel Cinematic Universe", "DC Extended Universe"]
+      }
+    },
+    "assertions": [
+      {"type": "contains_genre", "genre": "Action", "k": 10, "min": 6},
+      {"type": "excludes_title_substr", "substr": "Avengers", "k": 10},
+      {"type": "excludes_title_substr", "substr": "Batman", "k": 10}
+    ],
+    "needs_feature": "exclude_franchise",
+    "note": "franchise exclusion unrepresentable by genre/genome/people; no engine covers MCU or DC membership"
+  }
+]

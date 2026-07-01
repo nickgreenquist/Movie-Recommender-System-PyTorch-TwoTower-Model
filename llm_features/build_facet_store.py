@@ -1,36 +1,52 @@
 """
-Scraped-Facet Store builder — people facets from the TMDB credits scrape (v1.5).
+Scraped-Facet Store builder — people + structured F1 facets from the TMDB scrape (v1.5).
 
 PURPOSE
-    Distill the person→movie facet tables that let the LLM conversational front-end serve
-    people-facet requests ("Tom Hanks movies", "directed by Sofia Coppola") — the entire
-    `unsupported` request class the extraction prompt currently drops, leaving an empty query
-    that falls back to popularity. See docs/llm_frontend/facet_store_plan.md (this builder is Phase 0)
-    and the residual list in docs/llm_frontend/validation/llm_frontend_haiku_validation.md.
+    Distill the facet tables that let the LLM conversational front-end serve requests the two-tower
+    model has no concept of: people ("Tom Hanks movies", "directed by Sofia Coppola", "scored by
+    Hans Zimmer") AND the cheap structured "F1" facets already sitting in the scrape — US content
+    rating, runtime, franchise/collection membership, and the TMDB vote_average quality signal.
+    These are the `unsupported` request class the extraction prompt currently drops, leaving an
+    empty query that falls back to popularity. See docs/llm_frontend/facet_store_plan.md
+    (Expansion II, "Non-API build campaign" step A) and the residual list in
+    docs/llm_frontend/validation/llm_frontend_haiku_validation.md.
 
-    The two-tower model has no actor/director concept; these facets come entirely from the TMDB
-    credits we already scraped for the LLM-feature pipeline (llm_features/scrape.py) but never
-    wired in. This builder reads that cache and emits compact, int-keyed lookups.
+    All facets come entirely from the TMDB metadata we already scraped for the LLM-feature pipeline
+    (llm_features/scrape.py) but never wired in. This builder reads that cache and emits compact,
+    int-keyed lookups; nothing here needs the model or an LLM call.
 
 INPUT  (build-time only — local, gitignored, absent on Streamlit Cloud)
     llm_features/cache/scraped/{movieId}.json — one record per corpus movie (~9,366 of ~9,375).
-    Canonical TMDB person IDs live under tmdb.credits_raw, NOT the convenience tmdb.cast/
+    People — canonical TMDB person IDs live under tmdb.credits_raw, NOT the convenience tmdb.cast/
     director/writers fields (those are name-only strings):
       • actors    — credits_raw.cast[], billing-ordered by .order, capped to the top-N billed.
       • directors — credits_raw.crew[] where job == 'Director'.
       • writers   — credits_raw.crew[] where department == 'Writing'.
+      • composers — credits_raw.crew[] where job == 'Original Music Composer' (folded into the
+                    people store so "scored by X" resolves through the same require_people path).
     Keying by .id (not name) makes resolution unambiguous and splits same-name people for free.
+    Structured facets — from the tmdb sub-dict: content rating from details_raw.release_dates
+    (US MPAA certification), runtime from tmdb.runtime, franchise from
+    details_raw.belongs_to_collection, and vote_average/vote_count from tmdb.
 
-OUTPUT  (llm_features/cache/facet_store.pt — a build artifact; Phase 1 will bake the SAME tables
-    into serving/feature_store.pt at export time, since the deployed app loads only serving/)
-    movieId_to_people      : {mid: {'actors':[pid…], 'directors':[pid…], 'writers':[pid…]}}
-                             actors capped to top-N billed (cameos pollute "X movies");
-                             directors/writers uncapped. The filter path unions all three.
-    person_id_to_name      : {pid: 'Tom Hanks'}            display + reverse lookup
-    person_name_to_ids     : {normalized_name: [pid…]}     resolution; pre-sorted by in-corpus
-                             film count desc (so resolve_person takes the head on a collision)
-    person_id_to_film_count: {pid: int}                    in-corpus catalog size; tie-break + display
-    meta                   : build knobs + coverage counts
+OUTPUT  (llm_features/cache/facet_store.pt — a build artifact; export bakes the SAME dict into
+    serving/feature_store.pt['facets'] at export time, since the deployed app loads only serving/)
+    movieId_to_people       : {mid: {'actors':[pid…], 'directors':[pid…], 'writers':[pid…],
+                              'composers':[pid…]}} — actors capped to top-N billed (cameos pollute
+                              "X movies"); directors/writers/composers uncapped. Filter unions all.
+    person_id_to_name       : {pid: 'Tom Hanks'}            display + reverse lookup (all roles)
+    person_name_to_ids      : {normalized_name: [pid…]}     BILLED (actor/director/writer) resolution;
+                              pre-sorted by in-corpus film count desc (head on a collision)
+    composer_name_to_ids    : {normalized_name: [pid…]}     COMPOSER-only resolution (separate namespace
+                              so "movies with X" never shadows to a same-named composer)
+    person_id_to_film_count : {pid: int}                    in-corpus catalog size; tie-break + display
+    movieId_to_content_rating: {mid: 'G'|'PG'|'PG-13'|'R'|'NC-17'}   US MPAA cert (require_max_rating)
+    movieId_to_runtime      : {mid: int}                    minutes (max_runtime/min_runtime filter)
+    movieId_to_collection   : {mid: {'id': int, 'name': str}}   TMDB franchise (require/exclude_franchise)
+    movieId_to_vote         : {mid: {'average': float, 'count': int}}   quality floor (min_vote_average)
+    franchise_universe_aliases: {normalized_universe_phrase: [collection-name substring…]}   a small
+                              curated table so "skip the MCU" (no single TMDB collection) resolves
+    meta                    : build knobs + coverage counts
 
     All keys are int movieId / int pid. _norm_name is imported from src.llm_frontend so the
     build-time keys and the inference-time lookup normalize identically.
@@ -42,7 +58,7 @@ import glob
 import json
 import os
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 import torch
 
@@ -60,6 +76,44 @@ from src.llm_frontend import _norm_name, resolve_person  # noqa: E402  (single n
 # parts / cameos, and "Tom Hanks movies" wants films he leads, not one-scene voices. Start 10.
 TOP_N_ACTORS = 10
 
+# Valid US MPAA certifications, low→high restriction (used to pick a film's cert from the many
+# noisy release_dates entries — most of which carry an empty certification).
+MPAA_RATINGS = ('G', 'PG', 'PG-13', 'R', 'NC-17')
+
+# Curated franchise "universe" aliases → member collection-name tokens. TMDB models franchises as
+# per-series collections ("The Avengers Collection", "Batman Collection", …), NOT per-universe, so a
+# request to exclude a whole cinematic universe ("skip the MCU", "nothing from the DCEU") has no
+# single collection to match. This small explicit table expands a universe phrase into the member
+# collection-name token-phrases that make it up; `_franchise_match` (src/llm_frontend.py) tests each
+# as a CONTIGUOUS whole-word token subsequence of a collection name (never a raw substring — that
+# over-matches: 'saw'⊂'chainsaw', 'the ring'⊂'the lord of the rings').
+#
+# This is a deliberately BROAD franchise-family heuristic, not a precise universe roster — two known
+# limitations (universe membership is genuinely fuzzy and can't be read off collection names):
+#   • Over-inclusive: a name family is grouped whole. "no DC" drops Nolan's Dark-Knight trilogy and
+#     the Burton/Schumacher/Reeve Batman/Superman films too (not literally DCEU, but what a broad
+#     "no Batman/Superman" intent usually wants). Entries verified against the corpus's collection
+#     names; each hits only its intended family ('spider man mcu' excludes only the MCU Spider-Man
+#     collection, sparing the Sony Raimi/Garfield/Spider-Verse films).
+#   • Under-inclusive: a STANDALONE universe film TMDB gives no collection (The Incredible Hulk,
+#     Justice League 2017, Black Widow, Black Adam) cannot be caught by any collection-name rule.
+# The precise fix (curated member collection-ids + standalone movieIds) is deferred to F3; keys are
+# pre-normalized (lowercase, hyphen→space) to match _norm_name.
+FRANCHISE_UNIVERSE_ALIASES = {
+    'marvel cinematic universe': [
+        'avengers', 'iron man', 'captain america', 'thor', 'guardians of the galaxy',
+        'ant man', 'doctor strange', 'black panther', 'captain marvel', 'spider man mcu',
+    ],
+    'dc extended universe': [
+        'man of steel', 'wonder woman', 'aquaman', 'suicide squad', 'shazam',
+        'batman', 'superman', 'dark knight',
+    ],
+}
+# Common short forms resolve to the same expansion.
+FRANCHISE_UNIVERSE_ALIASES['mcu']         = FRANCHISE_UNIVERSE_ALIASES['marvel cinematic universe']
+FRANCHISE_UNIVERSE_ALIASES['dceu']        = FRANCHISE_UNIVERSE_ALIASES['dc extended universe']
+FRANCHISE_UNIVERSE_ALIASES['dc universe'] = FRANCHISE_UNIVERSE_ALIASES['dc extended universe']
+
 SCRAPED_DIR = os.path.join(REPO_ROOT, 'llm_features', 'cache', 'scraped')
 OUT_PATH    = os.path.join(REPO_ROOT, 'llm_features', 'cache', 'facet_store.pt')
 
@@ -70,9 +124,10 @@ def _people_from_record(record, top_n_actors=TOP_N_ACTORS):
     """Pull (role → [pid…]) and (pid → name) from one scraped record's credits_raw.
 
     Actors are the top-`top_n_actors` cast by billing order (.order ascending); directors are
-    crew with job == 'Director'; writers are crew with department == 'Writing'. Returns
-    (roles, id_to_name) where roles is {'actors':[…],'directors':[…],'writers':[…]} de-duped in
-    billing/credit order, or (None, {}) if the record has no usable TMDB credits."""
+    crew with job == 'Director'; writers are crew with department == 'Writing'; composers are crew
+    with job == 'Original Music Composer'. Returns (roles, id_to_name) where roles is
+    {'actors':[…],'directors':[…],'writers':[…],'composers':[…]} de-duped in billing/credit order,
+    or (None, {}) if the record has no usable TMDB credits."""
     tmdb = record.get('tmdb')
     if not tmdb:
         return None, {}
@@ -98,10 +153,66 @@ def _people_from_record(record, top_n_actors=TOP_N_ACTORS):
     actors    = _collect(actors_sorted)
     directors = _collect([c for c in crew if c.get('job') == 'Director'])
     writers   = _collect([c for c in crew if c.get('department') == 'Writing'])
+    composers = _collect([c for c in crew if c.get('job') == 'Original Music Composer'])
 
-    if not (actors or directors or writers):
+    if not (actors or directors or writers or composers):
         return None, {}
-    return {'actors': actors, 'directors': directors, 'writers': writers}, id_to_name
+    return {'actors': actors, 'directors': directors,
+            'writers': writers, 'composers': composers}, id_to_name
+
+
+def _us_content_rating(details_raw):
+    """The film's US MPAA certification (G/PG/PG-13/R/NC-17) from TMDB release_dates, or None.
+
+    TMDB lists many US release entries (theatrical, premiere, TV, re-release), most with an empty
+    certification; take the most common valid MPAA cert across them, ties broken toward the more
+    restrictive rating (a conservative ceiling filter). Toy Story → 'G'."""
+    rd = details_raw.get('release_dates') or {}
+    results = rd.get('results') if isinstance(rd, dict) else None
+    certs = []
+    for blk in results or []:
+        if blk.get('iso_3166_1') != 'US':
+            continue
+        for e in blk.get('release_dates') or []:
+            c = (e.get('certification') or '').strip().upper()
+            if c in MPAA_RATINGS:
+                certs.append(c)
+    if not certs:
+        return None
+    counts = Counter(certs)
+    top = max(counts.values())
+    # tie → most restrictive (highest index in MPAA_RATINGS)
+    return max((c for c, n in counts.items() if n == top), key=MPAA_RATINGS.index)
+
+
+def _attrs_from_record(record):
+    """Pull the structured F1 attribute facets from one record's tmdb sub-dict: US MPAA content
+    rating (details_raw.release_dates), runtime minutes (tmdb.runtime), franchise/collection
+    ({id,name} from details_raw.belongs_to_collection), and the vote_average/vote_count quality
+    signal. Returns a dict of only the fields that are present — a missing/unusable field is simply
+    omitted (the filter treats its absence as 'no info', mirroring the year gate)."""
+    tmdb = record.get('tmdb') or {}
+    dr   = tmdb.get('details_raw') or {}
+    out  = {}
+
+    cert = _us_content_rating(dr)
+    if cert:
+        out['content_rating'] = cert
+
+    rt = tmdb.get('runtime')
+    if isinstance(rt, (int, float)) and rt > 0:
+        out['runtime'] = int(rt)
+
+    coll = dr.get('belongs_to_collection')
+    if coll and coll.get('id') is not None:
+        out['collection'] = {'id': int(coll['id']), 'name': coll.get('name') or ''}
+
+    va = tmdb.get('vote_average')
+    if isinstance(va, (int, float)) and va > 0:
+        vc = tmdb.get('vote_count')
+        out['vote'] = {'average': float(va),
+                       'count':   int(vc) if isinstance(vc, (int, float)) else 0}
+    return out
 
 
 # ── Build ────────────────────────────────────────────────────────────────────
@@ -120,12 +231,27 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
     movieId_to_people = {}
     person_id_to_name = {}
     pid_films         = defaultdict(set)   # pid → {mid…}, for film_count + tie-break
+    billed_pids       = set()              # pids in an actor/director/writer role (the require_people namespace)
+    composer_pids     = set()              # pids in a composer role (the require_composers namespace)
+    movieId_to_content_rating = {}
+    movieId_to_runtime        = {}
+    movieId_to_collection     = {}
+    movieId_to_vote           = {}
     n_no_tmdb = n_no_people = 0
 
     for path in files:
         with open(path) as f:
             record = json.load(f)
         mid = int(record['movieId'])
+
+        # Structured attribute facets are independent of the credits, so collect them first — a
+        # film may carry a rating/runtime/collection even if its cast/crew is unusable.
+        attrs = _attrs_from_record(record)
+        if 'content_rating' in attrs: movieId_to_content_rating[mid] = attrs['content_rating']
+        if 'runtime'        in attrs: movieId_to_runtime[mid]        = attrs['runtime']
+        if 'collection'     in attrs: movieId_to_collection[mid]     = attrs['collection']
+        if 'vote'           in attrs: movieId_to_vote[mid]           = attrs['vote']
+
         roles, id_to_name = _people_from_record(record, top_n_actors)
         if roles is None:
             # Disjoint buckets: no TMDB at all vs. TMDB present but no usable cast/crew.
@@ -137,30 +263,46 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
         movieId_to_people[mid] = roles
         for pid, name in id_to_name.items():
             person_id_to_name.setdefault(pid, name)
-        for pid in set(roles['actors']) | set(roles['directors']) | set(roles['writers']):
+        billed_role   = set(roles['actors']) | set(roles['directors']) | set(roles['writers'])
+        composer_role = set(roles['composers'])
+        for pid in billed_role | composer_role:
             pid_films[pid].add(mid)
+        billed_pids   |= billed_role
+        composer_pids |= composer_role
 
     person_id_to_film_count = {pid: len(mids) for pid, mids in pid_films.items()}
 
-    # Reverse index: normalized name → [pid…], pre-sorted most-in-corpus-films first so a
-    # same-name collision resolves to the better-covered person without inference-time work.
-    name_to_ids = defaultdict(list)
-    for pid, name in person_id_to_name.items():
-        norm = _norm_name(name)
-        if norm:
-            name_to_ids[norm].append(pid)
-    person_name_to_ids = {
-        norm: sorted(pids, key=lambda p: (-person_id_to_film_count.get(p, 0), p))
-        for norm, pids in name_to_ids.items()
-    }
+    # Reverse index: normalized name → [pid…], pre-sorted most-in-corpus-films first so a same-name
+    # collision resolves to the better-covered person without inference-time work. Billed people
+    # (actor/director/writer) and composers get SEPARATE indexes so a "movies with X" (actor intent)
+    # query never resolves to a same-named composer — composers are credited on their whole uncapped
+    # filmography and would otherwise out-count the (top-10-billed-capped) actor and shadow them.
+    def _name_index(pids):
+        idx = defaultdict(list)
+        for pid in pids:
+            name = person_id_to_name.get(pid)
+            norm = _norm_name(name) if name else ''
+            if norm:
+                idx[norm].append(pid)
+        return {norm: sorted(ps, key=lambda p: (-person_id_to_film_count.get(p, 0), p))
+                for norm, ps in idx.items()}
+
+    person_name_to_ids   = _name_index(billed_pids)     # require_people (actor/director/writer)
+    composer_name_to_ids = _name_index(composer_pids)   # require_composers (separate namespace)
 
     n_total = len(files)
     n_covered = len(movieId_to_people)
     return {
-        'movieId_to_people':       movieId_to_people,
-        'person_id_to_name':       person_id_to_name,
-        'person_name_to_ids':      person_name_to_ids,
-        'person_id_to_film_count': person_id_to_film_count,
+        'movieId_to_people':        movieId_to_people,
+        'person_id_to_name':        person_id_to_name,
+        'person_name_to_ids':       person_name_to_ids,
+        'composer_name_to_ids':     composer_name_to_ids,
+        'person_id_to_film_count':  person_id_to_film_count,
+        'movieId_to_content_rating': movieId_to_content_rating,
+        'movieId_to_runtime':       movieId_to_runtime,
+        'movieId_to_collection':    movieId_to_collection,
+        'movieId_to_vote':          movieId_to_vote,
+        'franchise_universe_aliases': FRANCHISE_UNIVERSE_ALIASES,
         'meta': {
             'top_n_actors':     top_n_actors,
             'n_scraped_files':  n_total,
@@ -168,7 +310,12 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
             'n_no_tmdb':        n_no_tmdb,
             'n_no_people':      n_no_people,
             'n_persons':        len(person_id_to_name),
+            'n_composers':      len(composer_name_to_ids),
             'n_collisions':     sum(1 for v in person_name_to_ids.values() if len(v) > 1),
+            'n_content_rating': len(movieId_to_content_rating),
+            'n_runtime':        len(movieId_to_runtime),
+            'n_collection':     len(movieId_to_collection),
+            'n_vote':           len(movieId_to_vote),
         },
     }
 
@@ -180,8 +327,8 @@ def _films_for_pid(store, pid):
     inverse index isn't stored — compact forward tables only; this is a spot-check convenience)."""
     out = []
     for mid, roles in store['movieId_to_people'].items():
-        for role in ('actors', 'directors', 'writers'):
-            if pid in roles[role]:
+        for role in ('actors', 'directors', 'writers', 'composers'):
+            if pid in roles.get(role, []):
                 out.append((mid, role))
                 break
     return out
@@ -201,6 +348,18 @@ def _spot_check(store, titles=None):
     print(f"  unique persons    : {m['n_persons']}")
     print(f"  name collisions   : {m['n_collisions']}")
     print(f"  top_n_actors      : {m['top_n_actors']}")
+    n = m['n_scraped_files']
+    print(f"  content ratings   : {m.get('n_content_rating', 0)}  ({100 * m.get('n_content_rating', 0) / n:.1f}%)")
+    print(f"  runtimes          : {m.get('n_runtime', 0)}  ({100 * m.get('n_runtime', 0) / n:.1f}%)")
+    print(f"  franchise members : {m.get('n_collection', 0)}  ({100 * m.get('n_collection', 0) / n:.1f}%)")
+    print(f"  vote_average      : {m.get('n_vote', 0)}  ({100 * m.get('n_vote', 0) / n:.1f}%)")
+
+    # Deterministic attribute spot-check on Toy Story (movieId 1): G / 81 min / Toy Story Collection.
+    a = store['movieId_to_content_rating'].get(1), store['movieId_to_runtime'].get(1)
+    coll = store['movieId_to_collection'].get(1)
+    vote = store['movieId_to_vote'].get(1)
+    print(f"\n  attrs[Toy Story]  : rating={a[0]}  runtime={a[1]}  "
+          f"collection={coll['name'] if coll else None}  vote={vote['average'] if vote else None}")
 
     def report(label, name):
         pid, note = resolve_person(name, store)
@@ -218,6 +377,7 @@ def _spot_check(store, titles=None):
 
     report('actor   ', 'Tom Hanks')
     report('director', 'Christopher Nolan')
+    report('composer', 'Hans Zimmer')
 
     # Auto-find a real same-name collision (two distinct pids whose canonical names normalize
     # equal AND both spell the same) to exercise the tie-break path.

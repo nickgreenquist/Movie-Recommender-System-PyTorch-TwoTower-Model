@@ -1,0 +1,136 @@
+[
+  {
+    "utterance": "Recommend me psychological thrillers but absolutely no horror — nothing scary or gory",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": ["Thriller"],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "exclude_genres": ["Horror"]
+      }
+    },
+    "assertions": [
+      {"type": "excludes_genre", "genre": "Horror", "k": 15},
+      {"type": "contains_genre", "genre": "Thriller", "k": 10, "min": 4}
+    ],
+    "needs_feature": "none",
+    "note": "LLM must not conflate Thriller with Horror in exclude_genres"
+  },
+  {
+    "utterance": "I want a serious love story — romance is great but I cannot stand romantic comedies, nothing silly or lighthearted",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": ["Romance", "Drama"],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "exclude_genres": ["Comedy"]
+      }
+    },
+    "assertions": [
+      {"type": "excludes_genre", "genre": "Comedy", "k": 10},
+      {"type": "contains_genre", "genre": "Romance", "k": 10, "min": 3}
+    ],
+    "needs_feature": "none",
+    "note": "cannot stand romcom must set Comedy exclusion not Romance exclusion"
+  },
+  {
+    "utterance": "Classic film noir crime movies from before 1960, but not Double Indemnity or The Maltese Falcon — I've already seen those",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": ["Crime", "Film-Noir"],
+      "disliked_genres": [],
+      "genome_tags": ["film noir"],
+      "hard_constraints": {
+        "year_max": 1960,
+        "exclude_titles": ["Double Indemnity", "The Maltese Falcon"]
+      }
+    },
+    "assertions": [
+      {"type": "excludes_title_substr", "substr": "Double Indemnity", "k": 10},
+      {"type": "excludes_title_substr", "substr": "Maltese Falcon", "k": 10},
+      {"type": "min_genome", "tag": "film noir", "k": 10, "min_score": 0.6, "min": 5}
+    ],
+    "needs_feature": "exclude_titles",
+    "note": "but not X or Y clause must parse to exclude_titles list not be dropped"
+  },
+  {
+    "utterance": "Sci-fi films please, but I have had enough of the Alien franchise — nothing from that series at all",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": ["Sci-Fi"],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "exclude_franchise": "Alien"
+      }
+    },
+    "assertions": [
+      {"type": "excludes_title_substr", "substr": "Alien", "k": 10},
+      {"type": "contains_genre", "genre": "Sci-Fi", "k": 10, "min": 5}
+    ],
+    "needs_feature": "exclude_franchise",
+    "note": "franchise exclusion must block Alien/Aliens/Alien3; Prometheus gap unfixable by title-substr"
+  },
+  {
+    "utterance": "Something uplifting and feel-good — absolutely nothing sad or depressing, I need cheering up after a rough week",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": ["Comedy", "Drama"],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "exclude_mood": "sad"
+      }
+    },
+    "assertions": [
+      {"type": "contains_genre", "genre": "Comedy", "k": 10, "min": 3},
+      {"type": "excludes_genre", "genre": "Horror", "k": 10}
+    ],
+    "needs_feature": "resolve_mood",
+    "note": "nothing sad must populate exclude_mood not be silently dropped by extractor"
+  },
+  {
+    "utterance": "Action and adventure but no animated films at all — live-action only please, nothing cartoon",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": ["Action", "Adventure"],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "exclude_genres": ["Animation"]
+      }
+    },
+    "assertions": [
+      {"type": "excludes_genre", "genre": "Animation", "k": 15},
+      {"type": "contains_genre", "genre": "Action", "k": 10, "min": 4}
+    ],
+    "needs_feature": "none",
+    "note": "live-action only paraphrase must map to exclude Animation without being ignored"
+  },
+  {
+    "utterance": "[HOLE] I want atmospheric suspenseful films but nothing gory at all — I genuinely cannot handle graphic violence or blood",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": ["Thriller", "Mystery"],
+      "disliked_genres": [],
+      "genome_tags": ["atmospheric", "suspense"],
+      "hard_constraints": {
+        "exclude_genome_tags": ["gory", "violent"]
+      }
+    },
+    "assertions": [
+      {"type": "contains_genre", "genre": "Thriller", "k": 10, "min": 4}
+    ],
+    "needs_feature": "exclude_genome_tags",
+    "note": "no exclude_genome_tags slot in schema; no excludes_genome assertion type exists in runner"
+  }
+]

@@ -1,0 +1,2881 @@
+[
+  {
+    "utterance": "show me comedies from the 80s",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "year_min": 1980,
+        "year_max": 1989,
+        "require_genres": [
+          "Comedy"
+        ],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": []
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 7
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 3
+      }
+    ],
+    "needs_feature": "none",
+    "note": "genre+decade filter must surface Comedy-tagged 1980s titles",
+    "mode": "baseline_wellserved"
+  },
+  {
+    "utterance": "show me horror movies",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Horror"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "year_min": null,
+        "year_max": null,
+        "require_genres": [
+          "Horror"
+        ],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": []
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Horror",
+        "k": 10,
+        "min": 7
+      },
+      {
+        "type": "min_genome",
+        "tag": "horror",
+        "k": 10,
+        "min_score": 0.6,
+        "min": 6
+      }
+    ],
+    "needs_feature": "none",
+    "note": "pure Horror genre filter; genre tag and genome score must align",
+    "mode": "baseline_wellserved"
+  },
+  {
+    "utterance": "I liked Inception and Interstellar, recommend me something similar",
+    "extraction": {
+      "liked_items": [
+        "Inception",
+        "Interstellar"
+      ],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "year_min": null,
+        "year_max": null,
+        "require_genres": [],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": []
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Sci-Fi",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "min_genome",
+        "tag": "science fiction",
+        "k": 10,
+        "min_score": 0.6,
+        "min": 5
+      }
+    ],
+    "needs_feature": "none",
+    "note": "Mode-1 Nolan sci-fi anchors must surface Sci-Fi neighbors",
+    "mode": "baseline_wellserved"
+  },
+  {
+    "utterance": "I want something funny to watch tonight, nothing scary please",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Comedy"
+      ],
+      "disliked_genres": [
+        "Horror",
+        "Thriller"
+      ],
+      "genome_tags": [],
+      "hard_constraints": {
+        "year_min": null,
+        "year_max": null,
+        "require_genres": [
+          "Comedy"
+        ],
+        "exclude_genres": [
+          "Horror"
+        ],
+        "require_people": [],
+        "exclude_people": []
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 6
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Horror",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "Comedy require + Horror hard exclude must both hold in top-10",
+    "mode": "baseline_wellserved"
+  },
+  {
+    "utterance": "romantic comedies please",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Romance",
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "year_min": null,
+        "year_max": null,
+        "require_genres": [
+          "Romance",
+          "Comedy"
+        ],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": []
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 8
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Romance",
+        "k": 10,
+        "min": 7
+      }
+    ],
+    "needs_feature": "none",
+    "note": "AND-genre filter must surface rom-coms; neither genre should dilute",
+    "mode": "baseline_wellserved"
+  },
+  {
+    "utterance": "I loved The Godfather and Goodfellas, what should I watch next?",
+    "extraction": {
+      "liked_items": [
+        "The Godfather",
+        "Goodfellas"
+      ],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "year_min": null,
+        "year_max": null,
+        "require_genres": [],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": []
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Crime",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "max": 2
+      }
+    ],
+    "needs_feature": "none",
+    "note": "Mode-1 crime-mafia anchors must pull Crime neighbors without Comedy bleed",
+    "mode": "baseline_wellserved"
+  },
+  {
+    "utterance": "[HOLE] I only have 90 minutes tonight, show me nothing longer than that",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "year_min": null,
+        "year_max": null,
+        "require_genres": [],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": [],
+        "max_runtime": 90
+      }
+    },
+    "assertions": [
+      {
+        "type": "max_runtime",
+        "cap": 90,
+        "k": 10
+      }
+    ],
+    "needs_feature": "max_runtime",
+    "note": "runtime cap unbuilt; no runtime data in feature store or serving",
+    "mode": "baseline_wellserved",
+    "built": true
+  },
+  {
+    "utterance": "French heist films from the 70s",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Crime",
+        "Thriller"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "heist"
+      ],
+      "hard_constraints": {
+        "year_min": 1970,
+        "year_max": 1979,
+        "require_genres": [
+          "Crime"
+        ],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": [],
+        "require_country": "France"
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "heist",
+        "k": 10,
+        "min_score": 0.45,
+        "min": 4
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Crime",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Animation",
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_country",
+    "note": "year+country stack thins pool; heist genome must persist after country-fallback",
+    "mode": "composition_thin"
+  },
+  {
+    "utterance": "a feel-good movie about cooking",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Comedy",
+        "Drama"
+      ],
+      "disliked_genres": [
+        "Horror",
+        "Thriller"
+      ],
+      "genome_tags": [
+        "food"
+      ],
+      "hard_constraints": {
+        "exclude_genres": [
+          "Horror",
+          "Thriller"
+        ],
+        "mood": "feel-good"
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "food",
+        "k": 10,
+        "min_score": 0.4,
+        "min": 5
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Horror",
+        "k": 10
+      },
+      {
+        "type": "max_genre",
+        "genre": "Action",
+        "k": 10,
+        "max": 2
+      }
+    ],
+    "needs_feature": "resolve_mood",
+    "note": "food genome must anchor; absent mood slot risks grim food films or comfort-genre flood",
+    "mode": "composition_thin"
+  },
+  {
+    "utterance": "epic space opera but more mature, not the kiddie stuff",
+    "extraction": {
+      "liked_items": [
+        "Interstellar",
+        "2001: A Space Odyssey"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Sci-Fi",
+        "Adventure"
+      ],
+      "disliked_genres": [
+        "Animation",
+        "Family"
+      ],
+      "genome_tags": [
+        "space opera",
+        "epic"
+      ],
+      "hard_constraints": {
+        "require_genres": [
+          "Sci-Fi"
+        ],
+        "exclude_genres": [
+          "Animation",
+          "Family"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Sci-Fi",
+        "k": 10,
+        "min": 6
+      },
+      {
+        "type": "min_genome",
+        "tag": "space opera",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 4
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Animation",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "space opera genome and Animation exclusion must jointly hold; genre-only fallback loses space opera signal",
+    "mode": "composition_thin"
+  },
+  {
+    "utterance": "horror comedies please, nothing too gory",
+    "extraction": {
+      "liked_items": [
+        "Shaun of the Dead"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Horror",
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_genres": [
+          "Horror",
+          "Comedy"
+        ],
+        "require_max_rating": "PG-13"
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Horror",
+        "k": 10,
+        "min": 3
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 3
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 4
+      },
+      {
+        "type": "max_rating",
+        "rating": "PG-13",
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_max_rating",
+    "note": "dual-genre thin pool: collapse to Comedy-only or Horror-only is the primary failure",
+    "mode": "composition_thin",
+    "built": true
+  },
+  {
+    "utterance": "romantic movie set in Paris, more French New Wave than Hollywood",
+    "extraction": {
+      "liked_items": [
+        "Amélie"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Romance",
+        "Drama"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "paris"
+      ],
+      "hard_constraints": {
+        "require_country": "France"
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Romance",
+        "k": 10,
+        "min": 3
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Drama",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Action",
+        "k": 10,
+        "max": 1
+      }
+    ],
+    "needs_feature": "require_country",
+    "note": "without require_country Hollywood romances flood results; paris genome alone insufficient",
+    "mode": "composition_thin"
+  },
+  {
+    "utterance": "slick action heist with a big ensemble cast like Ocean's Eleven",
+    "extraction": {
+      "liked_items": [
+        "Ocean's Eleven"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Crime",
+        "Action"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "heist"
+      ],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "heist",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 5
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Crime",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Sci-Fi",
+        "k": 10,
+        "max": 1
+      }
+    ],
+    "needs_feature": "none",
+    "note": "anchor must not dilute heist genome toward generic blockbusters; heist must dominate top-10",
+    "mode": "composition_thin"
+  },
+  {
+    "utterance": "[HOLE] superhero film but nothing from the MCU or DC Extended Universe",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Action",
+        "Sci-Fi"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "superhero"
+      ],
+      "hard_constraints": {
+        "require_genres": [
+          "Action"
+        ],
+        "exclude_franchise": [
+          "Marvel Cinematic Universe",
+          "DC Extended Universe"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Action",
+        "k": 10,
+        "min": 6
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Avengers",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Batman",
+        "k": 10
+      },
+      {
+        "type": "excludes_franchise",
+        "spec": [
+          "Marvel Cinematic Universe",
+          "DC Extended Universe"
+        ],
+        "k": 10
+      }
+    ],
+    "needs_feature": "exclude_franchise",
+    "note": "franchise exclusion unrepresentable by genre/genome/people; no engine covers MCU or DC membership",
+    "mode": "composition_thin",
+    "built": true
+  },
+  {
+    "utterance": "Recommend me psychological thrillers but absolutely no horror — nothing scary or gory",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Thriller"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "exclude_genres": [
+          "Horror"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "excludes_genre",
+        "genre": "Horror",
+        "k": 15
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Thriller",
+        "k": 10,
+        "min": 4
+      }
+    ],
+    "needs_feature": "none",
+    "note": "LLM must not conflate Thriller with Horror in exclude_genres",
+    "mode": "exclusion_negation"
+  },
+  {
+    "utterance": "I want a serious love story — romance is great but I cannot stand romantic comedies, nothing silly or lighthearted",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Romance",
+        "Drama"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "exclude_genres": [
+          "Comedy"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "excludes_genre",
+        "genre": "Comedy",
+        "k": 10
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Romance",
+        "k": 10,
+        "min": 3
+      }
+    ],
+    "needs_feature": "none",
+    "note": "cannot stand romcom must set Comedy exclusion not Romance exclusion",
+    "mode": "exclusion_negation"
+  },
+  {
+    "utterance": "Classic film noir crime movies from before 1960, but not Double Indemnity or The Maltese Falcon — I've already seen those",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Crime",
+        "Film-Noir"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "film noir"
+      ],
+      "hard_constraints": {
+        "year_max": 1960,
+        "exclude_titles": [
+          "Double Indemnity",
+          "The Maltese Falcon"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "excludes_title_substr",
+        "substr": "Double Indemnity",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Maltese Falcon",
+        "k": 10
+      },
+      {
+        "type": "min_genome",
+        "tag": "film noir",
+        "k": 10,
+        "min_score": 0.6,
+        "min": 5
+      }
+    ],
+    "needs_feature": "exclude_titles",
+    "note": "but not X or Y clause must parse to exclude_titles list not be dropped",
+    "mode": "exclusion_negation"
+  },
+  {
+    "utterance": "Sci-fi films please, but I have had enough of the Alien franchise — nothing from that series at all",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Sci-Fi"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "exclude_franchise": "Alien"
+      }
+    },
+    "assertions": [
+      {
+        "type": "excludes_title_substr",
+        "substr": "Alien",
+        "k": 10
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Sci-Fi",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "excludes_franchise",
+        "spec": "Alien",
+        "k": 10
+      }
+    ],
+    "needs_feature": "exclude_franchise",
+    "note": "franchise exclusion must block Alien/Aliens/Alien3; Prometheus gap unfixable by title-substr",
+    "mode": "exclusion_negation",
+    "built": true
+  },
+  {
+    "utterance": "Something uplifting and feel-good — absolutely nothing sad or depressing, I need cheering up after a rough week",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Comedy",
+        "Drama"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "exclude_mood": "sad"
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 3
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Horror",
+        "k": 10
+      }
+    ],
+    "needs_feature": "resolve_mood",
+    "note": "nothing sad must populate exclude_mood not be silently dropped by extractor",
+    "mode": "exclusion_negation"
+  },
+  {
+    "utterance": "Action and adventure but no animated films at all — live-action only please, nothing cartoon",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Action",
+        "Adventure"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "exclude_genres": [
+          "Animation"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "excludes_genre",
+        "genre": "Animation",
+        "k": 15
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Action",
+        "k": 10,
+        "min": 4
+      }
+    ],
+    "needs_feature": "none",
+    "note": "live-action only paraphrase must map to exclude Animation without being ignored",
+    "mode": "exclusion_negation"
+  },
+  {
+    "utterance": "[HOLE] I want atmospheric suspenseful films but nothing gory at all — I genuinely cannot handle graphic violence or blood",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Thriller",
+        "Mystery"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "atmospheric",
+        "suspense"
+      ],
+      "hard_constraints": {
+        "exclude_genome_tags": [
+          "gory",
+          "violent"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Thriller",
+        "k": 10,
+        "min": 4
+      }
+    ],
+    "needs_feature": "exclude_genome_tags",
+    "note": "no exclude_genome_tags slot in schema; no excludes_genome assertion type exists in runner",
+    "mode": "exclusion_negation"
+  },
+  {
+    "utterance": "I want movies actually set in Paris, not just French cinema in general",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Romance",
+        "Drama"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "paris"
+      ],
+      "hard_constraints": {
+        "require_genome_tags": [
+          "paris"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "paris",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 6
+      },
+      {
+        "type": "rank_above",
+        "a": "Midnight in Paris",
+        "b": "La Dolce Vita"
+      }
+    ],
+    "needs_feature": "require_genome_tags",
+    "note": "paris genome gate keeps Amelie/Midnight, drops Rome-set La Dolce Vita",
+    "mode": "genome_setting_facet"
+  },
+  {
+    "utterance": "Give me gripping courtroom dramas - trials where the stakes are life or death",
+    "extraction": {
+      "liked_items": [
+        "12 Angry Men"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Drama",
+        "Thriller"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "courtroom drama"
+      ],
+      "hard_constraints": {
+        "require_genome_tags": [
+          "courtroom drama"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "courtroom drama",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 5
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Drama",
+        "k": 10,
+        "min": 6
+      }
+    ],
+    "needs_feature": "require_genome_tags",
+    "note": "courtroom tag blocks crime films where no trial scenes appear",
+    "mode": "genome_setting_facet"
+  },
+  {
+    "utterance": "I love time travel films where the rules are airtight and internally consistent",
+    "extraction": {
+      "liked_items": [
+        "Back to the Future",
+        "The Terminator"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Sci-Fi",
+        "Thriller"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "time travel"
+      ],
+      "hard_constraints": {
+        "require_genome_tags": [
+          "time travel"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "time travel",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 6
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Horror",
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_genome_tags",
+    "note": "time travel genome gate blocks sci-fi action films with no time mechanism",
+    "mode": "genome_setting_facet"
+  },
+  {
+    "utterance": "I only want biopics or films based on real events - nothing fictional even if it feels historical",
+    "extraction": {
+      "liked_items": [
+        "Schindler's List",
+        "The Social Network"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Drama",
+        "Documentary"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "based on a true story"
+      ],
+      "hard_constraints": {
+        "require_genome_tags": [
+          "based on a true story"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "based on a true story",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 6
+      },
+      {
+        "type": "max_genre",
+        "genre": "Animation",
+        "k": 10,
+        "max": 1
+      }
+    ],
+    "needs_feature": "require_genome_tags",
+    "note": "true-story gate prevents fictional historical dramas from diluting biopics",
+    "mode": "genome_setting_facet"
+  },
+  {
+    "utterance": "Movies set during World War II itself - not the Cold War or postwar fallout",
+    "extraction": {
+      "liked_items": [
+        "Schindler's List"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Drama",
+        "War"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "world war ii"
+      ],
+      "hard_constraints": {
+        "require_genome_tags": [
+          "world war ii"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "world war ii",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 6
+      },
+      {
+        "type": "rank_above",
+        "a": "Schindler's List",
+        "b": "Full Metal Jacket"
+      }
+    ],
+    "needs_feature": "require_genome_tags",
+    "note": "WWII genome gate prevents Vietnam/Korea war films ranking above WWII films",
+    "mode": "genome_setting_facet"
+  },
+  {
+    "utterance": "Dark serious dystopian futures where society has collapsed or turned authoritarian - not satirical comedies",
+    "extraction": {
+      "liked_items": [
+        "The Matrix",
+        "Children of Men"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Sci-Fi",
+        "Drama"
+      ],
+      "disliked_genres": [
+        "Comedy"
+      ],
+      "genome_tags": [
+        "dystopia"
+      ],
+      "hard_constraints": {
+        "require_genome_tags": [
+          "dystopia"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "dystopia",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 6
+      },
+      {
+        "type": "max_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "max": 2
+      }
+    ],
+    "needs_feature": "require_genome_tags",
+    "note": "dystopia gate with Comedy cap separates grim futures from satirical ones",
+    "mode": "genome_setting_facet"
+  },
+  {
+    "utterance": "[HOLE] Movies where everything happens in a single night - I want that one-night pressure and real-time intensity",
+    "extraction": {
+      "liked_items": [
+        "Collateral",
+        "Training Day"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Thriller",
+        "Crime",
+        "Drama"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "max_story_duration_days": 1
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Thriller",
+        "k": 10,
+        "min": 3
+      }
+    ],
+    "needs_feature": "story_duration_facet",
+    "note": "no genome tag for single-night story span; duration filter absent from all three engines",
+    "mode": "genome_setting_facet"
+  },
+  {
+    "utterance": "I want movies like Pulp Fiction",
+    "extraction": {
+      "liked_items": [
+        "Pulp Fiction"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Crime",
+        "Thriller"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "nonlinear",
+        "dark humor",
+        "stylized"
+      ],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "nonlinear",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 4
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Crime",
+        "k": 10,
+        "min": 4
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Jurassic",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Forrest",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "era-1994 drift: Jurassic Park / Forrest Gump must not appear",
+    "mode": "mode1_5_title_drift"
+  },
+  {
+    "utterance": "Show me films like Crouching Tiger, Hidden Dragon",
+    "extraction": {
+      "liked_items": [
+        "Crouching Tiger, Hidden Dragon"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Action",
+        "Drama"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "martial arts",
+        "kung fu",
+        "foreign language"
+      ],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "martial arts",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 4
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Animation",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Harry Potter",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Gladiator",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "wuxia anchor must not drift to 2000-2001 era blockbusters",
+    "mode": "mode1_5_title_drift"
+  },
+  {
+    "utterance": "something like Mulholland Drive",
+    "extraction": {
+      "liked_items": [
+        "Mulholland Drive"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Mystery",
+        "Drama",
+        "Thriller"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "surreal",
+        "nonlinear",
+        "mindfuck"
+      ],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "nonlinear",
+        "k": 10,
+        "min_score": 0.4,
+        "min": 3
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Mystery",
+        "k": 10,
+        "min": 3
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Harry Potter",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Spider-Man",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "Lynch surrealist anchor must not drift to 2001-2002 Hollywood blockbusters",
+    "mode": "mode1_5_title_drift"
+  },
+  {
+    "utterance": "give me films like Oldboy",
+    "extraction": {
+      "liked_items": [
+        "Oldboy"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Drama",
+        "Thriller",
+        "Mystery"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "revenge",
+        "dark",
+        "psychological thriller"
+      ],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Thriller",
+        "k": 10,
+        "min": 4
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Animation",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Pirates",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Lord of the Rings",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "2003 Korean anchor must not drift to Pirates / RotK era neighbors",
+    "mode": "mode1_5_title_drift"
+  },
+  {
+    "utterance": "I loved Amélie, show me similar movies",
+    "extraction": {
+      "liked_items": [
+        "Amélie"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Romance",
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "quirky",
+        "whimsical",
+        "feel-good"
+      ],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 4
+      },
+      {
+        "type": "max_genre",
+        "genre": "Children",
+        "k": 10,
+        "max": 1
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Action",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Shrek",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "French whimsy anchor must not drift to 2001 animated blockbusters",
+    "mode": "mode1_5_title_drift"
+  },
+  {
+    "utterance": "more movies like The Seventh Seal",
+    "extraction": {
+      "liked_items": [
+        "The Seventh Seal"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Drama"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "existential",
+        "allegory",
+        "black and white"
+      ],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "max_genre",
+        "genre": "Adventure",
+        "k": 10,
+        "max": 2
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Action",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Ben-Hur",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "North by Northwest",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "1957 Bergman anchor must not drift to 1950s Hollywood spectacles",
+    "mode": "mode1_5_title_drift"
+  },
+  {
+    "utterance": "[HOLE] movies like Crouching Tiger, Hidden Dragon but only originally in Chinese",
+    "extraction": {
+      "liked_items": [
+        "Crouching Tiger, Hidden Dragon"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Action",
+        "Drama"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "martial arts",
+        "foreign language"
+      ],
+      "hard_constraints": {
+        "require_original_language": "zh"
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "martial arts",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 6
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Harry Potter",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Lord of the Rings",
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_original_language",
+    "note": "no wired language filter; era drift persists for foreign-language anchors",
+    "mode": "mode1_5_title_drift"
+  },
+  {
+    "utterance": "I'm in the mood for a romance, something that makes you feel good about love",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Romance"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "romance",
+        "love story"
+      ],
+      "hard_constraints": {
+        "require_genres": [
+          "Romance"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Romance",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 5
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Horror",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "romance vibe must not drift to Bergman arthouse drama via mood anchors",
+    "mode": "mode2_5_vibe_dilution"
+  },
+  {
+    "utterance": "I want to watch Christmas movies and really get into the holiday spirit",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Comedy",
+        "Family"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "christmas",
+        "holiday season"
+      ],
+      "hard_constraints": {
+        "require_genome_tags": [
+          "christmas"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "christmas",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 3
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Horror",
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_genome_tags",
+    "note": "holiday request must surface Christmas-genome films, not generic drama",
+    "mode": "mode2_5_vibe_dilution"
+  },
+  {
+    "utterance": "I'd love some fun fantasy movies, the kind with magic and adventure and a real sense of wonder",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Fantasy",
+        "Adventure"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "magic",
+        "fantasy world",
+        "fairy tale"
+      ],
+      "hard_constraints": {
+        "require_genres": [
+          "Fantasy"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Fantasy",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 3
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Horror",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "fun fantasy must not become dark arthouse-horror via mood synthesis",
+    "mode": "mode2_5_vibe_dilution"
+  },
+  {
+    "utterance": "I'm a huge fan of westerns, give me some great ones",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Western"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "western",
+        "cowboy",
+        "frontier"
+      ],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Western",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "min_genome",
+        "tag": "western",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 4
+      }
+    ],
+    "needs_feature": "none",
+    "note": "pure western taste must yield Western-genre films, not Crime-drama drift",
+    "mode": "mode2_5_vibe_dilution"
+  },
+  {
+    "utterance": "Give me gritty crime thrillers, I love the tension and suspense",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Crime",
+        "Thriller"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "crime",
+        "detective",
+        "suspense"
+      ],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Crime",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 5
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Romance",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "crime-thriller vibe must not collapse to prestige arthouse drama",
+    "mode": "mode2_5_vibe_dilution"
+  },
+  {
+    "utterance": "War movies, I want the intense battlefield kind",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "War"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "war",
+        "combat",
+        "military",
+        "world war ii"
+      ],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "War",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 5
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Comedy",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "war vibe must surface War-genre films, not general intense Drama",
+    "mode": "mode2_5_vibe_dilution"
+  },
+  {
+    "utterance": "[HOLE] I want something light and fun, absolutely nothing dark or depressing",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "feel good",
+        "humor",
+        "lighthearted"
+      ],
+      "hard_constraints": {
+        "exclude_mood": [
+          "dark",
+          "depressing",
+          "bleak",
+          "violent"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 3
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Horror",
+        "k": 10
+      }
+    ],
+    "needs_feature": "exclude_mood",
+    "note": "no engine excludes anti-vibe affect; negative mood constraints unsupported",
+    "mode": "mode2_5_vibe_dilution"
+  },
+  {
+    "utterance": "I want something that will make me cry",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [
+        "heartbreaking",
+        "emotional",
+        "tearjerker"
+      ],
+      "hard_constraints": {
+        "require_genres": [],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": []
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "heartbreaking",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 5
+      }
+    ],
+    "needs_feature": "resolve_mood",
+    "note": "raw mood phrase must route to heartbreaking genome tag, not literal Comedy",
+    "mode": "mood_affect_routing"
+  },
+  {
+    "utterance": "I need something cozy and warm for a Sunday afternoon",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [
+        "feel-good",
+        "heartwarming",
+        "light-hearted"
+      ],
+      "hard_constraints": {
+        "require_genres": [],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": []
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "feel-good",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 5
+      }
+    ],
+    "needs_feature": "resolve_mood",
+    "note": "cozy/warm must route to feel-good genome, not Comedy genre literal",
+    "mode": "mood_affect_routing"
+  },
+  {
+    "utterance": "I usually watch comedies but tonight I want something darker and more mature",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [
+        "Comedy"
+      ],
+      "genome_tags": [
+        "dark",
+        "mature",
+        "serious"
+      ],
+      "hard_constraints": {
+        "require_genres": [],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": []
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "dark",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "max": 2
+      }
+    ],
+    "needs_feature": "resolve_mood",
+    "note": "mood pivot must surface dark genome and suppress Comedy anti-dilution",
+    "mode": "mood_affect_routing"
+  },
+  {
+    "utterance": "Give me something psychologically dark and unsettling, but nothing with jump scares or gore",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [
+        "Horror"
+      ],
+      "genome_tags": [
+        "dark",
+        "psychological"
+      ],
+      "hard_constraints": {
+        "require_genres": [],
+        "exclude_genres": [
+          "Horror"
+        ],
+        "require_people": [],
+        "exclude_people": []
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "dark",
+        "k": 10,
+        "min_score": 0.6,
+        "min": 6
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Horror",
+        "k": 10
+      }
+    ],
+    "needs_feature": "resolve_mood",
+    "note": "dark mood must activate dark genome AND hard-exclude Horror simultaneously",
+    "mode": "mood_affect_routing"
+  },
+  {
+    "utterance": "Something feel-good but not mindless — a drama that leaves me smiling",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Drama"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "feel-good",
+        "uplifting"
+      ],
+      "hard_constraints": {
+        "require_genres": [],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": []
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "feel-good",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 5
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Drama",
+        "k": 10,
+        "min": 4
+      }
+    ],
+    "needs_feature": "resolve_mood",
+    "note": "feel-good genome anchors and Drama genre must co-occur in top results",
+    "mode": "mood_affect_routing"
+  },
+  {
+    "utterance": "I loved The Dark Knight but I'm in the mood for something more emotional and heartbreaking tonight",
+    "extraction": {
+      "liked_items": [
+        "The Dark Knight"
+      ],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [
+        "heartbreaking",
+        "emotional"
+      ],
+      "hard_constraints": {
+        "require_genres": [],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": []
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "heartbreaking",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 4
+      },
+      {
+        "type": "max_genre",
+        "genre": "Action",
+        "k": 10,
+        "max": 3
+      }
+    ],
+    "needs_feature": "resolve_mood",
+    "note": "mood genome anchors must dominate liked-item style; Action must not flood",
+    "mode": "mood_affect_routing"
+  },
+  {
+    "utterance": "[HOLE] I'm already stressed and sad — I want nothing heavy or heartbreaking, just something light and fun",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [
+        "feel-good"
+      ],
+      "hard_constraints": {
+        "require_genres": [],
+        "exclude_genres": [],
+        "require_people": [],
+        "exclude_people": [],
+        "exclude_mood": [
+          "heartbreaking",
+          "dark",
+          "depressing"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "feel-good",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 6
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 3
+      }
+    ],
+    "needs_feature": "exclude_mood",
+    "note": "exclude_mood slot not built; dark/heartbreaking films cannot be filtered out",
+    "mode": "mood_affect_routing"
+  },
+  {
+    "utterance": "Show me Tom Hanks movies",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_people": [
+          "Tom Hanks"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "all_have_person",
+        "name": "Tom Hanks",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "baseline require_people: all top-k must include Tom Hanks",
+    "mode": "people_facet"
+  },
+  {
+    "utterance": "I love The Prestige and Memento but want smart mind-bending thrillers beyond Nolan",
+    "extraction": {
+      "liked_items": [
+        "The Prestige (2006)",
+        "Memento (2000)"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Thriller"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "cerebral",
+        "mindfuck",
+        "thought-provoking"
+      ],
+      "hard_constraints": {
+        "exclude_people": [
+          "Christopher Nolan"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "none_have_person",
+        "name": "Christopher Nolan",
+        "k": 15
+      }
+    ],
+    "needs_feature": "none",
+    "note": "exclude_people blocks director even when liked seeds are his own films",
+    "mode": "people_facet"
+  },
+  {
+    "utterance": "Movies directed by Sofia Coppola",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_people": [
+          "Sofia Coppola"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "all_have_person",
+        "name": "Sofia Coppola",
+        "k": 4
+      }
+    ],
+    "needs_feature": "none",
+    "note": "directed-by phrasing must route to require_people, not liked_items",
+    "mode": "people_facet"
+  },
+  {
+    "utterance": "What films did Tom Hanks and Steven Spielberg make together?",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_people": [
+          "Tom Hanks",
+          "Steven Spielberg"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "all_have_person",
+        "name": "Tom Hanks",
+        "k": 4
+      },
+      {
+        "type": "all_have_person",
+        "name": "Steven Spielberg",
+        "k": 4
+      }
+    ],
+    "needs_feature": "none",
+    "note": "multi-person require is intersection: every result needs both people",
+    "mode": "people_facet"
+  },
+  {
+    "utterance": "Denzel Washington action movies",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_people": [
+          "Denzel Washington"
+        ],
+        "require_genres": [
+          "Action"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "all_have_person",
+        "name": "Denzel Washington",
+        "k": 10
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Action",
+        "k": 10,
+        "min": 8
+      }
+    ],
+    "needs_feature": "none",
+    "note": "person + genre hard filters apply simultaneously, not as separate fallbacks",
+    "mode": "people_facet"
+  },
+  {
+    "utterance": "I love Hans Zimmer's music — show me movies he scored",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_composers": [
+          "Hans Zimmer"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "all_have_person",
+        "name": "Hans Zimmer",
+        "k": 10
+      }
+    ],
+    "needs_feature": "composer",
+    "note": "composer role is absent from actor/director/writer facets; filter always misses",
+    "mode": "people_facet",
+    "built": true
+  },
+  {
+    "utterance": "[HOLE] Show me A24 horror films",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [
+        "atmospheric"
+      ],
+      "hard_constraints": {
+        "require_studios": [
+          "A24"
+        ],
+        "require_genres": [
+          "Horror"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Horror",
+        "k": 10,
+        "min": 8
+      }
+    ],
+    "needs_feature": "production_company",
+    "note": "studio membership is a people-adjacent entity none of the three engines cover",
+    "mode": "people_facet"
+  },
+  {
+    "utterance": "I want something with frontier outlaw vibes but set in space, like a space western - guns and adventure on spaceships",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Sci-Fi",
+        "Western"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "frontier",
+        "outlaw"
+      ],
+      "hard_constraints": {
+        "require_genres": [
+          "Sci-Fi",
+          "Western"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Sci-Fi",
+        "k": 10,
+        "min": 3
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Western",
+        "k": 10,
+        "min": 2
+      },
+      {
+        "type": "max_genre",
+        "genre": "Sci-Fi",
+        "k": 10,
+        "max": 7
+      }
+    ],
+    "needs_feature": "none",
+    "note": "No anchor; rare Sci-Fi+Western AND-pool must not collapse to pure Sci-Fi",
+    "mode": "require_genre_coherence"
+  },
+  {
+    "utterance": "I love horror like The Shining and comedies like Airplane! but I want both at the same time - a horror comedy",
+    "extraction": {
+      "liked_items": [
+        "The Shining",
+        "Airplane!"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Horror",
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "dark comedy"
+      ],
+      "hard_constraints": {
+        "require_genres": [
+          "Horror",
+          "Comedy"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Horror",
+        "k": 10,
+        "min": 4
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 4
+      },
+      {
+        "type": "max_genre",
+        "genre": "Horror",
+        "k": 10,
+        "max": 7
+      }
+    ],
+    "needs_feature": "none",
+    "note": "Shining (Horror-only) and Airplane (Comedy-only) both filtered; zero anchor signal remains",
+    "mode": "require_genre_coherence"
+  },
+  {
+    "utterance": "A sci-fi noir please - futuristic world, dark detective atmosphere, like Blade Runner's visual style and mood",
+    "extraction": {
+      "liked_items": [
+        "Blade Runner"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Sci-Fi"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "neo-noir",
+        "noir"
+      ],
+      "hard_constraints": {
+        "require_genres": [
+          "Sci-Fi",
+          "Film-Noir"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Sci-Fi",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "min_genome",
+        "tag": "neo-noir",
+        "k": 10,
+        "min_score": 0.4,
+        "min": 3
+      }
+    ],
+    "needs_feature": "none",
+    "note": "Blade Runner carries no Film-Noir label; genome neo-noir must rescue the signal",
+    "mode": "require_genre_coherence"
+  },
+  {
+    "utterance": "I want a romantic thriller - real danger and stakes like Gone Girl, but also the emotional love story of The Notebook, both together",
+    "extraction": {
+      "liked_items": [
+        "Gone Girl",
+        "The Notebook"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Romance",
+        "Thriller"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_genres": [
+          "Romance",
+          "Thriller"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Romance",
+        "k": 10,
+        "min": 3
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Thriller",
+        "k": 10,
+        "min": 3
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 5
+      }
+    ],
+    "needs_feature": "none",
+    "note": "Gone Girl (Thriller-only) + Notebook (Romance-only) both filtered; Drama must not swamp both",
+    "mode": "require_genre_coherence"
+  },
+  {
+    "utterance": "Dark fantasy horror - a magical world but genuinely terrifying, like Pan's Labyrinth but with more actual horror",
+    "extraction": {
+      "liked_items": [
+        "Pan's Labyrinth"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Fantasy",
+        "Horror"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "dark fantasy",
+        "supernatural"
+      ],
+      "hard_constraints": {
+        "require_genres": [
+          "Fantasy",
+          "Horror"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Fantasy",
+        "k": 10,
+        "min": 3
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Horror",
+        "k": 10,
+        "min": 3
+      },
+      {
+        "type": "max_genre",
+        "genre": "Horror",
+        "k": 10,
+        "max": 7
+      }
+    ],
+    "needs_feature": "none",
+    "note": "Pan's Labyrinth tagged Fantasy/Drama not Horror; filtered anchor leaves Horror swamp risk",
+    "mode": "require_genre_coherence"
+  },
+  {
+    "utterance": "Action comedy - real exciting action sequences like Die Hard but genuinely funny like Anchorman, both in the same film",
+    "extraction": {
+      "liked_items": [
+        "Die Hard",
+        "Anchorman: The Legend of Ron Burgundy"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Action",
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_genres": [
+          "Action",
+          "Comedy"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Action",
+        "k": 10,
+        "min": 4
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 4
+      },
+      {
+        "type": "max_genre",
+        "genre": "Action",
+        "k": 10,
+        "max": 7
+      }
+    ],
+    "needs_feature": "none",
+    "note": "Die Hard (Action-only) + Anchorman (Comedy-only) both filtered; high-volume Action swamps Comedy",
+    "mode": "require_genre_coherence"
+  },
+  {
+    "utterance": "[HOLE] I want a musical thriller - a tense suspense film where songs and music are woven into the plot, not just background",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Musical",
+        "Thriller"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_genres": [
+          "Musical",
+          "Thriller"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Musical",
+        "k": 10,
+        "min": 1
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Thriller",
+        "k": 10,
+        "min": 3
+      }
+    ],
+    "needs_feature": "require_genre_pool_expansion",
+    "note": "Musical+Thriller AND-pool is near-empty; needs OR-fallback when candidate count is below k",
+    "mode": "require_genre_coherence"
+  },
+  {
+    "utterance": "My 7-year-old wants a movie tonight—animated, PG or below",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Animation",
+        "Children"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "children",
+        "kids and family"
+      ],
+      "hard_constraints": {
+        "require_max_rating": "PG"
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Animation",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "min_genome",
+        "tag": "children",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 5
+      },
+      {
+        "type": "max_rating",
+        "rating": "PG",
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_max_rating",
+    "note": "PG ceiling not enforced; R-rated content surfaces in results",
+    "mode": "structured_facet_rating_runtime",
+    "built": true
+  },
+  {
+    "utterance": "I only have 80 minutes—show me something funny I can actually finish",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "max_runtime": 80
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 6
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 3
+      },
+      {
+        "type": "max_runtime",
+        "cap": 80,
+        "k": 10
+      }
+    ],
+    "needs_feature": "max_runtime",
+    "note": "80-minute ceiling ignored; long dramas crowd out short comedies",
+    "mode": "structured_facet_rating_runtime"
+  },
+  {
+    "utterance": "Suggest a good thriller—early morning tomorrow, so nothing over two hours",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Thriller"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "max_runtime": 120
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Thriller",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 4
+      },
+      {
+        "type": "max_runtime",
+        "cap": 120,
+        "k": 10
+      }
+    ],
+    "needs_feature": "max_runtime",
+    "note": "120-minute cap missing; 3-hour prestige dramas surface in top-k",
+    "mode": "structured_facet_rating_runtime"
+  },
+  {
+    "utterance": "I loved Toy Story but want something fresh—no sequels, nothing from a franchise",
+    "extraction": {
+      "liked_items": [
+        "Toy Story (1995)"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Animation"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "exclude_franchise": true
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Animation",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Toy Story 2",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Toy Story 3",
+        "k": 10
+      },
+      {
+        "type": "excludes_franchise",
+        "spec": true,
+        "k": 10
+      }
+    ],
+    "needs_feature": "exclude_franchise",
+    "note": "Toy Story sequels flood top-k when franchise filter is unbuilt",
+    "mode": "structured_facet_rating_runtime",
+    "built": true
+  },
+  {
+    "utterance": "Family movie night with the teenagers—adventure or comedy, nothing R-rated",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Adventure",
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "kids and family"
+      ],
+      "hard_constraints": {
+        "require_max_rating": "PG-13",
+        "exclude_genres": [
+          "Horror"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "excludes_genre",
+        "genre": "Horror",
+        "k": 15
+      },
+      {
+        "type": "min_genome",
+        "tag": "kids and family",
+        "k": 10,
+        "min_score": 0.35,
+        "min": 3
+      },
+      {
+        "type": "max_rating",
+        "rating": "PG-13",
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_max_rating",
+    "note": "PG-13 ceiling absent; R-rated action titles enter despite family context",
+    "mode": "structured_facet_rating_runtime",
+    "built": true
+  },
+  {
+    "utterance": "Want a quick animated watch—under 80 minutes and not part of any series or franchise",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Animation"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "children"
+      ],
+      "hard_constraints": {
+        "max_runtime": 80,
+        "exclude_franchise": true
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Animation",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Toy Story 2",
+        "k": 10
+      },
+      {
+        "type": "max_runtime",
+        "cap": 80,
+        "k": 10
+      }
+    ],
+    "needs_feature": "max_runtime",
+    "note": "Compound constraint (max_runtime + exclude_franchise) fails silently; neither slot built",
+    "mode": "structured_facet_rating_runtime",
+    "built": true
+  },
+  {
+    "utterance": "[HOLE] French comedies under 90 minutes—original French language, nothing dubbed",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_language": "fr",
+        "max_runtime": 90
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 4
+      },
+      {
+        "type": "max_runtime",
+        "cap": 90,
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_language",
+    "note": "Language constraint has no slot in extraction shape or corpus metadata",
+    "mode": "structured_facet_rating_runtime"
+  },
+  {
+    "utterance": "[ORACLE] build_facet_store ground-truth on Toy Story",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Animation"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "oracle",
+        "title": "Toy Story (1995)",
+        "facet": "runtime",
+        "equals": 81
+      },
+      {
+        "type": "oracle",
+        "title": "Toy Story (1995)",
+        "facet": "content_rating",
+        "equals": "G"
+      },
+      {
+        "type": "oracle",
+        "title": "Toy Story (1995)",
+        "facet": "in_franchise",
+        "spec": "Toy Story",
+        "equals": true
+      }
+    ],
+    "needs_feature": "none",
+    "built": true,
+    "note": "Independent ground-truth check on baked facet values — catches a build_facet_store units/parse/collection regression the self-consistent gates miss."
+  },
+  {
+    "utterance": "Gory slasher horror night, but PG-13 max — nothing R",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_genres": [
+          "Horror"
+        ],
+        "require_max_rating": "PG-13"
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Horror",
+        "k": 10,
+        "min": 6
+      },
+      {
+        "type": "max_rating",
+        "rating": "PG-13",
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_max_rating",
+    "built": true,
+    "note": "Adversarial: horror pool is R-heavy, so a no-op rating filter surfaces R titles and max_rating bites (exercises the drop path)."
+  }
+]

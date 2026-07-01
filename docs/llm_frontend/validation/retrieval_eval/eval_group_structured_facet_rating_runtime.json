@@ -1,0 +1,278 @@
+[
+  {
+    "utterance": "My 7-year-old wants a movie tonight—animated, PG or below",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Animation",
+        "Children"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "children",
+        "kids and family"
+      ],
+      "hard_constraints": {
+        "require_max_rating": "PG"
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Animation",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "min_genome",
+        "tag": "children",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 5
+      },
+      {
+        "type": "max_rating",
+        "rating": "PG",
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_max_rating",
+    "note": "PG ceiling not enforced; R-rated content surfaces in results",
+    "built": true
+  },
+  {
+    "utterance": "I only have 80 minutes—show me something funny I can actually finish",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "max_runtime": 80
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 6
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 3
+      },
+      {
+        "type": "max_runtime",
+        "cap": 80,
+        "k": 10
+      }
+    ],
+    "needs_feature": "max_runtime",
+    "note": "80-minute ceiling ignored; long dramas crowd out short comedies"
+  },
+  {
+    "utterance": "Suggest a good thriller—early morning tomorrow, so nothing over two hours",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Thriller"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "max_runtime": 120
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Thriller",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 4
+      },
+      {
+        "type": "max_runtime",
+        "cap": 120,
+        "k": 10
+      }
+    ],
+    "needs_feature": "max_runtime",
+    "note": "120-minute cap missing; 3-hour prestige dramas surface in top-k"
+  },
+  {
+    "utterance": "I loved Toy Story but want something fresh—no sequels, nothing from a franchise",
+    "extraction": {
+      "liked_items": [
+        "Toy Story (1995)"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Animation"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "exclude_franchise": true
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Animation",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Toy Story 2",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Toy Story 3",
+        "k": 10
+      },
+      {
+        "type": "excludes_franchise",
+        "spec": true,
+        "k": 10
+      }
+    ],
+    "needs_feature": "exclude_franchise",
+    "note": "Toy Story sequels flood top-k when franchise filter is unbuilt",
+    "built": true
+  },
+  {
+    "utterance": "Family movie night with the teenagers—adventure or comedy, nothing R-rated",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Adventure",
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "kids and family"
+      ],
+      "hard_constraints": {
+        "require_max_rating": "PG-13",
+        "exclude_genres": [
+          "Horror"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "excludes_genre",
+        "genre": "Horror",
+        "k": 15
+      },
+      {
+        "type": "min_genome",
+        "tag": "kids and family",
+        "k": 10,
+        "min_score": 0.35,
+        "min": 3
+      },
+      {
+        "type": "max_rating",
+        "rating": "PG-13",
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_max_rating",
+    "note": "PG-13 ceiling absent; R-rated action titles enter despite family context",
+    "built": true
+  },
+  {
+    "utterance": "Want a quick animated watch—under 80 minutes and not part of any series or franchise",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Animation"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [
+        "children"
+      ],
+      "hard_constraints": {
+        "max_runtime": 80,
+        "exclude_franchise": true
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Animation",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Toy Story 2",
+        "k": 10
+      },
+      {
+        "type": "max_runtime",
+        "cap": 80,
+        "k": 10
+      }
+    ],
+    "needs_feature": "max_runtime",
+    "note": "Compound constraint (max_runtime + exclude_franchise) fails silently; neither slot built",
+    "built": true
+  },
+  {
+    "utterance": "[HOLE] French comedies under 90 minutes—original French language, nothing dubbed",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_language": "fr",
+        "max_runtime": 90
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 5
+      },
+      {
+        "type": "max_genre",
+        "genre": "Drama",
+        "k": 10,
+        "max": 4
+      },
+      {
+        "type": "max_runtime",
+        "cap": 90,
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_language",
+    "note": "Language constraint has no slot in extraction shape or corpus metadata"
+  }
+]

@@ -1,0 +1,88 @@
+Loaded 70 cases from 1 file(s). facet store: baked
+====================================================================================
+[SPEC-FAIL] 'French heist films from the 70s'  (needs: require_country)
+           MISS min_genome             3 of top-10 carry 'heist'>=0.45 (need >=4)
+[SPEC-FAIL] 'a feel-good movie about cooking'  (needs: resolve_mood)
+           MISS min_genome             1 of top-10 carry 'food'>=0.4 (need >=5)
+[SPEC-FAIL] 'romantic movie set in Paris, more French New Wave than Hollywood'  (needs: require_country)
+           MISS contains_genre         2 of top-10 are Romance (need >=3)
+           MISS contains_genre         3 of top-10 are Drama (need >=5)
+           MISS max_genre              4 of top-10 are Action (allow <=1)
+[FAIL     ] "slick action heist with a big ensemble cast like Ocean's Eleven"
+           MISS min_genome             2 of top-10 carry 'heist'>=0.5 (need >=5)
+           MISS max_genre              3 of top-10 are Sci-Fi (allow <=1)
+[FAIL     ] 'Recommend me psychological thrillers but absolutely no horror — no'
+           MISS contains_genre         2 of top-10 are Thriller (need >=4)
+[FAIL     ] 'I want a serious love story — romance is great but I cannot stand '
+           MISS contains_genre         2 of top-10 are Romance (need >=3)
+[SPEC-FAIL] 'Something uplifting and feel-good — absolutely nothing sad or depr'  (needs: resolve_mood)
+           MISS contains_genre         2 of top-10 are Comedy (need >=3)
+[FAIL     ] 'Action and adventure but no animated films at all — live-action on'
+           MISS contains_genre         2 of top-10 are Action (need >=4)
+[SPEC-FAIL] 'I want movies actually set in Paris, not just French cinema in gen'  (needs: require_genome_tags)
+           MISS min_genome             3 of top-10 carry 'paris'>=0.5 (need >=6)
+           MISS rank_above             missing in results (a@None, b@None)
+[SPEC-FAIL] 'Give me gripping courtroom dramas - trials where the stakes are li'  (needs: require_genome_tags)
+           MISS min_genome             1 of top-10 carry 'courtroom drama'>=0.5 (need >=5)
+           MISS contains_genre         5 of top-10 are Drama (need >=6)
+[SPEC-FAIL] 'I love time travel films where the rules are airtight and internal'  (needs: require_genome_tags)
+           MISS min_genome             3 of top-10 carry 'time travel'>=0.5 (need >=6)
+[SPEC-FAIL] 'Movies set during World War II itself - not the Cold War or postwa'  (needs: require_genome_tags)
+           MISS min_genome             2 of top-10 carry 'world war ii'>=0.5 (need >=6)
+           MISS rank_above             missing in results (a@None, b@None)
+[FAIL     ] 'I want movies like Pulp Fiction'
+           MISS min_genome             0 of top-10 carry 'nonlinear'>=0.5 (need >=4)
+           MISS contains_genre         3 of top-10 are Crime (need >=4)
+           MISS excludes_title_substr  'Jurassic' in top-10: ['Jurassic Park (1993)']
+           MISS excludes_title_substr  'Forrest' in top-10: ['Forrest Gump (1994)']
+[FAIL     ] 'Show me films like Crouching Tiger, Hidden Dragon'
+           MISS excludes_genre         1 Animation in top-10: ['Heavy Metal 2000 (2000)']
+[FAIL     ] 'more movies like The Seventh Seal'
+           MISS excludes_genre         1 Action in top-10: ['Fight Club (1999)']
+[SPEC-FAIL] '[HOLE] movies like Crouching Tiger, Hidden Dragon but only origina'  (needs: require_original_language)
+           MISS min_genome             3 of top-10 carry 'martial arts'>=0.5 (need >=6)
+[FAIL     ] "I'm in the mood for a romance, something that makes you feel good "
+           MISS max_genre              7 of top-10 are Drama (allow <=5)
+[SPEC-FAIL] 'I want to watch Christmas movies and really get into the holiday s'  (needs: require_genome_tags)
+           MISS min_genome             0 of top-10 carry 'christmas'>=0.5 (need >=5)
+           MISS excludes_genre         2 Horror in top-10: ['House II: The Second Story (1987)', 'Godzilla 1985: The Legend Is Reborn (Gojira) (Godzilla) (Return of Godzilla, The) (1984)']
+[FAIL     ] "I'm a huge fan of westerns, give me some great ones"
+           MISS contains_genre         0 of top-10 are Western (need >=5)
+           MISS min_genome             0 of top-10 carry 'western'>=0.5 (need >=5)
+[FAIL     ] 'War movies, I want the intense battlefield kind'
+           MISS max_genre              9 of top-10 are Drama (allow <=5)
+[SPEC-FAIL] '[HOLE] I want something light and fun, absolutely nothing dark or '  (needs: exclude_mood)
+           MISS contains_genre         3 of top-10 are Comedy (need >=5)
+[SPEC-FAIL] 'I usually watch comedies but tonight I want something darker and m'  (needs: resolve_mood)
+           MISS min_genome             4 of top-10 carry 'dark'>=0.5 (need >=5)
+[SPEC-FAIL] "I loved The Dark Knight but I'm in the mood for something more emo"  (needs: resolve_mood)
+           MISS min_genome             0 of top-10 carry 'heartbreaking'>=0.5 (need >=4)
+[SPEC-FAIL] "[HOLE] I'm already stressed and sad — I want nothing heavy or hear"  (needs: exclude_mood)
+           MISS max_genre              10 of top-10 are Drama (allow <=3)
+[SPEC-FAIL] "I love Hans Zimmer's music — show me movies he scored"  (needs: composer)
+           MISS all_have_person        unresolved person 'Hans Zimmer' [no match]
+[FAIL     ] 'I love horror like The Shining and comedies like Airplane! but I w'
+           MISS max_genre              10 of top-10 are Horror (allow <=7)
+[FAIL     ] 'A sci-fi noir please - futuristic world, dark detective atmosphere'
+           MISS contains_genre         2 of top-10 are Sci-Fi (need >=5)
+           MISS min_genome             1 of top-10 carry 'neo-noir'>=0.4 (need >=3)
+[FAIL     ] 'I want a romantic thriller - real danger and stakes like Gone Girl'
+           MISS max_genre              7 of top-10 are Drama (allow <=5)
+[FAIL     ] 'Dark fantasy horror - a magical world but genuinely terrifying, li'
+           MISS max_genre              10 of top-10 are Horror (allow <=7)
+[FAIL     ] 'Action comedy - real exciting action sequences like Die Hard but g'
+           MISS max_genre              10 of top-10 are Action (allow <=7)
+[SPEC-FAIL] 'I only have 80 minutes—show me something funny I can actually fini'  (needs: max_runtime)
+           MISS contains_genre         3 of top-10 are Comedy (need >=6)
+           MISS max_genre              5 of top-10 are Drama (allow <=3)
+[SPEC-FAIL] 'Suggest a good thriller—early morning tomorrow, so nothing over tw'  (needs: max_runtime)
+           MISS contains_genre         2 of top-10 are Thriller (need >=5)
+           MISS max_genre              5 of top-10 are Drama (allow <=4)
+[SPEC-FAIL] 'I loved Toy Story but want something fresh—no sequels, nothing fro'  (needs: exclude_franchise)
+           MISS excludes_title_substr  'Toy Story 2' in top-10: ['Toy Story 2 (1999)']
+[SPEC-FAIL] '[HOLE] French comedies under 90 minutes—original French language, '  (needs: require_language)
+           MISS contains_genre         3 of top-10 are Comedy (need >=5)
+           MISS max_genre              5 of top-10 are Drama (allow <=4)
+====================================================================================
+  REGRESSION (must stay green)       18/33 passing
+  SPEC (expected-fail until built)   18/37 passing  (19 not-yet-built)

@@ -1,0 +1,134 @@
+[
+  {
+    "utterance": "I want movies actually set in Paris, not just French cinema in general",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": ["Romance", "Drama"],
+      "disliked_genres": [],
+      "genome_tags": ["paris"],
+      "hard_constraints": {
+        "require_genome_tags": ["paris"]
+      }
+    },
+    "assertions": [
+      {"type": "min_genome", "tag": "paris", "k": 10, "min_score": 0.5, "min": 6},
+      {"type": "rank_above", "a": "Midnight in Paris", "b": "La Dolce Vita"}
+    ],
+    "needs_feature": "require_genome_tags",
+    "note": "paris genome gate keeps Amelie/Midnight, drops Rome-set La Dolce Vita"
+  },
+  {
+    "utterance": "Give me gripping courtroom dramas - trials where the stakes are life or death",
+    "extraction": {
+      "liked_items": ["12 Angry Men"],
+      "disliked_items": [],
+      "liked_genres": ["Drama", "Thriller"],
+      "disliked_genres": [],
+      "genome_tags": ["courtroom drama"],
+      "hard_constraints": {
+        "require_genome_tags": ["courtroom drama"]
+      }
+    },
+    "assertions": [
+      {"type": "min_genome", "tag": "courtroom drama", "k": 10, "min_score": 0.5, "min": 5},
+      {"type": "contains_genre", "genre": "Drama", "k": 10, "min": 6}
+    ],
+    "needs_feature": "require_genome_tags",
+    "note": "courtroom tag blocks crime films where no trial scenes appear"
+  },
+  {
+    "utterance": "I love time travel films where the rules are airtight and internally consistent",
+    "extraction": {
+      "liked_items": ["Back to the Future", "The Terminator"],
+      "disliked_items": [],
+      "liked_genres": ["Sci-Fi", "Thriller"],
+      "disliked_genres": [],
+      "genome_tags": ["time travel"],
+      "hard_constraints": {
+        "require_genome_tags": ["time travel"]
+      }
+    },
+    "assertions": [
+      {"type": "min_genome", "tag": "time travel", "k": 10, "min_score": 0.5, "min": 6},
+      {"type": "excludes_genre", "genre": "Horror", "k": 10}
+    ],
+    "needs_feature": "require_genome_tags",
+    "note": "time travel genome gate blocks sci-fi action films with no time mechanism"
+  },
+  {
+    "utterance": "I only want biopics or films based on real events - nothing fictional even if it feels historical",
+    "extraction": {
+      "liked_items": ["Schindler's List", "The Social Network"],
+      "disliked_items": [],
+      "liked_genres": ["Drama", "Documentary"],
+      "disliked_genres": [],
+      "genome_tags": ["based on a true story"],
+      "hard_constraints": {
+        "require_genome_tags": ["based on a true story"]
+      }
+    },
+    "assertions": [
+      {"type": "min_genome", "tag": "based on a true story", "k": 10, "min_score": 0.5, "min": 6},
+      {"type": "max_genre", "genre": "Animation", "k": 10, "max": 1}
+    ],
+    "needs_feature": "require_genome_tags",
+    "note": "true-story gate prevents fictional historical dramas from diluting biopics"
+  },
+  {
+    "utterance": "Movies set during World War II itself - not the Cold War or postwar fallout",
+    "extraction": {
+      "liked_items": ["Schindler's List"],
+      "disliked_items": [],
+      "liked_genres": ["Drama", "War"],
+      "disliked_genres": [],
+      "genome_tags": ["world war ii"],
+      "hard_constraints": {
+        "require_genome_tags": ["world war ii"]
+      }
+    },
+    "assertions": [
+      {"type": "min_genome", "tag": "world war ii", "k": 10, "min_score": 0.5, "min": 6},
+      {"type": "rank_above", "a": "Schindler's List", "b": "Full Metal Jacket"}
+    ],
+    "needs_feature": "require_genome_tags",
+    "note": "WWII genome gate prevents Vietnam/Korea war films ranking above WWII films"
+  },
+  {
+    "utterance": "Dark serious dystopian futures where society has collapsed or turned authoritarian - not satirical comedies",
+    "extraction": {
+      "liked_items": ["The Matrix", "Children of Men"],
+      "disliked_items": [],
+      "liked_genres": ["Sci-Fi", "Drama"],
+      "disliked_genres": ["Comedy"],
+      "genome_tags": ["dystopia"],
+      "hard_constraints": {
+        "require_genome_tags": ["dystopia"]
+      }
+    },
+    "assertions": [
+      {"type": "min_genome", "tag": "dystopia", "k": 10, "min_score": 0.5, "min": 6},
+      {"type": "max_genre", "genre": "Comedy", "k": 10, "max": 2}
+    ],
+    "needs_feature": "require_genome_tags",
+    "note": "dystopia gate with Comedy cap separates grim futures from satirical ones"
+  },
+  {
+    "utterance": "[HOLE] Movies where everything happens in a single night - I want that one-night pressure and real-time intensity",
+    "extraction": {
+      "liked_items": ["Collateral", "Training Day"],
+      "disliked_items": [],
+      "liked_genres": ["Thriller", "Crime", "Drama"],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "max_story_duration_days": 1
+      }
+    },
+    "assertions": [
+      {"type": "contains_genre", "genre": "Thriller", "k": 10, "min": 3}
+    ],
+    "needs_feature": "story_duration_facet",
+    "note": "no genome tag for single-night story span; duration filter absent from all three engines"
+  }
+]

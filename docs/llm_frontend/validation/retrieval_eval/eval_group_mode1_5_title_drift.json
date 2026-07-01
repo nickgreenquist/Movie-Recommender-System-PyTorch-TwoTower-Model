@@ -1,0 +1,136 @@
+[
+  {
+    "utterance": "I want movies like Pulp Fiction",
+    "extraction": {
+      "liked_items": ["Pulp Fiction"],
+      "disliked_items": [],
+      "liked_genres": ["Crime", "Thriller"],
+      "disliked_genres": [],
+      "genome_tags": ["nonlinear", "dark humor", "stylized"],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {"type": "min_genome", "tag": "nonlinear", "k": 10, "min_score": 0.5, "min": 4},
+      {"type": "contains_genre", "genre": "Crime", "k": 10, "min": 4},
+      {"type": "excludes_title_substr", "substr": "Jurassic", "k": 10},
+      {"type": "excludes_title_substr", "substr": "Forrest", "k": 10}
+    ],
+    "needs_feature": "none",
+    "note": "era-1994 drift: Jurassic Park / Forrest Gump must not appear"
+  },
+  {
+    "utterance": "Show me films like Crouching Tiger, Hidden Dragon",
+    "extraction": {
+      "liked_items": ["Crouching Tiger, Hidden Dragon"],
+      "disliked_items": [],
+      "liked_genres": ["Action", "Drama"],
+      "disliked_genres": [],
+      "genome_tags": ["martial arts", "kung fu", "foreign language"],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {"type": "min_genome", "tag": "martial arts", "k": 10, "min_score": 0.5, "min": 4},
+      {"type": "excludes_genre", "genre": "Animation", "k": 10},
+      {"type": "excludes_title_substr", "substr": "Harry Potter", "k": 10},
+      {"type": "excludes_title_substr", "substr": "Gladiator", "k": 10}
+    ],
+    "needs_feature": "none",
+    "note": "wuxia anchor must not drift to 2000-2001 era blockbusters"
+  },
+  {
+    "utterance": "something like Mulholland Drive",
+    "extraction": {
+      "liked_items": ["Mulholland Drive"],
+      "disliked_items": [],
+      "liked_genres": ["Mystery", "Drama", "Thriller"],
+      "disliked_genres": [],
+      "genome_tags": ["surreal", "nonlinear", "mindfuck"],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {"type": "min_genome", "tag": "nonlinear", "k": 10, "min_score": 0.4, "min": 3},
+      {"type": "contains_genre", "genre": "Mystery", "k": 10, "min": 3},
+      {"type": "excludes_title_substr", "substr": "Harry Potter", "k": 10},
+      {"type": "excludes_title_substr", "substr": "Spider-Man", "k": 10}
+    ],
+    "needs_feature": "none",
+    "note": "Lynch surrealist anchor must not drift to 2001-2002 Hollywood blockbusters"
+  },
+  {
+    "utterance": "give me films like Oldboy",
+    "extraction": {
+      "liked_items": ["Oldboy"],
+      "disliked_items": [],
+      "liked_genres": ["Drama", "Thriller", "Mystery"],
+      "disliked_genres": [],
+      "genome_tags": ["revenge", "dark", "psychological thriller"],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {"type": "contains_genre", "genre": "Thriller", "k": 10, "min": 4},
+      {"type": "excludes_genre", "genre": "Animation", "k": 10},
+      {"type": "excludes_title_substr", "substr": "Pirates", "k": 10},
+      {"type": "excludes_title_substr", "substr": "Lord of the Rings", "k": 10}
+    ],
+    "needs_feature": "none",
+    "note": "2003 Korean anchor must not drift to Pirates / RotK era neighbors"
+  },
+  {
+    "utterance": "I loved Amélie, show me similar movies",
+    "extraction": {
+      "liked_items": ["Amélie"],
+      "disliked_items": [],
+      "liked_genres": ["Romance", "Comedy"],
+      "disliked_genres": [],
+      "genome_tags": ["quirky", "whimsical", "feel-good"],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {"type": "contains_genre", "genre": "Comedy", "k": 10, "min": 4},
+      {"type": "max_genre", "genre": "Children", "k": 10, "max": 1},
+      {"type": "excludes_genre", "genre": "Action", "k": 10},
+      {"type": "excludes_title_substr", "substr": "Shrek", "k": 10}
+    ],
+    "needs_feature": "none",
+    "note": "French whimsy anchor must not drift to 2001 animated blockbusters"
+  },
+  {
+    "utterance": "more movies like The Seventh Seal",
+    "extraction": {
+      "liked_items": ["The Seventh Seal"],
+      "disliked_items": [],
+      "liked_genres": ["Drama"],
+      "disliked_genres": [],
+      "genome_tags": ["existential", "allegory", "black and white"],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {"type": "max_genre", "genre": "Adventure", "k": 10, "max": 2},
+      {"type": "excludes_genre", "genre": "Action", "k": 10},
+      {"type": "excludes_title_substr", "substr": "Ben-Hur", "k": 10},
+      {"type": "excludes_title_substr", "substr": "North by Northwest", "k": 10}
+    ],
+    "needs_feature": "none",
+    "note": "1957 Bergman anchor must not drift to 1950s Hollywood spectacles"
+  },
+  {
+    "utterance": "[HOLE] movies like Crouching Tiger, Hidden Dragon but only originally in Chinese",
+    "extraction": {
+      "liked_items": ["Crouching Tiger, Hidden Dragon"],
+      "disliked_items": [],
+      "liked_genres": ["Action", "Drama"],
+      "disliked_genres": [],
+      "genome_tags": ["martial arts", "foreign language"],
+      "hard_constraints": {
+        "require_original_language": "zh"
+      }
+    },
+    "assertions": [
+      {"type": "min_genome", "tag": "martial arts", "k": 10, "min_score": 0.5, "min": 6},
+      {"type": "excludes_title_substr", "substr": "Harry Potter", "k": 10},
+      {"type": "excludes_title_substr", "substr": "Lord of the Rings", "k": 10}
+    ],
+    "needs_feature": "require_original_language",
+    "note": "no wired language filter; era drift persists for foreign-language anchors"
+  }
+]
