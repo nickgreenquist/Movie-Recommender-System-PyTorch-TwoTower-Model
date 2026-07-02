@@ -123,6 +123,12 @@ def build_schema(genres=None, fs=None):
                                         'description': 'HARD US content-rating ceiling — one of "G", '
                                         '"PG", "PG-13", "R", "NC-17". "nothing R-rated" -> "PG-13"; '
                                         '"kid-friendly" -> "PG". Drops anything stricter.'},
+                    'require_min_rating': {'type': ['string', 'null'],
+                                        'description': 'HARD US content-rating FLOOR (mirror of the '
+                                        'ceiling) — one of "G", "PG", "PG-13", "R", "NC-17". A POSITIVE '
+                                        'maturity ask WANTS mature content: "R-rated comedies" / "adult '
+                                        'animation" / "raunchy" / "hard R" -> "R"; "adults only" / '
+                                        '"NC-17" -> "NC-17". Drops anything TAMER.'},
                     'max_runtime':     {'type': ['integer', 'null'],
                                         'description': 'HARD max runtime in MINUTES ("under two hours" '
                                         '-> 120, "nothing over 90 minutes" -> 90).'},
@@ -267,6 +273,10 @@ require_genome_tags ["japan"].
 "based on a book", "based on a true story", "anime", "stop motion", "independent / indie".
     • require_max_rating: HARD US content-rating ceiling — one of "G", "PG", "PG-13", "R", "NC-17". \
 "nothing R-rated" → "PG-13"; "kid-friendly" / "nothing too mature" → "PG". Drops anything stricter.
+    • require_min_rating: HARD US content-rating FLOOR (mirror of the ceiling) — one of "G", "PG", "PG-13", \
+"R", "NC-17". A POSITIVE maturity ask WANTS mature content, so it drops anything TAMER: "R-rated comedies" / \
+"adult animation" / "raunchy" / "hard R" → "R"; "adults only" / "NC-17" → "NC-17". Do NOT confuse the two: \
+"nothing R-rated" is a max ("PG-13"); "give me R-rated" / "for adults" is a min ("R").
     • max_runtime / min_runtime: HARD runtime bounds in MINUTES — "under two hours" → max_runtime 120, \
 "nothing over 90 minutes" → 90, "no shorts" → a min_runtime.
     • min_vote_average: HARD quality floor, TMDB score 0–10 — "actually good", "critically acclaimed", \

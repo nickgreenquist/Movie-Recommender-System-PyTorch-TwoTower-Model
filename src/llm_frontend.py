@@ -967,6 +967,18 @@ def _passes_constraints(mid, fs, hc, facets=None):
             if r is not None and r > ceil:
                 return False
 
+    # US content-rating FLOOR (require_min_rating = 'R'/'PG-13'/…): the mirror of the ceiling — a POSITIVE
+    # maturity ask ("R-rated comedies", "adult animation") wants films AT LEAST this mature, so drop films
+    # rated TAMER. Same absence contract as the ceiling/year gate (unknown cert → keep) so it never over-prunes.
+    min_rating = hc.get('require_min_rating')
+    if min_rating:
+        floor = MPAA_ORDER.get(str(min_rating).strip().upper())
+        cert = (facets.get('movieId_to_content_rating') or {}).get(mid)
+        if floor is not None and cert is not None:
+            r = MPAA_ORDER.get(cert)
+            if r is not None and r < floor:
+                return False
+
     # Quality floor (min_vote_average = "actually good"): drop films below the TMDB score.
     min_vote = _as_number(hc.get('min_vote_average'))
     if min_vote is not None:

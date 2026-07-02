@@ -3312,5 +3312,45 @@
     "built": true,
     "note": "Thin-axis require_genome_tags RANKING (distinct from the racing FALLBACK fix): within the 0.35 chess floor (34 films), base cosine (era/co-watch) dominated the weak 0.5 soft re-rank, so real chess films (Seventh Seal 0.92, Fresh 0.91) sank to rank 22/24 while incidental carriers (X-Men chess-scene 0.49) and the genome homonym Cadillac Records (Chess RECORDS label, 0.74) filled the top. Fix: a dedicated stronger REQUIRE_GT_RERANK_LAMBDA=2.0 makes subject relevance the primary in-floor ordering (cosine breaks ties) -> Seventh Seal/Fresh rise into top-8, X-Men/Sherlock/Colossus drop out. contains Seventh Seal + excludes X-Men + min_genome chess>=0.6 x9 are RED before, GREEN after. Cadillac Records (homonym 0.74) is an accepted genome-data residual; dense axes (racing) are near-uniformly boosted so anchor order holds.",
     "mode": "genome_setting_facet"
+  },
+  {
+    "utterance": "R-rated comedies from the 2000s",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_genres": [
+          "Comedy"
+        ],
+        "require_min_rating": "R",
+        "year_min": 2000,
+        "year_max": 2009
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_rating",
+        "rating": "R",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Shrek",
+        "k": 10
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Comedy",
+        "k": 10,
+        "min": 5
+      }
+    ],
+    "needs_feature": "require_min_rating",
+    "built": true,
+    "note": "Rating-FLOOR facet: the prompt/schema only offered require_max_rating (a one-sided CEILING), so a POSITIVE maturity ask ('R-rated') had no slot -> dropped -> G/PG family films (Shrek, Finding Nemo, Monsters Inc) dominated 'R-rated comedies'. Added require_min_rating (mirror of the ceiling; drops films rated TAMER, same unknown-cert-keeps absence contract) + the min_rating ruler assertion. With require_min_rating R: all top-10 are R comedies (Hangover/Superbad/Shaun of the Dead/Zombieland/40-Year-Old Virgin). min_rating R + excludes Shrek are RED without the floor, GREEN with it. Pure opt-in post-filter: no existing case sets require_min_rating, so zero regression to the core retrieval evals.",
+    "mode": "structured_facet_rating"
   }
 ]

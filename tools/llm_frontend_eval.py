@@ -227,6 +227,19 @@ def _check_assertion(a, recs, meta):
         bad = [(x, c) for x, c in known if MPAA_ORDER.get(c, 0) > ceil]
         return not bad, (f"{len(bad)} of top-{k} above {a['rating']}: {bad[:3]}" if bad
                          else f"all {len(known)} rated top-{k} <= {a['rating']}")
+    if t == 'min_rating':
+        floor = MPAA_ORDER.get(str(a['rating']).strip().upper())
+        if floor is None:
+            return False, f"unknown rating floor '{a['rating']}'"
+        if not recs:
+            return False, "no recs (empty pool — vacuous)"
+        known = [(titles[i], meta.content_rating(titles[i])) for i in range(min(k, len(recs)))]
+        known = [(x, c) for x, c in known if c]
+        if not known:
+            return False, f"no top-{k} film has a known rating — cannot verify {a['rating']} floor"
+        bad = [(x, c) for x, c in known if MPAA_ORDER.get(c, 99) < floor]
+        return not bad, (f"{len(bad)} of top-{k} below {a['rating']}: {bad[:3]}" if bad
+                         else f"all {len(known)} rated top-{k} >= {a['rating']}")
     if t == 'excludes_franchise':
         spec = a['spec']
         if not recs:
