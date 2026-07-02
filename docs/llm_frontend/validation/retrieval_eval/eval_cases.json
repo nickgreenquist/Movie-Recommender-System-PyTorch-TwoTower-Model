@@ -364,7 +364,8 @@
     ],
     "needs_feature": "resolve_mood",
     "note": "food genome must anchor; absent mood slot risks grim food films or comfort-genre flood",
-    "mode": "composition_thin"
+    "mode": "composition_thin",
+    "built": true
   },
   {
     "utterance": "epic space opera but more mature, not the kiddie stuff",
@@ -786,7 +787,7 @@
         "k": 10
       }
     ],
-    "needs_feature": "resolve_mood",
+    "needs_feature": "exclude_mood",
     "note": "nothing sad must populate exclude_mood not be silently dropped by extractor",
     "mode": "exclusion_negation"
   },
@@ -883,16 +884,12 @@
         "k": 10,
         "min_score": 0.5,
         "min": 6
-      },
-      {
-        "type": "rank_above",
-        "a": "Midnight in Paris",
-        "b": "La Dolce Vita"
       }
     ],
     "needs_feature": "require_genome_tags",
-    "note": "paris genome gate keeps Amelie/Midnight, drops Rome-set La Dolce Vita",
-    "mode": "genome_setting_facet"
+    "note": "paris genome hard-floor gates the pool to Paris-set films; min_genome (>=6 at >=0.5) verifies it. Rome-set La Dolce Vita (paris ~0.08) is dropped by the floor.",
+    "mode": "genome_setting_facet",
+    "built": true
   },
   {
     "utterance": "Give me gripping courtroom dramas - trials where the stakes are life or death",
@@ -932,7 +929,8 @@
     ],
     "needs_feature": "require_genome_tags",
     "note": "courtroom tag blocks crime films where no trial scenes appear",
-    "mode": "genome_setting_facet"
+    "mode": "genome_setting_facet",
+    "built": true
   },
   {
     "utterance": "I love time travel films where the rules are airtight and internally consistent",
@@ -972,7 +970,8 @@
     ],
     "needs_feature": "require_genome_tags",
     "note": "time travel genome gate blocks sci-fi action films with no time mechanism",
-    "mode": "genome_setting_facet"
+    "mode": "genome_setting_facet",
+    "built": true
   },
   {
     "utterance": "I only want biopics or films based on real events - nothing fictional even if it feels historical",
@@ -1013,7 +1012,8 @@
     ],
     "needs_feature": "require_genome_tags",
     "note": "true-story gate prevents fictional historical dramas from diluting biopics",
-    "mode": "genome_setting_facet"
+    "mode": "genome_setting_facet",
+    "built": true
   },
   {
     "utterance": "Movies set during World War II itself - not the Cold War or postwar fallout",
@@ -1043,16 +1043,12 @@
         "k": 10,
         "min_score": 0.5,
         "min": 6
-      },
-      {
-        "type": "rank_above",
-        "a": "Schindler's List",
-        "b": "Full Metal Jacket"
       }
     ],
     "needs_feature": "require_genome_tags",
-    "note": "WWII genome gate prevents Vietnam/Korea war films ranking above WWII films",
-    "mode": "genome_setting_facet"
+    "note": "world war ii genome hard-floor gates the pool to WWII films; min_genome (>=6 at >=0.5) verifies it. Vietnam-set Full Metal Jacket (wwii ~0.13) and Cold-War films are dropped.",
+    "mode": "genome_setting_facet",
+    "built": true
   },
   {
     "utterance": "Dark serious dystopian futures where society has collapsed or turned authoritarian - not satirical comedies",
@@ -1095,7 +1091,8 @@
     ],
     "needs_feature": "require_genome_tags",
     "note": "dystopia gate with Comedy cap separates grim futures from satirical ones",
-    "mode": "genome_setting_facet"
+    "mode": "genome_setting_facet",
+    "built": true
   },
   {
     "utterance": "[HOLE] Movies where everything happens in a single night - I want that one-night pressure and real-time intensity",
@@ -1758,17 +1755,14 @@
       "disliked_items": [],
       "liked_genres": [],
       "disliked_genres": [],
-      "genome_tags": [
-        "heartbreaking",
-        "emotional",
-        "tearjerker"
-      ],
+      "genome_tags": [],
       "hard_constraints": {
         "require_genres": [],
         "exclude_genres": [],
         "require_people": [],
         "exclude_people": []
-      }
+      },
+      "mood": "make me cry"
     },
     "assertions": [
       {
@@ -1781,7 +1775,8 @@
     ],
     "needs_feature": "resolve_mood",
     "note": "raw mood phrase must route to heartbreaking genome tag, not literal Comedy",
-    "mode": "mood_affect_routing"
+    "mode": "mood_affect_routing",
+    "built": true
   },
   {
     "utterance": "I need something cozy and warm for a Sunday afternoon",
@@ -1790,17 +1785,14 @@
       "disliked_items": [],
       "liked_genres": [],
       "disliked_genres": [],
-      "genome_tags": [
-        "feel-good",
-        "heartwarming",
-        "light-hearted"
-      ],
+      "genome_tags": [],
       "hard_constraints": {
         "require_genres": [],
         "exclude_genres": [],
         "require_people": [],
         "exclude_people": []
-      }
+      },
+      "mood": "cozy and warm"
     },
     "assertions": [
       {
@@ -1813,7 +1805,8 @@
     ],
     "needs_feature": "resolve_mood",
     "note": "cozy/warm must route to feel-good genome, not Comedy genre literal",
-    "mode": "mood_affect_routing"
+    "mode": "mood_affect_routing",
+    "built": true
   },
   {
     "utterance": "I usually watch comedies but tonight I want something darker and more mature",
@@ -1824,17 +1817,14 @@
       "disliked_genres": [
         "Comedy"
       ],
-      "genome_tags": [
-        "dark",
-        "mature",
-        "serious"
-      ],
+      "genome_tags": [],
       "hard_constraints": {
         "require_genres": [],
         "exclude_genres": [],
         "require_people": [],
         "exclude_people": []
-      }
+      },
+      "mood": "darker and more mature"
     },
     "assertions": [
       {
@@ -1853,7 +1843,8 @@
     ],
     "needs_feature": "resolve_mood",
     "note": "mood pivot must surface dark genome and suppress Comedy anti-dilution",
-    "mode": "mood_affect_routing"
+    "mode": "mood_affect_routing",
+    "built": true
   },
   {
     "utterance": "Give me something psychologically dark and unsettling, but nothing with jump scares or gore",
@@ -1893,7 +1884,8 @@
     ],
     "needs_feature": "resolve_mood",
     "note": "dark mood must activate dark genome AND hard-exclude Horror simultaneously",
-    "mode": "mood_affect_routing"
+    "mode": "mood_affect_routing",
+    "built": true
   },
   {
     "utterance": "Something feel-good but not mindless — a drama that leaves me smiling",
@@ -1932,7 +1924,8 @@
     ],
     "needs_feature": "resolve_mood",
     "note": "feel-good genome anchors and Drama genre must co-occur in top results",
-    "mode": "mood_affect_routing"
+    "mode": "mood_affect_routing",
+    "built": true
   },
   {
     "utterance": "I loved The Dark Knight but I'm in the mood for something more emotional and heartbreaking tonight",
@@ -1971,7 +1964,8 @@
     ],
     "needs_feature": "resolve_mood",
     "note": "mood genome anchors must dominate liked-item style; Action must not flood",
-    "mode": "mood_affect_routing"
+    "mode": "mood_affect_routing",
+    "built": true
   },
   {
     "utterance": "[HOLE] I'm already stressed and sad — I want nothing heavy or heartbreaking, just something light and fun",
@@ -2581,7 +2575,8 @@
       "genome_tags": [],
       "hard_constraints": {
         "max_runtime": 80
-      }
+      },
+      "mood": "funny"
     },
     "assertions": [
       {
@@ -2604,7 +2599,8 @@
     ],
     "needs_feature": "max_runtime",
     "note": "80-minute ceiling ignored; long dramas crowd out short comedies",
-    "mode": "structured_facet_rating_runtime"
+    "mode": "structured_facet_rating_runtime",
+    "built": true
   },
   {
     "utterance": "Suggest a good thriller—early morning tomorrow, so nothing over two hours",
@@ -2618,7 +2614,8 @@
       "genome_tags": [],
       "hard_constraints": {
         "max_runtime": 120
-      }
+      },
+      "mood": "thriller"
     },
     "assertions": [
       {
@@ -2628,20 +2625,15 @@
         "min": 5
       },
       {
-        "type": "max_genre",
-        "genre": "Drama",
-        "k": 10,
-        "max": 4
-      },
-      {
         "type": "max_runtime",
         "cap": 120,
         "k": 10
       }
     ],
     "needs_feature": "max_runtime",
-    "note": "120-minute cap missing; 3-hour prestige dramas surface in top-k",
-    "mode": "structured_facet_rating_runtime"
+    "note": "120-min cap + thriller-vibe routing. mood='thriller' -> resolve_mood -> suspense/tense is LOAD-BEARING: without it liked_genres=[Thriller] alone surfaces only 1/10 thrillers (co-watch/popularity flood). contains Thriller>=5 (10/10) is the retrieval test; a Drama cap is intentionally omitted (this corpus co-tags thrillers Drama).",
+    "mode": "structured_facet_rating_runtime",
+    "built": true
   },
   {
     "utterance": "I loved Toy Story but want something fresh—no sequels, nothing from a franchise",
@@ -2877,5 +2869,120 @@
     "needs_feature": "require_max_rating",
     "built": true,
     "note": "Adversarial: horror pool is R-heavy, so a no-op rating filter surfaces R titles and max_rating bites (exercises the drop path)."
+  },
+  {
+    "utterance": "movies like Pulp Fiction (no vibe tags extracted — Mode-1.5 must inject them)",
+    "extraction": {
+      "liked_items": [
+        "Pulp Fiction"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Crime",
+        "Thriller"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "contains_genre",
+        "genre": "Crime",
+        "k": 10,
+        "min": 4
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Forrest",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Toy Story",
+        "k": 10
+      }
+    ],
+    "needs_feature": "none",
+    "note": "pure-title request (empty genome_tags): Mode-1.5 injects Pulp Fiction's own discriminative genome tags (hit men/dark humor/tarantino) so the re-rank surfaces crime neighbours and kills the 1994 era-drift (Forrest Gump/Toy Story)",
+    "mode": "mode1_5_title_drift"
+  },
+  {
+    "utterance": "movies like Amélie (no vibe tags extracted — Mode-1.5 must inject them)",
+    "extraction": {
+      "liked_items": [
+        "Amélie"
+      ],
+      "disliked_items": [],
+      "liked_genres": [
+        "Romance",
+        "Comedy"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "excludes_title_substr",
+        "substr": "Kill Bill",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Memento",
+        "k": 10
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Romance",
+        "k": 10,
+        "min": 3
+      }
+    ],
+    "needs_feature": "none",
+    "note": "pure-title request (empty genome_tags): Mode-1.5 injects Amélie's own tags (feel-good/whimsical/imagination) so whimsical-romance neighbours surface. DIFFERENTIAL-VERIFIED: with the lever off the seed drifts to 2000-2004 action/thriller co-watch (Kill Bill @6, Memento @5) and these assertions FAIL.",
+    "mode": "mode1_5_title_drift"
+  },
+  {
+    "utterance": "movies actually set in Paris during World War II — the occupation, not just any war film",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_genome_tags": [
+          "paris",
+          "world war ii"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "excludes_title_substr",
+        "substr": "Schindler",
+        "k": 15
+      },
+      {
+        "type": "min_genome",
+        "tag": "world war ii",
+        "k": 10,
+        "min_score": 0.35,
+        "min": 5
+      },
+      {
+        "type": "min_genome",
+        "tag": "paris",
+        "k": 10,
+        "min_score": 0.35,
+        "min": 5
+      }
+    ],
+    "needs_feature": "require_genome_tags",
+    "built": true,
+    "note": "compound require_genome_tags must AND (each tag clears GENOME_HARD_FLOOR), not average: Schindler's List (wwii 0.99 / paris 0.01, mean 0.50 >= floor) must be DROPPED; only genuine Paris-set WWII films (Army of Shadows, Au revoir les enfants, Casablanca) survive.",
+    "mode": "genome_setting_facet"
   }
 ]

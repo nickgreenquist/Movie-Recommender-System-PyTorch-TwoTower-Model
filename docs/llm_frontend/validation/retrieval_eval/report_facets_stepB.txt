@@ -1,0 +1,38 @@
+Loaded 75 cases from 1 file(s). facet store: baked
+====================================================================================
+[SPEC-FAIL] 'romantic movie set in Paris, more French New Wave than Hollywood'  (needs: require_country)
+           MISS contains_genre         3 of top-10 are Drama (need >=5)
+           MISS max_genre              3 of top-10 are Action (allow <=1)
+[FAIL     ] 'Recommend me psychological thrillers but absolutely no horror — no'
+           MISS contains_genre         2 of top-10 are Thriller (need >=4)
+[FAIL     ] 'I want a serious love story — romance is great but I cannot stand '
+           MISS contains_genre         2 of top-10 are Romance (need >=3)
+[SPEC-FAIL] 'Something uplifting and feel-good — absolutely nothing sad or depr'  (needs: exclude_mood)
+           MISS contains_genre         2 of top-10 are Comedy (need >=3)
+[FAIL     ] 'Action and adventure but no animated films at all — live-action on'
+           MISS contains_genre         2 of top-10 are Action (need >=4)
+[FAIL     ] "I'm in the mood for a romance, something that makes you feel good "
+           MISS max_genre              6 of top-10 are Drama (allow <=5)
+[SPEC-FAIL] 'I want to watch Christmas movies and really get into the holiday s'  (needs: require_genome_tags)
+           MISS max_genre              4 of top-10 are Drama (allow <=3)
+           MISS excludes_genre         1 Horror in top-10: ['Gremlins (1984)']
+[FAIL     ] 'War movies, I want the intense battlefield kind'
+           MISS max_genre              8 of top-10 are Drama (allow <=5)
+[SPEC-FAIL] '[HOLE] I want something light and fun, absolutely nothing dark or '  (needs: exclude_mood)
+           MISS contains_genre         2 of top-10 are Comedy (need >=5)
+[SPEC-FAIL] "[HOLE] I'm already stressed and sad — I want nothing heavy or hear"  (needs: exclude_mood)
+           MISS max_genre              6 of top-10 are Drama (allow <=3)
+[FAIL     ] 'I love horror like The Shining and comedies like Airplane! but I w'
+           MISS max_genre              10 of top-10 are Horror (allow <=7)
+[FAIL     ] 'A sci-fi noir please - futuristic world, dark detective atmosphere'
+           MISS contains_genre         2 of top-10 are Sci-Fi (need >=5)
+           MISS min_genome             1 of top-10 carry 'neo-noir'>=0.4 (need >=3)
+[FAIL     ] 'I want a romantic thriller - real danger and stakes like Gone Girl'
+           MISS max_genre              8 of top-10 are Drama (allow <=5)
+[FAIL     ] 'Dark fantasy horror - a magical world but genuinely terrifying, li'
+           MISS max_genre              10 of top-10 are Horror (allow <=7)
+[FAIL     ] 'Action comedy - real exciting action sequences like Die Hard but g'
+           MISS max_genre              10 of top-10 are Action (allow <=7)
+====================================================================================
+  REGRESSION (must stay green)       52/62 passing
+  SPEC (expected-fail until built)   8/13 passing  (5 not-yet-built)

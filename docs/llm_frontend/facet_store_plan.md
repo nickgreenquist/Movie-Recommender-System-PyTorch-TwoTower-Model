@@ -160,7 +160,7 @@ exist; the LLM may also emit it.
 > the work into **three engines**, not one keyword-vocab phase. Measurement scripts + judge outputs:
 > memory `project_facet_expansion_measurement`; scratchpad `m1*.py`/`m2_*.py`/`actions.py`/`queries.py`.
 
-> ### ▶ RESUME HERE — non-API build campaign, step B (2026-07-01)
+> ### ▶ RESUME HERE — non-API build campaign, step C (2026-07-01)
 > **Active workstream: maximize non-API-key / non-Streamlit features before wiring the hosted extractor +
 > Ask tab.** Everything on the retrieval/filter/data/resolver side is buildable AND deterministically
 > verifiable now by feeding hand-authored extraction JSON to `recommend()` — the API is only the last-mile
@@ -196,10 +196,40 @@ exist; the LLM may also emit it.
 > already, so **no `src/export.py` change** — canonical `python main.py export <PROD α=0.5 ckpt>` reproduces the
 > `facets` key (this session re-baked it surgically into `serving/` for the eval).
 >
-> **CONTINUE AT → step B · retrieval quality:** `resolve_mood` (mood phrase → genome-tag set → feeds the
-> re-rank/anchors), a `require_genome_tags` **HARD floor** for emphatic "*only* set in Paris", and **Mode-1.5
-> title-genome injection** (inject a liked title's own top genome tags as re-rank tags to kill era-drift on
-> pure-title requests). Step B is what unblocks the 2 retrieval-limited max_runtime cases + the mood/genome SPEC group.
+> **Win #3 — step B · retrieval quality — BUILT + verified + adversarially reviewed (uncommitted, 2026-07-01).**
+> Three retrieval levers in `src/llm_frontend.py` (all reading the ALREADY-baked genome data — **no serving/export/
+> streamlit change**, so no re-bake is needed for step B):
+>   • **`resolve_mood(phrase)` (Engine-2 vibe/affect)** — a curated `MOOD_TABLE`/`MOOD_ALIASES` (~14 moods; every
+>     output tag verified in the serving genome vocab; OOV synonyms like "cozy"/"uplifting"/"mature" mapped onto
+>     in-vocab tags) routes a free `mood`/`vibe` slot → genome tags, feeding the Mode-2 anchors + a **separate**
+>     soft re-rank term (`MOOD_RERANK_LAMBDA`, its own knob). Kept apart from the subject `genome_tags` on purpose:
+>     folding both into one mean re-rank let the tone axis out-rank the subject ("feel-good movie about cooking"
+>     surfaced feel-good non-food films); two additive terms fixes it, and a mood only drives the anchors when it
+>     is the SOLE vibe.
+>   • **`require_genome_tags` HARD floor** (`GENOME_HARD_FLOOR=0.35`) — gates the pool to films that clear the floor
+>     on **every** required tag (AND, mirroring `require_genres`/`require_people` — NOT the average, so "set in Paris
+>     during WWII" drops Schindler's List for ~0 Paris relevance). OOV/absent → no floor (graceful, like the year gate).
+>   • **Mode-1.5 title-genome injection** — a PURE-TITLE request (liked title, no genome_tags AND no mood) injects the
+>     title's own most-relevant genome tags as SOFT re-rank tags (acclaim/production-meta tags stoplisted, so
+>     "masterpiece"/"imdb top 250"/"remake" don't re-summon the era-neighbours), killing the co-watch drift (a 1994
+>     Pulp Fiction seed no longer pulls Forrest Gump / Toy Story).
+> **A 4-lens adversarial review (5 confirmed findings) then hardened it**, all fixed: the floor now ANDs per-tag
+> (was a mean → a WWII film could clear a Paris require); two vacuous `rank_above` assertions dropped (min_genome
+> carries the floor) and the harness `rank_above` change reverted; a vacuous Mode-1.5 case (Seventh Seal — no base
+> drift to suppress) replaced with a **differential-verified** Amélie case (fails with the lever off); the thriller
+> Drama cap (tuned-to-observed) dropped with `mood="thriller"` documented as load-bearing genre-as-vibe routing; 6
+> inert stoplist entries removed.
+> **Final: REGRESSION 52/62 green** (the original 34 stay green; +18 newly-built mood/genome/max_runtime/Mode-1.5
+> cases all green — incl. a new multi-tag AND case; the 10 remaining are pre-existing genre-coherence cases → step C).
+> **SPEC 8/13** (remaining fails need `exclude_mood`/`require_country`, or are Christmas's genre-purity/Gremlins beyond
+> the genome floor — none are step B). Snapshot: `retrieval_eval/report_facets_stepB.txt`. Files: `src/llm_frontend.py`
+> + `retrieval_eval/eval_cases.json` (the eval harness `tools/llm_frontend_eval.py` is **net-unchanged** — a `rank_above`
+> tweak was added then reverted in review; `src/export.py`/`streamlit_app.py`/`serving/` untouched).
+>
+> **CONTINUE AT → step C · resolvers/routing + validation sweeps:** `resolve_facet` (country/language/format from
+> `production_countries`/`original_language` — Engine-1a), a facet-correctness sweep, and constraint-priority
+> degradation for thin pools (the 10 pre-existing genre-coherence REGRESSION fails: horror-comedy / sci-fi-noir /
+> action-comedy dual-genre AND-pools collapse to one genre — an OR-fan / genre-pool-expansion lever). See backlog **C** below.
 >
 > ---
 >
@@ -583,17 +613,30 @@ tag-skew (separate — abstract mood tags are inherently arthouse-heavy).
   cases whose runtime filter is correct but genre retrieval lags (a step-B lever). Not built here: schema/prompt
   slots for the hosted extractor (deferred to the API-wiring phase — this is the non-API campaign) and
   country/language/studio facets (a sibling F1 resolver — step C `resolve_facet`).
-- **B · Retrieval quality (NEXT).** `resolve_mood` (mood phrase → genome-tag set → feeds the re-rank/anchors); a
-  `require_genome_tags` **HARD floor** for emphatic "*only* set in Paris"; **Mode-1.5 title-genome injection** (inject a
-  liked title's own top genome tags as re-rank tags to kill era-drift on pure-title requests).
-- **C · Resolvers/routing + validation sweeps** (`resolve_facet` country/format, a facet-correctness sweep,
-  constraint-priority degradation for thin pools).
+- **B · Retrieval quality — ✅ DONE (uncommitted, 2026-07-01).** Three levers in `src/llm_frontend.py`, all over the
+  already-baked genome data (**no serving/export/streamlit change**): (1) `resolve_mood(phrase)` — curated
+  `MOOD_TABLE`/`MOOD_ALIASES` (~14 moods, all output tags in-vocab) → a `mood`/`vibe` slot feeds the anchors + a
+  **separate** soft re-rank term (`MOOD_RERANK_LAMBDA`), kept apart from subject `genome_tags` so tone doesn't out-rank
+  subject; (2) `require_genome_tags` **HARD floor** (`GENOME_HARD_FLOOR=0.35`) with **AND** semantics (each required tag
+  clears the floor, mirroring `require_genres` — not the mean); (3) **Mode-1.5 title-genome injection** — a pure-title
+  request (no genome_tags, no mood) injects the liked title's own discriminative genome tags (acclaim/production-meta
+  stoplisted) as soft re-rank tags to kill co-watch/era drift. 4-lens adversarial review (5 confirmed findings) fixed.
+  Verified via `tools/llm_frontend_eval.py`: **REGRESSION 52/62 green** (0 new regressions; +18 built mood/genome/
+  max_runtime/Mode-1.5 cases incl. a multi-tag AND case); **SPEC 8/13**. Snapshot `retrieval_eval/report_facets_stepB.txt`.
+  See the step-B "Win #3" block up in the RESUME-HERE callout for the full detail.
+- **C · Resolvers/routing + validation sweeps (NEXT).** `resolve_facet` (country/language/format — Engine-1a, from
+  `production_countries`/`original_language`), a facet-correctness sweep, and constraint-priority degradation for thin
+  pools — which is also what unblocks the 10 remaining REGRESSION fails (dual-genre AND-pools like horror-comedy /
+  sci-fi-noir / action-comedy that collapse to one genre; needs an OR-fan / genre-pool-expansion lever).
 
-**Uncommitted surface (this campaign):** `src/llm_frontend.py` (genome re-rank + F1 facet gates),
+**Uncommitted surface (this campaign):** `src/llm_frontend.py` (genome re-rank + F1 facet gates + step-B
+`resolve_mood`/`MOOD_TABLE` + the `require_genome_tags` AND floor + Mode-1.5 `_title_genome_tags`),
 `llm_features/build_facet_store.py` (F1 facet tables + composers), `tools/llm_frontend_eval.py` (facet
-assertion types), `docs/llm_frontend/validation/retrieval_eval/` (augmented cases + `report_facets_f1.txt`),
-and `serving/feature_store.pt` (surgically re-baked `facets`; the canonical `main.py export <PROD>` reproduces
-it). Commit, a real canary eyeball on the re-rank, and the canonical re-export are the user's call.
+assertion types), `docs/llm_frontend/validation/retrieval_eval/` (augmented cases + `report_facets_f1.txt` +
+`report_facets_stepB.txt`), and `serving/feature_store.pt` (the surgically re-baked step-A `facets`; step B
+adds NOTHING to serving/ — all its levers read the already-baked genome data — so the canonical
+`main.py export <PROD>` still reproduces the artifact). Commit, a real canary eyeball on the re-rank/mood, and
+the canonical re-export are the user's call.
 
 ## Validation approach (mirror the v1→v5 harness)
 

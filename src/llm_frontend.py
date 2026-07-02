@@ -72,6 +72,32 @@ TOP_N                 = 15
 # tags) to each movie's score so films that actually CARRY the tag rise. Additive (cosine is signed),
 # soft (never a hard filter) → moods still ride the anchors and the pool never empties. 0.0 disables.
 GENOME_RERANK_LAMBDA  = 0.5   # tuned via tools/llm_frontend_eval.py (+5 regression / +7 spec vs 0.0; plateaus after)
+# Mood re-rank weight — a SEPARATE additive term for the Engine-2 mood tags (step B lever 1), kept
+# apart from the subject-tag re-rank above so a tone modifier ("feel-good", "darker") nudges without
+# out-ranking the subject the user actually asked for. Equal to the subject λ for now (a pure-mood
+# request should feel as strong as a genome-tagged one); its own knob for future tuning.
+MOOD_RERANK_LAMBDA    = 0.5
+
+# Hard genome floor (require_genome_tags — step B lever 2). The soft re-rank above only NUDGES; an
+# EMPHATIC setting/theme request ("movies *actually* set in Paris", "*only* WWII, not the Cold War")
+# gates the candidate pool to films whose mean genome relevance over the required tags clears this
+# floor, dropping the rest (Rome-set La Dolce Vita, paris 0.08, goes; Midnight in Paris, 0.95, stays).
+# ONLY hard_constraints.require_genome_tags triggers it — soft moods (genome_tags) and Mode-1.5 title
+# tags never do. A required tag that is out-of-vocab contributes nothing; if NONE resolve there is no
+# floor at all (graceful, like the year gate: we never hard-drop on a signal we can't compute).
+GENOME_HARD_FLOOR     = 0.35
+
+# Mode-1.5 title-genome injection (step B lever 3). On a PURE-TITLE request — a liked title but no
+# genome_tags — cosine retrieval drifts to release-era / co-watch neighbours (a 1994 Pulp Fiction
+# anchor pulls Forrest Gump / Jurassic Park). We inject the liked title's OWN most-relevant genome
+# tags as SOFT re-rank tags (never anchors — that would over-expand the query), so films sharing its
+# vibe rise. Skipped entirely when the extraction already carries genome_tags (an explicit vibe list
+# wins) and non-discriminative acclaim/meta tags are filtered out (see MODE15_STOP_*), because
+# "masterpiece"/"imdb top 250" would re-summon the very prestige-era neighbours we are fighting.
+MODE15_TAGS_PER_TITLE = 6      # top genome tags injected per liked title (after the acclaim stoplist)
+MODE15_TAG_MIN_REL    = 0.6    # only inject a title's tag if the title carries it this strongly
+MODE15_MAX_TAGS       = 8      # global cap across all liked titles (keep the re-rank query focused)
+
 FUZZY_CUTOFF          = 0.74   # difflib ratio floor for title resolution (raised from 0.6 — a
                                # wrong-film fuzzy hit poisons the whole anchor; better to drop)
 FUZZY_YEAR_TOL        = 4      # reject a fuzzy hit whose catalog year disagrees with the year the
@@ -410,6 +436,159 @@ def _genome_relevance(ctx, tags):
     return torch.tensor(vals, dtype=torch.float32)
 
 
+# ── Engine-2 vibe/affect: mood phrase → genome tags (step B lever 1) ─────────
+# The 1,128 genome tags already carry a full affect/tone vocabulary (the item content tower + the
+# genome-derived LLM-132 vector both encode mood), so "make me cry" / "cozy" / "darker" is a ROUTING
+# problem, not a new-data one: map the raw mood phrase to a small set of genome tags and feed them
+# into the SAME anchor + re-rank machinery a genome_tags request uses (soft, never a hard filter —
+# per the plan the facet filter is the wrong tool for affect). Every tag below is verified in-vocab
+# in serving/ (OOV synonyms like "uplifting"/"cozy"/"mature" are mapped onto the in-vocab tag).
+MOOD_TAGS = {
+    'cry':          ['heartbreaking', 'emotional', 'poignant', 'tragedy', 'sad but good'],
+    'feel-good':    ['feel-good', 'heartwarming', 'happy ending'],
+    'funny':        ['humor', 'funny', 'quirky'],
+    'dark':         ['dark', 'gritty', 'bleak'],
+    'scary':        ['creepy', 'scary', 'atmospheric', 'tense'],
+    'suspenseful':  ['suspense', 'tense'],
+    'mind-bending': ['mindfuck', 'cerebral', 'twist ending', 'nonlinear'],
+    'epic':         ['epic'],
+    'whimsical':    ['quirky', 'whimsical'],
+    'romantic':     ['romance', 'love story'],
+    'psychological':['psychological', 'dark'],
+    'disturbing':   ['disturbing', 'bleak'],
+    'atmospheric':  ['atmospheric'],
+    'surreal':      ['surreal', 'nonlinear'],
+}
+# Trigger phrase (normalized, whole-word) → canonical mood key above. Multi-word triggers are matched
+# as contiguous token runs (mirrors _franchise_match's whole-word discipline, so "warm" ⊄ "warmth").
+MOOD_ALIASES = {
+    'cry': 'cry', 'make me cry': 'cry', 'tearjerker': 'cry', 'tear jerker': 'cry', 'weepy': 'cry',
+    'sad': 'cry', 'emotional': 'cry', 'heartbreaking': 'cry', 'moving': 'cry', 'poignant': 'cry',
+    'feel good': 'feel-good', 'feel-good': 'feel-good', 'feelgood': 'feel-good', 'cozy': 'feel-good',
+    'cosy': 'feel-good', 'warm': 'feel-good', 'comforting': 'feel-good', 'wholesome': 'feel-good',
+    'uplifting': 'feel-good', 'cheer me up': 'feel-good', 'cheering up': 'feel-good',
+    'heartwarming': 'feel-good', 'happy': 'feel-good',
+    'funny': 'funny', 'fun': 'funny', 'light': 'funny', 'lighthearted': 'funny',
+    'light hearted': 'funny', 'light-hearted': 'funny', 'comedic': 'funny', 'hilarious': 'funny',
+    'humor': 'funny', 'humorous': 'funny', 'silly': 'funny', 'goofy': 'funny',
+    'dark': 'dark', 'darker': 'dark', 'mature': 'dark', 'serious': 'dark', 'grim': 'dark',
+    'heavy': 'dark', 'gritty': 'dark', 'bleak': 'dark',
+    'scary': 'scary', 'creepy': 'scary', 'frightening': 'scary', 'spooky': 'scary',
+    'eerie': 'scary', 'chilling': 'scary', 'unsettling': 'scary',
+    'suspenseful': 'suspenseful', 'suspense': 'suspenseful', 'tense': 'suspenseful',
+    'gripping': 'suspenseful', 'thrilling': 'suspenseful', 'thriller': 'suspenseful',
+    'nail biting': 'suspenseful', 'riveting': 'suspenseful',
+    'mind bending': 'mind-bending', 'mind-bending': 'mind-bending', 'mindbending': 'mind-bending',
+    'cerebral': 'mind-bending', 'trippy': 'mind-bending', 'twisty': 'mind-bending',
+    'thought provoking': 'mind-bending', 'thought-provoking': 'mind-bending',
+    'epic': 'epic', 'grand': 'epic', 'sweeping': 'epic', 'sprawling': 'epic',
+    'whimsical': 'whimsical', 'quirky': 'whimsical', 'offbeat': 'whimsical', 'charming': 'whimsical',
+    'romantic': 'romantic', 'romance': 'romantic', 'love story': 'romantic', 'swoony': 'romantic',
+    'psychological': 'psychological', 'psychologically': 'psychological',
+    'disturbing': 'disturbing', 'depressing': 'disturbing', 'harrowing': 'disturbing',
+    'atmospheric': 'atmospheric', 'moody': 'atmospheric', 'brooding': 'atmospheric',
+    'surreal': 'surreal', 'dreamlike': 'surreal', 'dream like': 'surreal', 'abstract': 'surreal',
+}
+
+
+def resolve_mood(phrase):
+    """Resolve one free mood phrase to a de-duplicated list of genome tags (Engine-2 routing).
+
+    Normalizes the phrase (lowercase, accent-fold, punctuation→space via _norm_name), then collects
+    every MOOD_ALIASES trigger that appears as a whole-word contiguous token run — so "something that
+    makes me cry" hits `cry`, "darker and more mature" hits `dark` (twice, de-duped). Whole-word (not
+    substring) matching keeps "warm" out of "warmth" and mirrors the franchise resolver. Returns the
+    union of the matched moods' MOOD_TAGS (empty if nothing matches — the caller then just drops it,
+    like an unresolved title). Soft signal only: the caller merges these into genome_tags."""
+    norm_tokens = _norm_name(phrase).split()
+    if not norm_tokens:
+        return []
+    canon, tags = [], []
+    for trig, c in MOOD_ALIASES.items():
+        if c not in canon and _token_subseq(norm_tokens, _norm_name(trig)):
+            canon.append(c)
+    for c in canon:
+        for t in MOOD_TAGS[c]:
+            if t not in tags:
+                tags.append(t)
+    return tags
+
+
+def _resolve_mood_slots(extraction, hc):
+    """Collect + resolve every mood phrase carried by an extraction: a top-level `mood`/`vibe` slot
+    and a `hard_constraints.mood` (soft affect the extractor may nest beside a hard filter). Each may
+    be a string or a list of strings. Returns the de-duplicated union of resolved genome tags.
+    (`exclude_mood` is deliberately NOT handled here — negative-affect exclusion is a separate,
+    postfilter-only feature, still SPEC.)"""
+    phrases = []
+    for src in (extraction.get('mood'), extraction.get('vibe'), (hc or {}).get('mood')):
+        if isinstance(src, str):
+            phrases.append(src)
+        elif isinstance(src, (list, tuple)):
+            phrases.extend(p for p in src if isinstance(p, str))
+    tags = []
+    for p in phrases:
+        for t in resolve_mood(p):
+            if t not in tags:
+                tags.append(t)
+    return tags
+
+
+# ── Mode-1.5: liked title → its own discriminative genome tags (step B lever 3) ──
+# Non-discriminative genome tags to skip when injecting a title's tags — pure acclaim / meta / craft
+# labels that describe HOW GOOD a film is, not WHAT IT IS ABOUT, and so re-summon prestige-era
+# neighbours (a 1994 "masterpiece"/"imdb top 250" query pulls Forrest Gump right back). Content tags
+# that merely contain a craft word ("space opera", "twist ending", "based on a true story") are NOT
+# here — they stay eligible. Prefix families (oscar…, saturn award…, best of…, imdb top…) are caught
+# by MODE15_STOP_PREFIX so every award/list variant is covered without enumerating them.
+MODE15_STOP_EXACT = {
+    'masterpiece', 'classic', 'cult classic', 'cult film', 'cult', 'criterion', 'overrated',
+    'underrated', 'great movie', 'great acting', 'good acting', 'exceptional acting', 'bad acting',
+    'great dialogue', 'good dialogue', 'great ending', 'powerful ending', 'great music', 'good music',
+    'great soundtrack', 'good soundtrack', 'awesome soundtrack', 'notable soundtrack',
+    'great cinematography', 'amazing cinematography', 'cinematography', 'storytelling', 'writing',
+    'entertaining', 'boring', 'predictable', 'beautiful', 'beautifully filmed', 'visually appealing',
+    'visually stunning', 'stunning', "so bad it's good", "so bad it's funny", 'oscar winner',
+    # production / provenance meta — describes a film's release status, not its content (an Oldboy
+    # remake's top tags are "remake"/"original", which drag in unrelated films by provenance).
+    'remake', 'original', 'sequel', 'sequels', 'prequel', 'franchise', 'trilogy', 'directorial debut',
+}  # every entry is an actual genome-vocab tag (the check is against tag NAMES) — no inert strings.
+MODE15_STOP_PREFIX = ('oscar', 'saturn award', 'best of', 'imdb top', 'potential oscar')
+
+
+def _title_genome_tags(ctx, titles, per_title=MODE15_TAGS_PER_TITLE,
+                       min_rel=MODE15_TAG_MIN_REL, max_tags=MODE15_MAX_TAGS):
+    """The discriminative genome tags a set of liked titles most strongly carry, for Mode-1.5 re-rank
+    injection. For each title, take its top `per_title` genome tags by relevance (descending), keep
+    only those ≥ `min_rel` and NOT in the acclaim stoplist, and union across titles (de-duped, order
+    preserved) up to `max_tags`. Craft/acclaim tags are dropped so the injected query describes the
+    films' SUBJECT (hit men, dark humor, wuxia, dystopia) rather than their prestige — otherwise the
+    era-neighbours we are trying to suppress come straight back. Returns [] if nothing qualifies."""
+    fs = ctx.fs
+    gctx = fs['movieId_to_genome_tag_context']
+    idx_to_name = {i: n for n, i in ctx.genome_name_to_idx.items()}
+    out = []
+    for title in titles:
+        mid = fs['title_to_movieId'].get(title)
+        if mid is None:
+            continue
+        vec = gctx[mid]
+        ranked = sorted(idx_to_name, key=lambda c: float(vec[c]), reverse=True)
+        kept = 0
+        for c in ranked:
+            if kept >= per_title or len(out) >= max_tags:
+                break
+            if float(vec[c]) < min_rel:
+                break  # tags are relevance-sorted, so nothing below qualifies either
+            name = idx_to_name[c]
+            if name in MODE15_STOP_EXACT or name.startswith(MODE15_STOP_PREFIX):
+                continue
+            if name not in out:
+                out.append(name)
+                kept += 1
+    return out
+
+
 # ── Facet helpers (people union + franchise matching + numeric coercion) ─────
 def _people_union(roles):
     """The set of TMDB person IDs a facet-store role dict covers: actors ∪ directors ∪ writers ∪
@@ -564,6 +743,14 @@ def recommend(ctx, extraction, top_n=TOP_N):
     disliked_genres = extraction.get('disliked_genres') or []
     hc = extraction.get('hard_constraints') or {}
 
+    # Engine-2 mood routing (step B lever 1): resolve any free mood/vibe phrase → genome tags. Kept
+    # SEPARATE from the subject genome_tags on purpose — "a feel-good movie about cooking" wants the
+    # subject (food) to rank, with feel-good only nudging; folding both into one mean re-rank lets the
+    # tone axis outweigh the subject. So mood gets its own re-rank term (5b) and only drives the Mode-2
+    # anchors when it is the SOLE vibe (no explicit genome_tags — the pure "make me cry" case). Soft
+    # signal throughout, never a hard filter (per the plan, the facet filter is the wrong tool for affect).
+    mood_tags = _resolve_mood_slots(extraction, hc)
+
     # 1. Resolve mentioned titles (Mode 1).
     liked_resolved, disliked_resolved = [], []
     resolution_log = {'liked': [], 'disliked': []}
@@ -577,6 +764,14 @@ def recommend(ctx, extraction, top_n=TOP_N):
         resolution_log['disliked'].append((raw, canon, note))
         if canon:
             disliked_resolved.append(canon)
+
+    # Mode-1.5 title-genome injection (step B lever 3): a PURE-TITLE request (a liked title but no
+    # explicit vibe) drifts to release-era / co-watch neighbours under cosine alone, so inject the
+    # liked titles' own discriminative genome tags as SOFT re-rank tags (never anchors — that would
+    # over-expand the query). Fires only on a true pure-title: skipped when the extraction already
+    # carries genome_tags OR a resolved mood (an explicit vibe — "I loved X but I want to cry" — wins).
+    mode15_tags = (_title_genome_tags(ctx, liked_resolved)
+                   if (liked_resolved and not genome_tags and not mood_tags) else [])
 
     # 1b. Resolve people facets (Phase 1: HARD require/exclude only). Names → canonical TMDB
     #     person IDs via the facet store; unresolved names (or no facet store at all) are reported
@@ -607,13 +802,17 @@ def recommend(ctx, extraction, top_n=TOP_N):
 
     # 2. Mode-2 synthesis: genome tags → anchor movies (exclude already-named seeds).
     #    When the user named real titles (Mode 1) the anchors are subordinated so they refine
-    #    rather than swamp the explicit likes; pure Mode 2 keeps the full anchor strength.
+    #    rather than swamp the explicit likes; pure Mode 2 keeps the full anchor strength. The subject
+    #    genome_tags drive the anchors; a mood falls back to driving them only when it is the sole vibe
+    #    (no explicit genome_tags), so "make me cry" still synthesizes a query but "feel-good cooking"
+    #    anchors on food, not on feel-good.
+    anchor_tags = genome_tags if genome_tags else mood_tags
     seed_exclude = set(liked_resolved) | set(disliked_resolved)
     has_likes = bool(liked_resolved)
     per_tag      = ANCHORS_PER_TAG_WITH_LIKES if has_likes else ANCHORS_PER_TAG
     max_total    = MAX_ANCHORS_WITH_LIKES if has_likes else None
     anchor_weight = ANCHOR_WEIGHT_WITH_LIKES if has_likes else ANCHOR_MOVIE_WEIGHT
-    anchors, unresolved_tags = anchors_for(ctx, genome_tags, seed_exclude, per_tag, max_total)
+    anchors, unresolved_tags = anchors_for(ctx, anchor_tags, seed_exclude, per_tag, max_total)
 
     # 3. Assemble model input: explicit likes (2.0) + anchors (1.0, or 0.5 when subordinated),
     #    dislikes (-2.0).
@@ -645,13 +844,40 @@ def recommend(ctx, extraction, top_n=TOP_N):
     raw_scores = (ctx.all_embs @ user_emb.T).squeeze(-1)
 
     # 5b. Soft genome re-rank (Source A — see GENOME_RERANK_LAMBDA). Lift films that actually carry
-    #     the requested genome tags (moods in genome_tags + explicit hard_constraints.require_genome_tags)
-    #     so a correct anchor set isn't out-ranked by the item embedding's era/co-watch neighbours.
-    if GENOME_RERANK_LAMBDA and not fallback:
-        rerank_tags = list(genome_tags) + list(hc.get('require_genome_tags') or [])
-        boost = _genome_relevance(ctx, rerank_tags)
-        if boost is not None:
-            raw_scores = raw_scores + GENOME_RERANK_LAMBDA * boost.to(raw_scores.device)
+    #     the requested genome tags so a correct anchor/title set isn't out-ranked by the item
+    #     embedding's era/co-watch neighbours. TWO separate additive terms so orthogonal axes don't
+    #     dilute each other (see MOOD_RERANK_LAMBDA):
+    #       • subject: the explicit genome_tags + hard require_genome_tags + Mode-1.5 title tags.
+    #       • mood:    the Engine-2 affect tags routed from a mood/vibe phrase.
+    require_gt = hc.get('require_genome_tags') or []
+    if not fallback:
+        # subject term: explicit genome_tags + hard require_genome_tags + Mode-1.5 title tags.
+        subject_tags = list(genome_tags) + list(require_gt) + list(mode15_tags)
+        if GENOME_RERANK_LAMBDA and subject_tags:
+            subj = _genome_relevance(ctx, subject_tags)
+            if subj is not None:
+                raw_scores = raw_scores + GENOME_RERANK_LAMBDA * subj.to(raw_scores.device)
+        # mood term: Engine-2 affect, gated by its OWN knob so it survives GENOME_RERANK_LAMBDA=0.
+        if MOOD_RERANK_LAMBDA and mood_tags:
+            mood_boost = _genome_relevance(ctx, mood_tags)
+            if mood_boost is not None:
+                raw_scores = raw_scores + MOOD_RERANK_LAMBDA * mood_boost.to(raw_scores.device)
+
+    # 5c. require_genome_tags HARD floor (step B lever 2). Gate the pool to films that genuinely carry
+    #     the required tags, then drop the rest in BOTH ranking loops. Semantics mirror the sibling
+    #     hard gates in _passes_constraints (require_genres / require_people = ALL): a film must clear
+    #     GENOME_HARD_FLOOR on EVERY required tag, NOT on their average — so a compound "set in Paris
+    #     during WWII" require doesn't admit a WWII film with ~0 Paris relevance (a mean would). A
+    #     required-tag set that resolves to nothing in vocab → no floor (gt_floor_ok stays None),
+    #     mirroring the year gate's "don't filter on what we can't compute." Soft moods/Mode-1.5 tags
+    #     never reach here — only hard_constraints.require_genome_tags.
+    gt_floor_ok = None  # None → no floor; else the set of mids clearing the floor on EVERY required tag
+    if require_gt:
+        floor_cols = [ctx.genome_name_to_idx[t] for t in require_gt if t in ctx.genome_name_to_idx]
+        if floor_cols:
+            gt_ctx = fs['movieId_to_genome_tag_context']
+            gt_floor_ok = {mid for mid in ctx.all_ids
+                           if all(float(gt_ctx[mid][c]) >= GENOME_HARD_FLOOR for c in floor_cols)}
 
     # 6. Rank → drop only USER-NAMED seeds → apply post-filters → take top_n.
     #    Liked/disliked titles are films the user explicitly named, so we don't surface them back
@@ -670,6 +896,9 @@ def recommend(ctx, extraction, top_n=TOP_N):
             mid = title_to_mid.get(title)
             if mid is None or title in seed_titles:
                 continue
+            if gt_floor_ok is not None and mid not in gt_floor_ok:
+                filtered += 1
+                continue
             if not _passes_constraints(mid, fs, hc, facets):
                 filtered += 1
                 continue
@@ -686,6 +915,9 @@ def recommend(ctx, extraction, top_n=TOP_N):
             title = fs['movieId_to_title'][mid]
             if title in seed_titles:
                 continue
+            if gt_floor_ok is not None and mid not in gt_floor_ok:
+                filtered += 1
+                continue
             if not _passes_constraints(mid, fs, hc, facets):
                 filtered += 1
                 continue
@@ -699,6 +931,8 @@ def recommend(ctx, extraction, top_n=TOP_N):
         'people_resolution': people_log,
         'anchors': anchors,
         'anchor_weight': anchor_weight,
+        'mood_tags': mood_tags,          # genome tags routed from a free mood/vibe phrase (Engine-2)
+        'mode15_tags': mode15_tags,      # discriminative genome tags injected from a pure-title seed
         'unresolved_tags': unresolved_tags,
         'unknown_genres': unknown_genres,
         'seed_count': len(seed_titles),
