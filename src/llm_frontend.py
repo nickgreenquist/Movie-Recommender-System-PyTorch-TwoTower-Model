@@ -682,6 +682,7 @@ MOOD_TAGS = {
     'disturbing':   ['disturbing', 'bleak'],
     'atmospheric':  ['atmospheric'],
     'surreal':      ['surreal', 'nonlinear'],
+    'nostalgic':    ['nostalgic', 'nostalgia', 'bittersweet', 'coming-of-age'],
 }
 # Trigger phrase (normalized, whole-word) → canonical mood key above. Multi-word triggers are matched
 # as contiguous token runs (mirrors _franchise_match's whole-word discipline, so "warm" ⊄ "warmth").
@@ -712,6 +713,11 @@ MOOD_ALIASES = {
     'disturbing': 'disturbing', 'depressing': 'disturbing', 'harrowing': 'disturbing',
     'atmospheric': 'atmospheric', 'moody': 'atmospheric', 'brooding': 'atmospheric',
     'surreal': 'surreal', 'dreamlike': 'surreal', 'dream like': 'surreal', 'abstract': 'surreal',
+    'nostalgic': 'nostalgic', 'nostalgia': 'nostalgic', 'wistful': 'nostalgic',
+    'bittersweet': 'nostalgic', 'sentimental': 'nostalgic',
+    # Comparative (-er) forms of the base moods — "scarier"/"funnier" are single tokens so the whole-word
+    # matcher misses them (unlike "more scary", which already hits the base 'scary'). "darker" is above.
+    'scarier': 'scary', 'creepier': 'scary', 'funnier': 'funny', 'sadder': 'cry', 'grimmer': 'dark',
 }
 
 

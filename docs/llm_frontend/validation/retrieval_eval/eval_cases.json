@@ -3203,5 +3203,75 @@
     "built": true,
     "note": "A PURE require_genome_tags request must TASTE-RANK within its floor, not collapse to popularity. Before the anchor-seeding fix (llm_frontend.py ~1195), require_genome_tags seeded no anchors -> fallback=True -> the 0.35 racing floor is a binary gate that admits incidental blockbusters (Star Wars racing=0.358, Raiders 0.377) which popularity floats to the top over real racing films (Rush=0.998). After: require_gt seeds the anchors -> fallback=False -> top-12 are genuine racing films (F&F / Need for Speed / Rush / Death Race / Cars, racing>=0.6). excludes Star Wars/Raiders + min_genome racing>=0.5 x8 are RED before, GREEN after.",
     "mode": "genome_setting_facet"
+  },
+  {
+    "utterance": "a movie that will make me nostalgic",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "mood": [
+        "make me nostalgic"
+      ],
+      "hard_constraints": {}
+    },
+    "assertions": [
+      {
+        "type": "excludes_title_substr",
+        "substr": "Shawshank",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Pulp Fiction",
+        "k": 10
+      },
+      {
+        "type": "min_genome",
+        "tag": "nostalgic",
+        "k": 12,
+        "min_score": 0.3,
+        "min": 8
+      }
+    ],
+    "needs_feature": "mood",
+    "built": true,
+    "note": "Mood-router coverage gap: 'nostalgic' was absent from MOOD_TAGS/MOOD_ALIASES, so resolve_mood('make me nostalgic') returned [] -> empty anchors -> fallback=True -> the IMDb top-10 (Shawshank/Forrest Gump/Pulp Fiction), zero nostalgia. After adding the nostalgic mood (+ in-vocab tags nostalgic/nostalgia/bittersweet/coming-of-age): fallback=False -> Sing Street / Breakfast Club / Brooklyn / Moonrise Kingdom (nostalgic>=0.3). excludes Shawshank/Pulp Fiction (fallback tells) + min_genome nostalgic x8 are RED before, GREEN after. Same popularity-fallback class as the racing bug, via the mood table.",
+    "mode": "mood_affect"
+  },
+  {
+    "utterance": "marvel movies",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_franchise": [
+          "Marvel"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "contains_title_substr",
+        "substr": "Avengers",
+        "k": 12,
+        "min": 1
+      },
+      {
+        "type": "contains_title_substr",
+        "substr": "Iron Man",
+        "k": 12,
+        "min": 1
+      }
+    ],
+    "needs_feature": "require_franchise",
+    "built": true,
+    "note": "Franchise alias desync: the prompt teaches 'Marvel movies' -> require_franchise ['Marvel'], but FRANCHISE_UNIVERSE_ALIASES had 'marvel cinematic universe'/'mcu' and NO bare 'marvel' key, so 'marvel' token-matched only the 'Captain Marvel Collection' -> a 1-film result (the Avengers/Iron Man/Thor collections do not contain the token 'marvel'). After adding bare 'marvel'/'dc' aliases + re-bake: require_franchise ['Marvel'] -> the MCU (Iron Man/Avengers/Thor/Guardians/Captain America). contains Avengers + Iron Man are RED before (only Captain Marvel), GREEN after.",
+    "mode": "structured_facet_franchise"
   }
 ]

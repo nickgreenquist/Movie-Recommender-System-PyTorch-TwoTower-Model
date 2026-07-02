@@ -123,8 +123,10 @@ FRANCHISE_UNIVERSE_ALIASES = {
 }
 # Common short forms resolve to the same expansion.
 FRANCHISE_UNIVERSE_ALIASES['mcu']         = FRANCHISE_UNIVERSE_ALIASES['marvel cinematic universe']
+FRANCHISE_UNIVERSE_ALIASES['marvel']      = FRANCHISE_UNIVERSE_ALIASES['marvel cinematic universe']
 FRANCHISE_UNIVERSE_ALIASES['dceu']        = FRANCHISE_UNIVERSE_ALIASES['dc extended universe']
 FRANCHISE_UNIVERSE_ALIASES['dc universe'] = FRANCHISE_UNIVERSE_ALIASES['dc extended universe']
+FRANCHISE_UNIVERSE_ALIASES['dc']          = FRANCHISE_UNIVERSE_ALIASES['dc extended universe']
 
 SCRAPED_DIR = os.path.join(REPO_ROOT, 'llm_features', 'cache', 'scraped')
 OUT_PATH    = os.path.join(REPO_ROOT, 'llm_features', 'cache', 'facet_store.pt')
