@@ -967,15 +967,18 @@ def _passes_constraints(mid, fs, hc, facets=None):
         if exc_fr and _franchise_match(coll, exc_fr, aliases):
             return False
 
-    # Production country (require_country_codes = ISO 3166-1 resolved upstream). A film passes if its
-    # production_countries intersect the required set (ANY — a FR co-production satisfies "French films",
-    # a region like "Scandinavian" is any member code). Two absence levels, distinguished so we keep the
-    # membership semantics without breaking graceful degradation: (a) the WHOLE table missing (no bake /
-    # an old serving artifact, ctx.facets None) → skip the gate entirely, like the year gate, so the rest
-    # of the query still runs (mirrors the people path's 'no facet store' degrade — otherwise EVERY film
-    # would drop and the pool would empty); (b) the table present but THIS film has no country (one of the
-    # ~60 no-details_raw records) → DROP, since "French films" is an explicit membership demand at 99.2%
-    # coverage and a metadata-gap film must not float in masquerading as a member.
+    # Origin/nationality country (require_country_codes = ISO 3166-1 resolved upstream). movieId_to_countries
+    # is baked from TMDB origin_country, NOT production_countries — the latter lists every co-FINANCIER, so a
+    # US film with a sliver of foreign financing wrongly satisfied "French/Japanese films" (see build_facet_store).
+    # A film passes if its origin codes intersect the required set (ANY — a genuine multi-national co-production
+    # where the required country is a real co-ORIGIN still counts, and a region like "Scandinavian" is any member
+    # code; a mere co-financier does NOT). Two absence levels, distinguished so we keep the membership semantics
+    # without breaking graceful degradation: (a) the WHOLE table missing (no bake / an old serving artifact,
+    # ctx.facets None) → skip the gate entirely, like the year gate, so the rest of the query still runs (mirrors
+    # the people path's 'no facet store' degrade — otherwise EVERY film would drop and the pool would empty);
+    # (b) the table present but THIS film has no origin country (~81 films: 69 with no scraped TMDB record + 12
+    # whose TMDB omits origin_country; ~99.1% whole-corpus coverage) → DROP, since "French films" is an explicit
+    # membership demand and a metadata-gap film must not float in masquerading as a member.
     req_country = hc.get('require_country_codes') or []
     ctab = facets.get('movieId_to_countries')
     if req_country and ctab:
@@ -1188,8 +1191,14 @@ def recommend(ctx, extraction, top_n=TOP_N):
     #    rather than swamp the explicit likes; pure Mode 2 keeps the full anchor strength. The subject
     #    genome_tags drive the anchors; a mood falls back to driving them only when it is the sole vibe
     #    (no explicit genome_tags), so "make me cry" still synthesizes a query but "feel-good cooking"
-    #    anchors on food, not on feel-good.
-    anchor_tags = genome_tags if genome_tags else mood_tags
+    #    anchors on food, not on feel-good. A PURE require_genome_tags request (a hard subject/setting
+    #    floor with NO soft companion — "movies about racing" → require_genome_tags ['racing']) ALSO
+    #    seeds the anchors: otherwise it has no taste signal, collapses to the popularity fallback, and the
+    #    0.35 floor (a binary gate) lets incidental blockbusters through — Star Wars racing=0.36 clears it
+    #    and popularity floats it over real racing films (Rush=1.0). Anchoring on the required tag ranks by
+    #    taste WITHIN the floor. Scoped to the no-soft-signal case, so Mode-1 (likes) queries are untouched.
+    require_gt = hc.get('require_genome_tags') or []
+    anchor_tags = genome_tags if genome_tags else (require_gt if require_gt else mood_tags)
     seed_exclude = set(liked_resolved) | set(disliked_resolved)
     has_likes = bool(liked_resolved)
     per_tag      = ANCHORS_PER_TAG_WITH_LIKES if has_likes else ANCHORS_PER_TAG
@@ -1236,9 +1245,9 @@ def recommend(ctx, extraction, top_n=TOP_N):
     #     dilute each other (see MOOD_RERANK_LAMBDA):
     #       • subject: the explicit genome_tags + hard require_genome_tags + Mode-1.5 title tags.
     #       • mood:    the Engine-2 affect tags routed from a mood/vibe phrase.
-    require_gt = hc.get('require_genome_tags') or []
     if not fallback:
-        # subject term: explicit genome_tags + hard require_genome_tags + Mode-1.5 title tags.
+        # subject term: explicit genome_tags + hard require_genome_tags (require_gt, computed above where
+        # it also seeds the anchors) + Mode-1.5 title tags.
         subject_tags = list(genome_tags) + list(require_gt) + list(mode15_tags)
         if GENOME_RERANK_LAMBDA and subject_tags:
             subj = _genome_relevance(ctx, subject_tags)

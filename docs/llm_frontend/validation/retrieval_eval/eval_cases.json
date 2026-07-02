@@ -304,7 +304,7 @@
         "type": "contains_genre",
         "genre": "Crime",
         "k": 10,
-        "min": 4
+        "min": 1
       },
       {
         "type": "min_genome",
@@ -320,7 +320,7 @@
       }
     ],
     "needs_feature": "require_country",
-    "note": "year+country stack thins pool; heist genome must persist after country-fallback | step C: require_country=FR + year + Crime compose; the 70s French-heist set is genuinely thin (~1 film), so the heist-genome proxy is min>=1, not a corpus-unrealistic >=4.",
+    "note": "year+country stack thins pool; heist genome must persist after country-fallback | step C: require_country=FR + year + Crime compose; the 70s French-heist set is genuinely thin, so both the Crime and heist-genome proxies are min>=1, not corpus-unrealistic >=4. ORIGIN-COUNTRY recalibration: with require_country reading origin_country (nationality) not production_countries, the only genuinely French-origin 70s Crime film in the corpus is Le Cercle Rouge (Melville, 1970); the 4 that dropped (Marathon Man US, The American Friend DE, The Night Porter IT, Day of the Jackal US/GB) were co-financed non-French films that used to leak in — the same co-production noise the origin switch removes.",
     "mode": "composition_thin",
     "built": true
   },
@@ -526,8 +526,7 @@
         "title": "Amelie (Fabuleux destin d'Amélie Poulain, Le) (2001)",
         "facet": "country",
         "equals": [
-          "FR",
-          "DE"
+          "FR"
         ]
       }
     ],
@@ -3111,6 +3110,98 @@
     "needs_feature": "require_genome_tags",
     "built": true,
     "note": "API-wiring LOCATION hard filter: 'based in Japan' -> require_genome_tags japan floor (0.35 AND); exclude_genres drops anime/animation. Setting (japan) is DISTINCT from require_country (JP nationality). japan floor pool = 335 films; top-10 Japan-set, zero Animation.",
+    "mode": "genome_setting_facet"
+  },
+  {
+    "utterance": "I want to watch some Japanese movies",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_country": "Japanese"
+      }
+    },
+    "assertions": [
+      {
+        "type": "all_have_country",
+        "country": "Japanese",
+        "k": 10
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Cliffhanger",
+        "k": 15
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Scott Pilgrim",
+        "k": 15
+      },
+      {
+        "type": "contains_title_substr",
+        "substr": "Spirited Away",
+        "k": 20,
+        "min": 1
+      },
+      {
+        "type": "oracle",
+        "title": "Spirited Away (Sen to Chihiro no kamikakushi) (2001)",
+        "facet": "country",
+        "equals": [
+          "JP"
+        ]
+      }
+    ],
+    "needs_feature": "require_country",
+    "built": true,
+    "note": "NATIONALITY vs SETTING (sibling to the 'based in Japan' genome case above): 'japanese movies' -> require_country JP. The gate reads origin_country (nationality), NOT production_countries: co-financed US films (Cliffhanger prod FR/IT/US/JP, Scott Pilgrim prod JP/GB/US — both origin US) must NOT leak in. The excludes_title_substr assertions are RED under the old production_countries source and GREEN under origin_country; Spirited Away (origin JP) stays. all_have_country counts co-pros as matches so it alone cannot catch the leak.",
+    "mode": "structured_facet_country"
+  },
+  {
+    "utterance": "movies about racing, street racing or track racing",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_genome_tags": [
+          "racing"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "excludes_title_substr",
+        "substr": "Star Wars",
+        "k": 12
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Raiders",
+        "k": 12
+      },
+      {
+        "type": "min_genome",
+        "tag": "racing",
+        "k": 12,
+        "min_score": 0.5,
+        "min": 8
+      },
+      {
+        "type": "contains_title_substr",
+        "substr": "Fast",
+        "k": 12,
+        "min": 3
+      }
+    ],
+    "needs_feature": "require_genome_tags",
+    "built": true,
+    "note": "A PURE require_genome_tags request must TASTE-RANK within its floor, not collapse to popularity. Before the anchor-seeding fix (llm_frontend.py ~1195), require_genome_tags seeded no anchors -> fallback=True -> the 0.35 racing floor is a binary gate that admits incidental blockbusters (Star Wars racing=0.358, Raiders 0.377) which popularity floats to the top over real racing films (Rush=0.998). After: require_gt seeds the anchors -> fallback=False -> top-12 are genuine racing films (F&F / Need for Speed / Rush / Death Race / Cars, racing>=0.6). excludes Star Wars/Raiders + min_genome racing>=0.5 x8 are RED before, GREEN after.",
     "mode": "genome_setting_facet"
   }
 ]

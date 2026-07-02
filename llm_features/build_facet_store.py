@@ -44,7 +44,8 @@ OUTPUT  (llm_features/cache/facet_store.pt — a build artifact; export bakes th
     movieId_to_runtime      : {mid: int}                    minutes (max_runtime/min_runtime filter)
     movieId_to_collection   : {mid: {'id': int, 'name': str}}   TMDB franchise (require/exclude_franchise)
     movieId_to_vote         : {mid: {'average': float, 'count': int}}   quality floor (min_vote_average)
-    movieId_to_countries    : {mid: ['US','FR'…]}   production ISO 3166-1 codes (require_country, step C)
+    movieId_to_countries    : {mid: ['US','FR'…]}   ORIGIN (nationality) ISO 3166-1 codes, from
+                                                    origin_country not production_countries (require_country, step C)
     movieId_to_language     : {mid: 'fr'}            original_language ISO 639-1 (require_language, step C)
     movieId_to_attributes   : {mid: ['black and white'…]}   curated format/attribute keys (require_attributes)
     franchise_universe_aliases: {normalized_universe_phrase: [collection-name substring…]}   a small
@@ -217,7 +218,7 @@ def _attrs_from_record(record):
     """Pull the structured F1/step-C attribute facets from one record's tmdb sub-dict: US MPAA content
     rating (details_raw.release_dates), runtime minutes (tmdb.runtime), franchise/collection
     ({id,name} from details_raw.belongs_to_collection), the vote_average/vote_count quality signal,
-    production countries (details_raw.production_countries → ISO 3166-1 list), original language
+    origin/nationality countries (details_raw.origin_country → ISO 3166-1 list), original language
     (details_raw.original_language), and the curated format/attribute keys. Returns a dict of only the
     fields present — a missing/unusable field is simply omitted (the filter treats its absence as 'no
     info', mirroring the year gate; format attributes are membership, so absence there means 'not that
@@ -244,9 +245,21 @@ def _attrs_from_record(record):
         out['vote'] = {'average': float(va),
                        'count':   int(vc) if isinstance(vc, (int, float)) else 0}
 
-    # Production countries → ISO 3166-1 alpha-2 list (nationality of production, require_country).
-    pcs = dr.get('production_countries') or []
-    codes = [pc.get('iso_3166_1') for pc in pcs if isinstance(pc, dict) and pc.get('iso_3166_1')]
+    # Country of ORIGIN → ISO 3166-1 alpha-2 list (nationality, require_country). We source
+    # origin_country, NOT production_countries: the latter lists every co-FINANCIER, so an
+    # ANY-membership require_country gate leaked US films with a sliver of foreign financing into
+    # nationality queries ("japanese movies" surfaced Cliffhanger [prod FR/IT/US/JP] and Scott Pilgrim
+    # [prod JP/GB/US] — both origin US). origin_country is TMDB's actual nationality field (US for
+    # those, JP for genuine Japanese films), ~99% of scraped records populated. SETTING ("set in Japan") is
+    # a separate genome path (require_genome_tags), untouched — see llm_frontend require_genome_tags floor.
+    # Residual ceiling (inherent to TMDB origin_country + ANY-membership, ~8x smaller leak than production):
+    # a few genuine legal co-productions where the queried country is a real co-origin still surface (e.g. some
+    # US/DE tax-shelter films under "German"), plus rare IP-noise multi-origins (Super Mario Bros → JP) — not
+    # removable without dropping true co-productions.
+    oc = dr.get('origin_country')
+    oc = oc if isinstance(oc, list) else []   # mirror the language line's guard (a scalar crashes the
+                                              # comprehension; a bare string would char-split into ['U','S'])
+    codes = [c for c in oc if isinstance(c, str) and c.strip()]
     codes = list(dict.fromkeys(codes))  # de-dupe, order-preserving
     if codes:
         out['countries'] = codes
