@@ -66,6 +66,13 @@ def build_schema(genres=None, fs=None):
                                 'description': 'Soft genre taste preferences.'},
             'disliked_genres': {'type': 'array', 'items': genre_enum,
                                 'description': 'Soft genre aversions.'},
+            'mood':            {'type': 'array', 'items': {'type': 'string'},
+                                'description': 'SOFT affect / emotional-goal phrases — how the user '
+                                'wants to FEEL — as FREE natural language ("make me cry", "feel-good", '
+                                '"something cozy", "uplifting", "darker", "more mature"). Unlike '
+                                'genome_tags these need NOT come from the vocab; the harness maps them '
+                                'to tone tags. Soft anchor, not a filter. A hard "absolutely no sad '
+                                'stuff" is NOT mood — that is exclude_mood.'},
             'hard_constraints': {
                 'type': 'object',
                 'additionalProperties': False,
@@ -83,6 +90,61 @@ def build_schema(genres=None, fs=None):
                     'exclude_people':  {'type': 'array', 'items': {'type': 'string'},
                                         'description': 'HARD filter: drop any result involving any of '
                                         'these people. Full names as free strings.'},
+                    'require_genome_tags': {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD floor: every result must genuinely carry '
+                                        'ALL of these genome tags (copied EXACTLY from the genome '
+                                        'vocab). Use ONLY for an EMPHATIC SETTING or specific-theme '
+                                        'demand — "set in Japan" -> ["japan"], "actually about chess" '
+                                        '-> ["chess"]. Location SETTING only, DISTINCT from '
+                                        'require_country (nationality). The tag MUST be in the vocab; '
+                                        'when unsure whether the demand is emphatic, prefer soft '
+                                        'genome_tags instead.'},
+                    'exclude_genome_tags': {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD anti-filter: drop any result carrying any '
+                                        'of these genome tags (exact vocab). For an emphatic content '
+                                        'aversion — "no gore" -> ["gore"].'},
+                    'exclude_mood':    {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD affect exclusion as FREE phrases — '
+                                        '"nothing sad", "no dark depressing stuff". The harness maps '
+                                        'these to tone tags and drops films that carry them.'},
+                    'require_country': {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD PRODUCTION-nationality filter — "French", '
+                                        '"South Korean", "Scandinavian", "foreign". Who MADE the film, '
+                                        'NOT where it is set (a Paris-SET US film is not French — use '
+                                        'require_genome_tags for setting).'},
+                    'require_language': {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD original-language filter — "in French", '
+                                        '"originally Japanese, not dubbed".'},
+                    'require_attributes': {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD format/attribute filter — "black and '
+                                        'white", "silent", "directed by women", "based on a book", '
+                                        '"based on a true story", "anime", "stop motion", "independent".'},
+                    'require_max_rating': {'type': ['string', 'null'],
+                                        'description': 'HARD US content-rating ceiling — one of "G", '
+                                        '"PG", "PG-13", "R", "NC-17". "nothing R-rated" -> "PG-13"; '
+                                        '"kid-friendly" -> "PG". Drops anything stricter.'},
+                    'max_runtime':     {'type': ['integer', 'null'],
+                                        'description': 'HARD max runtime in MINUTES ("under two hours" '
+                                        '-> 120, "nothing over 90 minutes" -> 90).'},
+                    'min_runtime':     {'type': ['integer', 'null'],
+                                        'description': 'HARD min runtime in minutes ("no shorts", '
+                                        '"at least feature length").'},
+                    'min_vote_average': {'type': ['number', 'null'],
+                                        'description': 'HARD quality floor, TMDB score 0-10. "actually '
+                                        'good" / "critically acclaimed" / "no trash" -> ~7.0.'},
+                    'require_franchise': {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD franchise/collection membership — "the '
+                                        'Marvel movies", "James Bond films", "Star Wars". Free names.'},
+                    'exclude_franchise': {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD franchise exclusion — "no MCU", "skip the '
+                                        'sequels / the DCEU". Free names.'},
+                    'require_composers': {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD filter: every result scored by ALL these '
+                                        'composers — "scored by Hans Zimmer", "John Williams '
+                                        'soundtrack". Full names.'},
+                    'exclude_composers': {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD filter: drop any result scored by these '
+                                        'composers. Full names.'},
                 },
             },
         },
@@ -123,7 +185,9 @@ specific, evocative ones like "quirky", "neo-noir", "atmospheric", "surreal", "s
 "dreamlike". HOW MANY depends on whether the user named any titles:
     • NO titles given: decide require_genres / require_people / year FIRST — whether a HARD \
 constraint defines the request determines how to handle tags.
-        – PURE VIBE or SOFT-GENRE TASTE (no require_genres, no require_people, and no year limit — \
+        – PURE VIBE or SOFT-GENRE TASTE (NO hard constraint at all — no require_genres, require_people, \
+require_genome_tags, require_country, require_language, require_attributes, require_franchise, \
+require_composers, rating/runtime/quality floor, AND no year limit — \
 "I love a good romance", "something dreamy and melancholy", "big fan of war movies", "into crime \
 and mystery"): \
 the tags ARE the query, so ALWAYS emit 3–5 specific mood/style tags — even when you also set a SOFT \
@@ -139,7 +203,10 @@ ONLY for a GENUINE extra vibe stated beyond the category ("dark gritty westerns"
 year_min 1980 / year_max 1989, NO invented tags — do NOT manufacture quirky/campy/atmospheric-type \
 tags: an invented vibe tag pulls results off the required genre. When unsure here, prefer NO tag. \
 A named-person request ("Tom Hanks movies", "I like Tom Hanks movies" → require_people ["Tom Hanks"]) \
-is likewise defined by that person, NOT a vibe — emit NO mood tags unless a genuine extra vibe is stated.
+is likewise defined by that person, NOT a vibe — emit NO mood tags unless a genuine extra vibe is stated. \
+The SAME holds for a request defined by a SETTING ("set in Japan" → require_genome_tags ["japan"]), a \
+NATIONALITY ("French films" → require_country), or a FORMAT / RATING / RUNTIME / FRANCHISE facet: set that \
+hard slot and do NOT manufacture vibe tags — the facet is the query.
     • Titles GIVEN in liked_items: the named titles are the real query and they already encode \
 tone, intensity, and era — so use FEW tags (0–2), and only when they add something the titles \
 don't. Decide by HOW the user frames the mood:
@@ -154,6 +221,11 @@ WHIMSICAL", "but a MUSICAL") pushes a NEW direction the titles don't already go 
 - liked_genres / disliked_genres: SOFT taste signals ("I like sci-fi", "not really into \
 horror"). Choose only from the GENRES list. Soft = shapes the recommendation, does not \
 hard-filter.
+- mood: SOFT affect / emotional-goal phrases — how the user wants to FEEL — as FREE natural \
+language: "make me cry", "feel-good", "something cozy", "uplifting", "darker", "more mature", \
+"something scary". Unlike genome_tags these need NOT be in the vocab (the model maps them to tone). \
+Use mood for the emotional GOAL; use genome_tags for concrete style/atmosphere descriptors. A hard \
+"absolutely NO sad stuff" is NOT a mood — it goes in exclude_mood.
 - hard_constraints: things the model can't express, applied as a post-filter.
     • year_min / year_max: explicit date limits ("after 2010", "90s movies" → 1990–1999, \
 "recent" → roughly year_min {current_year_minus_10}). Use integers or null.
@@ -171,6 +243,40 @@ Emit each person's FULL NAME as a free string ("Tom Hanks", not "Hanks"; "Christ
 taste, and never a genome_tag. (The model has no person concept, so this is the only way people work.)
     • exclude_people: HARD people exclusion → list the full names. "no Nolan films", "nothing with \
 Tom Cruise", "I'm sick of Nolan / show me other..." → exclude_people ["Christopher Nolan"] etc.
+    • require_genome_tags: HARD filter on SETTING or a SPECIFIC THEME, expressed as genome tags copied \
+EXACTLY from the GENOME TAGS list. Use it ONLY for an EMPHATIC, explicit demand that a film BE SET IN a \
+place or BE ABOUT a specific subject — "set in Japan" / "takes place in Paris" / "based in New York" → \
+["japan"] / ["paris"] / ["new york city"]; "actually about chess" → ["chess"]. The place/subject MUST \
+appear verbatim in the GENOME TAGS list — if it is NOT there, do NOT invent it (drop the place, or if a \
+softer word from the list captures the vibe use genome_tags instead). SETTING is NOT NATIONALITY: "set in \
+Japan" → require_genome_tags ["japan"] (WHERE it takes place), but "Japanese films" / "French cinema" → \
+require_country (WHO made it) — a Japan-set film can be a US production. DISCIPLINE: do NOT hard-require a \
+genome tag for a passing mention or a mere atmosphere ("a bit of a Paris vibe" → SOFT genome_tags ["paris"], \
+not require). Reserve require_genome_tags for an unmistakable "it MUST be set in / be about ___". When in \
+doubt, prefer soft genome_tags — an over-eager hard floor empties the pool.
+    • exclude_genome_tags / exclude_mood: HARD content/affect aversions. exclude_genome_tags lists EXACT \
+genome tags to forbid ("no gore" → ["gore"]); exclude_mood takes FREE affect phrases ("nothing sad", "no \
+dark depressing stuff"). Only for an EMPHATIC "absolutely no ___" — a mild preference is not an exclusion.
+    • require_country: HARD PRODUCTION-nationality filter — "French films", "Korean cinema", "Scandinavian \
+movies", "foreign" (non-English). Free strings. This is WHO PRODUCED the film, NOT where it is set (see \
+require_genome_tags). "Japanese films" → require_country ["Japanese"]; "movies set in Japan" → \
+require_genome_tags ["japan"].
+    • require_language: HARD original-language filter — "in French", "originally Japanese, not dubbed", \
+"Korean-language". Free language names.
+    • require_attributes: HARD format/attribute filter — "black and white", "silent", "directed by women", \
+"based on a book", "based on a true story", "anime", "stop motion", "independent / indie".
+    • require_max_rating: HARD US content-rating ceiling — one of "G", "PG", "PG-13", "R", "NC-17". \
+"nothing R-rated" → "PG-13"; "kid-friendly" / "nothing too mature" → "PG". Drops anything stricter.
+    • max_runtime / min_runtime: HARD runtime bounds in MINUTES — "under two hours" → max_runtime 120, \
+"nothing over 90 minutes" → 90, "no shorts" → a min_runtime.
+    • min_vote_average: HARD quality floor, TMDB score 0–10 — "actually good", "critically acclaimed", \
+"no trash" → ~7.0.
+    • require_franchise / exclude_franchise: HARD franchise/collection membership or exclusion — "the \
+Marvel movies" → require_franchise ["Marvel"]; "no MCU", "skip the sequels", "not the DCEU" → \
+exclude_franchise. Free franchise/universe names.
+    • require_composers / exclude_composers: HARD filter on the FILM-SCORE composer — "scored by Hans \
+Zimmer", "John Williams soundtrack" → require_composers ["Hans Zimmer"]. Full names. (A composer is a \
+person, but goes in this slot, not require_people, so an actor of the same name is never confused.)
   Distinguish SOFT vs HARD by the genre's ROLE, not just keywords: a genre that IS the thing \
 being requested (the head noun — "show me comedies", "I want a western", "horror movies") is \
 HARD → require_genres; a genre mentioned as a side preference ("I'm into sci-fi", "I usually \
@@ -179,10 +285,11 @@ always HARD. A hard "no X" goes in exclude_genres. A genre you put in require_ge
 in liked_genres so the model leans toward it, but a SOFT preference must NEVER go in require_genres.
 
 NOT SUPPORTED — silently ignore these, do not invent fields for them: constraints about specific \
-studios / production companies, content or age ratings, and runtime ("rated PG", "A24 films", \
-"nothing over two hours"). Still capture the rest of such a request. (Actors, directors, and \
-writers ARE supported now — route a named person to require_people / exclude_people above, never \
-to genome_tags.)
+studios / production companies ("A24 films", "a Pixar movie" as a STUDIO) and streaming availability \
+("on Netflix", "what's streaming"). Still capture the rest of such a request. (Actors, directors, \
+writers, and composers ARE supported → require_people / require_composers; content ratings, runtime, \
+quality, franchises, nationality, language, and format ARE now supported → the hard_constraints slots \
+above. Route each to its slot, never to genome_tags.)
 
 GENRES (closed list — the only valid values for any genre field):
 {genres}
@@ -225,6 +332,25 @@ FEWSHOT_EXAMPLES = [
     ('A family-friendly animated adventure from the last ten years, nothing scary',
      {'liked_genres': ['Animation', 'Adventure', 'Children'],
       'hard_constraints': {'year_min': CURRENT_YEAR - 10, 'exclude_genres': ['Horror']}}),
+    # LOCATION setting (hard genome floor) — "set in Japan" is WHERE, distinct from require_country.
+    ('Going to Tokyo soon — recommend movies actually set in Japan, but nothing animated or anime',
+     {'hard_constraints': {'require_genome_tags': ['japan'], 'exclude_genres': ['Animation']}}),
+    # Composition: nationality (hard) + head-noun genre (hard) + runtime bound.
+    ('Korean thrillers please, and nothing over two hours',
+     {'liked_genres': ['Thriller'],
+      'hard_constraints': {'require_genres': ['Thriller'], 'require_country': ['South Korean'],
+                           'max_runtime': 120}}),
+    # Affect goal (soft mood) + emphatic affect exclusion (hard).
+    ('Something to make me cry, but nothing too dark or depressing',
+     {'mood': ['make me cry'],
+      'hard_constraints': {'exclude_mood': ['dark or depressing']}}),
+    # Format/attribute facets.
+    ('Classic black-and-white films directed by women',
+     {'hard_constraints': {'require_attributes': ['black and white', 'directed by women']}}),
+    # DISCIPLINE: a "vibe", not "set in Paris" → SOFT genome_tags, NOT require_genome_tags.
+    ('I love a romantic movie with a bit of a Paris vibe',
+     {'liked_genres': ['Romance'],
+      'genome_tags': ['paris']}),
 ]
 
 

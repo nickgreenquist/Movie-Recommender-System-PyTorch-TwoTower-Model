@@ -3076,5 +3076,41 @@
     "built": true,
     "note": "step C Engine-1a attribute facet: 'based on a book' -> based-on-novel-or-book keyword (1149 films).",
     "mode": "structured_facet_rating_runtime"
+  },
+  {
+    "utterance": "going to Tokyo soon — movies based in Japan, no animation or anime",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_genome_tags": [
+          "japan"
+        ],
+        "exclude_genres": [
+          "Animation"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "min_genome",
+        "tag": "japan",
+        "k": 10,
+        "min_score": 0.5,
+        "min": 6
+      },
+      {
+        "type": "excludes_genre",
+        "genre": "Animation",
+        "k": 15
+      }
+    ],
+    "needs_feature": "require_genome_tags",
+    "built": true,
+    "note": "API-wiring LOCATION hard filter: 'based in Japan' -> require_genome_tags japan floor (0.35 AND); exclude_genres drops anime/animation. Setting (japan) is DISTINCT from require_country (JP nationality). japan floor pool = 335 films; top-10 Japan-set, zero Animation.",
+    "mode": "genome_setting_facet"
   }
 ]
