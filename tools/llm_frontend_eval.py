@@ -123,6 +123,7 @@ def _check_assertion(a, recs, meta):
       contains_title_substr {substr,k,min}  excludes_title_substr {substr,k}
       all_have_person {name,k}              none_have_person {name,k}
       rank_above {a,b}                      min_genome {tag,k,min_score,min}
+      max_genome {tag,k,min_score,max}      (exclusion mirror of min_genome — at most `max` carry the tag)
       max_runtime {cap,k}                   max_rating {rating,k}
       excludes_franchise {spec,k}           oracle {title,facet,equals[,spec]}
       all_have_country {country,k}          all_have_language {language,k}
@@ -190,6 +191,18 @@ def _check_assertion(a, recs, meta):
             return False, f"genome tag '{a['tag']}' not in vocab / no scores"
         n = sum(1 for _, s in scored if s is not None and s >= thr)
         return n >= need, f"{n} of top-{k} carry '{a['tag']}'>={thr} (need >={need})"
+    if t == 'max_genome':
+        # The exclusion mirror of min_genome — the faithful metric for exclude_mood / exclude_genome_tags:
+        # AT MOST `max` of the top-k may carry `tag` at >= min_score. "Nothing heavy/heartbreaking" is an
+        # AFFECT ask, so this checks the genome affect directly (not a genre LABEL proxy — feel-good
+        # dramedies are light but Drama-tagged). Same anti-vacuity guard as min_genome: an OOV tag
+        # (all-None) FAILS rather than reading green on a signal it can't compute.
+        thr = float(a.get('min_score', 0.5)); mx = int(a.get('max', 0))
+        scored = [(x, meta.genome_score(x, a['tag'])) for x in titles[:k]]
+        if all(s is None for _, s in scored):
+            return False, f"genome tag '{a['tag']}' not in vocab / no scores"
+        n = sum(1 for _, s in scored if s is not None and s >= thr)
+        return n <= mx, f"{n} of top-{k} carry '{a['tag']}'>={thr} (allow <={mx})"
     if t == 'max_runtime':
         cap = int(a['cap'])
         if not recs:

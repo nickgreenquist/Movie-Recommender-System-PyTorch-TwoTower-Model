@@ -1778,7 +1778,8 @@
       }
     ],
     "needs_feature": "exclude_mood",
-    "note": "no engine excludes anti-vibe affect; negative mood constraints unsupported",
+    "built": true,
+    "note": "exclude_mood anti-floor drops the horror-comedy (Shaun of the Dead, dark 0.46) so 'nothing dark' clears Horror; liked_genres Comedy + humor/lighthearted keep Drama low. built=true: guards the shipped anti-floor.",
     "mode": "mode2_5_vibe_dilution"
   },
   {
@@ -2031,14 +2032,16 @@
         "min": 6
       },
       {
-        "type": "max_genre",
-        "genre": "Drama",
+        "type": "max_genome",
+        "tag": "heartbreaking",
         "k": 10,
-        "max": 3
+        "min_score": 0.3,
+        "max": 2
       }
     ],
     "needs_feature": "exclude_mood",
-    "note": "exclude_mood slot not built; dark/heartbreaking films cannot be filtered out",
+    "built": true,
+    "note": "exclude_mood anti-floor removes heavy/heartbreaking films. Faithful test is the AFFECT (heartbreaking absent), NOT the Drama genre LABEL: the feel-good anchor surfaces feel-good dramedies (Marigold Hotel, Chocolat) that are light but Drama-tagged, so the old max_genre Drama<=3 was unachievable by affect exclusion. min_genome feel-good confirms the positive intent still holds; max_genome heartbreaking@0.3 (below the 0.4 anti-floor ceiling) confirms the suppression reaches beyond the hard cut.",
     "mode": "mood_affect_routing"
   },
   {
