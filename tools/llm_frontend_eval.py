@@ -28,7 +28,7 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 
 from tools.llm_frontend_probe import Serving
-from src.llm_frontend import recommend, resolve_person, MPAA_ORDER, _franchise_match
+from src.llm_frontend import recommend, resolve_person, resolve_facet, MPAA_ORDER, _franchise_match
 
 _DEFAULT_CASES = os.path.join(
     _REPO_ROOT, 'docs/llm_frontend/validation/retrieval_eval/eval_cases.json')
@@ -77,6 +77,15 @@ class _Meta:
     def content_rating(self, title):
         return self._facet('movieId_to_content_rating', title)
 
+    def country(self, title):
+        return self._facet('movieId_to_countries', title)
+
+    def language(self, title):
+        return self._facet('movieId_to_language', title)
+
+    def attributes(self, title):
+        return self._facet('movieId_to_attributes', title)
+
     def in_franchise(self, title, spec):
         """True if `title`'s TMDB collection matches the franchise `spec` (True / name / [name…]),
         using the same _franchise_match the real post-filter uses (universe aliases included)."""
@@ -110,17 +119,22 @@ def _check_assertion(a, recs, meta):
 
     Types:
       contains_genre {genre,k,min}          excludes_genre {genre,k}        max_genre {genre,k,max}
+      both_genres {genres,k,min}            (top-k carrying ALL listed genres — the intersection metric)
       contains_title_substr {substr,k,min}  excludes_title_substr {substr,k}
       all_have_person {name,k}              none_have_person {name,k}
       rank_above {a,b}                      min_genome {tag,k,min_score,min}
       max_runtime {cap,k}                   max_rating {rating,k}
       excludes_franchise {spec,k}           oracle {title,facet,equals[,spec]}
-    Facet-membership assertions (max_runtime / max_rating / excludes_franchise) test the F1
-    structured facets directly — the plan's PRIMARY metric (a hard facet's membership IS its
-    correctness), not the genre proxies the other assertions use. A film with the facet UNKNOWN
-    passes, BUT an empty pool or an all-unknown top-k FAILS (an over-pruning filter must not read
-    green vacuously). `oracle` is the independent ground-truth check (facet value vs a literal),
-    the only assertion that doesn't consult the same filter path.
+      all_have_country {country,k}          all_have_language {language,k}
+      all_have_attribute {attribute,k}
+    Facet-membership assertions (max_runtime / max_rating / excludes_franchise / all_have_country /
+    all_have_language / all_have_attribute) test the structured facets directly — the plan's PRIMARY
+    metric (a hard facet's membership IS its correctness), not the genre proxies the other assertions
+    use. A film with the facet UNKNOWN is skipped (country/language) or counts as a miss (attribute,
+    which is absent-drops), BUT an empty pool or an all-unknown top-k FAILS (an over-pruning filter
+    must not read green vacuously). `oracle` is the independent ground-truth check (facet value vs a
+    literal — facet ∈ {runtime, content_rating, in_franchise, country, language, attributes}), the
+    only assertion that doesn't consult the same filter path.
     """
     t = a.get('type')
     titles = [r[0] for r in recs]
@@ -138,6 +152,13 @@ def _check_assertion(a, recs, meta):
         n = sum(1 for g in genres[:k] if a['genre'] in g)
         mx = int(a['max'])
         return n <= mx, f"{n} of top-{k} are {a['genre']} (allow <={mx})"
+    if t == 'both_genres':
+        # Intersection check: top-k films carrying ALL listed genres. This is the faithful metric for a
+        # dual-genre "X and Y ... both in the same film" ask (a genuine horror-comedy), vs a diluted mix.
+        gs = a['genres']
+        n = sum(1 for g in genres[:k] if all(x in g for x in gs))
+        need = int(a.get('min', 1))
+        return n >= need, f"{n} of top-{k} carry ALL of {gs} (need >={need})"
     if t == 'contains_title_substr':
         s = _norm(a['substr']); n = sum(1 for x in titles[:k] if s in _norm(x))
         need = int(a.get('min', 1))
@@ -200,6 +221,48 @@ def _check_assertion(a, recs, meta):
         hit = [titles[i] for i in range(min(k, len(recs))) if meta.in_franchise(titles[i], spec)]
         return not hit, (f"{len(hit)} of top-{k} in franchise {spec!r}: {hit[:3]}" if hit
                          else f"no top-{k} in franchise {spec!r}")
+    if t == 'all_have_country':
+        # Membership IS correctness for a hard nationality facet (step C). Resolve the phrase the same
+        # way recommend() does, then check every KNOWN-country top-k film intersects it (a co-pro listing
+        # the country counts). Empty pool or all-unknown FAILS (an over-pruning filter must not read green).
+        codes, _ = resolve_facet(a['country'], 'country')
+        if not codes:
+            return False, f"unresolved country {a['country']!r}"
+        if not recs:
+            return False, "no recs (empty pool — vacuous)"
+        known = [(titles[i], meta.country(titles[i])) for i in range(min(k, len(recs)))]
+        known = [(x, c) for x, c in known if c]
+        if not known:
+            return False, f"no top-{k} film has a known country — cannot verify {a['country']}"
+        bad = [(x, c) for x, c in known if not (set(c) & set(codes))]
+        return not bad, (f"{len(bad)} of top-{k} not {a['country']} ({codes}): {bad[:3]}" if bad
+                         else f"all {len(known)} known-country top-{k} in {codes}")
+    if t == 'all_have_language':
+        codes, _ = resolve_facet(a['language'], 'language')
+        if not codes:
+            return False, f"unresolved language {a['language']!r}"
+        if not recs:
+            return False, "no recs (empty pool — vacuous)"
+        known = [(titles[i], meta.language(titles[i])) for i in range(min(k, len(recs)))]
+        known = [(x, c) for x, c in known if c]
+        if not known:
+            return False, f"no top-{k} film has a known language — cannot verify {a['language']}"
+        bad = [(x, c) for x, c in known if c not in codes]
+        return not bad, (f"{len(bad)} of top-{k} not {a['language']} ({codes}): {bad[:3]}" if bad
+                         else f"all {len(known)} known-language top-{k} in {codes}")
+    if t == 'all_have_attribute':
+        # Format/attribute (black and white / woman director / …) is a keyword-membership hard filter
+        # (require_attributes = absent-drops), so EVERY top-k rec must carry it — no unknown-skip (cf.
+        # all_have_person, unlike the country/language known-skip). A missing attribute = not that film.
+        key, _ = resolve_facet(a['attribute'], 'format')
+        if not key:
+            return False, f"unresolved attribute {a['attribute']!r}"
+        key = key[0]
+        if not recs:
+            return False, "no recs (empty pool — vacuous)"
+        kk = min(k, len(recs))
+        miss = [titles[i] for i in range(kk) if key not in (meta.attributes(titles[i]) or [])]
+        return not miss, f"{kk - len(miss)}/{kk} have '{a['attribute']}'" + (f"; miss {miss[:3]}" if miss else "")
     if t == 'oracle':
         # Independent ground-truth check on a KNOWN film's facet value — the one assertion that does
         # NOT read through the same filter path, so it catches a build_facet_store extraction bug
@@ -211,9 +274,18 @@ def _check_assertion(a, recs, meta):
             got = meta.content_rating(title)
         elif facet == 'in_franchise':
             got = meta.in_franchise(title, a['spec'])
+        elif facet == 'country':
+            got = meta.country(title)
+        elif facet == 'language':
+            got = meta.language(title)
+        elif facet == 'attributes':
+            got = meta.attributes(title)
         else:
             return False, f"unknown oracle facet '{facet}'"
-        return got == exp, f"{facet}({title!r}) = {got!r} (expect {exp!r})"
+        # Set-like facets (country/attributes) are order-insensitive — compare as sorted lists so a
+        # TMDB re-scrape reordering ['FR','DE'] doesn't false-alarm; scalar/bool oracles compare as-is.
+        ok = (sorted(got) == sorted(exp)) if (isinstance(exp, list) and isinstance(got, list)) else (got == exp)
+        return ok, f"{facet}({title!r}) = {got!r} (expect {exp!r})"
     return False, f"UNKNOWN assertion type '{t}'"
 
 

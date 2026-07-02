@@ -160,14 +160,15 @@ exist; the LLM may also emit it.
 > the work into **three engines**, not one keyword-vocab phase. Measurement scripts + judge outputs:
 > memory `project_facet_expansion_measurement`; scratchpad `m1*.py`/`m2_*.py`/`actions.py`/`queries.py`.
 
-> ### ▶ RESUME HERE — non-API build campaign, step C (2026-07-01)
-> **Active workstream: maximize non-API-key / non-Streamlit features before wiring the hosted extractor +
-> Ask tab.** Everything on the retrieval/filter/data/resolver side is buildable AND deterministically
-> verifiable now by feeding hand-authored extraction JSON to `recommend()` — the API is only the last-mile
-> free-text→JSON step. A deterministic eval harness exists: `tools/llm_frontend_eval.py` over
-> `docs/llm_frontend/validation/retrieval_eval/eval_cases.json` (70 subagent-authored cases → recommend() →
-> machine-checkable assertions; no API). **Win #1 (uncommitted):** soft genome re-rank
-> `GENOME_RERANK_LAMBDA=0.5`. Full detail + the ranked backlog are in **"Non-API build campaign"** below.
+> ### ▶ RESUME HERE — non-API build campaign COMPLETE; next = API-wiring / F2 (2026-07-02)
+> **The non-API-key / non-Streamlit build campaign (steps A→C) is DONE and COMMITTED.** Everything on the
+> retrieval/filter/data/resolver side that is buildable + deterministically verifiable without an API key has
+> shipped; what remains needs either the hosted extractor (schema/prompt slots feeding these engines) or the
+> Streamlit Ask tab. A deterministic eval harness anchors it: `tools/llm_frontend_eval.py` over
+> `docs/llm_frontend/validation/retrieval_eval/eval_cases.json` (subagent-authored cases → recommend() →
+> machine-checkable assertions; no API), now at **REGRESSION 69/69, SPEC 6/9** (snapshot `report_facets_stepC.txt`).
+> **Win #1 (committed):** soft genome re-rank `GENOME_RERANK_LAMBDA=0.5`. Full detail + the ranked backlog are in
+> **"Non-API build campaign"** below.
 >
 > **Win #2 — step A · F1 structured facets — BUILT + verified + adversarially reviewed (uncommitted, 2026-07-01).**
 > content-rating (US MPAA cert), runtime, franchise/collection (require/exclude incl. a curated MCU/DCEU
@@ -226,10 +227,26 @@ exist; the LLM may also emit it.
 > + `retrieval_eval/eval_cases.json` (the eval harness `tools/llm_frontend_eval.py` is **net-unchanged** — a `rank_above`
 > tweak was added then reverted in review; `src/export.py`/`streamlit_app.py`/`serving/` untouched).
 >
-> **CONTINUE AT → step C · resolvers/routing + validation sweeps:** `resolve_facet` (country/language/format from
-> `production_countries`/`original_language` — Engine-1a), a facet-correctness sweep, and constraint-priority
-> degradation for thin pools (the 10 pre-existing genre-coherence REGRESSION fails: horror-comedy / sci-fi-noir /
-> action-comedy dual-genre AND-pools collapse to one genre — an OR-fan / genre-pool-expansion lever). See backlog **C** below.
+> **Win #4 — step C · resolvers/routing + genre-pool degradation — DONE + adversarially reviewed + committed (2026-07-02).**
+> Two threads. (1) **Engine-1a membership facets:** `resolve_facet(phrase,kind)` → country (`production_countries`,
+> ISO + region rollups Scandinavian/East-Asian/European), language (`original_language`, ISO; Chinese→[zh,cn]), and
+> format/attribute (8 curated top-distribution keywords: black-and-white / woman-director / based-on-a-book / …).
+> `build_facet_store` emits `movieId_to_countries` (99.2%) / `_language` (99.4%) / `_attributes` (26.3%); the whole dict
+> re-bakes into `serving/feature_store.pt` at export. Country/language gate **per-film-absent → DROP** (explicit
+> membership demand) but **whole-table-missing → SKIP** (graceful, when `facets=None`). (2) **Genre-pool degradation,
+> 3 orthogonal levers** (`src/llm_frontend.py`, attribution-clean via a turn-off sweep): L1 genre-affinity re-rank
+> (under-supplied `liked_genres`), a co-genre diversity cap (Drama swamping War/Romance pools), and signature-MMR on a
+> near-empty OR-fan (sci-fi-noir). **Key correction (user-confirmed, review-driven): INTERSECTION-FIRST** — a dual-genre
+> "X and Y" ask means the intersection ("both in the same film" / "a horror comedy" → Shaun of the Dead), so a healthy
+> X∩Y pool stays strict AND (10/10 real both-genre films) and only a near-empty intersection (Sci-Fi∩Film-Noir = 2)
+> OR-fans; the eval's dual-genre assertions were rewritten from the mix-mandating `max_genre<=7` to a faithful
+> `both_genres` (intersection) metric. See backlog **C** below.
+>
+> **CONTINUE AT → API-wiring phase (needs a key) + F2 (Engine-1c location / Engine-2 vibe over the existing anchors):**
+> the retrieval/filter side is now built and green; the next non-trivial work is (a) wiring the hosted Haiku extractor
+> to EMIT these slots (`require_country`/`require_language`/`require_attributes`/`mood`, plus the intersection-vs-mix
+> signal so "both in the same film" resolves to strict AND from a real extraction cue, not a heuristic), (b) the
+> Streamlit Ask tab, and (c) F2's location hierarchy + mood-anchor routing. See **Phasing (F2/F3)** and the backlog.
 >
 > ---
 >
@@ -624,19 +641,38 @@ tag-skew (separate — abstract mood tags are inherently arthouse-heavy).
   Verified via `tools/llm_frontend_eval.py`: **REGRESSION 52/62 green** (0 new regressions; +18 built mood/genome/
   max_runtime/Mode-1.5 cases incl. a multi-tag AND case); **SPEC 8/13**. Snapshot `retrieval_eval/report_facets_stepB.txt`.
   See the step-B "Win #3" block up in the RESUME-HERE callout for the full detail.
-- **C · Resolvers/routing + validation sweeps (NEXT).** `resolve_facet` (country/language/format — Engine-1a, from
-  `production_countries`/`original_language`), a facet-correctness sweep, and constraint-priority degradation for thin
-  pools — which is also what unblocks the 10 remaining REGRESSION fails (dual-genre AND-pools like horror-comedy /
-  sci-fi-noir / action-comedy that collapse to one genre; needs an OR-fan / genre-pool-expansion lever).
+- **C · Resolvers/routing + genre-pool degradation — ✅ DONE + committed (2026-07-02).** `resolve_facet`
+  (country/language/format — Engine-1a, from `production_countries`/`original_language` + a curated attribute-keyword
+  vocab), `build_facet_store` emitting the three new tables (whole dict re-bakes into `serving/`), and the three
+  genre-pool levers (L1 genre re-rank / co-genre cap / near-empty-pool signature-MMR). **INTERSECTION-FIRST** replaced
+  the original "OR-fan/never-collapse" framing after the review showed the utterances demand the intersection ("both in
+  the same film" / "a horror comedy"): a healthy X∩Y pool stays strict AND (real horror-comedies / action-comedies);
+  only a near-empty intersection (Sci-Fi∩Film-Noir = 2) OR-fans. **REGRESSION 69/69, SPEC 6/9** (snapshot
+  `report_facets_stepC.txt`). The eval's dual-genre assertions moved from mix-mandating `max_genre<=7` to a faithful
+  `both_genres` (intersection) metric. Adversarial review (4 lenses → verify): 5 confirmed findings, all addressed
+  (intersection-first; facet-absent-empties-pool guard; oracle set-compare). The remaining SPEC fails are NOT step C —
+  `exclude_mood` (2 HOLE cases) + Christmas genre-purity (needs `require_genome_tags` tuning), i.e. F2/F3 territory.
 
-**Uncommitted surface (this campaign):** `src/llm_frontend.py` (genome re-rank + F1 facet gates + step-B
-`resolve_mood`/`MOOD_TABLE` + the `require_genome_tags` AND floor + Mode-1.5 `_title_genome_tags`),
-`llm_features/build_facet_store.py` (F1 facet tables + composers), `tools/llm_frontend_eval.py` (facet
-assertion types), `docs/llm_frontend/validation/retrieval_eval/` (augmented cases + `report_facets_f1.txt` +
-`report_facets_stepB.txt`), and `serving/feature_store.pt` (the surgically re-baked step-A `facets`; step B
-adds NOTHING to serving/ — all its levers read the already-baked genome data — so the canonical
-`main.py export <PROD>` still reproduces the artifact). Commit, a real canary eyeball on the re-rank/mood, and
-the canonical re-export are the user's call.
+**Still to do (needs an API key or Streamlit — out of the non-API campaign):**
+- **API-wiring:** teach the hosted Haiku extractor to EMIT the new slots (`require_country`/`require_language`/
+  `require_attributes`/`mood`) AND an explicit intersection-vs-mix signal, so "action comedy, both in the same film" →
+  strict AND from a real extraction cue rather than the current pool-size heuristic. Budget a judged pass on this
+  schema reopening (see "Caveats — Schema reopening").
+- **F2 — Engine-1c location + Engine-2 vibe:** the `"city, region"` location hierarchy rollup and mood/tone anchor
+  routing over the existing embedding. Both reuse machinery already built; measure with the same ruler.
+- **F3 — composition validation + (optional) Engine-3 backfill:** a judged pass on multi-constraint asks; only then,
+  if a gap remains, the narrow curated-object / no-keyword-movie plot backfill.
+
+**Recommended next step:** wire the hosted extractor (API-wiring) — the retrieval/filter substrate is now built and
+green, so the highest-leverage remaining work is making the free-text→JSON step actually populate these slots + the
+Streamlit Ask tab, turning the whole non-API substrate into a usable product. F2 (location/vibe) is the natural
+non-API follow-on if staying key-free.
+
+**Committed (this campaign):** Phase 0/1 + step A + step B (commits `5fbadea`/`cbd0257`/`4ac377d`/`9b8beab`); step C
+(2026-07-02) touches `src/llm_frontend.py`, `llm_features/build_facet_store.py`, `tools/llm_frontend_eval.py`,
+`docs/llm_frontend/validation/retrieval_eval/` (cases + `report_facets_stepC.txt`), and `serving/feature_store.pt`
+(re-baked with the new facet tables — `main.py export <PROD α=0.5 ckpt>` reproduces it for deploy). A canary eyeball
+on the new country/language/format + intersection behavior is still worth doing before the next Streamlit deploy.
 
 ## Validation approach (mirror the v1→v5 harness)
 

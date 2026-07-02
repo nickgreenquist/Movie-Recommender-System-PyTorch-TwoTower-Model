@@ -44,6 +44,9 @@ OUTPUT  (llm_features/cache/facet_store.pt — a build artifact; export bakes th
     movieId_to_runtime      : {mid: int}                    minutes (max_runtime/min_runtime filter)
     movieId_to_collection   : {mid: {'id': int, 'name': str}}   TMDB franchise (require/exclude_franchise)
     movieId_to_vote         : {mid: {'average': float, 'count': int}}   quality floor (min_vote_average)
+    movieId_to_countries    : {mid: ['US','FR'…]}   production ISO 3166-1 codes (require_country, step C)
+    movieId_to_language     : {mid: 'fr'}            original_language ISO 639-1 (require_language, step C)
+    movieId_to_attributes   : {mid: ['black and white'…]}   curated format/attribute keys (require_attributes)
     franchise_universe_aliases: {normalized_universe_phrase: [collection-name substring…]}   a small
                               curated table so "skip the MCU" (no single TMDB collection) resolves
     meta                    : build knobs + coverage counts
@@ -67,7 +70,15 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-from src.llm_frontend import _norm_name, resolve_person  # noqa: E402  (single normalization source)
+from src.llm_frontend import (  # noqa: E402  (single normalization / format-vocab source)
+    _norm_name, resolve_person, FORMAT_ATTR_KEYWORDS)
+
+# Reverse of FORMAT_ATTR_KEYWORDS ({canonical attr: [TMDB keyword name…]}) → {tmdb keyword (lower):
+# canonical attr}, so a film's keyword list can be scanned to the compact attribute membership the
+# format facet gates on. EXACT lowercase keyword match only (never substring — the resolver and the
+# TMDB tagger both use the whole clean keyword; see facet_store_plan overturned #4).
+_TMDB_KEYWORD_TO_ATTR = {
+    kw.lower(): attr for attr, kws in FORMAT_ATTR_KEYWORDS.items() for kw in kws}
 
 
 # ── Constants ────────────────────────────────────────────────────────────────
@@ -185,12 +196,32 @@ def _us_content_rating(details_raw):
     return max((c for c, n in counts.items() if n == top), key=MPAA_RATINGS.index)
 
 
+def _format_attrs(dr):
+    """The curated format/attribute keys a film carries (Engine-1a), from details_raw.keywords.
+
+    TMDB stores keywords as {'keywords': [{'id','name'}…]}. Scan the names for an EXACT (lowercase)
+    membership in _TMDB_KEYWORD_TO_ATTR and return the de-duped set of canonical attr keys present
+    ('black and white', 'woman director', 'based on book', …). Empty if the film has none of them."""
+    kw = dr.get('keywords') or {}
+    entries = kw.get('keywords') if isinstance(kw, dict) else (kw if isinstance(kw, list) else None)
+    attrs = []
+    for e in entries or []:
+        name = (e.get('name') if isinstance(e, dict) else e) or ''
+        attr = _TMDB_KEYWORD_TO_ATTR.get(name.strip().lower())
+        if attr and attr not in attrs:
+            attrs.append(attr)
+    return attrs
+
+
 def _attrs_from_record(record):
-    """Pull the structured F1 attribute facets from one record's tmdb sub-dict: US MPAA content
+    """Pull the structured F1/step-C attribute facets from one record's tmdb sub-dict: US MPAA content
     rating (details_raw.release_dates), runtime minutes (tmdb.runtime), franchise/collection
-    ({id,name} from details_raw.belongs_to_collection), and the vote_average/vote_count quality
-    signal. Returns a dict of only the fields that are present — a missing/unusable field is simply
-    omitted (the filter treats its absence as 'no info', mirroring the year gate)."""
+    ({id,name} from details_raw.belongs_to_collection), the vote_average/vote_count quality signal,
+    production countries (details_raw.production_countries → ISO 3166-1 list), original language
+    (details_raw.original_language), and the curated format/attribute keys. Returns a dict of only the
+    fields present — a missing/unusable field is simply omitted (the filter treats its absence as 'no
+    info', mirroring the year gate; format attributes are membership, so absence there means 'not that
+    kind of film')."""
     tmdb = record.get('tmdb') or {}
     dr   = tmdb.get('details_raw') or {}
     out  = {}
@@ -212,6 +243,23 @@ def _attrs_from_record(record):
         vc = tmdb.get('vote_count')
         out['vote'] = {'average': float(va),
                        'count':   int(vc) if isinstance(vc, (int, float)) else 0}
+
+    # Production countries → ISO 3166-1 alpha-2 list (nationality of production, require_country).
+    pcs = dr.get('production_countries') or []
+    codes = [pc.get('iso_3166_1') for pc in pcs if isinstance(pc, dict) and pc.get('iso_3166_1')]
+    codes = list(dict.fromkeys(codes))  # de-dupe, order-preserving
+    if codes:
+        out['countries'] = codes
+
+    # Original language → ISO 639-1 (require_language / require_original_language).
+    ol = dr.get('original_language')
+    if isinstance(ol, str) and ol.strip():
+        out['language'] = ol.strip()
+
+    # Curated format/attribute keys (black and white / woman director / based on a book / …).
+    attrs = _format_attrs(dr)
+    if attrs:
+        out['attributes'] = attrs
     return out
 
 
@@ -237,6 +285,9 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
     movieId_to_runtime        = {}
     movieId_to_collection     = {}
     movieId_to_vote           = {}
+    movieId_to_countries      = {}
+    movieId_to_language       = {}
+    movieId_to_attributes     = {}
     n_no_tmdb = n_no_people = 0
 
     for path in files:
@@ -251,6 +302,9 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
         if 'runtime'        in attrs: movieId_to_runtime[mid]        = attrs['runtime']
         if 'collection'     in attrs: movieId_to_collection[mid]     = attrs['collection']
         if 'vote'           in attrs: movieId_to_vote[mid]           = attrs['vote']
+        if 'countries'      in attrs: movieId_to_countries[mid]      = attrs['countries']
+        if 'language'       in attrs: movieId_to_language[mid]       = attrs['language']
+        if 'attributes'     in attrs: movieId_to_attributes[mid]     = attrs['attributes']
 
         roles, id_to_name = _people_from_record(record, top_n_actors)
         if roles is None:
@@ -302,6 +356,9 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
         'movieId_to_runtime':       movieId_to_runtime,
         'movieId_to_collection':    movieId_to_collection,
         'movieId_to_vote':          movieId_to_vote,
+        'movieId_to_countries':     movieId_to_countries,
+        'movieId_to_language':      movieId_to_language,
+        'movieId_to_attributes':    movieId_to_attributes,
         'franchise_universe_aliases': FRANCHISE_UNIVERSE_ALIASES,
         'meta': {
             'top_n_actors':     top_n_actors,
@@ -316,6 +373,9 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
             'n_runtime':        len(movieId_to_runtime),
             'n_collection':     len(movieId_to_collection),
             'n_vote':           len(movieId_to_vote),
+            'n_countries':      len(movieId_to_countries),
+            'n_language':       len(movieId_to_language),
+            'n_attributes':     len(movieId_to_attributes),
         },
     }
 
@@ -353,13 +413,22 @@ def _spot_check(store, titles=None):
     print(f"  runtimes          : {m.get('n_runtime', 0)}  ({100 * m.get('n_runtime', 0) / n:.1f}%)")
     print(f"  franchise members : {m.get('n_collection', 0)}  ({100 * m.get('n_collection', 0) / n:.1f}%)")
     print(f"  vote_average      : {m.get('n_vote', 0)}  ({100 * m.get('n_vote', 0) / n:.1f}%)")
+    print(f"  countries         : {m.get('n_countries', 0)}  ({100 * m.get('n_countries', 0) / n:.1f}%)")
+    print(f"  languages         : {m.get('n_language', 0)}  ({100 * m.get('n_language', 0) / n:.1f}%)")
+    print(f"  format attributes : {m.get('n_attributes', 0)}  ({100 * m.get('n_attributes', 0) / n:.1f}%)")
+    from collections import Counter as _C
+    lang_c = _C(store['movieId_to_language'].values())
+    attr_c = _C(a for v in store['movieId_to_attributes'].values() for a in v)
+    print(f"  top languages     : {lang_c.most_common(8)}")
+    print(f"  attribute counts  : {dict(attr_c)}")
 
     # Deterministic attribute spot-check on Toy Story (movieId 1): G / 81 min / Toy Story Collection.
     a = store['movieId_to_content_rating'].get(1), store['movieId_to_runtime'].get(1)
     coll = store['movieId_to_collection'].get(1)
     vote = store['movieId_to_vote'].get(1)
     print(f"\n  attrs[Toy Story]  : rating={a[0]}  runtime={a[1]}  "
-          f"collection={coll['name'] if coll else None}  vote={vote['average'] if vote else None}")
+          f"collection={coll['name'] if coll else None}  vote={vote['average'] if vote else None}  "
+          f"countries={store['movieId_to_countries'].get(1)}  lang={store['movieId_to_language'].get(1)}")
 
     def report(label, name):
         pid, note = resolve_person(name, store)

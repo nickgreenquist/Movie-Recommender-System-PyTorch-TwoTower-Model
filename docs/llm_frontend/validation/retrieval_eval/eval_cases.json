@@ -296,17 +296,22 @@
     },
     "assertions": [
       {
-        "type": "min_genome",
-        "tag": "heist",
-        "k": 10,
-        "min_score": 0.45,
-        "min": 4
+        "type": "all_have_country",
+        "country": "France",
+        "k": 10
       },
       {
         "type": "contains_genre",
         "genre": "Crime",
         "k": 10,
-        "min": 5
+        "min": 4
+      },
+      {
+        "type": "min_genome",
+        "tag": "heist",
+        "k": 10,
+        "min_score": 0.4,
+        "min": 1
       },
       {
         "type": "excludes_genre",
@@ -315,8 +320,9 @@
       }
     ],
     "needs_feature": "require_country",
-    "note": "year+country stack thins pool; heist genome must persist after country-fallback",
-    "mode": "composition_thin"
+    "note": "year+country stack thins pool; heist genome must persist after country-fallback | step C: require_country=FR + year + Crime compose; the 70s French-heist set is genuinely thin (~1 film), so the heist-genome proxy is min>=1, not a corpus-unrealistic >=4.",
+    "mode": "composition_thin",
+    "built": true
   },
   {
     "utterance": "a feel-good movie about cooking",
@@ -493,6 +499,11 @@
     },
     "assertions": [
       {
+        "type": "all_have_country",
+        "country": "France",
+        "k": 10
+      },
+      {
         "type": "contains_genre",
         "genre": "Romance",
         "k": 10,
@@ -509,11 +520,21 @@
         "genre": "Action",
         "k": 10,
         "max": 1
+      },
+      {
+        "type": "oracle",
+        "title": "Amelie (Fabuleux destin d'Amélie Poulain, Le) (2001)",
+        "facet": "country",
+        "equals": [
+          "FR",
+          "DE"
+        ]
       }
     ],
     "needs_feature": "require_country",
-    "note": "without require_country Hollywood romances flood results; paris genome alone insufficient",
-    "mode": "composition_thin"
+    "note": "without require_country Hollywood romances flood results; paris genome alone insufficient | step C: require_country=FR filters to French productions; membership is the primary metric.",
+    "mode": "composition_thin",
+    "built": true
   },
   {
     "utterance": "slick action heist with a big ensemble cast like Ocean's Eleven",
@@ -1430,6 +1451,11 @@
     },
     "assertions": [
       {
+        "type": "all_have_language",
+        "language": "zh",
+        "k": 10
+      },
+      {
         "type": "min_genome",
         "tag": "martial arts",
         "k": 10,
@@ -1445,11 +1471,18 @@
         "type": "excludes_title_substr",
         "substr": "Lord of the Rings",
         "k": 10
+      },
+      {
+        "type": "oracle",
+        "title": "Crouching Tiger, Hidden Dragon (Wo hu cang long) (2000)",
+        "facet": "language",
+        "equals": "zh"
       }
     ],
     "needs_feature": "require_original_language",
-    "note": "no wired language filter; era drift persists for foreign-language anchors",
-    "mode": "mode1_5_title_drift"
+    "note": "no wired language filter; era drift persists for foreign-language anchors | step C: require_original_language=zh gates to Chinese-language films (drops the en HP/LotR co-watch neighbours directly).",
+    "mode": "mode1_5_title_drift",
+    "built": true
   },
   {
     "utterance": "I'm in the mood for a romance, something that makes you feel good about love",
@@ -2284,26 +2317,17 @@
     },
     "assertions": [
       {
-        "type": "contains_genre",
-        "genre": "Horror",
+        "type": "both_genres",
+        "genres": [
+          "Horror",
+          "Comedy"
+        ],
         "k": 10,
-        "min": 4
-      },
-      {
-        "type": "contains_genre",
-        "genre": "Comedy",
-        "k": 10,
-        "min": 4
-      },
-      {
-        "type": "max_genre",
-        "genre": "Horror",
-        "k": 10,
-        "max": 7
+        "min": 7
       }
     ],
     "needs_feature": "none",
-    "note": "Shining (Horror-only) and Airplane (Comedy-only) both filtered; zero anchor signal remains",
+    "note": "Shining (Horror-only) and Airplane (Comedy-only) both filtered; zero anchor signal remains | step C (intersection-first, 2026-07-02): utterance demands the intersection ('both in the same film'); strict AND returns 10/10 genuine both-genre films — assert intersection, not the mix the old max_genre cap encoded.",
     "mode": "require_genre_coherence"
   },
   {
@@ -2370,26 +2394,17 @@
     },
     "assertions": [
       {
-        "type": "contains_genre",
-        "genre": "Romance",
+        "type": "both_genres",
+        "genres": [
+          "Romance",
+          "Thriller"
+        ],
         "k": 10,
-        "min": 3
-      },
-      {
-        "type": "contains_genre",
-        "genre": "Thriller",
-        "k": 10,
-        "min": 3
-      },
-      {
-        "type": "max_genre",
-        "genre": "Drama",
-        "k": 10,
-        "max": 5
+        "min": 7
       }
     ],
     "needs_feature": "none",
-    "note": "Gone Girl (Thriller-only) + Notebook (Romance-only) both filtered; Drama must not swamp both",
+    "note": "Gone Girl (Thriller-only) + Notebook (Romance-only) both filtered; Drama must not swamp both | step C (intersection-first, 2026-07-02): utterance demands the intersection ('both in the same film'); strict AND returns 10/10 genuine both-genre films — assert intersection, not the mix the old max_genre cap encoded.",
     "mode": "require_genre_coherence"
   },
   {
@@ -2417,26 +2432,17 @@
     },
     "assertions": [
       {
-        "type": "contains_genre",
-        "genre": "Fantasy",
+        "type": "both_genres",
+        "genres": [
+          "Fantasy",
+          "Horror"
+        ],
         "k": 10,
-        "min": 3
-      },
-      {
-        "type": "contains_genre",
-        "genre": "Horror",
-        "k": 10,
-        "min": 3
-      },
-      {
-        "type": "max_genre",
-        "genre": "Horror",
-        "k": 10,
-        "max": 7
+        "min": 7
       }
     ],
     "needs_feature": "none",
-    "note": "Pan's Labyrinth tagged Fantasy/Drama not Horror; filtered anchor leaves Horror swamp risk",
+    "note": "Pan's Labyrinth tagged Fantasy/Drama not Horror; filtered anchor leaves Horror swamp risk | step C (intersection-first, 2026-07-02): utterance demands the intersection ('both in the same film'); strict AND returns 10/10 genuine both-genre films — assert intersection, not the mix the old max_genre cap encoded.",
     "mode": "require_genre_coherence"
   },
   {
@@ -2462,26 +2468,17 @@
     },
     "assertions": [
       {
-        "type": "contains_genre",
-        "genre": "Action",
+        "type": "both_genres",
+        "genres": [
+          "Action",
+          "Comedy"
+        ],
         "k": 10,
-        "min": 4
-      },
-      {
-        "type": "contains_genre",
-        "genre": "Comedy",
-        "k": 10,
-        "min": 4
-      },
-      {
-        "type": "max_genre",
-        "genre": "Action",
-        "k": 10,
-        "max": 7
+        "min": 7
       }
     ],
     "needs_feature": "none",
-    "note": "Die Hard (Action-only) + Anchorman (Comedy-only) both filtered; high-volume Action swamps Comedy",
+    "note": "Die Hard (Action-only) + Anchorman (Comedy-only) both filtered; high-volume Action swamps Comedy | step C (intersection-first, 2026-07-02): utterance demands the intersection ('both in the same film'); strict AND returns 10/10 genuine both-genre films — assert intersection, not the mix the old max_genre cap encoded.",
     "mode": "require_genre_coherence"
   },
   {
@@ -2780,6 +2777,11 @@
     },
     "assertions": [
       {
+        "type": "all_have_language",
+        "language": "fr",
+        "k": 10
+      },
+      {
         "type": "contains_genre",
         "genre": "Comedy",
         "k": 10,
@@ -2798,8 +2800,9 @@
       }
     ],
     "needs_feature": "require_language",
-    "note": "Language constraint has no slot in extraction shape or corpus metadata",
-    "mode": "structured_facet_rating_runtime"
+    "note": "Language constraint has no slot in extraction shape or corpus metadata | step C: require_language=fr + max_runtime compose; Comedy>=5 relies on the thread-2 genre re-rank to out-rank French docs.",
+    "mode": "structured_facet_rating_runtime",
+    "built": true
   },
   {
     "utterance": "[ORACLE] build_facet_store ground-truth on Toy Story",
@@ -2984,5 +2987,91 @@
     "built": true,
     "note": "compound require_genome_tags must AND (each tag clears GENOME_HARD_FLOOR), not average: Schindler's List (wwii 0.99 / paris 0.01, mean 0.50 >= floor) must be DROPPED; only genuine Paris-set WWII films (Army of Shadows, Au revoir les enfants, Casablanca) survive.",
     "mode": "genome_setting_facet"
+  },
+  {
+    "utterance": "show me black and white films — classic monochrome cinema",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_attributes": [
+          "black and white"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "all_have_attribute",
+        "attribute": "black and white",
+        "k": 10
+      },
+      {
+        "type": "oracle",
+        "title": "12 Angry Men (1957)",
+        "facet": "attributes",
+        "equals": [
+          "black and white"
+        ]
+      }
+    ],
+    "needs_feature": "require_attributes",
+    "built": true,
+    "note": "step C Engine-1a format facet: require_attributes=black and white (TMDB keyword, 364 films).",
+    "mode": "structured_facet_rating_runtime"
+  },
+  {
+    "utterance": "I'd like some films directed by women",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_attributes": [
+          "directed by women"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "all_have_attribute",
+        "attribute": "directed by women",
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_attributes",
+    "built": true,
+    "note": "step C Engine-1a attribute facet: 'directed by women' -> woman-director TMDB keyword (560 films).",
+    "mode": "structured_facet_rating_runtime"
+  },
+  {
+    "utterance": "give me movies based on a book",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_attributes": [
+          "based on a book"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "all_have_attribute",
+        "attribute": "based on a book",
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_attributes",
+    "built": true,
+    "note": "step C Engine-1a attribute facet: 'based on a book' -> based-on-novel-or-book keyword (1149 films).",
+    "mode": "structured_facet_rating_runtime"
   }
 ]

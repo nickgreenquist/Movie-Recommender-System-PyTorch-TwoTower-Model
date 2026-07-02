@@ -35,6 +35,7 @@ LOCKED-IN v1 POLICY (validated in the Claude Code test loop — see docs/llm_fro
 """
 
 import difflib
+import math
 import re
 import unicodedata
 from typing import NamedTuple
@@ -97,6 +98,43 @@ GENOME_HARD_FLOOR     = 0.35
 MODE15_TAGS_PER_TITLE = 6      # top genome tags injected per liked title (after the acclaim stoplist)
 MODE15_TAG_MIN_REL    = 0.6    # only inject a title's tag if the title carries it this strongly
 MODE15_MAX_TAGS       = 8      # global cap across all liked titles (keep the re-rank query focused)
+
+# ── Genre-pool degradation (step C thread 2) ─────────────────────────────────
+# A genre-oriented ask can fail three ways the levers above don't touch: (I) an under-specified genre
+# (only liked_genres, no anchors) barely surfaces the genre — popular off-genre films win on cosine;
+# (II) a dual-genre "X and Y" ask over a THIN intersection (Sci-Fi∩Film-Noir = 2 films) can't fill a
+# result under strict AND; (III) an unrequested co-genre (Drama) swamps the pool (war/romance/thriller
+# films are mostly Drama). Three composable levers — a soft genre re-rank, a near-empty-only AND→OR
+# relax, and rolling genre-diversity caps in selection.
+#
+# NOTE (intersection-first, per the 2026-07-02 review + user call): a dual-genre "X and Y" ask means the
+# INTERSECTION — "a horror comedy" / "both in the same film" wants films that are BOTH (Shaun of the
+# Dead), NOT a mix of separate horror and comedy films. So a healthy X∩Y pool stays strict AND; we do
+# NOT OR-fan it (an earlier exemplar-based blend trigger did, diluting the head — removed).
+#
+# L1 — genre-affinity soft re-rank. After scoring, ADD lambda * (fraction of the WANTED genres —
+# require_genres ∪ liked_genres — a film carries), lifting on-genre films. Additive/soft like the
+# genome re-rank (a post-hoc OUTPUT boost, not the weak soft-genre EMBEDDING input the residual work
+# found inert); never a hard filter. Fixes (I).
+GENRE_RERANK_LAMBDA = 0.3
+# L2 — near-empty AND→OR relax. A dual-genre AND-pool smaller than this can't rank a coherent result,
+# so relax to OR (the plan's "near-empty AND-pool → OR-fan") — Sci-Fi∩Film-Noir = 2 fans out; a healthy
+# intersection stays strict AND (Fantasy∩Horror 86, Romance∩Thriller 118, Horror∩Comedy 160, Action∩
+# Comedy 390, and the green Musical∩Thriller 5 / Sci-Fi∩Western 7). 3 is a principled floor (an
+# intersection of <3 films can't be ranked, not a value read off the eval), so it degrades rather than
+# returning almost nothing. Fixes (II).
+GENRE_AND_POOL_MIN = 3
+# L3 — genre-diversity selection. Two composable mechanisms in _select_diverse:
+#   • UNREQUESTED co-genre rolling cap ≤ COGENRE_CAP_FRAC (always, any genre ask) — keeps a co-genre
+#     like Drama from swamping a War/Romance/Thriller pool (a war film is usually also Drama), fix (III).
+#   • genre-SIGNATURE MMR, active only for a near-empty-pool OR-fan (blend_genres set) — penalize a
+#     candidate by MMR_SIGNATURE_LAMBDA per already-picked film sharing its requested-genre signature,
+#     interleaving the {G1}/{G2}/{G1,G2} signatures so a THIN-pool fan-out (Sci-Fi∩Film-Noir → Sci-Fi OR
+#     Film-Noir) gives a fair share of each rather than the denser cluster swamping it. Intentionally a
+#     strong (near-round-robin) diversity penalty at this λ — that IS the goal for a fanned-out pool; it
+#     never fires on the strict-AND intersection cases (no blend set), which stay concentrated.
+COGENRE_CAP_FRAC       = 0.4
+MMR_SIGNATURE_LAMBDA   = 0.35
 
 FUZZY_CUTOFF          = 0.74   # difflib ratio floor for title resolution (raised from 0.6 — a
                                # wrong-film fuzzy hit poisons the whole anchor; better to drop)
@@ -389,6 +427,181 @@ def resolve_person(raw, facets, role=None):
     return pid, note
 
 
+# ── Facet resolution: country / language / format (Engine-1a membership, step C) ──
+# The two-tower model has no nationality/language/format concept, so these come entirely from the
+# TMDB scrape (production_countries / original_language / a curated top-distribution keyword set),
+# distilled by build_facet_store into serving/ tables (movieId_to_countries/_language/_attributes)
+# and gated in _passes_constraints. resolve_facet is the country/language/format analogue of
+# resolve_person: it maps a free LLM phrase ("French", "in Chinese", "black and white") to the
+# canonical facet value(s) the tables are keyed on. Membership is EXACT (alias-mapped) — never a
+# substring probe (per the plan's overturned #4: `world war i` ⊂ `world war ii`, `paris` ⊂ `parish`).
+#
+# Country: production nationality (ISO 3166-1 alpha-2). A region phrase ("Scandinavian") expands to
+# a member-code list; require_country then matches a film whose production_countries intersect the
+# set (ANY — "French films" = FR-produced; a co-production listing FR passes). NOT a setting proxy
+# (overturned #5: a Paris-SET film is often a US/GB production — "set in Paris" is a location keyword,
+# a separate axis routed to require_genome_tags, not here).
+COUNTRY_ALIASES = {
+    'us': 'US', 'usa': 'US', 'u s a': 'US', 'america': 'US', 'american': 'US',
+    'united states': 'US', 'united states of america': 'US', 'hollywood': 'US',
+    'uk': 'GB', 'u k': 'GB', 'britain': 'GB', 'british': 'GB', 'england': 'GB', 'english': 'GB',
+    'great britain': 'GB', 'united kingdom': 'GB',
+    'france': 'FR', 'french': 'FR',
+    'germany': 'DE', 'german': 'DE', 'west germany': 'DE', 'east germany': 'DE',
+    'italy': 'IT', 'italian': 'IT',
+    'spain': 'ES', 'spanish': 'ES',
+    'japan': 'JP', 'japanese': 'JP',
+    'china': 'CN', 'chinese': 'CN', 'mainland china': 'CN',
+    'hong kong': 'HK', 'hongkong': 'HK',
+    'taiwan': 'TW', 'taiwanese': 'TW',
+    'korea': 'KR', 'korean': 'KR', 'south korea': 'KR', 'south korean': 'KR',
+    'india': 'IN', 'indian': 'IN', 'bollywood': 'IN',
+    'canada': 'CA', 'canadian': 'CA',
+    'australia': 'AU', 'australian': 'AU',
+    'new zealand': 'NZ',
+    'ireland': 'IE', 'irish': 'IE',
+    'mexico': 'MX', 'mexican': 'MX',
+    'brazil': 'BR', 'brazilian': 'BR',
+    'argentina': 'AR', 'argentine': 'AR', 'argentinian': 'AR',
+    'russia': 'RU', 'russian': 'RU', 'soviet': 'SU', 'soviet union': 'SU', 'ussr': 'SU',
+    'sweden': 'SE', 'swedish': 'SE',
+    'denmark': 'DK', 'danish': 'DK',
+    'norway': 'NO', 'norwegian': 'NO',
+    'finland': 'FI', 'finnish': 'FI',
+    'iceland': 'IS', 'icelandic': 'IS',
+    'netherlands': 'NL', 'dutch': 'NL', 'holland': 'NL',
+    'belgium': 'BE', 'belgian': 'BE',
+    'switzerland': 'CH', 'swiss': 'CH',
+    'austria': 'AT', 'austrian': 'AT',
+    'poland': 'PL', 'polish': 'PL',
+    'czech': 'CZ', 'czech republic': 'CZ', 'czechoslovakia': 'CZ',
+    'hungary': 'HU', 'hungarian': 'HU',
+    'portugal': 'PT', 'portuguese': 'PT',
+    'greece': 'GR', 'greek': 'GR',
+    'iran': 'IR', 'iranian': 'IR', 'persian': 'IR',
+    'thailand': 'TH', 'thai': 'TH',
+    'israel': 'IL', 'israeli': 'IL',
+    'turkey': 'TR', 'turkish': 'TR',
+    'luxembourg': 'LU',
+}
+# Region / supra-national phrase → member ISO codes (require_country matches ANY member). Curated
+# from the corpus's production_countries distribution (see facet_store_plan Engine-1a "~26-code
+# region table"); a film need only list ONE member country to satisfy the region.
+COUNTRY_REGIONS = {
+    'scandinavian': ['SE', 'DK', 'NO', 'FI', 'IS'],
+    'nordic':       ['SE', 'DK', 'NO', 'FI', 'IS'],
+    'east asian':   ['JP', 'KR', 'CN', 'HK', 'TW'],
+    'asian':        ['JP', 'KR', 'CN', 'HK', 'TW', 'IN', 'TH', 'IR', 'IL'],
+    'european':     ['GB', 'FR', 'DE', 'IT', 'ES', 'SE', 'DK', 'NO', 'FI', 'IS', 'NL', 'BE',
+                     'CH', 'AT', 'PL', 'CZ', 'HU', 'PT', 'GR', 'IE', 'LU', 'RU', 'SU'],
+    'latin american': ['MX', 'BR', 'AR'],
+    'south american': ['BR', 'AR'],
+}
+# Language: ORIGINAL production language (ISO 639-1). require_language / require_original_language both
+# gate on original_language ("original French, nothing dubbed"). A phrase may map to several codes —
+# "Chinese" spans Mandarin (TMDB 'zh') and Cantonese (TMDB's non-standard 'cn'); the filter matches ANY.
+LANGUAGE_ALIASES = {
+    'english': ['en'],
+    'french': ['fr'],
+    'german': ['de'],
+    'italian': ['it'],
+    'spanish': ['es'],
+    'japanese': ['ja'],
+    'chinese': ['zh', 'cn'], 'mandarin': ['zh'], 'cantonese': ['cn'],
+    'korean': ['ko'],
+    'russian': ['ru'],
+    'swedish': ['sv'],
+    'danish': ['da'],
+    'norwegian': ['no'],
+    'finnish': ['fi'],
+    'dutch': ['nl'],
+    'portuguese': ['pt'],
+    'polish': ['pl'],
+    'czech': ['cs'],
+    'hungarian': ['hu'],
+    'greek': ['el'],
+    'persian': ['fa'], 'farsi': ['fa'],
+    'thai': ['th'],
+    'hindi': ['hi'],
+    'arabic': ['ar'],
+    'hebrew': ['he'],
+    'turkish': ['tr'],
+    'vietnamese': ['vi'],
+}
+# Format / attribute facets — a curated set of single, clean, high-precision TMDB keywords (the plan's
+# Engine-1a "single clean top-25 tag"). Each canonical attr key maps to the TMDB keyword name(s)
+# build_facet_store scans for; FORMAT_ALIASES routes the user's phrasing to that key. Import
+# FORMAT_ATTR_KEYWORDS into the builder so the stored membership and the resolver share one vocabulary.
+FORMAT_ATTR_KEYWORDS = {
+    'black and white':    ['black and white'],
+    'woman director':     ['woman director'],
+    'based on book':      ['based on novel or book'],
+    'based on true story': ['based on true story'],
+    'silent film':        ['silent film'],
+    'anime':              ['anime'],
+    'stop motion':        ['stop motion'],
+    'independent film':   ['independent film'],
+}
+FORMAT_ALIASES = {
+    'black and white': 'black and white', 'b w': 'black and white', 'b and w': 'black and white',
+    'black white': 'black and white', 'monochrome': 'black and white', 'greyscale': 'black and white',
+    'grayscale': 'black and white',
+    'directed by women': 'woman director', 'woman director': 'woman director',
+    'women directors': 'woman director', 'female director': 'woman director',
+    'female directors': 'woman director', 'directed by a woman': 'woman director',
+    'based on a book': 'based on book', 'based on a novel': 'based on book', 'based on book': 'based on book',
+    'based on novel': 'based on book', 'based on novel or book': 'based on book',
+    'literary adaptation': 'based on book', 'book adaptation': 'based on book', 'novel adaptation': 'based on book',
+    'based on a true story': 'based on true story', 'based on true story': 'based on true story',
+    'true story': 'based on true story', 'based on real events': 'based on true story',
+    'based on true events': 'based on true story', 'based on a real story': 'based on true story',
+    'silent': 'silent film', 'silent film': 'silent film', 'silent movie': 'silent film',
+    'anime': 'anime',
+    'stop motion': 'stop motion', 'claymation': 'stop motion', 'clay animation': 'stop motion',
+    'indie': 'independent film', 'independent': 'independent film', 'independent film': 'independent film',
+    'indie film': 'independent film',
+}
+# Valid raw codes accepted verbatim (the LLM often emits the ISO code directly, e.g. require_original_language="zh").
+_COUNTRY_CODES = set(COUNTRY_ALIASES.values()) | {c for cs in COUNTRY_REGIONS.values() for c in cs}
+_LANGUAGE_CODES = {c for cs in LANGUAGE_ALIASES.values() for c in cs}
+
+
+def resolve_facet(phrase, kind):
+    """Resolve one free LLM facet phrase to its canonical stored value(s). Returns (values, note).
+
+    kind='country'  → [ISO 3166-1 alpha-2 …]  ("French"→['FR']; "Scandinavian"→['SE','DK','NO','FI','IS'])
+    kind='language' → [ISO 639-1 …]           ("Chinese"→['zh','cn']; "fr"→['fr'])
+    kind='format'   → [canonical attr key …]  ("black & white"→['black and white'])
+
+    Strategy mirrors resolve_person/resolve_mood: normalize (lowercase, accent-fold, punctuation→space
+    via _norm_name) → exact alias-map hit → for country/language also accept a raw ISO code verbatim
+    (uppercase/lowercase respectively). A miss returns ([], 'no match') and the caller drops it +
+    reports it, so the rest of the query still runs. No fuzzy/substring matching (overturned #4)."""
+    norm = _norm_name(phrase)
+    if not norm:
+        return [], 'empty'
+    if kind == 'country':
+        if norm in COUNTRY_REGIONS:
+            return list(COUNTRY_REGIONS[norm]), 'region'
+        if norm in COUNTRY_ALIASES:
+            return [COUNTRY_ALIASES[norm]], 'exact'
+        code = norm.upper()
+        if len(code) == 2 and code in _COUNTRY_CODES:
+            return [code], 'iso'
+        return [], 'no match'
+    if kind == 'language':
+        if norm in LANGUAGE_ALIASES:
+            return list(LANGUAGE_ALIASES[norm]), 'exact'
+        if len(norm) == 2 and norm in _LANGUAGE_CODES:
+            return [norm], 'iso'
+        return [], 'no match'
+    if kind == 'format':
+        if norm in FORMAT_ALIASES:
+            return [FORMAT_ALIASES[norm]], 'exact'
+        return [], 'no match'
+    return [], f'unknown kind {kind!r}'
+
+
 # ── Mode-2 synthesis: genome tag → anchor movies (mirror evaluate._get_anchor_titles) ──
 def anchors_for(ctx, genome_tags, exclude, per_tag=ANCHORS_PER_TAG, max_total=None):
     """Top `per_tag` representative real movies per genome tag (descending genome relevance
@@ -676,7 +889,10 @@ def _passes_constraints(mid, fs, hc, facets=None):
     genres = set(fs['movieId_to_genres'].get(mid, []))
     require = hc.get('require_genres') or []
     exclude = hc.get('exclude_genres') or []
+    require_or = hc.get('require_genres_or') or []  # step C: blend AND→OR relax (ANY of these)
     if require and not all(g in genres for g in require):
+        return False
+    if require_or and not any(g in genres for g in require_or):
         return False
     if exclude and any(g in genres for g in exclude):
         return False
@@ -719,6 +935,45 @@ def _passes_constraints(mid, fs, hc, facets=None):
         if exc_fr and _franchise_match(coll, exc_fr, aliases):
             return False
 
+    # Production country (require_country_codes = ISO 3166-1 resolved upstream). A film passes if its
+    # production_countries intersect the required set (ANY — a FR co-production satisfies "French films",
+    # a region like "Scandinavian" is any member code). Two absence levels, distinguished so we keep the
+    # membership semantics without breaking graceful degradation: (a) the WHOLE table missing (no bake /
+    # an old serving artifact, ctx.facets None) → skip the gate entirely, like the year gate, so the rest
+    # of the query still runs (mirrors the people path's 'no facet store' degrade — otherwise EVERY film
+    # would drop and the pool would empty); (b) the table present but THIS film has no country (one of the
+    # ~60 no-details_raw records) → DROP, since "French films" is an explicit membership demand at 99.2%
+    # coverage and a metadata-gap film must not float in masquerading as a member.
+    req_country = hc.get('require_country_codes') or []
+    ctab = facets.get('movieId_to_countries')
+    if req_country and ctab:
+        countries = ctab.get(mid)
+        if not countries or not (set(countries) & set(req_country)):
+            return False
+
+    # Original language (require_language_codes = ISO 639-1 resolved upstream). "original French,
+    # nothing dubbed" → original_language ∈ the set. Same two-level absence as country: whole table
+    # missing → skip (graceful); present but this film's language unknown → DROP.
+    req_lang = hc.get('require_language_codes') or []
+    ltab = facets.get('movieId_to_language')
+    if req_lang and ltab:
+        lang = ltab.get(mid)
+        if lang is None or lang not in req_lang:
+            return False
+
+    # Format / attribute keywords (require_attribute_keys = canonical attr keys resolved upstream), e.g.
+    # black-and-white / woman-director / based-on-a-book. ALL required attrs must be present (mirrors
+    # require_genres). Whole table missing → skip (graceful). Present → a MISSING attribute keyword is
+    # 'film lacks it' and DROPS the film: these are high-precision crowd tags applied when the trait
+    # holds, and an emphatic "black and white ONLY" wants precision. (Recall ≤ coverage — an untagged
+    # member is a false negative; documented in facet_store_plan "Keyword recall gaps".)
+    req_attrs = hc.get('require_attribute_keys') or []
+    atab = facets.get('movieId_to_attributes')
+    if req_attrs and atab is not None:
+        attrs = set(atab.get(mid) or [])
+        if not all(a in attrs for a in req_attrs):
+            return False
+
     # People (actors/directors/writers/composers), resolved to IDs upstream.
     require_p = hc.get('require_people_ids') or []
     exclude_p = hc.get('exclude_people_ids') or []
@@ -729,6 +984,49 @@ def _passes_constraints(mid, fs, hc, facets=None):
         if exclude_p and any(p in people for p in exclude_p):
             return False
     return True
+
+
+# ── Genre-diversity selection (step C thread 2, L3) ──────────────────────────
+def _select_diverse(eligible, fs, wanted, blend_genres, top_n, scores):
+    """Pick up to `top_n` from score-sorted `eligible` [(i, mid, title)…] with genre diversification.
+
+    Greedy: at each slot pick the highest-value remaining candidate, where value = its score minus,
+    for a BLEND ask, MMR_SIGNATURE_LAMBDA × (# already-picked films sharing its requested-genre
+    signature). Skip a candidate that would push an UNREQUESTED co-genre over its rolling per-prefix
+    cap (COGENRE_CAP_FRAC) — with a relax-to-best fallback if the cap blocks everything, so the list
+    never comes up short (degrade, never empty). The signature penalty interleaves the {G1}/{G2}/{G1,G2}
+    genre signatures of a blend so it doesn't collapse to N identical both-genre films; a non-blend
+    (empty `blend_genres`) gets no penalty and stays score-ordered (concentrated). `scores` is indexed
+    by corpus position i (== eligible item[0]). Returns the chosen [(i, mid, title)…] in output order."""
+    m2g = fs['movieId_to_genres']
+    bset = set(blend_genres)
+    gsets = {item[1]: set(m2g.get(item[1], ())) for item in eligible}
+    remaining = list(eligible)
+    picked, counts, sig_count = [], {}, {}
+
+    while remaining and len(picked) < top_n:
+        cap = math.ceil((len(picked) + 1) * COGENRE_CAP_FRAC)
+        best_i, best_val = None, None
+        for idx, item in enumerate(remaining):
+            gset = gsets[item[1]]
+            if any(g not in wanted and counts.get(g, 0) + 1 > cap for g in gset):
+                continue  # co-genre cap
+            val = scores[item[0]]
+            if bset:
+                val -= MMR_SIGNATURE_LAMBDA * sig_count.get(frozenset(gset & bset), 0)
+            if best_val is None or val > best_val:
+                best_i, best_val = idx, val
+        if best_i is None:                       # co-genre cap blocked all → relax to best remaining
+            best_i = 0
+        item = remaining.pop(best_i)
+        gset = gsets[item[1]]
+        picked.append(item)
+        for g in gset:
+            counts[g] = counts.get(g, 0) + 1
+        if bset:
+            sig = frozenset(gset & bset)
+            sig_count[sig] = sig_count.get(sig, 0) + 1
+    return picked
 
 
 # ── Recommend ────────────────────────────────────────────────────────────────
@@ -800,6 +1098,53 @@ def recommend(ctx, extraction, top_n=TOP_N):
                 (require_pids if bucket == 'require' else exclude_pids).append(pid)
     hc = {**hc, 'require_people_ids': require_pids, 'exclude_people_ids': exclude_pids}
 
+    # 1c. Resolve country/language/format facets (Engine-1a membership, step C). Free LLM phrases
+    #     ("French", "in Chinese", "black and white") → canonical stored values via resolve_facet;
+    #     require_language and require_original_language are synonyms (both gate original_language).
+    #     Each slot may be a string or list. Unresolved phrases are reported and dropped, like
+    #     unresolved people/titles. The resolved values feed _passes_constraints as require_country_codes /
+    #     require_language_codes / require_attribute_keys. Like people, these are a post-filter on the
+    #     corpus — the model has no nationality/language/format concept.
+    facet_codes = {'country': [], 'language': [], 'attribute': []}
+    facet_log = {'country': [], 'language': [], 'attribute': []}
+    _FACET_SLOTS = (
+        ('country',   'country',  ('require_country',)),
+        ('language',  'language', ('require_language', 'require_original_language')),
+        ('attribute', 'format',   ('require_attributes',)),
+    )
+    for bucket, kind, hc_keys in _FACET_SLOTS:
+        for hc_key in hc_keys:
+            raw = hc.get(hc_key)
+            for phrase in ([raw] if isinstance(raw, str) else (raw or [])):
+                if not isinstance(phrase, str):
+                    continue
+                vals, note = resolve_facet(phrase, kind)
+                facet_log[bucket].append((phrase, vals, note))
+                for v in vals:
+                    if v not in facet_codes[bucket]:
+                        facet_codes[bucket].append(v)
+    hc = {**hc,
+          'require_country_codes':  facet_codes['country'],
+          'require_language_codes': facet_codes['language'],
+          'require_attribute_keys': facet_codes['attribute']}
+
+    # 1d. Genre-pool degradation (step C thread 2 — see the L1/L2/L3 constants). Record the WANTED
+    #     genre set (require_genres ∪ liked_genres) for the L1 re-rank + L3 diversity caps, and decide
+    #     whether a multi-genre require_genres must relax AND→OR. INTERSECTION-FIRST: a dual-genre
+    #     "X and Y" ask means films that are BOTH ("a horror comedy" = Shaun of the Dead, not a mix of
+    #     separate horror and comedy films), so keep strict AND while the X∩Y pool can rank a result.
+    #     Relax to OR only when that intersection is too thin to rank (< GENRE_AND_POOL_MIN films, e.g.
+    #     Sci-Fi∩Film-Noir = 2) — degrade to the union rather than return almost nothing.
+    require_genres_orig = hc.get('require_genres') or []
+    wanted_genres = set(liked_genres) | set(require_genres_orig)
+    blend = False
+    if len(require_genres_orig) >= 2:
+        and_pool = sum(1 for mg in fs['movieId_to_genres'].values()
+                       if all(g in mg for g in require_genres_orig))
+        blend = and_pool < GENRE_AND_POOL_MIN
+    if blend:
+        hc = {**hc, 'require_genres': [], 'require_genres_or': require_genres_orig}
+
     # 2. Mode-2 synthesis: genome tags → anchor movies (exclude already-named seeds).
     #    When the user named real titles (Mode 1) the anchors are subordinated so they refine
     #    rather than swamp the explicit likes; pure Mode 2 keeps the full anchor strength. The subject
@@ -825,7 +1170,8 @@ def recommend(ctx, extraction, top_n=TOP_N):
     genre_vocab = set(fs['genres_ordered'])
     unknown_genres = sorted(
         (set(liked_genres) | set(disliked_genres)
-         | set(hc.get('require_genres') or []) | set(hc.get('exclude_genres') or []))
+         | set(hc.get('require_genres') or []) | set(hc.get('require_genres_or') or [])
+         | set(hc.get('exclude_genres') or []))
         - genre_vocab)
 
     # Empty-signal fallback → popularity (a sensible, diverse default).
@@ -862,6 +1208,16 @@ def recommend(ctx, extraction, top_n=TOP_N):
             mood_boost = _genome_relevance(ctx, mood_tags)
             if mood_boost is not None:
                 raw_scores = raw_scores + MOOD_RERANK_LAMBDA * mood_boost.to(raw_scores.device)
+        # genre term (step C thread 2 L1): lift films carrying the WANTED genres so an under-specified
+        # genre ask (only liked_genres, no anchors) doesn't drown in popular off-genre films. Fraction
+        # of wanted genres present, so a fuller genre match rises more. Its own knob (GENRE_RERANK_LAMBDA).
+        if GENRE_RERANK_LAMBDA and wanted_genres:
+            wl = list(wanted_genres)
+            gvec = torch.tensor(
+                [sum(1 for g in wl if g in fs['movieId_to_genres'].get(mid, ())) / len(wl)
+                 for mid in ctx.all_ids],
+                dtype=torch.float32)
+            raw_scores = raw_scores + GENRE_RERANK_LAMBDA * gvec.to(raw_scores.device)
 
     # 5c. require_genome_tags HARD floor (step B lever 2). Gate the pool to films that genuinely carry
     #     the required tags, then drop the rest in BOTH ranking loops. Semantics mirror the sibling
@@ -908,9 +1264,13 @@ def recommend(ctx, extraction, top_n=TOP_N):
                 break
     else:
         order = raw_scores.argsort(descending=True).tolist()
+        diversify = bool(wanted_genres)   # step C thread 2 L3: only genre-oriented asks get diversified
+        # Collect eligible candidates in score order (seed/floor/constraint-filtered). Without
+        # diversification the first top_n suffice; with it, scan a bounded pool so the diversity
+        # backfill has room to inject under-represented genres (see _select_diverse).
+        scan_cap = max(CANDIDATE_POOL, top_n * 4) if diversify else top_n
+        eligible = []
         for i in order:
-            if kept >= top_n:
-                break
             mid = ctx.all_ids[i]
             title = fs['movieId_to_title'][mid]
             if title in seed_titles:
@@ -921,14 +1281,22 @@ def recommend(ctx, extraction, top_n=TOP_N):
             if not _passes_constraints(mid, fs, hc, facets):
                 filtered += 1
                 continue
+            eligible.append((i, mid, title))
+            if len(eligible) >= scan_cap:
+                break
+        chosen = (_select_diverse(eligible, fs, wanted_genres,
+                                  require_genres_orig if blend else [], top_n, raw_scores.tolist())
+                  if diversify else eligible[:top_n])
+        for i, mid, title in chosen:
             recs.append((title, fs['movieId_to_genres'].get(mid, []),
                          fs['movieId_to_year'].get(mid), float(raw_scores[i])))
-            kept += 1
+        kept = len(recs)
 
     return {
         'extraction': extraction,
         'resolution': resolution_log,
         'people_resolution': people_log,
+        'facet_resolution': facet_log,   # country/language/format phrase → resolved codes (step C)
         'anchors': anchors,
         'anchor_weight': anchor_weight,
         'mood_tags': mood_tags,          # genome tags routed from a free mood/vibe phrase (Engine-2)
