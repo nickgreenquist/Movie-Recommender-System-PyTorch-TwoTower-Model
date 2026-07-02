@@ -88,6 +88,17 @@ MOOD_RERANK_LAMBDA    = 0.5
 # floor at all (graceful, like the year gate: we never hard-drop on a signal we can't compute).
 GENOME_HARD_FLOOR     = 0.35
 
+# Hard ANTI-floor for negative affect / anti-vibe exclusion (exclude_mood + exclude_genome_tags — the
+# mirror of the require floor above). An emphatic "absolutely nothing dark", "I genuinely cannot handle
+# gore" is a gate, not a nudge: drop any film whose genome relevance on ANY excluded tag clears this
+# ceiling. Set ABOVE the require floor (0.35) so we only cut films that STRONGLY carry the unwanted
+# affect — a moderate/incidental score survives, protecting the pool from over-pruning (the eval fails a
+# vacuous empty pool). Only exclude_mood (routed via MOOD_TAGS) and exclude_genome_tags (verbatim) feed
+# it; an out-of-vocab excluded tag contributes nothing, and an all-OOV set means no gate at all (graceful).
+# Tuned on the ruler: 0.4 drops a horror-comedy like Shaun of the Dead (dark 0.46) on "nothing dark" while
+# leaving the light-comedy pool full; 0.5 lets it leak, ≤0.35 starts cutting moderate incidental carriers.
+GENOME_EXCLUDE_CEILING = 0.4
+
 # Mode-1.5 title-genome injection (step B lever 3). On a PURE-TITLE request — a liked title but no
 # genome_tags — cosine retrieval drifts to release-era / co-watch neighbours (a 1994 Pulp Fiction
 # anchor pulls Forrest Gump / Jurassic Park). We inject the liked title's OWN most-relevant genome
@@ -732,7 +743,7 @@ def _resolve_mood_slots(extraction, hc):
     and a `hard_constraints.mood` (soft affect the extractor may nest beside a hard filter). Each may
     be a string or a list of strings. Returns the de-duplicated union of resolved genome tags.
     (`exclude_mood` is deliberately NOT handled here — negative-affect exclusion is a separate,
-    postfilter-only feature, still SPEC.)"""
+    hard-exclude sibling, now handled by _resolve_exclude_slots below.)"""
     phrases = []
     for src in (extraction.get('mood'), extraction.get('vibe'), (hc or {}).get('mood')):
         if isinstance(src, str):
@@ -744,6 +755,27 @@ def _resolve_mood_slots(extraction, hc):
         for t in resolve_mood(p):
             if t not in tags:
                 tags.append(t)
+    return tags
+
+
+def _resolve_exclude_slots(hc):
+    """Genome tags to HARD-exclude, collected from a hard_constraints block: `exclude_mood` phrases
+    routed through resolve_mood (the same MOOD_TAGS table the positive mood path uses) plus
+    `exclude_genome_tags` named verbatim. Each slot may be a string or a list of strings. Returns the
+    de-duplicated union (empty if neither slot is present). The caller turns these into the
+    GENOME_EXCLUDE_CEILING anti-floor — soft moods (genome_tags / mood) never reach here, only the
+    explicit hard-exclude slots (mirrors how only require_genome_tags reaches the require floor)."""
+    tags = []
+    em = (hc or {}).get('exclude_mood')
+    for phrase in ([em] if isinstance(em, str) else (em or [])):
+        if isinstance(phrase, str):
+            for t in resolve_mood(phrase):
+                if t not in tags:
+                    tags.append(t)
+    egt = (hc or {}).get('exclude_genome_tags')
+    for t in ([egt] if isinstance(egt, str) else (egt or [])):
+        if isinstance(t, str) and t not in tags:
+            tags.append(t)
     return tags
 
 
@@ -1049,6 +1081,12 @@ def recommend(ctx, extraction, top_n=TOP_N):
     # signal throughout, never a hard filter (per the plan, the facet filter is the wrong tool for affect).
     mood_tags = _resolve_mood_slots(extraction, hc)
 
+    # Negative affect / anti-vibe exclusion (exclude_mood + exclude_genome_tags): the anti-vibe siblings
+    # of resolve_mood / require_genome_tags. "Absolutely nothing dark", "I cannot handle gore" resolve to
+    # genome tags (mood phrases via the MOOD_TAGS table, exclude_genome_tags verbatim) that become a HARD
+    # anti-floor below (5d) — dropping films that strongly carry them. Emphatic exclusion is a gate, not a nudge.
+    exclude_tags = _resolve_exclude_slots(hc)
+
     # 1. Resolve mentioned titles (Mode 1).
     liked_resolved, disliked_resolved = [], []
     resolution_log = {'liked': [], 'disliked': []}
@@ -1178,16 +1216,19 @@ def recommend(ctx, extraction, top_n=TOP_N):
     fallback = not liked_with_weights and not disliked_resolved \
         and not liked_genres and not disliked_genres
 
-    # 4. Build the user embedding via the real serving model.
-    with torch.no_grad():
-        user_emb = build_user_embedding(
-            ctx.model, fs, liked_with_weights, disliked_resolved, ctx.ts_inference,
-            liked_genres=liked_genres, disliked_genres=disliked_genres,
-            disliked_movie_value=DISLIKED_MOVIE_WEIGHT,
-        )
-
-    # 5. Score whole corpus (raw dot product == cosine; both L2-normed). No alpha/temp.
-    raw_scores = (ctx.all_embs @ user_emb.T).squeeze(-1)
+    # 4-5. Build the user embedding + score the whole corpus (raw dot product == cosine; both L2-normed;
+    #      no alpha/temp) — but ONLY when there's a taste signal to rank by. On the empty-signal fallback
+    #      the popularity branch (step 6) ignores these scores, so building the embedding and scoring the
+    #      corpus is pure wasted work; skip the forward pass entirely and leave raw_scores None.
+    raw_scores = None
+    if not fallback:
+        with torch.no_grad():
+            user_emb = build_user_embedding(
+                ctx.model, fs, liked_with_weights, disliked_resolved, ctx.ts_inference,
+                liked_genres=liked_genres, disliked_genres=disliked_genres,
+                disliked_movie_value=DISLIKED_MOVIE_WEIGHT,
+            )
+        raw_scores = (ctx.all_embs @ user_emb.T).squeeze(-1)
 
     # 5b. Soft genome re-rank (Source A — see GENOME_RERANK_LAMBDA). Lift films that actually carry
     #     the requested genome tags so a correct anchor/title set isn't out-ranked by the item
@@ -1235,6 +1276,18 @@ def recommend(ctx, extraction, top_n=TOP_N):
             gt_floor_ok = {mid for mid in ctx.all_ids
                            if all(float(gt_ctx[mid][c]) >= GENOME_HARD_FLOOR for c in floor_cols)}
 
+    # 5d. Anti-vibe HARD anti-floor (exclude_mood / exclude_genome_tags — see GENOME_EXCLUDE_CEILING).
+    #     The mirror of the require floor: drop any film that STRONGLY carries an excluded tag (relevance
+    #     ≥ ceiling on ANY excluded tag — an emphatic "nothing dark AND nothing gory" cuts a film that is
+    #     heavy on EITHER). Out-of-vocab excluded tags contribute nothing; an all-OOV set → empty set → no gate.
+    gt_exclude_bad = set()
+    if exclude_tags:
+        ex_cols = [ctx.genome_name_to_idx[t] for t in exclude_tags if t in ctx.genome_name_to_idx]
+        if ex_cols:
+            ex_ctx = fs['movieId_to_genome_tag_context']
+            gt_exclude_bad = {mid for mid in ctx.all_ids
+                              if any(float(ex_ctx[mid][c]) >= GENOME_EXCLUDE_CEILING for c in ex_cols)}
+
     # 6. Rank → drop only USER-NAMED seeds → apply post-filters → take top_n.
     #    Liked/disliked titles are films the user explicitly named, so we don't surface them back
     #    (classic "don't recommend what they already know"). Genome anchors are the opposite:
@@ -1253,6 +1306,9 @@ def recommend(ctx, extraction, top_n=TOP_N):
             if mid is None or title in seed_titles:
                 continue
             if gt_floor_ok is not None and mid not in gt_floor_ok:
+                filtered += 1
+                continue
+            if mid in gt_exclude_bad:
                 filtered += 1
                 continue
             if not _passes_constraints(mid, fs, hc, facets):
@@ -1276,6 +1332,9 @@ def recommend(ctx, extraction, top_n=TOP_N):
             if title in seed_titles:
                 continue
             if gt_floor_ok is not None and mid not in gt_floor_ok:
+                filtered += 1
+                continue
+            if mid in gt_exclude_bad:
                 filtered += 1
                 continue
             if not _passes_constraints(mid, fs, hc, facets):
