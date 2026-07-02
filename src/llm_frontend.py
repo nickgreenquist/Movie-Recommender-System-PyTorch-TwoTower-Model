@@ -88,6 +88,17 @@ MOOD_RERANK_LAMBDA    = 0.5
 # floor at all (graceful, like the year gate: we never hard-drop on a signal we can't compute).
 GENOME_HARD_FLOOR     = 0.35
 
+# Dedicated re-rank strength for the HARD require_genome_tags subject — SEPARATE from and stronger than
+# the soft GENOME_RERANK_LAMBDA (0.5). The 0.35 floor only GATES; within the gated pool the base ranking
+# is anchor cosine (era/co-watch/taste). On a THIN axis (e.g. chess: only ~7 of the 34 films clearing the
+# floor are genuinely about chess) the ~0.7-wide cosine swing dominates the weak 0.5*relevance nudge, so
+# incidental carriers (an X-Men chess-metaphor scene, chess 0.49) and genome homonyms (Cadillac Records =
+# Chess RECORDS, 0.74) out-rank real subject films (The Seventh Seal 0.92, Fresh 0.91) — found in the bug
+# sweep. A stronger lambda makes SUBJECT RELEVANCE the primary in-floor ordering (a Δ0.5 relevance gap
+# ~ 1.0 pts overcomes the cosine spread) while cosine still breaks ties; on a DENSE axis (racing: nearly
+# all ~1.0) the boost is near-uniform so the anchor/taste order is preserved. Tuned on the ruler.
+REQUIRE_GT_RERANK_LAMBDA = 2.0
+
 # Hard ANTI-floor for negative affect / anti-vibe exclusion (exclude_mood + exclude_genome_tags — the
 # mirror of the require floor above). An emphatic "absolutely nothing dark", "I genuinely cannot handle
 # gore" is a gate, not a nudge: drop any film whose genome relevance on ANY excluded tag clears this
@@ -1247,18 +1258,26 @@ def recommend(ctx, extraction, top_n=TOP_N):
 
     # 5b. Soft genome re-rank (Source A — see GENOME_RERANK_LAMBDA). Lift films that actually carry
     #     the requested genome tags so a correct anchor/title set isn't out-ranked by the item
-    #     embedding's era/co-watch neighbours. TWO separate additive terms so orthogonal axes don't
+    #     embedding's era/co-watch neighbours. THREE separate additive terms so orthogonal axes don't
     #     dilute each other (see MOOD_RERANK_LAMBDA):
-    #       • subject: the explicit genome_tags + hard require_genome_tags + Mode-1.5 title tags.
-    #       • mood:    the Engine-2 affect tags routed from a mood/vibe phrase.
+    #       • soft subject: explicit genome_tags + Mode-1.5 title tags (GENOME_RERANK_LAMBDA).
+    #       • hard subject: require_genome_tags, a SEPARATE stronger term (REQUIRE_GT_RERANK_LAMBDA) so
+    #         aboutness — not co-watch cosine — orders films WITHIN the hard floor (thin-axis fix).
+    #       • mood:         the Engine-2 affect tags routed from a mood/vibe phrase (MOOD_RERANK_LAMBDA).
     if not fallback:
-        # subject term: explicit genome_tags + hard require_genome_tags (require_gt, computed above where
-        # it also seeds the anchors) + Mode-1.5 title tags.
-        subject_tags = list(genome_tags) + list(require_gt) + list(mode15_tags)
+        # soft subject term: explicit genome_tags + Mode-1.5 title tags (require_gt gets its own term below).
+        subject_tags = list(genome_tags) + list(mode15_tags)
         if GENOME_RERANK_LAMBDA and subject_tags:
             subj = _genome_relevance(ctx, subject_tags)
             if subj is not None:
                 raw_scores = raw_scores + GENOME_RERANK_LAMBDA * subj.to(raw_scores.device)
+        # hard subject term: require_genome_tags re-rank, stronger than the soft term so subject relevance
+        # (not co-watch cosine) is the primary ordering WITHIN the 0.35 floor — fixes the thin-axis
+        # 'movies about chess' displacement; near-uniform on a dense axis (racing) so anchor order holds.
+        if REQUIRE_GT_RERANK_LAMBDA and require_gt:
+            reqv = _genome_relevance(ctx, require_gt)
+            if reqv is not None:
+                raw_scores = raw_scores + REQUIRE_GT_RERANK_LAMBDA * reqv.to(raw_scores.device)
         # mood term: Engine-2 affect, gated by its OWN knob so it survives GENOME_RERANK_LAMBDA=0.
         if MOOD_RERANK_LAMBDA and mood_tags:
             mood_boost = _genome_relevance(ctx, mood_tags)
