@@ -210,25 +210,34 @@ restate-a-genre tags are FORBIDDEN in any mode (they pull off-target): "comedy",
 "thriller", "epic", "funny", "romantic", "action", "scary", "dramatic", "adventure". Prefer \
 specific, evocative ones like "quirky", "neo-noir", "atmospheric", "surreal", "stylized", \
 "dreamlike". HOW MANY depends on whether the user named any titles:
-    • NO titles given: decide require_genres / require_people / year FIRST — whether a HARD \
-constraint defines the request determines how to handle tags.
-        – PURE VIBE or SOFT-GENRE TASTE (NO hard constraint at all — no require_genres, require_people, \
-require_genome_tags, require_keyword_concepts, require_country, require_language, require_attributes, \
-require_franchise, require_composers, rating/runtime/quality floor, AND no year limit — \
-"I love a good romance", "something dreamy and melancholy", "big fan of war movies", "into crime \
-and mystery"): \
-the tags ARE the query, so ALWAYS emit 3–5 specific mood/style tags — even when you also set a SOFT \
-liked_genres. A bare taste preference is a weak signal on its own, so add concrete vibe tags \
+    • NO titles given: decide whether a hard CATEGORY head noun (a genre, a named person, or a \
+concrete topic / setting / nationality / format / franchise) defines the request FIRST — that, NOT the \
+mere presence of a year / runtime / rating fence, decides how to handle tags. A vibe WITH an orthogonal \
+fence is STILL a vibe.
+        – PURE VIBE or SOFT-GENRE TASTE (the request is defined by a FEELING / atmosphere or a soft genre \
+lean, with NO hard CATEGORY head noun — no require_genres, require_people, require_genome_tags, \
+require_keyword_concepts, require_country, require_language, require_attributes, require_franchise, \
+require_composers. A year / runtime / rating / quality fence MAY be present — it is ORTHOGONAL and does \
+NOT disqualify this branch — "I love a good romance", "something dreamy and melancholy", "big fan of war \
+movies", "into crime and mystery", "scare me but nothing older than 2010", "make me cry, keep it under \
+two hours"): the tags ARE the query, so ALWAYS emit 3–5 specific mood/style tags — even when you also set \
+a SOFT liked_genres, AND even when you ALSO capture a year / runtime / rating fence (that fence is applied \
+SEPARATELY and NEVER replaces the vibe; an implied genre stays SOFT in liked_genres, NEVER require_genres). \
+A bare taste preference is a weak signal on its own, so add concrete vibe tags \
 (romance → "intimate", "heartfelt", "bittersweet"; crime → "noir", "detective", "hardboiled"; war \
 → "anti-war", "visceral", "harrowing"). Never leave genome_tags empty for a pure-vibe/taste request.
-        – HARD-CONSTRAINT request (a genre is the head noun → require_genres, a named person → \
-require_people, and/or an explicit era/year — "comedies from the 80s", "show me horror movies", \
-"Tom Hanks movies", "recent thrillers"): the CONSTRAINT is \
-the query, not a vibe. Set require_genres / require_people / year_min / year_max, and emit mood tags \
+        – HARD-CATEGORY request (the HEAD NOUN is a genre → require_genres, a named person → \
+require_people, or a concrete topic / setting / nationality / format / franchise → its slot — "comedies \
+from the 80s", "show me horror movies", "Tom Hanks movies", "recent thrillers", "submarine movies"): the \
+CATEGORY is the query, not a vibe. Set the hard slot(s) plus any year_min / year_max, and emit mood tags \
 ONLY for a GENUINE extra vibe stated beyond the category ("dark gritty westerns" → require ["Western"] + \
 "gritty"). For a plain category(+era) request — "comedies from the 80s" → require ["Comedy"] + \
 year_min 1980 / year_max 1989, NO invented tags — do NOT manufacture quirky/campy/atmospheric-type \
 tags: an invented vibe tag pulls results off the required genre. When unsure here, prefer NO tag. \
+CRUCIAL — a fence is NOT a category: a year / runtime / rating limit ADDED to a vibe ("scare me, nothing \
+old"; "make me cry, under 90 min") does NOT move the request here — the head noun is still the VIBE, so it \
+stays in the pure-vibe bullet above (emit the 3–5 vibe tags; keep any implied genre SOFT in liked_genres). \
+Only a genre / person / topic HEAD NOUN belongs here. \
 A named-person request ("Tom Hanks movies", "I like Tom Hanks movies" → require_people ["Tom Hanks"]) \
 is likewise defined by that person, NOT a vibe — emit NO mood tags unless a genuine extra vibe is stated. \
 The SAME holds for a request defined by a SETTING ("set in Japan" → require_genome_tags ["japan"]), a \
