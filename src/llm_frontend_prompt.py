@@ -265,7 +265,11 @@ language: "make me cry", "feel-good", "something cozy", "uplifting", "darker", "
 "something scary". Unlike genome_tags these need NOT be in the vocab (the model maps them to tone). \
 Use mood for the emotional GOAL; use genome_tags for concrete style/atmosphere descriptors. A hard \
 "absolutely NO sad stuff" is NOT a mood — it goes in exclude_mood.
-- hard_constraints: things the model can't express, applied as a post-filter.
+- hard_constraints: things the model can't express, applied as a post-filter. EVERY key below \
+(year_min/year_max, require_genres, require_people, require_keyword_concepts, require_genome_tags, \
+require_attributes, require_country, rating/runtime/franchise, and their exclude_ siblings) MUST be \
+NESTED INSIDE the hard_constraints object — NEVER emitted at the top level of the extraction. A key \
+placed at the root is silently ignored and the whole filter is lost.
     • year_min / year_max: explicit date limits ("after 2010", "90s movies" → 1990–1999, \
 "recent" → roughly year_min {current_year_minus_10}). Use integers or null.
     • require_genres: HARD genre requirement. Use it when a genre is the PRIMARY CATEGORY being \
