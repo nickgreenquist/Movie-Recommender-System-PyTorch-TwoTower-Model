@@ -131,7 +131,9 @@ def build_schema(genres=None, fs=None):
                                         'the film is ABOUT, chosen ONLY from this fixed list: '
                                         + _CONCEPT_KEYS_STR + '. "movies about chess" -> ["chess"], '
                                         '"submarine movies" -> ["submarine"], "a good heist film" -> '
-                                        '["heist"]. Emit the exact concept key(s). Precise topic '
+                                        '["heist"]. Emit the exact concept key(s). Multiple concepts are '
+                                        'ALTERNATIVES (a film matching ANY qualifies): "a boxing or MMA '
+                                        'fighter" -> ["boxing", "mixed martial arts"]. Precise topic '
                                         'membership, DISTINCT from require_genres (a topic is not a '
                                         'genre) and require_genome_tags (a place/SETTING). If the topic '
                                         'is NOT in the list, do NOT invent one — use soft genome_tags '
@@ -307,8 +309,10 @@ require_genome_tags ["japan"].
 concept list ({keyword_concepts}). Use it when the request is ABOUT a concrete subject in that list — \
 "movies about chess" → require_keyword_concepts ["chess"], "submarine movies" / "a good heist" / \
 "something with dinosaurs" → the matching concept; "no zombie movies", "nothing with vampires" → \
-exclude_keyword_concepts ["zombie"] / ["vampire"]. Precise TOPIC membership, DISTINCT from require_genres (a \
-topic is not a genre) and require_genome_tags (a place/SETTING). Pick the concept key EXACTLY from the list; \
+exclude_keyword_concepts ["zombie"] / ["vampire"]. Multiple require concepts are ALTERNATIVES (ANY match \
+qualifies): "a boxing or MMA fighter" → ["boxing", "mixed martial arts"]. Precise TOPIC membership, DISTINCT \
+from require_genres (a topic is not a genre) and require_genome_tags (a place/SETTING). Pick the concept key \
+EXACTLY from the list; \
 if the topic is not listed, do NOT invent one — use soft genome_tags or drop it.
     • require_max_rating: HARD US content-rating ceiling — one of "G", "PG", "PG-13", "R", "NC-17". \
 "nothing R-rated" → "PG-13"; "kid-friendly" / "nothing too mature" → "PG". Drops anything stricter.

@@ -42,6 +42,7 @@ from typing import NamedTuple
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 
 from src.inference import build_user_embedding
 from src.model import MovieRecommender
@@ -245,6 +246,8 @@ class FrontendContext(NamedTuple):
     pop_rank:           dict          # canonical title → popularity rank (tie-break / fallback)
     genome_name_to_idx: dict          # genome tag NAME → 0-based column in the genome vector
     facets:             dict          # scraped-facet store (people tables) or None if unbaked
+    genome_sim_matrix:  torch.Tensor  # [N, 1128] L2-normed raw genome vectors (row i ↔ all_ids[i]); the
+                                      # Similar-tab genome content space, for 'movies like X' ranking
 
 
 def build_frontend_context(model, fs, all_ids, all_embs, ts_inference, facets=None) -> FrontendContext:
@@ -257,6 +260,13 @@ def build_frontend_context(model, fs, all_ids, all_embs, ts_inference, facets=No
     people. None (an old serving artifact without the bake) degrades gracefully: people facets in
     an extraction are simply reported unresolved and dropped, leaving the rest of the query intact."""
     gn, gi = fs['genome_tag_names'], fs['genome_tag_to_i']
+    # Raw genome content space (the Similar tab's "Genome Tags → Raw features" cell), L2-normed so a
+    # single matmul against a seed row yields cosine. This — not the combined item embedding, which
+    # clusters by release era / co-watch — is the faithful "movies like X" substrate (Toy Story → the
+    # Pixar films, not the 1995 co-watch cohort). Built once (~40MB); row i ↔ all_ids[i].
+    gt_ctx = fs['movieId_to_genome_tag_context']
+    genome_sim_matrix = F.normalize(
+        torch.stack([torch.as_tensor(gt_ctx[m], dtype=torch.float32) for m in all_ids]), dim=1)
     return FrontendContext(
         model=model,
         fs=fs,
@@ -267,6 +277,7 @@ def build_frontend_context(model, fs, all_ids, all_embs, ts_inference, facets=No
         pop_rank={t: i for i, t in enumerate(fs['popularity_ordered_titles'])},
         genome_name_to_idx={gn[tid]: gi[tid] for tid in gi},
         facets=facets,
+        genome_sim_matrix=genome_sim_matrix,
     )
 
 
@@ -1167,10 +1178,14 @@ def _passes_constraints(mid, fs, hc, facets=None):
 
     # Keyword CONTENT concepts (require/exclude_keyword_concept_keys = canonical concepts resolved upstream),
     # e.g. chess / submarine / heist — a HARD boolean membership pre-filter over the curated TMDB-keyword store
-    # (KEYWORD_CONCEPTS). require = ALL present (AND, mirrors require_genres/attributes — "movies about chess"
-    # wants a chess film); exclude = NONE present (ANY hit drops). Same two-level absence as the other facets:
-    # whole table missing (ctx.facets None / old artifact) → skip the gate (graceful, else every film drops);
-    # present but this film carries no concepts → its concept set is empty, so it FAILS a require (an explicit
+    # (KEYWORD_CONCEPTS). require = ANY present (OR); exclude = NONE present (ANY hit drops). require is OR —
+    # NOT AND like require_genres — because a genre pair (horror-comedy) routinely co-occurs in one film, but two
+    # distinct CONCRETE topics almost never do: "a boxing or MMA fighter" wants ['boxing','mixed martial arts'] as
+    # ALTERNATIVES, and an AND-intersection there is vacuously empty (no film is tagged BOTH), which read as a
+    # zero-result loss in the 500-query run. A multi-concept list is virtually always alternatives, so ANY-of is
+    # the faithful default; a single concept is unaffected (any-of-one == all-of-one). Same two-level absence as
+    # the other facets: whole table missing (ctx.facets None / old artifact) → skip the gate (graceful, else every
+    # film drops); present but this film carries no concepts → its set is empty, so it FAILS a require (an explicit
     # "about X" demand must not admit a film with no such tag) and PASSES an exclude. Recall ≤ keyword coverage —
     # an untagged member is a false negative, same precision/recall trade as the format facet.
     req_kw = hc.get('require_keyword_concept_keys') or []
@@ -1178,7 +1193,7 @@ def _passes_constraints(mid, fs, hc, facets=None):
     ktab = facets.get('movieId_to_keyword_concepts')
     if (req_kw or exc_kw) and ktab is not None:
         concepts = set(ktab.get(mid) or [])
-        if req_kw and not all(k in concepts for k in req_kw):
+        if req_kw and not any(k in concepts for k in req_kw):
             return False
         if exc_kw and any(k in concepts for k in exc_kw):
             return False
@@ -1239,6 +1254,26 @@ def _select_diverse(eligible, fs, wanted, blend_genres, top_n, scores):
 
 
 # ── Recommend ────────────────────────────────────────────────────────────────
+def _content_similar_scores(ctx, title):
+    """'Movies like X' ranking: cosine of every catalog movie to the seed title in the raw GENOME
+    content space (the Similar tab's "Genome Tags → Raw features" cell). Returns a [N] tensor aligned
+    to ctx.all_ids, or None if the seed isn't in the matrix (caller then falls back to the user tower).
+    The seed scores 1.0 but is dropped downstream via seed_titles, exactly as probe_similar skips
+    candidate == mid. We rank in genome space — NOT the combined item embedding (which clusters by
+    release era / co-watch, so Toy Story drifts to its 1995 cohort) and NOT a 1-movie mock through the
+    user tower (trained to predict the NEXT item, not content-similar ones). Genome space keeps 'like
+    Toy Story' → the Pixar films, 'like Alien' → sci-fi horror."""
+    mid = ctx.fs['title_to_movieId'].get(title)
+    if mid is None:
+        return None
+    try:
+        i = ctx.all_ids.index(mid)
+    except ValueError:
+        return None
+    q = ctx.genome_sim_matrix[i:i + 1]                    # [1, 1128], already unit-norm
+    return (ctx.genome_sim_matrix @ q.T).squeeze(-1)      # [N] cosine scores, aligned to ctx.all_ids
+
+
 def recommend(ctx, extraction, top_n=TOP_N):
     """Run one extraction object through the full v1 pipeline. Returns a report dict
     (UI-agnostic — the harness CLI and the Streamlit tab each render it their own way)."""
@@ -1285,6 +1320,18 @@ def recommend(ctx, extraction, top_n=TOP_N):
     # carries genome_tags OR a resolved mood (an explicit vibe — "I loved X but I want to cry" — wins).
     mode15_tags = (_title_genome_tags(ctx, liked_resolved)
                    if (liked_resolved and not genome_tags and not mood_tags) else [])
+
+    # Pure single-title "movies like X": exactly one named title and NO other taste signal (no vibe, no
+    # genre, no dislikes) → rank by genome content-space cosine to the seed (Similar-tab semantics), NOT
+    # by pushing a 1-movie 'history' through the user tower. Hard constraints still post-filter and the
+    # seed is excluded via seed_titles. This path is PURE content cosine, so we drop the Mode-1.5 genome
+    # injection (which existed only to steady the user-tower drift this path avoids by construction).
+    # Two+ titles keep the user-tower centroid path (a genuine multi-seed taste, not a single-item lookup).
+    pure_single_title = (len(liked_resolved) == 1 and not disliked_resolved
+                         and not genome_tags and not mood_tags
+                         and not liked_genres and not disliked_genres)
+    if pure_single_title:
+        mode15_tags = []
 
     # 1b. Resolve people facets (Phase 1: HARD require/exclude only). Names → canonical TMDB
     #     person IDs via the facet store; unresolved names (or no facet store at all) are reported
@@ -1425,14 +1472,20 @@ def recommend(ctx, extraction, top_n=TOP_N):
     #      the popularity branch (step 6) ignores these scores, so building the embedding and scoring the
     #      corpus is pure wasted work; skip the forward pass entirely and leave raw_scores None.
     raw_scores = None
+    ranked_by_similarity = False   # True → 'movies like X' ranked by item-item cosine, not the user tower
     if not fallback:
-        with torch.no_grad():
-            user_emb = build_user_embedding(
-                ctx.model, fs, liked_with_weights, disliked_resolved, ctx.ts_inference,
-                liked_genres=liked_genres, disliked_genres=disliked_genres,
-                disliked_movie_value=DISLIKED_MOVIE_WEIGHT,
-            )
-        raw_scores = (ctx.all_embs @ user_emb.T).squeeze(-1)
+        if pure_single_title:
+            # 'movies like X' — genome content-space cosine off the seed (see _content_similar_scores).
+            raw_scores = _content_similar_scores(ctx, liked_resolved[0])
+            ranked_by_similarity = raw_scores is not None
+        if raw_scores is None:  # not a pure single title, OR seed missing from the matrix → user tower
+            with torch.no_grad():
+                user_emb = build_user_embedding(
+                    ctx.model, fs, liked_with_weights, disliked_resolved, ctx.ts_inference,
+                    liked_genres=liked_genres, disliked_genres=disliked_genres,
+                    disliked_movie_value=DISLIKED_MOVIE_WEIGHT,
+                )
+            raw_scores = (ctx.all_embs @ user_emb.T).squeeze(-1)
 
     # 5b. Soft genome re-rank (Source A — see GENOME_RERANK_LAMBDA). Lift films that actually carry
     #     the requested genome tags so a correct anchor/title set isn't out-ranked by the item
@@ -1572,6 +1625,7 @@ def recommend(ctx, extraction, top_n=TOP_N):
         'anchor_weight': anchor_weight,
         'mood_tags': mood_tags,          # genome tags routed from a free mood/vibe phrase (Engine-2)
         'mode15_tags': mode15_tags,      # discriminative genome tags injected from a pure-title seed
+        'ranked_by_similarity': ranked_by_similarity,  # 'movies like X' → item-item cosine (Similar-tab)
         'unresolved_tags': unresolved_tags,
         'unknown_genres': unknown_genres,
         'seed_count': len(seed_titles),
