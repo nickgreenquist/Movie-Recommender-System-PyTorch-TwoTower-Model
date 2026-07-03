@@ -86,6 +86,9 @@ class _Meta:
     def attributes(self, title):
         return self._facet('movieId_to_attributes', title)
 
+    def keyword_concepts(self, title):
+        return self._facet('movieId_to_keyword_concepts', title)
+
     def in_franchise(self, title, spec):
         """True if `title`'s TMDB collection matches the franchise `spec` (True / name / [name…]),
         using the same _franchise_match the real post-filter uses (universe aliases included)."""
@@ -127,7 +130,8 @@ def _check_assertion(a, recs, meta):
       max_runtime {cap,k}                   max_rating {rating,k}
       excludes_franchise {spec,k}           oracle {title,facet,equals[,spec]}
       all_have_country {country,k}          all_have_language {language,k}
-      all_have_attribute {attribute,k}
+      all_have_attribute {attribute,k}      all_have_keyword_concept {concept,k}
+      excludes_keyword_concept {concept,k}
     Facet-membership assertions (max_runtime / max_rating / excludes_franchise / all_have_country /
     all_have_language / all_have_attribute) test the structured facets directly — the plan's PRIMARY
     metric (a hard facet's membership IS its correctness), not the genre proxies the other assertions
@@ -289,6 +293,29 @@ def _check_assertion(a, recs, meta):
         kk = min(k, len(recs))
         miss = [titles[i] for i in range(kk) if key not in (meta.attributes(titles[i]) or [])]
         return not miss, f"{kk - len(miss)}/{kk} have '{a['attribute']}'" + (f"; miss {miss[:3]}" if miss else "")
+    if t == 'all_have_keyword_concept':
+        # Keyword content concept (chess / submarine / heist) is a boolean membership hard filter
+        # (require_keyword_concepts = absent-drops), so EVERY top-k rec must carry it — like all_have_attribute.
+        keys, _ = resolve_facet(a['concept'], 'keyword')
+        if not keys:
+            return False, f"unresolved concept {a['concept']!r}"
+        key = keys[0]
+        if not recs:
+            return False, "no recs (empty pool — vacuous)"
+        kk = min(k, len(recs))
+        miss = [titles[i] for i in range(kk) if key not in (meta.keyword_concepts(titles[i]) or [])]
+        return not miss, f"{kk - len(miss)}/{kk} about '{a['concept']}'" + (f"; miss {miss[:3]}" if miss else "")
+    if t == 'excludes_keyword_concept':
+        keys, _ = resolve_facet(a['concept'], 'keyword')
+        if not keys:
+            return False, f"unresolved concept {a['concept']!r}"
+        key = keys[0]
+        if not recs:
+            return False, "no recs (empty pool — vacuous)"
+        kk = min(k, len(recs))
+        hit = [titles[i] for i in range(kk) if key in (meta.keyword_concepts(titles[i]) or [])]
+        return not hit, (f"{len(hit)} of top-{kk} carry '{a['concept']}': {hit[:3]}" if hit
+                         else f"no top-{kk} carry '{a['concept']}'")
     if t == 'oracle':
         # Independent ground-truth check on a KNOWN film's facet value — the one assertion that does
         # NOT read through the same filter path, so it catches a build_facet_store extraction bug
@@ -306,6 +333,8 @@ def _check_assertion(a, recs, meta):
             got = meta.language(title)
         elif facet == 'attributes':
             got = meta.attributes(title)
+        elif facet == 'keyword_concepts':
+            got = meta.keyword_concepts(title)
         else:
             return False, f"unknown oracle facet '{facet}'"
         # Set-like facets (country/attributes) are order-insensitive — compare as sorted lists so a

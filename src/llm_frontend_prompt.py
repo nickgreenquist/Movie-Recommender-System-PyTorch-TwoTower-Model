@@ -19,8 +19,14 @@ import os
 
 import torch
 
+from src.llm_frontend import KEYWORD_CONCEPTS  # single source of the curated content-concept vocab
+
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _FEATURE_STORE = os.path.join(_REPO_ROOT, 'serving', 'feature_store.pt')
+
+# The closed set of concrete content TOPICS the keyword facet supports (chess / submarine / heist / …).
+# Injected into the schema + system prompt so the model only ever emits a supported concept key.
+_CONCEPT_KEYS_STR = ', '.join(sorted(KEYWORD_CONCEPTS))
 
 # Current year is injected so the model can resolve relative dates ("last 10 years").
 # Bump this (or wire it to the real clock at the API call site) as needed.
@@ -93,11 +99,12 @@ def build_schema(genres=None, fs=None):
                     'require_genome_tags': {'type': 'array', 'items': {'type': 'string'},
                                         'description': 'HARD floor: every result must genuinely carry '
                                         'ALL of these genome tags (copied EXACTLY from the genome '
-                                        'vocab). Use ONLY for an EMPHATIC SETTING or specific-theme '
-                                        'demand — "set in Japan" -> ["japan"], "actually about chess" '
-                                        '-> ["chess"]. Location SETTING only, DISTINCT from '
-                                        'require_country (nationality). The tag MUST be in the vocab; '
-                                        'when unsure whether the demand is emphatic, prefer soft '
+                                        'vocab). Use ONLY for an EMPHATIC SETTING / place demand — '
+                                        '"set in Japan" -> ["japan"], "takes place in Paris" -> '
+                                        '["paris"]. A place/SETTING only, DISTINCT from require_country '
+                                        '(nationality) and from require_keyword_concepts (a concrete '
+                                        'TOPIC like chess/submarine/heist). The tag MUST be in the '
+                                        'vocab; when unsure whether the demand is emphatic, prefer soft '
                                         'genome_tags instead.'},
                     'exclude_genome_tags': {'type': 'array', 'items': {'type': 'string'},
                                         'description': 'HARD anti-filter: drop any result carrying any '
@@ -119,6 +126,20 @@ def build_schema(genres=None, fs=None):
                                         'description': 'HARD format/attribute filter — "black and '
                                         'white", "silent", "directed by women", "based on a book", '
                                         '"based on a true story", "anime", "stop motion", "independent".'},
+                    'require_keyword_concepts': {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD boolean CONTENT filter: a concrete TOPIC '
+                                        'the film is ABOUT, chosen ONLY from this fixed list: '
+                                        + _CONCEPT_KEYS_STR + '. "movies about chess" -> ["chess"], '
+                                        '"submarine movies" -> ["submarine"], "a good heist film" -> '
+                                        '["heist"]. Emit the exact concept key(s). Precise topic '
+                                        'membership, DISTINCT from require_genres (a topic is not a '
+                                        'genre) and require_genome_tags (a place/SETTING). If the topic '
+                                        'is NOT in the list, do NOT invent one — use soft genome_tags '
+                                        'or drop it.'},
+                    'exclude_keyword_concepts': {'type': 'array', 'items': {'type': 'string'},
+                                        'description': 'HARD topic exclusion from the SAME concept list '
+                                        '— "no zombie movies" -> ["zombie"], "nothing with vampires" -> '
+                                        '["vampire"].'},
                     'require_max_rating': {'type': ['string', 'null'],
                                         'description': 'HARD US content-rating ceiling — one of "G", '
                                         '"PG", "PG-13", "R", "NC-17". "nothing R-rated" -> "PG-13"; '
@@ -192,8 +213,8 @@ specific, evocative ones like "quirky", "neo-noir", "atmospheric", "surreal", "s
     • NO titles given: decide require_genres / require_people / year FIRST — whether a HARD \
 constraint defines the request determines how to handle tags.
         – PURE VIBE or SOFT-GENRE TASTE (NO hard constraint at all — no require_genres, require_people, \
-require_genome_tags, require_country, require_language, require_attributes, require_franchise, \
-require_composers, rating/runtime/quality floor, AND no year limit — \
+require_genome_tags, require_keyword_concepts, require_country, require_language, require_attributes, \
+require_franchise, require_composers, rating/runtime/quality floor, AND no year limit — \
 "I love a good romance", "something dreamy and melancholy", "big fan of war movies", "into crime \
 and mystery"): \
 the tags ARE the query, so ALWAYS emit 3–5 specific mood/style tags — even when you also set a SOFT \
@@ -211,7 +232,8 @@ tags: an invented vibe tag pulls results off the required genre. When unsure her
 A named-person request ("Tom Hanks movies", "I like Tom Hanks movies" → require_people ["Tom Hanks"]) \
 is likewise defined by that person, NOT a vibe — emit NO mood tags unless a genuine extra vibe is stated. \
 The SAME holds for a request defined by a SETTING ("set in Japan" → require_genome_tags ["japan"]), a \
-NATIONALITY ("French films" → require_country), or a FORMAT / RATING / RUNTIME / FRANCHISE facet: set that \
+NATIONALITY ("French films" → require_country), a concrete TOPIC ("submarine movies" → \
+require_keyword_concepts ["submarine"]), or a FORMAT / RATING / RUNTIME / FRANCHISE facet: set that \
 hard slot and do NOT manufacture vibe tags — the facet is the query.
     • Titles GIVEN in liked_items: the named titles are the real query and they already encode \
 tone, intensity, and era — so use FEW tags (0–2), and only when they add something the titles \
@@ -249,10 +271,11 @@ Emit each person's FULL NAME as a free string ("Tom Hanks", not "Hanks"; "Christ
 taste, and never a genome_tag. (The model has no person concept, so this is the only way people work.)
     • exclude_people: HARD people exclusion → list the full names. "no Nolan films", "nothing with \
 Tom Cruise", "I'm sick of Nolan / show me other..." → exclude_people ["Christopher Nolan"] etc.
-    • require_genome_tags: HARD filter on SETTING or a SPECIFIC THEME, expressed as genome tags copied \
+    • require_genome_tags: HARD filter on a place/SETTING, expressed as genome tags copied \
 EXACTLY from the GENOME TAGS list. Use it ONLY for an EMPHATIC, explicit demand that a film BE SET IN a \
-place or BE ABOUT a specific subject — "set in Japan" / "takes place in Paris" / "based in New York" → \
-["japan"] / ["paris"] / ["new york city"]; "actually about chess" → ["chess"]. The place/subject MUST \
+place — "set in Japan" / "takes place in Paris" / "based in New York" → \
+["japan"] / ["paris"] / ["new york city"]. (A concrete TOPIC the film is ABOUT — chess, submarine, heist, \
+dinosaurs — goes to require_keyword_concepts, NOT here.) The place MUST \
 appear verbatim in the GENOME TAGS list — if it is NOT there, do NOT invent it (drop the place, or if a \
 softer word from the list captures the vibe use genome_tags instead). SETTING is NOT NATIONALITY: "set in \
 Japan" → require_genome_tags ["japan"] (WHERE it takes place), but "Japanese films" / "French cinema" → \
@@ -271,6 +294,13 @@ require_genome_tags ["japan"].
 "Korean-language". Free language names.
     • require_attributes: HARD format/attribute filter — "black and white", "silent", "directed by women", \
 "based on a book", "based on a true story", "anime", "stop motion", "independent / indie".
+    • require_keyword_concepts / exclude_keyword_concepts: HARD boolean CONTENT-topic filter over a curated \
+concept list ({keyword_concepts}). Use it when the request is ABOUT a concrete subject in that list — \
+"movies about chess" → require_keyword_concepts ["chess"], "submarine movies" / "a good heist" / \
+"something with dinosaurs" → the matching concept; "no zombie movies", "nothing with vampires" → \
+exclude_keyword_concepts ["zombie"] / ["vampire"]. Precise TOPIC membership, DISTINCT from require_genres (a \
+topic is not a genre) and require_genome_tags (a place/SETTING). Pick the concept key EXACTLY from the list; \
+if the topic is not listed, do NOT invent one — use soft genome_tags or drop it.
     • require_max_rating: HARD US content-rating ceiling — one of "G", "PG", "PG-13", "R", "NC-17". \
 "nothing R-rated" → "PG-13"; "kid-friendly" / "nothing too mature" → "PG". Drops anything stricter.
     • require_min_rating: HARD US content-rating FLOOR (mirror of the ceiling) — one of "G", "PG", "PG-13", \
@@ -298,8 +328,8 @@ NOT SUPPORTED — silently ignore these, do not invent fields for them: constrai
 studios / production companies ("A24 films", "a Pixar movie" as a STUDIO) and streaming availability \
 ("on Netflix", "what's streaming"). Still capture the rest of such a request. (Actors, directors, \
 writers, and composers ARE supported → require_people / require_composers; content ratings, runtime, \
-quality, franchises, nationality, language, and format ARE now supported → the hard_constraints slots \
-above. Route each to its slot, never to genome_tags.)
+quality, franchises, nationality, language, format, and concrete content TOPICS from the concept list ARE \
+now supported → the hard_constraints slots above. Route each to its slot, never to genome_tags.)
 
 GENRES (closed list — the only valid values for any genre field):
 {genres}
@@ -319,6 +349,7 @@ def build_system_prompt(fs=None):
         current_year_minus_10=CURRENT_YEAR - 10,
         genres=json.dumps(genres),
         genome_tags=json.dumps(genome_tags),
+        keyword_concepts=_CONCEPT_KEYS_STR,
     )
 
 
@@ -361,6 +392,20 @@ FEWSHOT_EXAMPLES = [
     ('I love a romantic movie with a bit of a Paris vibe',
      {'liked_genres': ['Romance'],
       'genome_tags': ['paris']}),
+    # Concrete TOPIC → keyword concept (hard), NOT a genre and NOT a genome setting; the facet is the query.
+    ('Movies about chess',
+     {'hard_constraints': {'require_keyword_concepts': ['chess']}}),
+    # TOPIC + a genuine liked seed: the topic hard-filters, the seed shapes ranking.
+    ('Loved Das Boot — any other good submarine movies?',
+     {'liked_items': ['Boot, Das (Boat, The) (1981)'],
+      'hard_constraints': {'require_keyword_concepts': ['submarine']}}),
+    # TOPIC exclusion.
+    ('A fun horror night but PLEASE no zombie movies',
+     {'liked_genres': ['Horror'],
+      'hard_constraints': {'exclude_keyword_concepts': ['zombie']}}),
+    # TOPIC not in the concept list → do NOT invent one; fall back to a soft genome tag.
+    ('Something about surfing on the beach',
+     {'hard_constraints': {'require_keyword_concepts': ['surfing']}}),
 ]
 
 

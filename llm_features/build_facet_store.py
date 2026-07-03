@@ -48,6 +48,8 @@ OUTPUT  (llm_features/cache/facet_store.pt — a build artifact; export bakes th
                                                     origin_country not production_countries (require_country, step C)
     movieId_to_language     : {mid: 'fr'}            original_language ISO 639-1 (require_language, step C)
     movieId_to_attributes   : {mid: ['black and white'…]}   curated format/attribute keys (require_attributes)
+    movieId_to_keyword_concepts: {mid: ['chess','heist'…]}  curated KEYWORD_CONCEPTS content facet
+                              (require/exclude_keyword_concepts hard boolean pre-filter)
     franchise_universe_aliases: {normalized_universe_phrase: [collection-name substring…]}   a small
                               curated table so "skip the MCU" (no single TMDB collection) resolves
     meta                    : build knobs + coverage counts
@@ -71,8 +73,8 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-from src.llm_frontend import (  # noqa: E402  (single normalization / format-vocab source)
-    _norm_name, resolve_person, FORMAT_ATTR_KEYWORDS)
+from src.llm_frontend import (  # noqa: E402  (single normalization / format+keyword-vocab source)
+    _norm_name, resolve_person, FORMAT_ATTR_KEYWORDS, KEYWORD_CONCEPTS)
 
 # Reverse of FORMAT_ATTR_KEYWORDS ({canonical attr: [TMDB keyword name…]}) → {tmdb keyword (lower):
 # canonical attr}, so a film's keyword list can be scanned to the compact attribute membership the
@@ -80,6 +82,14 @@ from src.llm_frontend import (  # noqa: E402  (single normalization / format-voc
 # TMDB tagger both use the whole clean keyword; see facet_store_plan overturned #4).
 _TMDB_KEYWORD_TO_ATTR = {
     kw.lower(): attr for attr, kws in FORMAT_ATTR_KEYWORDS.items() for kw in kws}
+
+# Reverse of KEYWORD_CONCEPTS ({canonical concept: [TMDB keyword name…]}) → {tmdb keyword (lower):
+# [concept…]}. Unlike the format map a keyword may belong to >1 concept ('casino heist' → casino + heist),
+# so the value is a list. Same EXACT-lowercase discipline (the allow-lists are hand-curated to exclude homonyms).
+_TMDB_KEYWORD_TO_CONCEPTS = {}
+for _concept, _kws in KEYWORD_CONCEPTS.items():
+    for _kw in _kws:
+        _TMDB_KEYWORD_TO_CONCEPTS.setdefault(_kw.lower(), []).append(_concept)
 
 
 # ── Constants ────────────────────────────────────────────────────────────────
@@ -216,6 +226,22 @@ def _format_attrs(dr):
     return attrs
 
 
+def _keyword_concepts(dr):
+    """The curated KEYWORD_CONCEPTS a film carries (chess / submarine / heist / …), from details_raw.keywords.
+
+    Scan the keyword names for an EXACT (lowercase) membership in _TMDB_KEYWORD_TO_CONCEPTS; a keyword may map
+    to >1 concept ('casino heist' → casino + heist), so accumulate the de-duped concept list. Empty if none."""
+    kw = dr.get('keywords') or {}
+    entries = kw.get('keywords') if isinstance(kw, dict) else (kw if isinstance(kw, list) else None)
+    concepts = []
+    for e in entries or []:
+        name = (e.get('name') if isinstance(e, dict) else e) or ''
+        for c in _TMDB_KEYWORD_TO_CONCEPTS.get(name.strip().lower(), ()):
+            if c not in concepts:
+                concepts.append(c)
+    return concepts
+
+
 def _attrs_from_record(record):
     """Pull the structured F1/step-C attribute facets from one record's tmdb sub-dict: US MPAA content
     rating (details_raw.release_dates), runtime minutes (tmdb.runtime), franchise/collection
@@ -275,6 +301,11 @@ def _attrs_from_record(record):
     attrs = _format_attrs(dr)
     if attrs:
         out['attributes'] = attrs
+
+    # Curated keyword CONTENT concepts (chess / submarine / heist / …) — a hard-filter membership axis.
+    concepts = _keyword_concepts(dr)
+    if concepts:
+        out['keyword_concepts'] = concepts
     return out
 
 
@@ -303,6 +334,7 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
     movieId_to_countries      = {}
     movieId_to_language       = {}
     movieId_to_attributes     = {}
+    movieId_to_keyword_concepts = {}
     n_no_tmdb = n_no_people = 0
 
     for path in files:
@@ -320,6 +352,7 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
         if 'countries'      in attrs: movieId_to_countries[mid]      = attrs['countries']
         if 'language'       in attrs: movieId_to_language[mid]       = attrs['language']
         if 'attributes'     in attrs: movieId_to_attributes[mid]     = attrs['attributes']
+        if 'keyword_concepts' in attrs: movieId_to_keyword_concepts[mid] = attrs['keyword_concepts']
 
         roles, id_to_name = _people_from_record(record, top_n_actors)
         if roles is None:
@@ -374,6 +407,7 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
         'movieId_to_countries':     movieId_to_countries,
         'movieId_to_language':      movieId_to_language,
         'movieId_to_attributes':    movieId_to_attributes,
+        'movieId_to_keyword_concepts': movieId_to_keyword_concepts,
         'franchise_universe_aliases': FRANCHISE_UNIVERSE_ALIASES,
         'meta': {
             'top_n_actors':     top_n_actors,
@@ -391,6 +425,7 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
             'n_countries':      len(movieId_to_countries),
             'n_language':       len(movieId_to_language),
             'n_attributes':     len(movieId_to_attributes),
+            'n_keyword_concepts': len(movieId_to_keyword_concepts),
         },
     }
 
@@ -431,11 +466,14 @@ def _spot_check(store, titles=None):
     print(f"  countries         : {m.get('n_countries', 0)}  ({100 * m.get('n_countries', 0) / n:.1f}%)")
     print(f"  languages         : {m.get('n_language', 0)}  ({100 * m.get('n_language', 0) / n:.1f}%)")
     print(f"  format attributes : {m.get('n_attributes', 0)}  ({100 * m.get('n_attributes', 0) / n:.1f}%)")
+    print(f"  keyword concepts  : {m.get('n_keyword_concepts', 0)}  ({100 * m.get('n_keyword_concepts', 0) / n:.1f}%)")
     from collections import Counter as _C
     lang_c = _C(store['movieId_to_language'].values())
     attr_c = _C(a for v in store['movieId_to_attributes'].values() for a in v)
+    concept_c = _C(c for v in store['movieId_to_keyword_concepts'].values() for c in v)
     print(f"  top languages     : {lang_c.most_common(8)}")
     print(f"  attribute counts  : {dict(attr_c)}")
+    print(f"  top concepts      : {concept_c.most_common(12)}")
 
     # Deterministic attribute spot-check on Toy Story (movieId 1): G / 81 min / Toy Story Collection.
     a = store['movieId_to_content_rating'].get(1), store['movieId_to_runtime'].get(1)

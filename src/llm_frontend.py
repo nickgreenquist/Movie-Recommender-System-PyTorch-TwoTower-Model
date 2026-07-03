@@ -583,6 +583,126 @@ FORMAT_ALIASES = {
     'indie': 'independent film', 'independent': 'independent film', 'independent film': 'independent film',
     'indie film': 'independent film',
 }
+# Keyword CONTENT concepts — a curated set of concrete "movies about X" nouns (chess / submarine / boxing /
+# dinosaur / …) where the two-tower + genome path is WEAK: genome is thin on niche topics, its top signal is
+# award/meta-polluted (Rocky's top genome tags are 4 Oscars + `sports`; `boxing` is 13th), and cheap surface
+# nouns collide with homonyms. TMDB's crowd-sourced keywords carry these cleanly, so a HARD boolean membership
+# pre-filter (require_keyword_concepts) beats a genome floor for concrete-noun intent, and composes with the
+# empty→popularity fallback. Each canonical concept maps to the EXACT (lowercase) TMDB keyword name(s)
+# build_facet_store scans for; the allow-list is hand-curated to EXCLUDE homonyms (chess ≠ `duchess`; shark ≠
+# `loan shark`; heist ≠ `atheist`; alien invasion ≠ `alienation`; outer space includes `space opera` but wine ≠
+# `swine`, opera ≠ `space opera`). Import KEYWORD_CONCEPTS into the builder so stored membership + the resolver
+# share one vocabulary (mirrors FORMAT_ATTR_KEYWORDS). Verdict-driven: replaces the abandoned narrative-dimension
+# feature (redundant with genome's story-shape tags) — see project_narrative_dimension_plan / facet_store_plan.
+KEYWORD_CONCEPTS = {
+    'chess': ['chess', 'playing chess', 'chess tournament', 'chess match', 'chess champion'],
+    'submarine': ['submarine', 'nuclear submarine', 'submarine commander', 'mini submarine', 'russian submarine', 'submarine warfare', 'submarine crew'],
+    'boxing': ['boxing', 'boxer', 'bare knuckle boxing', 'boxing trainer', 'boxing match', 'boxing school', 'boxing champion', 'kick boxing', 'kickboxing', 'boxing ring'],
+    'dinosaur': ['dinosaur', 'robot dinosaur'],
+    'shark': ['shark', 'shark attack', 'great white shark', 'killer shark', 'shark cage'],
+    'poker': ['poker', 'poker game'],
+    'surfing': ['surfing', 'surfer', 'surfboard', 'surf', 'surfing contest'],
+    'mountain climbing': ['climbing', 'mountain climbing', 'rock climbing', 'free climbing', 'solo climbing', 'climbing accident'],
+    'sailing': ['sailing', 'sailor', 'sailboat', 'sailing ship', 'sailing trip', 'sail boat'],
+    'wine': ['wine', 'wine cellar', 'winery', 'winegrowing'],
+    'cooking': ['cooking', 'chef', 'celebrity chef', 'cookbook', 'gourmet cook', 'masterchef'],
+    'jazz': ['jazz', 'jazz singer or musician', 'jazz club', 'jazz band', 'jazz age', 'jazz music', 'hot jazz'],
+    'zombie': ['zombie', 'zombies', 'zombie apocalypse', 'zombie horror', 'zombie comedy'],
+    'vampire': ['vampire', 'vampire hunter (slayer)', 'vampiress (female vampire)', 'child vampire', 'vampire human love', 'vampire bat'],
+    'werewolf': ['werewolf', 'werewolf child'],
+    'ghost': ['ghost', 'ghost ship', 'ghost story', 'ghost child', 'vengeful ghost', 'ghost hunting'],
+    'witch': ['witch', 'witchcraft', 'school of witchcraft', 'witch hunt', 'witch burning', 'evil witch'],
+    'samurai': ['samurai', 'samurai sword', 'code of the samurai', 'samurai western'],
+    'pirate': ['pirate', 'pirate gang', 'pirate ship', 'space pirate'],
+    'viking': ['vikings (norsemen)'],
+    'gladiator': ['gladiator', 'gladiator fight'],
+    'knight': ['knight', 'knights of the round table', 'knight templars', 'knights templar', 'medieval knight'],
+    'cowboy': ['cowboy', 'rodeo cowboy', 'singing cowboy'],
+    'robot': ['robot', 'giant robot', 'killer robot', 'humanoid robot', 'robot cop', 'robot as menace', 'robotics'],
+    'cyborg': ['cyborg', 'female cyborg'],
+    'android': ['android', 'android horror', 'synthetic android', 'human android relationship'],
+    'virtual reality': ['virtual reality'],
+    'time travel': ['time travel'],
+    'time loop': ['time loop'],
+    'alien invasion': ['alien', 'aliens', 'alien invasion', 'alien life-form', 'alien planet', 'alien abduction', 'alien contact'],
+    'outer space': ['space travel', 'spacecraft', 'space station', 'spaceship', 'outer space', 'space opera', 'space marine', 'astronaut'],
+    'nuclear weapons': ['nuclear war', 'nuclear weapons', 'nuclear missile', 'nuclear explosion', 'nuclear threat', 'nuclear radiation', 'nuclear bomb', 'atomic bomb'],
+    'pandemic': ['pandemic', 'epidemic', 'outbreak', 'lethal virus'],
+    'circus': ['circus', 'traveling circus', 'circus freak'],
+    'casino': ['casino', 'casino owner', 'casino heist', 'casino vault'],
+    'prison': ['prison', 'prisoner', 'prison escape', 'imprisonment', "women's prison", 'prison break', 'release from prison', 'prisoner of war'],
+    'heist': ['heist', 'bank heist', 'jewelry heist', 'diamond heist', 'art heist', 'gold heist', 'heist gone wrong', 'casino heist'],
+    'dragon': ['dragon', 'dragonslayer', 'dragon egg', 'dragon rider', 'talking dragon', 'komodo dragon'],
+    'wizard': ['wizard', 'wizardry'],
+    'kung fu': ['kung fu', 'kung fu master', 'shaolin kung fu'],
+    'martial arts': ['martial arts', 'martial arts master', 'martial arts tournament', 'martial arts training', 'martial arts school', 'female martial artist'],
+    'mixed martial arts': ['mixed martial arts (mma)'],
+    'wrestling': ['wrestling', 'wrestler', 'pro wrestling', 'wrestling coach', 'pro wrestlers', 'pro wrestler', 'arm wrestling'],
+    'baseball': ['baseball', 'baseball player', 'baseball stadium', 'major league baseball (mlb)', 'baseball bat', 'baseball pitcher', 'baseball team', 'baseball hall of fame'],
+    'basketball': ['basketball', 'basketball player', 'national basketball association (nba)', 'basketball coach', 'basketball team'],
+    'american football': ['american football', 'american football coach', 'american football team', 'high school american football', 'nfl (national football league)'],
+    'soccer': ['football (soccer)', 'amateur football (soccer)', 'football (soccer) coach'],
+    'golf': ['golf', 'golf tournament', 'golfers', 'golf course', 'golf instructor'],
+    'skateboarding': ['skateboarding', 'skateboarder'],
+    'motorcycle': ['motorcycle', 'motorcycle gang', 'motorcycle chase', 'motorcycle crash'],
+    'mafia': ['mafia', 'bratva (russian mafia)', 'mafia boss', 'chinese mafia', 'sicilian mafia', 'mafia family', 'italian mafia', 'japanese mafia'],
+    'yakuza': ['yakuza', 'female yakuza', 'yakuza eiga'],
+    'cannibal': ['cannibal', 'cannibalism', 'self-cannibalism'],
+    'spy': ['spy', 'british spy', 'russian spy', 'female spy', 'spy thriller', 'american spy', 'teen spy', 'spy ring'],
+    'ballet': ['ballet', 'ballet dancer', 'ballet school', 'ballet performance', 'ballet dancing', 'ballet company', 'bolshoi ballet'],
+    'opera': ['opera', 'opera singer', 'rock opera'],
+    'magic': ['magic', 'black magic', 'magician', 'magic show', 'magical creature', 'magical object'],
+}
+# User phrasing (normalized via _norm_name) → canonical concept, for phrasings the LLM may emit that aren't the
+# concept key itself (plurals + close synonyms). The resolver also accepts any concept key VERBATIM, so this only
+# needs the deltas. Kept exact (no substring) — same discipline as the other facet resolvers.
+KEYWORD_CONCEPT_ALIASES = {
+    'submarines': 'submarine',
+    'boxer': 'boxing', 'boxers': 'boxing', 'prizefighting': 'boxing', 'prize fighting': 'boxing',
+    'dinosaurs': 'dinosaur',
+    'sharks': 'shark',
+    'surfer': 'surfing', 'surfers': 'surfing', 'surfboarding': 'surfing',
+    'climbing': 'mountain climbing', 'rock climbing': 'mountain climbing', 'mountaineering': 'mountain climbing',
+    'sailboat': 'sailing', 'sailors': 'sailing', 'yachting': 'sailing',
+    'vineyard': 'wine', 'winemaking': 'wine', 'sommelier': 'wine',
+    'chef': 'cooking', 'chefs': 'cooking', 'culinary': 'cooking', 'cuisine': 'cooking', 'cook': 'cooking', 'cooks': 'cooking',
+    'zombies': 'zombie', 'undead': 'zombie',
+    'vampires': 'vampire',
+    'werewolves': 'werewolf', 'lycanthrope': 'werewolf',
+    'ghosts': 'ghost', 'haunting': 'ghost', 'haunted house': 'ghost', 'poltergeist': 'ghost',
+    'witches': 'witch', 'sorceress': 'witch',
+    'samurais': 'samurai', 'ronin': 'samurai',
+    'pirates': 'pirate',
+    'vikings': 'viking', 'norse': 'viking', 'norsemen': 'viking',
+    'gladiators': 'gladiator',
+    'knights': 'knight',
+    'cowboys': 'cowboy',
+    'robots': 'robot',
+    'cyborgs': 'cyborg',
+    'androids': 'android',
+    'vr': 'virtual reality',
+    'time travelling': 'time travel', 'time traveling': 'time travel',
+    'aliens': 'alien invasion', 'alien': 'alien invasion', 'extraterrestrial': 'alien invasion', 'extraterrestrials': 'alien invasion', 'ufo': 'alien invasion', 'ufos': 'alien invasion',
+    'space': 'outer space', 'in space': 'outer space', 'spaceship': 'outer space', 'spaceships': 'outer space', 'astronaut': 'outer space', 'astronauts': 'outer space', 'space travel': 'outer space',
+    'nuclear war': 'nuclear weapons', 'nuclear weapon': 'nuclear weapons', 'nuclear bomb': 'nuclear weapons', 'atomic bomb': 'nuclear weapons', 'nukes': 'nuclear weapons',
+    'epidemic': 'pandemic', 'outbreak': 'pandemic', 'plague': 'pandemic', 'contagion': 'pandemic', 'virus outbreak': 'pandemic',
+    'casinos': 'casino', 'gambling': 'casino',
+    'prisons': 'prison', 'jail': 'prison', 'incarceration': 'prison', 'prison break': 'prison',
+    'heists': 'heist',
+    'dragons': 'dragon',
+    'wizards': 'wizard', 'sorcerer': 'wizard', 'sorcery': 'wizard',
+    'kungfu': 'kung fu',
+    'martial art': 'martial arts', 'karate': 'martial arts',
+    'mma': 'mixed martial arts', 'cage fighting': 'mixed martial arts',
+    'wrestlers': 'wrestling', 'pro wrestling': 'wrestling',
+    'nfl': 'american football',
+    'motorcycles': 'motorcycle', 'biker': 'motorcycle', 'bikers': 'motorcycle', 'motorbike': 'motorcycle',
+    'mob': 'mafia', 'mobster': 'mafia', 'mobsters': 'mafia', 'cosa nostra': 'mafia',
+    'cannibals': 'cannibal', 'cannibalism': 'cannibal',
+    'spies': 'spy', 'espionage': 'spy', 'secret agent': 'spy',
+    'magician': 'magic', 'magicians': 'magic',
+}
+_KEYWORD_CONCEPT_KEYS = set(KEYWORD_CONCEPTS)
 # Valid raw codes accepted verbatim (the LLM often emits the ISO code directly, e.g. require_original_language="zh").
 _COUNTRY_CODES = set(COUNTRY_ALIASES.values()) | {c for cs in COUNTRY_REGIONS.values() for c in cs}
 _LANGUAGE_CODES = {c for cs in LANGUAGE_ALIASES.values() for c in cs}
@@ -594,6 +714,7 @@ def resolve_facet(phrase, kind):
     kind='country'  → [ISO 3166-1 alpha-2 …]  ("French"→['FR']; "Scandinavian"→['SE','DK','NO','FI','IS'])
     kind='language' → [ISO 639-1 …]           ("Chinese"→['zh','cn']; "fr"→['fr'])
     kind='format'   → [canonical attr key …]  ("black & white"→['black and white'])
+    kind='keyword'  → [canonical concept …]   ("submarines"→['submarine']; "chess"→['chess'])
 
     Strategy mirrors resolve_person/resolve_mood: normalize (lowercase, accent-fold, punctuation→space
     via _norm_name) → exact alias-map hit → for country/language also accept a raw ISO code verbatim
@@ -620,6 +741,12 @@ def resolve_facet(phrase, kind):
     if kind == 'format':
         if norm in FORMAT_ALIASES:
             return [FORMAT_ALIASES[norm]], 'exact'
+        return [], 'no match'
+    if kind == 'keyword':
+        if norm in _KEYWORD_CONCEPT_KEYS:   # canonical concept key emitted verbatim
+            return [norm], 'exact'
+        if norm in KEYWORD_CONCEPT_ALIASES:
+            return [KEYWORD_CONCEPT_ALIASES[norm]], 'alias'
         return [], 'no match'
     return [], f'unknown kind {kind!r}'
 
@@ -1038,6 +1165,24 @@ def _passes_constraints(mid, fs, hc, facets=None):
         if not all(a in attrs for a in req_attrs):
             return False
 
+    # Keyword CONTENT concepts (require/exclude_keyword_concept_keys = canonical concepts resolved upstream),
+    # e.g. chess / submarine / heist — a HARD boolean membership pre-filter over the curated TMDB-keyword store
+    # (KEYWORD_CONCEPTS). require = ALL present (AND, mirrors require_genres/attributes — "movies about chess"
+    # wants a chess film); exclude = NONE present (ANY hit drops). Same two-level absence as the other facets:
+    # whole table missing (ctx.facets None / old artifact) → skip the gate (graceful, else every film drops);
+    # present but this film carries no concepts → its concept set is empty, so it FAILS a require (an explicit
+    # "about X" demand must not admit a film with no such tag) and PASSES an exclude. Recall ≤ keyword coverage —
+    # an untagged member is a false negative, same precision/recall trade as the format facet.
+    req_kw = hc.get('require_keyword_concept_keys') or []
+    exc_kw = hc.get('exclude_keyword_concept_keys') or []
+    ktab = facets.get('movieId_to_keyword_concepts')
+    if (req_kw or exc_kw) and ktab is not None:
+        concepts = set(ktab.get(mid) or [])
+        if req_kw and not all(k in concepts for k in req_kw):
+            return False
+        if exc_kw and any(k in concepts for k in exc_kw):
+            return False
+
     # People (actors/directors/writers/composers), resolved to IDs upstream.
     require_p = hc.get('require_people_ids') or []
     exclude_p = hc.get('exclude_people_ids') or []
@@ -1197,6 +1342,27 @@ def recommend(ctx, extraction, top_n=TOP_N):
           'require_country_codes':  facet_codes['country'],
           'require_language_codes': facet_codes['language'],
           'require_attribute_keys': facet_codes['attribute']}
+
+    # 1c-bis. Resolve keyword CONTENT concepts (require/exclude_keyword_concepts → canonical concept keys via
+    #     resolve_facet(kind='keyword')). Concrete-noun "movies about chess" / "no zombie movies" intent → a
+    #     HARD boolean membership gate on the curated TMDB-keyword store (KEYWORD_CONCEPTS), distinct from the
+    #     genome floor (award/meta-polluted on niche topics) and from require_genres (chess is not a genre).
+    #     Each slot is a string or list; unresolved phrases are reported + dropped like the other facets.
+    kw_codes = {'require': [], 'exclude': []}
+    kw_log   = {'require': [], 'exclude': []}
+    for bucket, hc_key in (('require', 'require_keyword_concepts'), ('exclude', 'exclude_keyword_concepts')):
+        raw = hc.get(hc_key)
+        for phrase in ([raw] if isinstance(raw, str) else (raw or [])):
+            if not isinstance(phrase, str):
+                continue
+            vals, note = resolve_facet(phrase, 'keyword')
+            kw_log[bucket].append((phrase, vals, note))
+            for v in vals:
+                if v not in kw_codes[bucket]:
+                    kw_codes[bucket].append(v)
+    hc = {**hc,
+          'require_keyword_concept_keys': kw_codes['require'],
+          'exclude_keyword_concept_keys': kw_codes['exclude']}
 
     # 1d. Genre-pool degradation (step C thread 2 — see the L1/L2/L3 constants). Record the WANTED
     #     genre set (require_genres ∪ liked_genres) for the L1 re-rank + L3 diversity caps, and decide

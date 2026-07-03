@@ -3352,5 +3352,163 @@
     "built": true,
     "note": "Rating-FLOOR facet: the prompt/schema only offered require_max_rating (a one-sided CEILING), so a POSITIVE maturity ask ('R-rated') had no slot -> dropped -> G/PG family films (Shrek, Finding Nemo, Monsters Inc) dominated 'R-rated comedies'. Added require_min_rating (mirror of the ceiling; drops films rated TAMER, same unknown-cert-keeps absence contract) + the min_rating ruler assertion. With require_min_rating R: all top-10 are R comedies (Hangover/Superbad/Shaun of the Dead/Zombieland/40-Year-Old Virgin). min_rating R + excludes Shrek are RED without the floor, GREEN with it. Pure opt-in post-filter: no existing case sets require_min_rating, so zero regression to the core retrieval evals.",
     "mode": "structured_facet_rating"
+  },
+  {
+    "utterance": "Movies about chess",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_keyword_concepts": [
+          "chess"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "all_have_keyword_concept",
+        "concept": "chess",
+        "k": 10
+      },
+      {
+        "type": "oracle",
+        "title": "Searching for Bobby Fischer (1993)",
+        "facet": "keyword_concepts",
+        "equals": [
+          "chess"
+        ]
+      },
+      {
+        "type": "oracle",
+        "title": "Duchess, The (2008)",
+        "facet": "keyword_concepts",
+        "equals": null
+      },
+      {
+        "type": "excludes_title_substr",
+        "substr": "Duchess",
+        "k": 10
+      }
+    ],
+    "needs_feature": "require_keyword_concepts",
+    "built": true,
+    "note": "Keyword CONTENT facet (chess = a genome-THIN / homonym-prone concrete topic). require_keyword_concepts hard-gates to the 14 TMDB-tagged chess films; without the facet 'about chess' routed to a genome floor that is noisy on niche topics. all_have_keyword_concept: every top-10 is a real chess film (Searching for Bobby Fischer / Fresh). ORACLE homonym guards: Searching for Bobby Fischer carries exactly ['chess']; 'The Duchess' carries NO concept (its 'duchess' keyword contains the substring 'chess' but the curated allow-list is EXACT, so it is correctly excluded). RED before the facet (no such slot -> popularity), GREEN after.",
+    "mode": "keyword_concept_chess"
+  },
+  {
+    "utterance": "Loved The Hunt for Red October — any other good submarine movies?",
+    "extraction": {
+      "liked_items": [
+        "Hunt for Red October, The (1990)"
+      ],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_keyword_concepts": [
+          "submarine"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "all_have_keyword_concept",
+        "concept": "submarine",
+        "k": 10
+      },
+      {
+        "type": "oracle",
+        "title": "Hunt for Red October, The (1990)",
+        "facet": "keyword_concepts",
+        "equals": [
+          "submarine"
+        ]
+      }
+    ],
+    "needs_feature": "require_keyword_concepts",
+    "built": true,
+    "note": "Keyword facet with a liked SEED: the concept hard-filters to submarine films, the seed shapes ranking WITHIN. all_have_keyword_concept submarine holds for every top-10. Oracle: Hunt for Red October carries exactly ['submarine'].",
+    "mode": "keyword_concept_submarine_seed"
+  },
+  {
+    "utterance": "A fun horror night, but PLEASE no zombie movies",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [
+        "Horror"
+      ],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "exclude_keyword_concepts": [
+          "zombie"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "excludes_keyword_concept",
+        "concept": "zombie",
+        "k": 10
+      },
+      {
+        "type": "oracle",
+        "title": "Shaun of the Dead (2004)",
+        "facet": "keyword_concepts",
+        "equals": [
+          "zombie"
+        ]
+      },
+      {
+        "type": "contains_genre",
+        "genre": "Horror",
+        "k": 10,
+        "min": 4
+      }
+    ],
+    "needs_feature": "exclude_keyword_concepts",
+    "built": true,
+    "note": "exclude_keyword_concepts drops the topic while keeping the genre: no top-10 rec carries the 'zombie' concept, yet the pool stays Horror. Oracle: Shaun of the Dead IS tagged zombie (so it is a genuine exclusion, not a vacuous pass).",
+    "mode": "keyword_concept_exclude_zombie"
+  },
+  {
+    "utterance": "Movies about a heist",
+    "extraction": {
+      "liked_items": [],
+      "disliked_items": [],
+      "liked_genres": [],
+      "disliked_genres": [],
+      "genome_tags": [],
+      "hard_constraints": {
+        "require_keyword_concepts": [
+          "heist"
+        ]
+      }
+    },
+    "assertions": [
+      {
+        "type": "all_have_keyword_concept",
+        "concept": "heist",
+        "k": 10
+      },
+      {
+        "type": "oracle",
+        "title": "Ocean's Eleven (2001)",
+        "facet": "keyword_concepts",
+        "equals": [
+          "casino",
+          "heist"
+        ]
+      }
+    ],
+    "needs_feature": "require_keyword_concepts",
+    "built": true,
+    "note": "Keyword facet on a genome-COVERED concept (genome carries 'heist' strongly): the boolean membership pre-filter is still a clean, precise path for a concrete-noun ask and composes with the popularity fallback. Oracle: Ocean's Eleven carries both concepts it earns ('casino' via its keyword + 'heist'), demonstrating multi-concept membership.",
+    "mode": "keyword_concept_heist"
   }
 ]
