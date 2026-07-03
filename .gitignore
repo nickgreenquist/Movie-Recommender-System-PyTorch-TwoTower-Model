@@ -10,3 +10,4 @@ llm_features/cache/
 .playwright-mcp/
 .streamlit/secrets.toml
 docs/llm_frontend/validation/v4_resume/
+tools/results/traces/
