@@ -754,6 +754,10 @@ def tab_ask(art, posters, tmdb_ids):
         "is the interface, not the recommender, and its output is never shown. See the About tab for "
         "why this is the production pattern."
     )
+    st.caption(
+        "📀 Catalog: MovieLens 32M (movies with 200+ ratings) — well-covered through ~2019 and sparse "
+        "after, so very recent films (2023+) and newer stars may return thin or no results."
+    )
 
     utterance = st.text_area(
         "What do you feel like watching?",
@@ -796,6 +800,13 @@ def tab_ask(art, posters, tmdb_ids):
 
     report = st.session_state.get('ask_report')
     if report is not None:
+        relaxed = report.get('relaxed_constraints') or []
+        if relaxed:
+            labels = {'require_attributes': 'format', 'require_genome_tags': 'vibe/setting',
+                      'require_genres': 'genre', 'require_keyword_concepts': 'topic'}
+            dropped = ", ".join(labels.get(r, r) for r in relaxed)
+            st.info(f"No exact matches for every constraint — showing the closest titles, with these "
+                    f"relaxed: **{dropped}**. Identity filters (people, franchise, rating, year) were kept.")
         _render_ask_debug(report)
     _show_results('ask', posters, fs, tmdb_ids)
 

@@ -203,11 +203,16 @@ def render_trace(report, utterance, top_n):
     L.extend(f)
     L.append("")
     L.append(_fmt_kv("candidates dropped by filters", report['filtered']))
+    if report.get('ranked_by_similarity'):
+        L.append(_fmt_kv("ranking", "item-item genome content similarity ('movies like X', Similar-tab space)"))
+    if report.get('relaxed_constraints'):
+        L.append(_fmt_kv("⚠ empty pool → relaxed (closest matches)", ", ".join(report['relaxed_constraints'])))
     L.append("")
 
     # §5 Recommendations (what the user sees)
     n = len(report['recs'])
-    src = 'popularity fallback' if fallback else 'model retrieval'
+    src = ('genome similarity' if report.get('ranked_by_similarity')
+           else 'popularity fallback' if fallback else 'model retrieval')
     L.append(f"## 5. Recommendations — top {n} _(source: {src}; this is what the user sees)_")
     L.append("")
     L.append("| # | Title | Year | Genres | cos |")

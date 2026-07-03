@@ -1562,59 +1562,89 @@ def recommend(ctx, extraction, top_n=TOP_N):
     #    Cast Away should be recommendable). So anchors stay eligible for the output.
     seed_titles = set(liked_resolved) | set(disliked_resolved)
     facets = ctx.facets  # baked facet store (people + F1 structured tables), or None if unbaked
-    recs, kept, filtered = [], 0, 0
-    if fallback:
-        ranked_titles = fs['popularity_ordered_titles']
-        title_to_mid = fs['title_to_movieId']
-        for title in ranked_titles:
-            mid = title_to_mid.get(title)
-            if mid is None or title in seed_titles:
-                continue
-            if gt_floor_ok is not None and mid not in gt_floor_ok:
-                filtered += 1
-                continue
-            if mid in gt_exclude_bad:
-                filtered += 1
-                continue
-            if not _passes_constraints(mid, fs, hc, facets):
-                filtered += 1
-                continue
-            recs.append((title, fs['movieId_to_genres'].get(mid, []), fs['movieId_to_year'].get(mid), None))
-            kept += 1
-            if kept >= top_n:
-                break
-    else:
-        order = raw_scores.argsort(descending=True).tolist()
-        diversify = bool(wanted_genres)   # step C thread 2 L3: only genre-oriented asks get diversified
-        # Collect eligible candidates in score order (seed/floor/constraint-filtered). Without
-        # diversification the first top_n suffice; with it, scan a bounded pool so the diversity
-        # backfill has room to inject under-represented genres (see _select_diverse).
-        scan_cap = max(CANDIDATE_POOL, top_n * 4) if diversify else top_n
+    order = raw_scores.argsort(descending=True).tolist() if not fallback else None
+    diversify = bool(wanted_genres)   # step C thread 2 L3: only genre-oriented asks get diversified
+
+    def _run_select(hc_, gt_floor_ok_, diversify_):
+        """Collect up to top_n recs under the given (possibly relaxed) hard constraints + genome floor.
+        Shared by the popularity-fallback and model-ranked paths, and re-called by the relaxation ladder
+        below. gt_exclude_bad / seed_titles / exclusions are captured fixed — never relaxed. Returns
+        (recs, filtered_count)."""
+        out, filt = [], 0
+        if fallback:
+            title_to_mid = fs['title_to_movieId']
+            for title in fs['popularity_ordered_titles']:
+                mid = title_to_mid.get(title)
+                if mid is None or title in seed_titles:
+                    continue
+                if gt_floor_ok_ is not None and mid not in gt_floor_ok_:
+                    filt += 1; continue
+                if mid in gt_exclude_bad:
+                    filt += 1; continue
+                if not _passes_constraints(mid, fs, hc_, facets):
+                    filt += 1; continue
+                out.append((title, fs['movieId_to_genres'].get(mid, []),
+                            fs['movieId_to_year'].get(mid), None))
+                if len(out) >= top_n:
+                    break
+            return out, filt
+        # model-ranked path: collect eligible in score order; scan a bounded pool when diversifying so
+        # the backfill has room to inject under-represented genres (see _select_diverse).
+        scan_cap = max(CANDIDATE_POOL, top_n * 4) if diversify_ else top_n
         eligible = []
         for i in order:
             mid = ctx.all_ids[i]
             title = fs['movieId_to_title'][mid]
             if title in seed_titles:
                 continue
-            if gt_floor_ok is not None and mid not in gt_floor_ok:
-                filtered += 1
-                continue
+            if gt_floor_ok_ is not None and mid not in gt_floor_ok_:
+                filt += 1; continue
             if mid in gt_exclude_bad:
-                filtered += 1
-                continue
-            if not _passes_constraints(mid, fs, hc, facets):
-                filtered += 1
-                continue
+                filt += 1; continue
+            if not _passes_constraints(mid, fs, hc_, facets):
+                filt += 1; continue
             eligible.append((i, mid, title))
             if len(eligible) >= scan_cap:
                 break
         chosen = (_select_diverse(eligible, fs, wanted_genres,
                                   require_genres_orig if blend else [], top_n, raw_scores.tolist())
-                  if diversify else eligible[:top_n])
+                  if diversify_ else eligible[:top_n])
         for i, mid, title in chosen:
-            recs.append((title, fs['movieId_to_genres'].get(mid, []),
-                         fs['movieId_to_year'].get(mid), float(raw_scores[i])))
-        kept = len(recs)
+            out.append((title, fs['movieId_to_genres'].get(mid, []),
+                        fs['movieId_to_year'].get(mid), float(raw_scores[i])))
+        return out, filt
+
+    recs, filtered = _run_select(hc, gt_floor_ok, diversify)
+
+    # Graceful relaxation: when the hard filters empty the pool, progressively drop the SOFTEST require
+    # gates — attributes → genome-tag floor → genre → keyword topic — keeping user IDENTITY (people,
+    # franchise, rating, year) and every exclude_ gate intact, until something surfaces. The order runs
+    # modifier→core: format (indie/b&w) and the genome vibe/setting floor go first ("dark gritty western"
+    # with no matches keeps WESTERN, drops the vibe), then the genre label, and the concrete keyword topic
+    # is dropped LAST ("comedy heist" with no matches keeps HEIST, drops comedy — a topic defines the ask
+    # more than its genre). Identity gates are never relaxed (relaxing "Zendaya" or "PG for my kid"
+    # defeats the request — an empty pool there is the honest answer). Only fires on an EMPTY pool; a
+    # thin-but-valid result (e.g. 5 Zendaya films) is left untouched. Each relaxed rung is recorded so
+    # the UI/trace can label the output "closest matches (relaxed: …)".
+    relaxed_constraints = []
+    if not recs:
+        cur_hc, cur_floor = dict(hc), gt_floor_ok
+        for name in ('require_attributes', 'require_genome_tags', 'require_genres', 'require_keyword_concepts'):
+            applied = False
+            if name == 'require_genome_tags' and cur_floor is not None:
+                cur_floor = None; applied = True
+            elif name == 'require_attributes' and cur_hc.get('require_attribute_keys'):
+                cur_hc = {k: v for k, v in cur_hc.items() if k != 'require_attribute_keys'}; applied = True
+            elif name == 'require_genres' and (cur_hc.get('require_genres') or cur_hc.get('require_genres_or')):
+                cur_hc = {k: v for k, v in cur_hc.items() if k not in ('require_genres', 'require_genres_or')}; applied = True
+            elif name == 'require_keyword_concepts' and cur_hc.get('require_keyword_concept_keys'):
+                cur_hc = {k: v for k, v in cur_hc.items() if k != 'require_keyword_concept_keys'}; applied = True
+            if not applied:
+                continue
+            relaxed_constraints.append(name)
+            recs, filtered = _run_select(cur_hc, cur_floor, False)
+            if recs:
+                break
 
     return {
         'extraction': extraction,
@@ -1631,5 +1661,6 @@ def recommend(ctx, extraction, top_n=TOP_N):
         'seed_count': len(seed_titles),
         'fallback': fallback,
         'filtered': filtered,
+        'relaxed_constraints': relaxed_constraints,  # soft gates dropped to rescue an empty pool (else [])
         'recs': recs,
     }
