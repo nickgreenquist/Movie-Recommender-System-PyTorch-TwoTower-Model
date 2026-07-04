@@ -224,18 +224,36 @@ def render_trace(report, utterance, top_n):
         L.append(_fmt_kv("⚠ empty pool → relaxed (closest matches)", ", ".join(report['relaxed_constraints'])))
     L.append("")
 
-    # §5 Recommendations (what the user sees)
+    # §5 Recommendations (what the user sees) — step-4 transparency layer renders here: the intent
+    # echo + relaxation/capability notices lead the section, per-rec provenance rides a `matched`
+    # column, and an out-of-domain catch replaces the table with the honest decline + showcase chips.
+    if report.get('out_of_domain'):
+        L.append("## 5. Recommendations — none _(out-of-domain request)_")
+        L.append("")
+        L.append(f"> 🧭 {report['intent_echo']}")
+        if report.get('showcase_queries'):
+            L.append("> Try: " + " · ".join(f"_{q}_" for q in report['showcase_queries']))
+        L.append("")
+        return "\n".join(L)
     n = len(report['recs'])
     src = ('genome similarity' if report.get('ranked_by_similarity')
            else 'popularity fallback' if fallback else 'model retrieval')
     L.append(f"## 5. Recommendations — top {n} _(source: {src}; this is what the user sees)_")
     L.append("")
-    L.append("| # | Title | Year | Genres | cos |")
-    L.append("|--:|-------|-----:|--------|----:|")
+    if report.get('intent_echo'):
+        L.append(f"> 🧭 {report['intent_echo']}")
+    for key, glyph in (('relaxation_notice', '⚠'), ('capability_notice', 'ℹ')):
+        if report.get(key):
+            L.append(f"> {glyph} {report[key]}")
+    L.append("")
+    prov = report.get('rec_provenance') or []
+    L.append("| # | Title | Year | Genres | cos | matched |")
+    L.append("|--:|-------|-----:|--------|----:|---------|")
     for rank, (title, genres, year, score) in enumerate(report['recs'][:top_n], 1):
         sc = f"{score:+.3f}" if score is not None else "—"
         g = ", ".join(genres) if genres else ""
-        L.append(f"| {rank} | {title} | {year or '—'} | {g} | {sc} |")
+        chips = ", ".join(prov[rank - 1]) if rank - 1 < len(prov) else ""
+        L.append(f"| {rank} | {title} | {year or '—'} | {g} | {sc} | {chips} |")
     L.append("")
     return "\n".join(L)
 

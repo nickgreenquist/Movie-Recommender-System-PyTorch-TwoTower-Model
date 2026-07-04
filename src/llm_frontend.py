@@ -159,6 +159,33 @@ GENRE_AND_POOL_MIN = 3
 COGENRE_CAP_FRAC       = 0.4
 MMR_SIGNATURE_LAMBDA   = 0.35
 
+# ── Step-4 transparency layer (plan step 4 — portfolio-grade graceful degradation) ──────────────
+# Presentation-only report fields composed at the end of recommend(): an intent echo ("Understood:
+# 🎯 dog · ✨ cozy — ranked by taste match."), per-rec provenance chips ("dog @0.98, heartwarming"),
+# honest wording over relaxed_constraints, a capability-boundary line for demands nothing could
+# ground, and an out-of-domain catch with seeded showcase queries. NOTHING here gates or re-ranks —
+# the fields only surface what the pipeline already did, so retrieval behavior is unchanged by
+# construction (the 165-case ruler reads recs alone).
+PROVENANCE_SOFT_REL  = 0.5   # a SOFT tag (genome_tags / mood / Mode-1.5) earns a chip only when the
+                             # film carries it at least this strongly; HARD subject tags always chip,
+                             # with their true relevance — visibly honest when a relaxed floor
+                             # surfaces a weak carrier
+PROVENANCE_MAX_CHIPS = 5     # keep the per-rec "matched:" row scannable
+# Out-of-domain reply + the seeded example chips (step 4e). The examples double as the UI's
+# empty-state suggestions; each exercises a validated shining path — the genome-first topic
+# resolver (dogs), Engine-2 mood routing, topic+genre composition, people+era, the hard genome
+# floor, and single-title similarity with an anti-vibe exclusion.
+OUT_OF_DOMAIN_ECHO = ("That doesn't look like a movie request — movies are all I know 🎬. "
+                      "Try one of the examples below.")
+SHOWCASE_QUERIES = [
+    'Movies with dogs',
+    'Something to make me cry',
+    'Tense submarine thrillers',
+    'Tom Hanks movies from the 90s',
+    'Courtroom dramas with a big twist',
+    'Like Oldboy, but nothing too gory',
+]
+
 FUZZY_CUTOFF          = 0.74   # difflib ratio floor for title resolution (raised from 0.6 — a
                                # wrong-film fuzzy hit poisons the whole anchor; better to drop)
 FUZZY_YEAR_TOL        = 4      # reject a fuzzy hit whose catalog year disagrees with the year the
@@ -323,6 +350,19 @@ def _extract_year(s):
     """The first 4-digit "(year)" in a title string, or None."""
     m = _YEAR_RE.search(s)
     return int(m.group(1)) if m else None
+
+
+def _display_title(s):
+    """Human-display form of a catalog title for the transparency fields (intent echo / provenance
+    chips): strip the "(year)" suffix and any alternate-title parenthetical, un-invert MovieLens's
+    "Matrix, The" → "The Matrix". Display only — matching always goes through _norm_title."""
+    s = _leading_title(_YEAR_SUFFIX_RE.sub('', s).strip())
+    m = _ARTICLE_RE.match(s)
+    if m:
+        art = m.group(2)
+        sep = '' if art.lower() == "l'" else ' '
+        s = f"{art[0].upper()}{art[1:]}{sep}{m.group(1)}"
+    return s
 
 
 def _pick_candidate(cands, raw, ctx):
@@ -1028,7 +1068,8 @@ MOOD_ALIASES = {
     'dark': 'dark', 'darker': 'dark', 'mature': 'dark', 'serious': 'dark', 'grim': 'dark',
     'heavy': 'dark', 'gritty': 'dark', 'bleak': 'dark',
     'scary': 'scary', 'creepy': 'scary', 'frightening': 'scary', 'spooky': 'scary',
-    'eerie': 'scary', 'chilling': 'scary', 'unsettling': 'scary',
+    'eerie': 'scary', 'chilling': 'scary', 'unsettling': 'scary', 'scare me': 'scary',
+    'scare': 'scary',
     'suspenseful': 'suspenseful', 'suspense': 'suspenseful', 'tense': 'suspenseful',
     'gripping': 'suspenseful', 'thrilling': 'suspenseful', 'thriller': 'suspenseful',
     'nail biting': 'suspenseful', 'riveting': 'suspenseful',
@@ -1073,20 +1114,27 @@ def resolve_mood(phrase):
     return tags
 
 
-def _resolve_mood_slots(extraction, hc):
-    """Collect + resolve every mood phrase carried by an extraction: a top-level `mood`/`vibe` slot
-    and a `hard_constraints.mood` (soft affect the extractor may nest beside a hard filter). Each may
-    be a string or a list of strings. Returns the de-duplicated union of resolved genome tags.
-    (`exclude_mood` is deliberately NOT handled here — negative-affect exclusion is a separate,
-    hard-exclude sibling, now handled by _resolve_exclude_slots below.)"""
+def _mood_phrases(extraction, hc):
+    """The raw SOFT mood/vibe phrases carried by an extraction: a top-level `mood`/`vibe` slot and
+    a `hard_constraints.mood` (soft affect the extractor may nest beside a hard filter). Each slot
+    may be a string or a list of strings. The phrases feed resolve_mood (Engine-2 routing) and,
+    verbatim, the step-4 intent echo — the user's own words beat the resolved tag list there."""
     phrases = []
     for src in (extraction.get('mood'), extraction.get('vibe'), (hc or {}).get('mood')):
-        if isinstance(src, str):
+        if isinstance(src, str) and src.strip():
             phrases.append(src)
         elif isinstance(src, (list, tuple)):
-            phrases.extend(p for p in src if isinstance(p, str))
+            phrases.extend(p for p in src if isinstance(p, str) and p.strip())
+    return phrases
+
+
+def _resolve_mood_slots(extraction, hc):
+    """Collect + resolve every mood phrase carried by an extraction (see _mood_phrases). Returns
+    the de-duplicated union of resolved genome tags. (`exclude_mood` is deliberately NOT handled
+    here — negative-affect exclusion is a separate, hard-exclude sibling, handled by
+    _resolve_exclude_slots below.)"""
     tags = []
-    for p in phrases:
+    for p in _mood_phrases(extraction, hc):
         for t in resolve_mood(p):
             if t not in tags:
                 tags.append(t)
@@ -1417,6 +1465,299 @@ def _select_diverse(eligible, fs, wanted, blend_genres, top_n, scores):
     return picked
 
 
+# ── Step-4 transparency helpers (presentation only — none of these gate or re-rank) ─────────────
+def _slot_vals(v):
+    """An LLM hard-constraint slot may arrive as a string or a list; normalize to a string list."""
+    return [v] if isinstance(v, str) else [x for x in (v or []) if isinstance(x, str)]
+
+
+def _build_intent_echo(hc, resolution_log, people_log, facet_log, topic_log, genome_tags,
+                       mood_phrases, setting_tags, require_genres_orig, blend, liked_genres,
+                       disliked_genres, ranked_by, sim_seed, relaxed):
+    """Compose the step-4a intent echo — one short user-facing line proving the pipeline understood
+    the request: "Understood: 🎯 dog · ✨ cozy — ranked by taste match."
+
+    Chips carry a fixed glyph per signal CLASS (topic / vibe / genre / people / era / …), never a
+    per-term emoji — a hand-curated term→emoji map is exactly the whack-a-mole the dynamic resolver
+    retired. The echo covers every signal the extraction carried, including ones that later failed
+    to ground (understanding is the echo's job; serving gaps are the capability notice's). Returns
+    (chips, echo_string); an empty extraction echoes the honest popularity default instead."""
+    hc = hc or {}
+    chips = []
+
+    liked    = [_display_title(c) for _, c, _ in resolution_log['liked'] if c]
+    disliked = [_display_title(c) for _, c, _ in resolution_log['disliked'] if c]
+    if liked:
+        chips.append('🎬 like ' + ', '.join(liked))
+    if disliked:
+        chips.append('🚫 not ' + ', '.join(disliked))
+
+    # Topics (require terms are alternatives → one chip; excludes chip separately). topic_log
+    # already folds in the attribute/genome-slot fallthroughs, so misrouted topics still echo.
+    req_topics, seen_topics = [], set()
+    for phrase, _, _ in topic_log['require']:
+        if phrase not in seen_topics:
+            seen_topics.add(phrase); req_topics.append(phrase)
+    if req_topics:
+        chips.append('🎯 ' + ' or '.join(req_topics))
+    for phrase, _, _ in topic_log['exclude']:
+        if phrase not in seen_topics:
+            seen_topics.add(phrase); chips.append(f'🚫 no {phrase}')
+
+    if setting_tags:   # require_genome_tags ∩ vocab (OOV entries ride the topic fallthrough above)
+        chips.append('📍 ' + ', '.join(setting_tags))
+    for p in mood_phrases:
+        chips.append(f'✨ {p}')
+    if genome_tags:
+        chips.append('✨ ' + ', '.join(genome_tags[:4]))
+
+    if require_genres_orig:
+        chips.append('🎭 ' + (' or ' if blend else ' + ').join(require_genres_orig))
+    soft_g = [g for g in liked_genres if g not in set(require_genres_orig)]
+    if soft_g:
+        chips.append('🎭 leaning ' + ', '.join(soft_g))
+    exc_genres = _slot_vals(hc.get('exclude_genres'))
+    for g in exc_genres:
+        chips.append(f'🚫 no {g}')
+    for g in disliked_genres:
+        if g not in exc_genres:
+            chips.append(f'🚫 not into {g}')
+
+    for raw, _, _ in people_log['require']:
+        chips.append(f'👤 {raw}')
+    for raw, _, _ in people_log['exclude']:
+        chips.append(f'🚫 not {raw}')
+    for phrase, _, _ in facet_log['country']:
+        chips.append(f'🌍 {phrase}')
+    for phrase, _, _ in facet_log['language']:
+        chips.append(f'🗣 {phrase}')
+    for phrase, vals, _ in facet_log['attribute']:
+        if vals:   # unresolved attribute phrases already echo via the topic fallthrough
+            chips.append(f'🎞 {phrase}')
+
+    ymin, ymax = hc.get('year_min'), hc.get('year_max')
+    if ymin is not None and ymax is not None:
+        chips.append(f'📅 {ymin}–{ymax}')
+    elif ymin is not None:
+        chips.append(f'📅 {ymin} or later')
+    elif ymax is not None:
+        chips.append(f'📅 up to {ymax}')
+    rt_max, rt_min = _as_number(hc.get('max_runtime')), _as_number(hc.get('min_runtime'))
+    if rt_max is not None:
+        chips.append(f'⏱ ≤ {rt_max:.0f} min')
+    if rt_min is not None:
+        chips.append(f'⏱ ≥ {rt_min:.0f} min')
+    if hc.get('require_max_rating'):
+        chips.append(f"👪 {hc['require_max_rating']} or milder")
+    if hc.get('require_min_rating'):
+        chips.append(f"🔞 {hc['require_min_rating']} or stronger")
+    mv = _as_number(hc.get('min_vote_average'))
+    if mv is not None:
+        chips.append(f'⭐ {mv:g}+')
+    for spec in _slot_vals(hc.get('require_franchise')):
+        chips.append(f'🏷 {spec}')
+    exc_fr = hc.get('exclude_franchise')
+    if exc_fr is True:
+        chips.append('🚫 no franchise films')
+    else:
+        for spec in _slot_vals(exc_fr):
+            chips.append(f'🚫 no {spec}')
+    for p in _slot_vals(hc.get('exclude_mood')):
+        chips.append(f'🚫 {p}')
+    for t in _slot_vals(hc.get('exclude_genome_tags')):
+        chips.append(f'🚫 no {t}')
+
+    seen, deduped = set(), []
+    for c in chips:
+        if c not in seen:
+            seen.add(c); deduped.append(c)
+
+    tail = {'similarity': f'ranked by similarity to {sim_seed}',
+            'popularity': 'ranked by popularity',
+            'taste':      'ranked by taste match'}[ranked_by]
+    if relaxed:
+        tail += ', closest matches'
+    if not deduped:
+        return [], "I didn't catch a specific ask — showing broadly loved films."
+    return deduped, 'Understood: ' + ' · '.join(deduped) + f' — {tail}.'
+
+
+def _build_relaxation_notice(relaxed, require_genres_orig, require_gt, topic_log, facet_log,
+                             hc, got_recs):
+    """Honest wording over relaxed_constraints (step 4c). Names each dropped gate WITH its values
+    and — when identity gates (people / rating / year / …) survived — says so, so a relaxed result
+    never reads as a silent generic dump. Also owns the honest EMPTY: no matches and nothing
+    relaxable (identity-only filters), or nothing even after full relaxation — both say so plainly
+    rather than return silence. Returns None on the ordinary full-result path."""
+    if not relaxed and got_recs:
+        return None
+    detail = {
+        'require_attributes':       ('the format filter',
+                                     [p for p, vals, _ in facet_log['attribute'] if vals]),
+        'require_genome_tags':      ('the setting/theme floor', list(require_gt)),
+        'require_genres':           ('the genre filter', list(require_genres_orig)),
+        'require_keyword_concepts': ('the topic filter',
+                                     [p for p, _, size in topic_log['require'] if size is not None]),
+    }
+    parts = []
+    for name in relaxed:
+        label, vals = detail[name]
+        parts.append(f"{label} ({', '.join(map(str, vals))})" if vals else label)
+    kept = [n for n, active in (
+        ('people',    bool(hc.get('require_people_ids') or hc.get('exclude_people_ids'))),
+        ('year',      hc.get('year_min') is not None or hc.get('year_max') is not None),
+        ('rating',    bool(hc.get('require_max_rating') or hc.get('require_min_rating'))),
+        ('runtime',   hc.get('max_runtime') is not None or hc.get('min_runtime') is not None),
+        ('franchise', bool(hc.get('require_franchise') or hc.get('exclude_franchise'))),
+        ('country',   bool(hc.get('require_country_codes'))),
+        ('language',  bool(hc.get('require_language_codes'))),
+        ('quality',   hc.get('min_vote_average') is not None),
+        ('exclusion', bool(hc.get('exclude_genres') or hc.get('exclude_mood')
+                           or hc.get('exclude_genome_tags') or hc.get('exclude_keyword_concepts'))),
+    ) if active]
+    if got_recs:
+        s = ('No film cleared every filter at once, so I relaxed ' + '; then '.join(parts)
+             + ' — these are the closest matches')
+        if kept:
+            s += f" (your {', '.join(kept)} filters stayed on)"
+        return s + '.'
+    if not relaxed:   # empty pool with nothing relaxable — identity-only filters, honest no-match
+        s = 'Nothing in my catalog matches this combination'
+        if kept:
+            s += f" — and the {', '.join(kept)} filters that define it aren't ones I'll relax"
+        return s + '.'
+    s = 'Even after relaxing ' + '; '.join(parts) + ', nothing in my catalog matches'
+    if kept:
+        s += (f" — the {', '.join(kept)} filters define this request, so I kept them rather than "
+              'fake a match')
+    return s + '.'
+
+
+def _build_capability_notice(extraction, resolution_log, people_log, facet_log, topic_log,
+                             unresolved_tags, unresolved_moods, fallback, filtered):
+    """Compose the step-4d honest capability boundary — fires whenever some demand could not be
+    GROUNDED in any catalog signal: extractor-flagged un-routable asks (unsupported_notes: plot
+    mechanics, craft techniques), resolver misses (topics incl. fallthroughs, country/language
+    phrases, people, mood phrases, OOV soft genome tags), and named titles missing from the
+    catalog. One short honest line instead of silence; returns None when everything grounded."""
+    seen, ungrounded = set(), []
+
+    def _add(x):
+        if isinstance(x, str) and x and x not in seen:
+            seen.add(x); ungrounded.append(x)
+
+    for note in _slot_vals(extraction.get('unsupported_notes')):   # tolerate a bare-string slot
+        _add(note.strip())
+    for phrase, _, size in topic_log['require'] + topic_log['exclude']:
+        if size is None:
+            _add(phrase)
+    for bucket in ('country', 'language'):   # attribute misses fall through to the topic resolver
+        for phrase, vals, _ in facet_log[bucket]:
+            if not vals:
+                _add(phrase)
+    for raw, pid, _ in people_log['require'] + people_log['exclude']:
+        if pid is None:
+            _add(raw)
+    for t in unresolved_tags:
+        _add(t)
+    for p in unresolved_moods:
+        _add(p)
+    missing = [raw for raw, canon, _ in resolution_log['liked'] + resolution_log['disliked']
+               if not canon]
+    if not ungrounded and not missing:
+        return None
+    parts = []
+    if ungrounded:
+        parts.append('I match themes, topics, people, genres and era — not specific plot mechanics '
+                     'or niche metadata — so I couldn\'t use: '
+                     + ', '.join(f'"{u}"' for u in ungrounded) + '.')
+    if missing:
+        parts.append('Not in my catalog: ' + ', '.join(f'"{m}"' for m in missing) + '.')
+    parts.append('Nothing else resolved, so these are broadly loved films.'
+                 if (fallback and not filtered) else "Here's my closest read from what did resolve.")
+    return ' '.join(parts)
+
+
+def _rec_provenance(ctx, recs, sim_seed, hard_tags, topic_terms, people_names, soft_tags,
+                    require_genres, fallback):
+    """Per-rec provenance chips (step 4b) — the "why is this here" surface: `dog @0.98, heartwarming`.
+
+    Chip sources, in priority order: the similarity seed (pure single-title path), HARD graded
+    genome subjects (require_genome_tags ∩ vocab + resolver genome routes — always chipped with the
+    film's TRUE relevance, so a relaxed floor surfacing a weak carrier is visibly honest), boolean
+    topic membership (concept / raw-keyword routes), required people, SOFT tags the film genuinely
+    carries (≥ PROVENANCE_SOFT_REL), the required genres it satisfies, and — on the popularity
+    floor — an explicit "crowd favorite" marker. De-duplicated, capped at PROVENANCE_MAX_CHIPS.
+    Returns a list aligned with recs (the rec tuple itself never changes shape — the ruler and the
+    mock-loop records read it positionally)."""
+    fs = ctx.fs
+    gctx = fs['movieId_to_genome_tag_context']
+    out = []
+    for title, genres, _, _ in recs:
+        mid = fs['title_to_movieId'].get(title)
+        chips = []
+        if sim_seed:
+            chips.append(f'≈ {sim_seed}')
+        if mid is not None:
+            for t in hard_tags:
+                col = ctx.genome_name_to_idx.get(t)
+                if col is not None:
+                    chips.append(f'{t} @{float(gctx[mid][col]):.2f}')
+            for phrase, members in topic_terms:
+                if mid in members:
+                    chips.append(phrase)
+        chips.extend(people_names)
+        if mid is not None:
+            for t in soft_tags:
+                col = ctx.genome_name_to_idx.get(t)
+                if col is not None and float(gctx[mid][col]) >= PROVENANCE_SOFT_REL:
+                    chips.append(t)
+        hit_genres = [g for g in require_genres if g in (genres or [])]
+        if hit_genres:
+            chips.append('/'.join(hit_genres))
+        if fallback:
+            chips.append('crowd favorite')
+        seen, deduped = set(), []
+        for c in chips:
+            if c not in seen:
+                seen.add(c); deduped.append(c)
+        out.append(deduped[:PROVENANCE_MAX_CHIPS])
+    return out
+
+
+def _out_of_domain_report(extraction):
+    """The full-shape report for an extractor-flagged NON-movie request (step 4e): empty recs, the
+    honest echo, and the seeded showcase queries the UI can offer as next steps. Every standard
+    report key is present so all consumers (ruler, mock loop, renderers, Streamlit adapter) read it
+    like any other result."""
+    return {
+        'extraction': extraction,
+        'resolution': {'liked': [], 'disliked': []},
+        'people_resolution': {'require': [], 'exclude': []},
+        'facet_resolution': {'country': [], 'language': [], 'attribute': []},
+        'topic_resolution': {'require': [], 'exclude': []},
+        'anchors': [],
+        'anchor_weight': ANCHOR_MOVIE_WEIGHT,
+        'mood_tags': [],
+        'mode15_tags': [],
+        'ranked_by_similarity': False,
+        'unresolved_tags': [],
+        'unknown_genres': [],
+        'seed_count': 0,
+        'fallback': False,
+        'filtered': 0,
+        'relaxed_constraints': [],
+        'recs': [],
+        'out_of_domain': True,
+        'intent_chips': [],
+        'intent_echo': OUT_OF_DOMAIN_ECHO,
+        'rec_provenance': [],
+        'relaxation_notice': None,
+        'capability_notice': None,
+        'showcase_queries': list(SHOWCASE_QUERIES),
+    }
+
+
 # ── Recommend ────────────────────────────────────────────────────────────────
 def _content_similar_scores(ctx, title):
     """'Movies like X' ranking: cosine of every catalog movie to the seed title in the raw GENOME
@@ -1441,6 +1782,12 @@ def _content_similar_scores(ctx, title):
 def recommend(ctx, extraction, top_n=TOP_N):
     """Run one extraction object through the full v1 pipeline. Returns a report dict
     (UI-agnostic — the harness CLI and the Streamlit tab each render it their own way)."""
+    # Step-4e out-of-domain catch: the extractor flagged a request that isn't asking for movies at
+    # all ("a game with dogs"). Decline honestly — empty recs, an explicit echo, showcase chips —
+    # instead of dumping a popularity list that pretends to be an answer.
+    if extraction.get('out_of_domain'):
+        return _out_of_domain_report(extraction)
+
     fs = ctx.fs
     liked_raw    = extraction.get('liked_items') or []
     disliked_raw = extraction.get('disliked_items') or []
@@ -1462,6 +1809,14 @@ def recommend(ctx, extraction, top_n=TOP_N):
     # genome tags (mood phrases via the MOOD_TAGS table, exclude_genome_tags verbatim) that become a HARD
     # anti-floor below (5d) — dropping films that strongly carry them. Emphatic exclusion is a gate, not a nudge.
     exclude_tags = _resolve_exclude_slots(hc)
+
+    # Step-4 transparency bookkeeping: the raw mood phrases (the echo shows the user's own words),
+    # and any mood/exclude_mood phrase the MOOD_TAGS routing couldn't place — today those vanish
+    # silently; the capability notice names them instead.
+    mood_phrases = _mood_phrases(extraction, hc)
+    unresolved_moods = [p for p in mood_phrases if not resolve_mood(p)]
+    unresolved_moods += [p for p in _slot_vals(hc.get('exclude_mood'))
+                         if not resolve_mood(p) and p not in unresolved_moods]
 
     # 1. Resolve mentioned titles (Mode 1).
     liked_resolved, disliked_resolved = [], []
@@ -1568,6 +1923,7 @@ def recommend(ctx, extraction, top_n=TOP_N):
     topic_pool_ok = None        # None → no topic gate; else set of mids (union across require terms)
     topic_exclude_mids = set()  # films dropped by exclude topics (fixed — never relaxed, like gt_exclude_bad)
     topic_gt_tags = []          # genome-routed require terms → graded re-rank + anchor seeding
+    topic_require_resolved = []  # (phrase, members, gtag) per resolved require term → provenance chips
     for bucket, hc_key in (('require', 'require_keyword_concepts'), ('exclude', 'exclude_keyword_concepts')):
         raw = hc.get(hc_key)
         for phrase in ([raw] if isinstance(raw, str) else (raw or [])):
@@ -1579,6 +1935,7 @@ def recommend(ctx, extraction, top_n=TOP_N):
                 continue
             if bucket == 'require':
                 topic_pool_ok = members if topic_pool_ok is None else (topic_pool_ok | members)
+                topic_require_resolved.append((phrase, members, gtag))
                 if gtag and gtag not in topic_gt_tags:
                     topic_gt_tags.append(gtag)
             else:
@@ -1598,6 +1955,7 @@ def recommend(ctx, extraction, top_n=TOP_N):
         if members is None:
             continue
         topic_pool_ok = members if topic_pool_ok is None else (topic_pool_ok | members)
+        topic_require_resolved.append((phrase, members, gtag))
         if gtag and gtag not in topic_gt_tags:
             topic_gt_tags.append(gtag)
     # The same fallthrough for an OUT-OF-VOCAB require_genome_tags entry ("entirely in the winter"
@@ -1614,6 +1972,7 @@ def recommend(ctx, extraction, top_n=TOP_N):
         if members is None:
             continue
         topic_pool_ok = members if topic_pool_ok is None else (topic_pool_ok | members)
+        topic_require_resolved.append((tag, members, gtag))
         if gtag and gtag not in topic_gt_tags:
             topic_gt_tags.append(gtag)
 
@@ -1901,6 +2260,40 @@ def recommend(ctx, extraction, top_n=TOP_N):
             if recs:
                 break
 
+    # ── Step-4 transparency layer (presentation only — composed AFTER ranking/relaxation, so it
+    #    reports what actually happened and can never change what does) ──────────────────────────
+    ranked_by = ('similarity' if ranked_by_similarity else 'popularity' if fallback else 'taste')
+    sim_seed = _display_title(liked_resolved[0]) if ranked_by_similarity else None
+    setting_tags = [t for t in require_gt if t in ctx.genome_name_to_idx]
+    hard_prov_tags = setting_tags + [t for t in topic_gt_tags if t not in setting_tags]
+    soft_prov_tags = []
+    for t in list(genome_tags) + list(mood_tags) + list(mode15_tags):
+        if t not in hard_prov_tags and t not in soft_prov_tags and t in ctx.genome_name_to_idx:
+            soft_prov_tags.append(t)
+    id_to_name = (ctx.facets or {}).get('person_id_to_name') or {}
+    people_names = [id_to_name.get(pid, raw) for raw, pid, _ in people_log['require']
+                    if pid is not None]
+    intent_chips, intent_echo = _build_intent_echo(
+        hc, resolution_log, people_log, facet_log, topic_log, genome_tags, mood_phrases,
+        setting_tags, require_genres_orig, blend, liked_genres, disliked_genres,
+        ranked_by, sim_seed, bool(relaxed_constraints))
+    # Thin-but-valid pool (e.g. French ∩ heist = 2 films): a short list with no explanation looks
+    # broken, so the echo says it's exhaustive. Relaxed/empty pools have their own notice instead.
+    if recs and len(recs) < top_n and filtered and not relaxed_constraints:
+        n = len(recs)
+        intent_echo = (intent_echo.rstrip('.')
+                       + (f'; only {n} films match every filter (showing all of them).' if n > 1
+                          else '; only 1 film matches every filter (showing it).'))
+    relaxation_notice = _build_relaxation_notice(
+        relaxed_constraints, require_genres_orig, require_gt, topic_log, facet_log, hc, bool(recs))
+    capability_notice = _build_capability_notice(
+        extraction, resolution_log, people_log, facet_log, topic_log, unresolved_tags,
+        unresolved_moods, fallback, filtered)
+    rec_provenance = _rec_provenance(
+        ctx, recs, sim_seed, hard_prov_tags,
+        [(p, m) for p, m, g in topic_require_resolved if g is None],  # boolean-only topic routes
+        people_names, soft_prov_tags, require_genres_orig, fallback)
+
     return {
         'extraction': extraction,
         'resolution': resolution_log,
@@ -1919,4 +2312,12 @@ def recommend(ctx, extraction, top_n=TOP_N):
         'filtered': filtered,
         'relaxed_constraints': relaxed_constraints,  # soft gates dropped to rescue an empty pool (else [])
         'recs': recs,
+        # step-4 transparency fields (presentation only; see the helpers above)
+        'out_of_domain': False,
+        'intent_chips': intent_chips,            # per-signal chips, fixed glyph per signal class
+        'intent_echo': intent_echo,              # "Understood: … — ranked by …." one-liner
+        'rec_provenance': rec_provenance,        # chips per rec, aligned with recs
+        'relaxation_notice': relaxation_notice,  # honest wording over relaxed_constraints (else None)
+        'capability_notice': capability_notice,  # honest boundary for un-groundable demands (else None)
+        'showcase_queries': [],                  # populated only on the out-of-domain catch
     }

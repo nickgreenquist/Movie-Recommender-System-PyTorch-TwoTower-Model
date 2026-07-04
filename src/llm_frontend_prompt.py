@@ -78,6 +78,18 @@ def build_schema(genres=None, fs=None):
                                 'genome_tags these need NOT come from the vocab; the harness maps them '
                                 'to tone tags. Soft anchor, not a filter. A hard "absolutely no sad '
                                 'stuff" is NOT mood — that is exclude_mood.'},
+            'unsupported_notes': {'type': 'array', 'items': {'type': 'string'},
+                                'description': 'LAST RESORT: short phrases for demands NO other '
+                                'field can express — specific plot mechanics ("where the twist '
+                                'recontextualizes everything", "where the dog dies at the end") or '
+                                'craft techniques ("shot in one take"). Note the demand here instead '
+                                'of dropping it silently, and still extract the rest of the request '
+                                'normally. NEVER route anything a field above can express here.'},
+            'out_of_domain':   {'type': 'boolean',
+                                'description': 'True ONLY when the request is not asking for movie '
+                                'recommendations at all (they want a video game, TV series, book, '
+                                'music, or non-movie help). Leave every other field empty then. A '
+                                'movie request that merely MENTIONS another medium stays in-domain.'},
             'hard_constraints': {
                 'type': 'object',
                 'additionalProperties': False,
@@ -357,6 +369,21 @@ writers, and composers ARE supported → require_people / require_composers; con
 quality, franchises, nationality, language, format, and concrete content TOPICS ARE supported → the \
 hard_constraints slots above. Route each to its slot, never to genome_tags.)
 
+OUT OF DOMAIN: if the request is not asking for MOVIE recommendations at all (they want a video \
+game, a TV series, a book, music, or help unrelated to movies), set the top-level out_of_domain: \
+true and leave every other field empty. A movie request that merely MENTIONS another medium \
+("a movie like The Last of Us game") is still IN domain — extract it normally.
+
+CAN'T-EXPRESS RESIDUE (top-level unsupported_notes, LAST resort): a demand NO field above can \
+express — a specific plot mechanic or a craft technique — goes into unsupported_notes as a short \
+phrase instead of being dropped silently, and you STILL extract every expressible part of the \
+request normally: "movies where the dog dies at the end" → require_keyword_concepts ["dog"] + \
+unsupported_notes ["the dog dies at the end"]; "shot entirely in one take" → unsupported_notes \
+["shot in one take"]. CHECK the fields first — never park something a field CAN express: a \
+twist/tone ask is genome_tags ("a big twist" → ["twist ending"]), a format/credit ask is \
+require_attributes ("black and white", "directed by women"), a concrete subject is \
+require_keyword_concepts. Most requests leave unsupported_notes EMPTY.
+
 GENRES (closed list — the only valid values for any genre field):
 {genres}
 
@@ -431,6 +458,14 @@ FEWSHOT_EXAMPLES = [
     # Free topic term — the server-side resolver routes it genome-first (no list to consult).
     ('Something about surfing on the beach',
      {'hard_constraints': {'require_keyword_concepts': ['surfing']}}),
+    # Out-of-domain: not a movie ask at all — flag it, extract nothing else.
+    ('Can you recommend a good video game with dogs in it?',
+     {'out_of_domain': True}),
+    # Un-routable plot-mechanics residue → unsupported_notes; the expressible parts still extract.
+    ('Movies like The Prestige where the ending recontextualizes the whole story',
+     {'liked_items': ['The Prestige (2006)'],
+      'genome_tags': ['twist ending', 'mindfuck'],
+      'unsupported_notes': ['ending recontextualizes the whole story']}),
     # Another free topic; the resolver lands it on the genome machinery (graded floor + anchors).
     # (require_genome_tags would also work — the two slots converge for a single subject term —
     # but topics belong in require_keyword_concepts; require_genome_tags is the SETTINGS slot.)

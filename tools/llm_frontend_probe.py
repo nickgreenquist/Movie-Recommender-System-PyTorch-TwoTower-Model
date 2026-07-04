@@ -171,15 +171,28 @@ def print_report(report, utterance=None):
         print(f"  ⚠ genre names NOT in model vocab (ignored): {report['unknown_genres']}")
     if report['fallback']:
         print('  ⚠ no embedding signal → POPULARITY ranking (within any hard constraints)')
+    # Step-4 transparency layer: intent echo, honest relaxation/capability notices, and — on an
+    # out-of-domain catch — the decline + seeded showcase queries instead of a fake result.
+    if report.get('intent_echo'):
+        print(f"  🧭 {report['intent_echo']}")
+    if report.get('relaxation_notice'):
+        print(f"  ⚠ {report['relaxation_notice']}")
+    if report.get('capability_notice'):
+        print(f"  ℹ {report['capability_notice']}")
+    if report.get('out_of_domain') and report.get('showcase_queries'):
+        print('  try: ' + ' | '.join(report['showcase_queries']))
     print('-' * 72)
 
     n = len(report['recs'])
     tag = 'popularity fallback' if report['fallback'] else 'model retrieval'
+    prov = report.get('rec_provenance') or []
     print(f'Recommendations (top {n} after year+genre post-filter; '
           f'{report["filtered"]} candidates filtered; source: {tag}):')
     for rank, (title, genres, year, score) in enumerate(report['recs'], 1):
         sc = f'  (cos {score:+.3f})' if score is not None else ''
-        print(f"  {rank:>2}. {title}  [{', '.join(genres)}]{sc}")
+        chips = prov[rank - 1] if rank - 1 < len(prov) else []
+        matched = f"  ⇐ {', '.join(chips)}" if chips else ''
+        print(f"  {rank:>2}. {title}  [{', '.join(genres)}]{sc}{matched}")
     print('=' * 72)
 
 
