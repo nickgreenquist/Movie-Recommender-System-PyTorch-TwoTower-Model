@@ -98,6 +98,23 @@ for _concept, _kws in KEYWORD_CONCEPTS.items():
 # parts / cameos, and "Tom Hanks movies" wants films he leads, not one-scene voices. Start 10.
 TOP_N_ACTORS = 10
 
+# ── Dynamic raw-keyword index (step-2 genome-first resolver, rung 3) ──────────
+# Inverted RAW-TMDB-keyword → [movieId…] table for src/llm_frontend.py:resolve_topic_term: a free
+# LLM topic term that BOTH the genome vocab and the curated KEYWORD_CONCEPTS miss resolves here by
+# EXACT normalized-token match (keys pass through _norm_name, the same normalization the resolver
+# applies to the query term, so build keys and lookups agree by construction). LOCAL build artifact
+# only — never baked into serving/ (the resolver degrades gracefully without the table).
+KEYWORD_MIN_COVERAGE = 3   # drop keywords on fewer films — a <3-film pool can't fill a result, and
+                           # the 1–2-film tail is where TMDB's noisy one-off tags live
+# Production-META keywords excluded from the index: they describe the film ARTIFACT, not a topic a
+# request can be ABOUT, so a free term must never resolve to them (the format facet owns the
+# attribute-like ones; 'amused' is a TMDB reaction-tag artifact).
+KEYWORD_INDEX_DENYLIST = {
+    'duringcreditsstinger', 'aftercreditsstinger', 'based on novel or book', 'based on true story',
+    'based on comic', 'sequel', 'remake', 'woman director', 'black and white', 'independent film',
+    'amused',
+}
+
 # Valid US MPAA certifications, low→high restriction (used to pick a film's cert from the many
 # noisy release_dates entries — most of which carry an empty certification).
 MPAA_RATINGS = ('G', 'PG', 'PG-13', 'R', 'NC-17')
@@ -242,6 +259,20 @@ def _keyword_concepts(dr):
     return concepts
 
 
+def _raw_keywords(dr):
+    """Every raw TMDB keyword name on a film, normalized via _norm_name and de-duped — feeds the
+    inverted keyword_to_movieIds index (the dynamic resolver's rung-3 long tail)."""
+    kw = dr.get('keywords') or {}
+    entries = kw.get('keywords') if isinstance(kw, dict) else (kw if isinstance(kw, list) else None)
+    out = []
+    for e in entries or []:
+        name = (e.get('name') if isinstance(e, dict) else e) or ''
+        norm = _norm_name(name)
+        if norm and norm not in out:
+            out.append(norm)
+    return out
+
+
 def _attrs_from_record(record):
     """Pull the structured F1/step-C attribute facets from one record's tmdb sub-dict: US MPAA content
     rating (details_raw.release_dates), runtime minutes (tmdb.runtime), franchise/collection
@@ -335,12 +366,18 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
     movieId_to_language       = {}
     movieId_to_attributes     = {}
     movieId_to_keyword_concepts = {}
+    keyword_to_movieIds       = defaultdict(list)   # inverted raw-keyword index (resolver rung 3)
     n_no_tmdb = n_no_people = 0
 
     for path in files:
         with open(path) as f:
             record = json.load(f)
         mid = int(record['movieId'])
+
+        # Inverted raw-keyword index — every normalized TMDB keyword on the film (pruned to the
+        # ≥KEYWORD_MIN_COVERAGE survivors minus the denylist after the scan).
+        for kw in _raw_keywords((record.get('tmdb') or {}).get('details_raw') or {}):
+            keyword_to_movieIds[kw].append(mid)
 
         # Structured attribute facets are independent of the credits, so collect them first — a
         # film may carry a rating/runtime/collection even if its cast/crew is unusable.
@@ -392,6 +429,10 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
     person_name_to_ids   = _name_index(billed_pids)     # require_people (actor/director/writer)
     composer_name_to_ids = _name_index(composer_pids)   # require_composers (separate namespace)
 
+    # Prune the inverted keyword index: coverage floor + production-meta denylist (see constants).
+    keyword_to_movieIds = {kw: mids for kw, mids in keyword_to_movieIds.items()
+                           if len(mids) >= KEYWORD_MIN_COVERAGE and kw not in KEYWORD_INDEX_DENYLIST}
+
     n_total = len(files)
     n_covered = len(movieId_to_people)
     return {
@@ -408,6 +449,7 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
         'movieId_to_language':      movieId_to_language,
         'movieId_to_attributes':    movieId_to_attributes,
         'movieId_to_keyword_concepts': movieId_to_keyword_concepts,
+        'keyword_to_movieIds':      keyword_to_movieIds,
         'franchise_universe_aliases': FRANCHISE_UNIVERSE_ALIASES,
         'meta': {
             'top_n_actors':     top_n_actors,
@@ -426,6 +468,7 @@ def build_facet_store(scraped_dir=SCRAPED_DIR, top_n_actors=TOP_N_ACTORS):
             'n_language':       len(movieId_to_language),
             'n_attributes':     len(movieId_to_attributes),
             'n_keyword_concepts': len(movieId_to_keyword_concepts),
+            'n_keyword_index':  len(keyword_to_movieIds),
         },
     }
 
@@ -467,6 +510,7 @@ def _spot_check(store, titles=None):
     print(f"  languages         : {m.get('n_language', 0)}  ({100 * m.get('n_language', 0) / n:.1f}%)")
     print(f"  format attributes : {m.get('n_attributes', 0)}  ({100 * m.get('n_attributes', 0) / n:.1f}%)")
     print(f"  keyword concepts  : {m.get('n_keyword_concepts', 0)}  ({100 * m.get('n_keyword_concepts', 0) / n:.1f}%)")
+    print(f"  keyword index     : {m.get('n_keyword_index', 0)} keywords (≥{KEYWORD_MIN_COVERAGE} films)")
     from collections import Counter as _C
     lang_c = _C(store['movieId_to_language'].values())
     attr_c = _C(a for v in store['movieId_to_attributes'].values() for a in v)

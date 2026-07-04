@@ -105,10 +105,22 @@ class Serving:
         # by export); fall back to the local build artifact for dev before the bake exists. The
         # deployed app only ever sees fs['facets'] — this disk fallback is harness-only.
         facets = self.fs.get('facets')
+        fp = os.path.join(_REPO_ROOT, 'llm_features', 'cache', 'facet_store.pt')
         if facets is None:
-            fp = os.path.join(_REPO_ROOT, 'llm_features', 'cache', 'facet_store.pt')
             if os.path.exists(fp):
                 facets = torch.load(fp, weights_only=False)
+        elif os.path.exists(fp):
+            # Split-brain guard (harness-only): the baked facet tables lag the locally-rebuilt
+            # store whenever KEYWORD_CONCEPTS grows between gated exports, so /trace and the probe
+            # CLI would disagree with the rulers on concept membership (a require on a new concept
+            # empty-pools here while passing eval). Overlay the tables that drift — the same patch
+            # as mock_serving.py / llm_frontend_eval.py; serving/ stays untouched. keyword_to_movieIds
+            # (the step-2 resolver's raw-keyword index) is local-only and never baked, so it always
+            # rides in from the local store.
+            local = torch.load(fp, map_location='cpu', weights_only=False)
+            for table in ('movieId_to_keyword_concepts', 'keyword_to_movieIds'):
+                if table in local:
+                    facets[table] = local[table]
 
         self.ctx = build_frontend_context(
             model, self.fs, all_ids, all_embs, ts_inference, facets=facets)
@@ -144,6 +156,11 @@ def print_report(report, utterance=None):
         for raw, pid, note in pr.get(key, []):
             arrow = f'→ person #{pid}' if pid is not None else '→ (UNRESOLVED, dropped)'
             print(f"  {key+' ppl':<8}{raw!r:<32} {arrow}  [{note}]")
+    tr = report.get('topic_resolution') or {}
+    for key in ('require', 'exclude'):
+        for raw, note, size in tr.get(key, []):
+            arrow = f'→ {note} ({size} films)' if size is not None else f'→ (UNRESOLVED, dropped) [{note}]'
+            print(f"  {key+' topic':<8}{raw!r:<32} {arrow}")
     if report['anchors']:
         print(f"  genome anchors (Mode-2 synthesis, weight {report['anchor_weight']}):")
         for t in report['anchors']:

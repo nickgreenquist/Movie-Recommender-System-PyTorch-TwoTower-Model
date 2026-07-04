@@ -248,6 +248,8 @@ class FrontendContext(NamedTuple):
     facets:             dict          # scraped-facet store (people tables) or None if unbaked
     genome_sim_matrix:  torch.Tensor  # [N, 1128] L2-normed raw genome vectors (row i ↔ all_ids[i]); the
                                       # Similar-tab genome content space, for 'movies like X' ranking
+    genome_norm_to_name: dict         # _norm_name(tag) → tag, the topic resolver's exact-token rung
+                                      # (resolve_topic_term), so free terms and vocab normalize alike
 
 
 def build_frontend_context(model, fs, all_ids, all_embs, ts_inference, facets=None) -> FrontendContext:
@@ -278,6 +280,7 @@ def build_frontend_context(model, fs, all_ids, all_embs, ts_inference, facets=No
         genome_name_to_idx={gn[tid]: gi[tid] for tid in gi},
         facets=facets,
         genome_sim_matrix=genome_sim_matrix,
+        genome_norm_to_name={_norm_name(gn[tid]): gn[tid] for tid in sorted(gn)},
     )
 
 
@@ -605,6 +608,10 @@ FORMAT_ALIASES = {
 # `swine`, opera ≠ `space opera`). Import KEYWORD_CONCEPTS into the builder so stored membership + the resolver
 # share one vocabulary (mirrors FORMAT_ATTR_KEYWORDS). Verdict-driven: replaces the abandoned narrative-dimension
 # feature (redundant with genome's story-shape tags) — see project_narrative_dimension_plan / facet_store_plan.
+# FROZEN as of step 2 (the genome-first dynamic resolver): this list is rung 2 of resolve_topic_term — the
+# high-precision homonym-safe core — and must NOT grow. New topics resolve dynamically against the genome vocab
+# (rung 1) and the raw keyword_to_movieIds index (rung 3); resuming hand-curation here is the whack-a-mole the
+# resolver replaces (plan guardrail).
 KEYWORD_CONCEPTS = {
     'chess': ['chess', 'playing chess', 'chess tournament', 'chess match', 'chess champion'],
     'submarine': ['submarine', 'nuclear submarine', 'submarine commander', 'mini submarine', 'russian submarine', 'submarine warfare', 'submarine crew'],
@@ -663,6 +670,51 @@ KEYWORD_CONCEPTS = {
     'ballet': ['ballet', 'ballet dancer', 'ballet school', 'ballet performance', 'ballet dancing', 'ballet company', 'bolshoi ballet'],
     'opera': ['opera', 'opera singer', 'rock opera'],
     'magic': ['magic', 'black magic', 'magician', 'magic show', 'magical creature', 'magical object'],
+    # ── run500 quality-grade additions (2026-07-03) — concrete-noun + season/decade concepts harvested
+    # from the 500-query bad-list triage, each with MEASURED raw-TMDB-keyword coverage in the corpus
+    # (union #movies in llm_features/cache/scraped shown after each). Season/decade fold into this SAME
+    # membership mechanism — "set in winter / during the holidays / an 80s-set film" is a keyword gate,
+    # NOT a release-year window (see the prompt's decade-disambiguation note). Adding a NEW concept only
+    # creates a new membership table; existing concepts are untouched, so the retrieval regression is
+    # green by construction — the only exposure is extraction-side over-emit, spot-checked via /trace.
+    'post-apocalyptic': ['post-apocalyptic future', 'post-apocalyptic', 'apocalypse', 'dystopia', 'dystopian future'],  # 286
+    'found footage': ['found footage'],                                                                                 # 68
+    'hostage': ['hostage', 'hostage situation', 'hostage negotiator'],                                                  # 94
+    'kidnapping': ['kidnapping', 'abduction', 'child abduction'],                                                       # 173
+    'survival': ['survival', 'stranded', 'wilderness', 'plane crash', 'airplane crash', 'shipwreck', 'lost at sea'],    # 211
+    'road trip': ['road trip'],                                                                                         # 133
+    'train': ['train', 'train station', 'train robbery', 'runaway train'],                                             # 81
+    'treasure hunt': ['treasure hunt', 'treasure', 'buried treasure', 'treasure map', 'hidden treasure'],              # 52
+    'serial killer': ['serial killer'],                                                                                 # 199
+    'stalker': ['stalker', 'stalking'],                                                                                 # 48
+    'cult': ['cult', 'cult leader', 'religious cult'],                                                                  # 51
+    'secret society': ['secret society', 'secret organization'],                                                        # 51
+    'hacker': ['hacker', 'hacking', 'computer hacker'],                                                                 # 46
+    'amusement park': ['amusement park', 'theme park', 'carnival'],                                                     # 48
+    'architect': ['architect', 'architecture'],                                                                         # 33
+    'radio': ['radio', 'radio station', 'radio host', 'talk radio'],                                                   # 32
+    'curse': ['curse', 'ancient curse'],                                                                                # 52
+    'buddy cop': ['buddy cop', 'buddy comedy'],                                                                         # 72
+    'slasher': ['slasher'],                                                                                             # 104
+    'stoner': ['stoner', 'marijuana', 'cannabis'],                                                                      # 77
+    'internet': ['social media', 'internet', 'cyberspace'],                                                             # 31
+    'black hole': ['black hole', 'wormhole'],                                                                           # 12
+    'folk horror': ['folk horror', 'urban legend', 'folklore'],                                                         # 40
+    'writer': ['writer', 'novelist', 'author', 'screenwriter'],                                                         # 163
+    'family secrets': ['dysfunctional family', 'family reunion', 'inheritance'],                                        # 117
+    'obsession': ['obsession'],                                                                                         # 82
+    'coming of age': ['coming of age'],                                                                                 # 219
+    'retirement home': ['nursing home', 'retirement home'],                                                             # 11
+    'reunion': ['high school reunion', 'class reunion', 'reunion', 'school reunion'],                                    # 28 (social/class reunion; family reunion stays under family secrets)
+    'dog': ['dog', 'puppy', 'talking dog', 'police dog', 'guide dog'],                                                   # 152 (surfaced live via /trace "movies with dogs")
+    'cat': ['cat', 'kitten'],                                                                                            # 52
+    'horse': ['horse', 'horse racing', 'racehorse'],                                                                    # 45
+    'christmas': ['christmas', 'christmas eve', 'santa claus'],                                                         # 178
+    'winter': ['winter', 'snow', 'snowstorm', 'blizzard'],                                                              # 106
+    'summer': ['summer', 'summer vacation', 'beach'],                                                                   # 115
+    'halloween': ['halloween'],                                                                                         # 69
+    '1980s': ['1980s'],                                                                                                 # 125
+    '1990s': ['1990s'],                                                                                                 # 65
 }
 # User phrasing (normalized via _norm_name) → canonical concept, for phrasings the LLM may emit that aren't the
 # concept key itself (plurals + close synonyms). The resolver also accepts any concept key VERBATIM, so this only
@@ -712,8 +764,61 @@ KEYWORD_CONCEPT_ALIASES = {
     'cannibals': 'cannibal', 'cannibalism': 'cannibal',
     'spies': 'spy', 'espionage': 'spy', 'secret agent': 'spy',
     'magician': 'magic', 'magicians': 'magic',
+    # run500-grade concept phrasings → canonical key (the resolver also accepts each key verbatim, so
+    # this is only the deltas the LLM may emit off-key: plurals, close synonyms, setting phrasings).
+    'post apocalyptic': 'post-apocalyptic', 'postapocalyptic': 'post-apocalyptic', 'post-apocalypse': 'post-apocalyptic',
+    'apocalyptic': 'post-apocalyptic', 'dystopian': 'post-apocalyptic', 'dystopia': 'post-apocalyptic',
+    'found-footage': 'found footage',
+    'hostage situation': 'hostage', 'hostages': 'hostage',
+    'kidnap': 'kidnapping', 'kidnapped': 'kidnapping', 'abduction': 'kidnapping',
+    'survive': 'survival', 'stranded': 'survival', 'shipwrecked': 'survival', 'plane crash': 'survival',
+    'roadtrip': 'road trip', 'road-trip': 'road trip',
+    'trains': 'train',
+    'treasure': 'treasure hunt', 'treasure hunting': 'treasure hunt', 'treasure hunter': 'treasure hunt',
+    'serial killers': 'serial killer',
+    'stalking': 'stalker', 'stalked': 'stalker',
+    'cults': 'cult', 'cult leader': 'cult',
+    'secret societies': 'secret society', 'secret organization': 'secret society',
+    'hacking': 'hacker', 'hackers': 'hacker', 'hack': 'hacker',
+    'theme park': 'amusement park', 'carnival': 'amusement park', 'fairground': 'amusement park',
+    'architecture': 'architect', 'architects': 'architect',
+    'radio host': 'radio', 'podcast': 'radio', 'podcaster': 'radio', 'dj': 'radio',
+    'cursed': 'curse', 'ancient curse': 'curse', 'curses': 'curse',
+    'buddy cops': 'buddy cop', 'buddy comedy': 'buddy cop',
+    'slashers': 'slasher', 'slasher film': 'slasher',
+    'stoner comedy': 'stoner', 'weed': 'stoner', 'marijuana': 'stoner', 'pot': 'stoner',
+    'social media': 'internet', 'the internet': 'internet', 'cyber': 'internet',
+    'wormhole': 'black hole', 'black holes': 'black hole',
+    'urban legend': 'folk horror', 'folklore': 'folk horror', 'folk tale': 'folk horror',
+    'novelist': 'writer', 'author': 'writer', 'screenwriter': 'writer',
+    'family secret': 'family secrets', 'dysfunctional family': 'family secrets', 'inheritance': 'family secrets',
+    'obsessive': 'obsession', 'obsessed': 'obsession',
+    'coming-of-age': 'coming of age',
+    'nursing home': 'retirement home', 'old age home': 'retirement home',
+    'high school reunion': 'reunion', 'class reunion': 'reunion', 'reunions': 'reunion',
+    'dogs': 'dog', 'puppy': 'dog', 'puppies': 'dog',
+    'cats': 'cat', 'kitten': 'cat', 'kittens': 'cat',
+    'horses': 'horse',
+    'xmas': 'christmas', 'christmas eve': 'christmas', 'holidays': 'christmas',
+    'snow': 'winter', 'snowy': 'winter', 'wintertime': 'winter', 'snowstorm': 'winter', 'blizzard': 'winter',
+    'summertime': 'summer', 'summer vacation': 'summer',
+    'halloween night': 'halloween',
+    '80s': '1980s', 'eighties': '1980s',
+    '90s': '1990s', 'nineties': '1990s',
 }
 _KEYWORD_CONCEPT_KEYS = set(KEYWORD_CONCEPTS)
+# Semantic-homonym denylist for the DYNAMIC resolver rungs (genome vocab + raw keyword index —
+# resolve_topic_term): terms whose exact-token vocabulary hit means something ELSE than the topical
+# ask, which exact matching cannot catch (the step-2 plan gotcha). The curated KEYWORD_CONCEPTS rung
+# is exempt — its allow-lists are hand-curated homonym-safe. Grow as misroutes surface; entries live
+# in _norm_name space (lowercase, punctuation→space).
+TOPIC_HOMONYM_DENYLIST = {
+    'bat', 'bats',        # the animal vs a baseball bat
+    'ring', 'rings',      # jewelry vs a boxing ring vs The Lord of the Rings
+    'saw',                # the tool vs the franchise
+    'scream', 'screams',  # the affect vs the franchise
+    'it',                 # a pronoun echo vs the film
+}
 # Valid raw codes accepted verbatim (the LLM often emits the ISO code directly, e.g. require_original_language="zh").
 _COUNTRY_CODES = set(COUNTRY_ALIASES.values()) | {c for cs in COUNTRY_REGIONS.values() for c in cs}
 _LANGUAGE_CODES = {c for cs in LANGUAGE_ALIASES.values() for c in cs}
@@ -760,6 +865,81 @@ def resolve_facet(phrase, kind):
             return [KEYWORD_CONCEPT_ALIASES[norm]], 'alias'
         return [], 'no match'
     return [], f'unknown kind {kind!r}'
+
+
+# ── Dynamic topic resolver (step 2 — genome-first signal resolution) ──────────
+def resolve_topic_term(ctx, term, exclude=False):
+    """Resolve one FREE concrete-topic term (the evolved require/exclude_keyword_concepts slots) to
+    a corpus member set, GENOME-FIRST — the step-2 dynamic resolver that replaces the closed
+    concept-list prompt contract (the LLM now emits free terms; hand-authored curated keys keep
+    resolving via rung 2, so old extractions work unchanged).
+
+    Rungs, in order. Matching is EXACT normalized-token only, never substring (cat ≠ catastrophe);
+    each vocabulary is tried with the term verbatim, then a naive singular/plural variant; the
+    TOPIC_HOMONYM_DENYLIST gates the two dynamic rungs (the curated core is homonym-safe by hand):
+      1. GENOME vocab (1,128 graded tags) → relevance member set (require: ≥ GENOME_HARD_FLOOR;
+         exclude: ≥ GENOME_EXCLUDE_CEILING, the emphatic-aversion ceiling). The returned tag also
+         lets the caller wire the GRADED machinery — REQUIRE_GT_RERANK_LAMBDA ordering + anchor
+         seeding — which is the point of genome-first: membership gates, relevance ORDERS. A term
+         that is ALSO a curated concept (dual membership — dog, heist, chess) keeps the boolean
+         membership in play: require → genome ∩ concept (the keyword-true pool, genome-ordered —
+         incidental strong carriers like a chess-metaphor scene stay out); exclude → genome ∪
+         concept (an emphatic exclusion wants recall, so either signal drops).
+      2. Curated KEYWORD_CONCEPTS core (frozen, homonym-safe) → boolean membership set, exactly the
+         pre-resolver behavior.
+      3. Raw TMDB keyword index (facets['keyword_to_movieIds'], ≥3-film floor, LOCAL build artifact
+         only) → boolean membership set — the long tail both vocabularies miss.
+
+    Returns (member_set | None, genome_tag | None, note). member_set None → nothing gateable (the
+    caller reports + drops the term and the rest of the query runs — the year-gate contract);
+    genome_tag is non-None only on a rung-1 hit."""
+    norm = _norm_name(term)
+    if not norm:
+        return None, None, 'empty'
+    variants = (norm, norm[:-1] if norm.endswith('s') else norm + 's')
+    facets = ctx.facets or {}
+    denied = norm in TOPIC_HOMONYM_DENYLIST
+
+    # rung 1: genome vocab, exact token (verbatim first, then the naive plural/singular variant)
+    gtag = None
+    if not denied:
+        gtag = next((ctx.genome_norm_to_name[v] for v in variants if v in ctx.genome_norm_to_name),
+                    None)
+
+    # rung 2: curated concept core (resolve_facet applies the key + alias tables, both exact)
+    concept_keys, _ = resolve_facet(term, 'keyword')
+    ktab = facets.get('movieId_to_keyword_concepts')
+    concept_members = None
+    if concept_keys and ktab is not None:
+        concept_members = {mid for mid, cs in ktab.items() if any(k in cs for k in concept_keys)}
+        if not concept_members:
+            concept_members = None   # concept known but zero members baked → no boolean signal
+
+    genome_members = None
+    if gtag is not None:
+        col = ctx.genome_name_to_idx[gtag]
+        gctx = ctx.fs['movieId_to_genome_tag_context']
+        floor = GENOME_EXCLUDE_CEILING if exclude else GENOME_HARD_FLOOR
+        genome_members = {mid for mid in ctx.all_ids if float(gctx[mid][col]) >= floor}
+
+    ckey = '+'.join(concept_keys) if concept_keys else ''
+    if genome_members is not None and concept_members is not None:
+        members = (genome_members | concept_members) if exclude else (genome_members & concept_members)
+        return members, gtag, f"genome '{gtag}' {'∪' if exclude else '∩'} concept '{ckey}'"
+    if genome_members is not None:
+        return genome_members, gtag, f"genome '{gtag}'"
+    if concept_members is not None:
+        return concept_members, None, f"concept '{ckey}'"
+    if concept_keys:
+        return None, None, f"concept '{ckey}' (no membership table — gate skipped)"
+
+    # rung 3: raw keyword index (local build artifact; absent on the baked serving store)
+    kw_index = facets.get('keyword_to_movieIds')
+    if not denied and kw_index:
+        mids = next((kw_index[v] for v in variants if v in kw_index), None)
+        if mids is not None:
+            return set(mids), None, f"keyword '{norm}'"
+    return None, None, ('homonym denylist' if denied else 'no match')
 
 
 # ── Mode-2 synthesis: genome tag → anchor movies (mirror evaluate._get_anchor_titles) ──
@@ -1176,27 +1356,11 @@ def _passes_constraints(mid, fs, hc, facets=None):
         if not all(a in attrs for a in req_attrs):
             return False
 
-    # Keyword CONTENT concepts (require/exclude_keyword_concept_keys = canonical concepts resolved upstream),
-    # e.g. chess / submarine / heist — a HARD boolean membership pre-filter over the curated TMDB-keyword store
-    # (KEYWORD_CONCEPTS). require = ANY present (OR); exclude = NONE present (ANY hit drops). require is OR —
-    # NOT AND like require_genres — because a genre pair (horror-comedy) routinely co-occurs in one film, but two
-    # distinct CONCRETE topics almost never do: "a boxing or MMA fighter" wants ['boxing','mixed martial arts'] as
-    # ALTERNATIVES, and an AND-intersection there is vacuously empty (no film is tagged BOTH), which read as a
-    # zero-result loss in the 500-query run. A multi-concept list is virtually always alternatives, so ANY-of is
-    # the faithful default; a single concept is unaffected (any-of-one == all-of-one). Same two-level absence as
-    # the other facets: whole table missing (ctx.facets None / old artifact) → skip the gate (graceful, else every
-    # film drops); present but this film carries no concepts → its set is empty, so it FAILS a require (an explicit
-    # "about X" demand must not admit a film with no such tag) and PASSES an exclude. Recall ≤ keyword coverage —
-    # an untagged member is a false negative, same precision/recall trade as the format facet.
-    req_kw = hc.get('require_keyword_concept_keys') or []
-    exc_kw = hc.get('exclude_keyword_concept_keys') or []
-    ktab = facets.get('movieId_to_keyword_concepts')
-    if (req_kw or exc_kw) and ktab is not None:
-        concepts = set(ktab.get(mid) or [])
-        if req_kw and not any(k in concepts for k in req_kw):
-            return False
-        if exc_kw and any(k in concepts for k in exc_kw):
-            return False
+    # Keyword CONTENT concepts (require/exclude_keyword_concepts) no longer gate here: the step-2
+    # dynamic resolver (resolve_topic_term) turns each free topic term into a member SET in
+    # recommend() — OR-united across terms and channels — and _run_select applies it alongside the
+    # genome floor, so a cross-channel "boxing or MMA" stays an alternatives-union rather than an
+    # AND of per-channel gates.
 
     # People (actors/directors/writers/composers), resolved to IDs upstream.
     require_p = hc.get('require_people_ids') or []
@@ -1390,26 +1554,68 @@ def recommend(ctx, extraction, top_n=TOP_N):
           'require_language_codes': facet_codes['language'],
           'require_attribute_keys': facet_codes['attribute']}
 
-    # 1c-bis. Resolve keyword CONTENT concepts (require/exclude_keyword_concepts → canonical concept keys via
-    #     resolve_facet(kind='keyword')). Concrete-noun "movies about chess" / "no zombie movies" intent → a
-    #     HARD boolean membership gate on the curated TMDB-keyword store (KEYWORD_CONCEPTS), distinct from the
-    #     genome floor (award/meta-polluted on niche topics) and from require_genres (chess is not a genre).
-    #     Each slot is a string or list; unresolved phrases are reported + dropped like the other facets.
-    kw_codes = {'require': [], 'exclude': []}
-    kw_log   = {'require': [], 'exclude': []}
+    # 1c-bis. Dynamic topic resolver (step 2, GENOME-FIRST). require/exclude_keyword_concepts now
+    #     carry FREE concrete-topic terms (the closed concept-list prompt contract is retired;
+    #     hand-authored curated keys still resolve via rung 2, so old extractions keep working).
+    #     Each term resolves to a corpus member set (resolve_topic_term: genome floor ∩/∪ curated
+    #     concept core → raw keyword index). REQUIRE sets are OR-UNITED across terms — multiple
+    #     topics are ALTERNATIVES ("a boxing or MMA fighter"), and union is the only semantics that
+    #     survives sibling terms landing on DIFFERENT channels (boxing → genome, mma → concept; an
+    #     AND across channels is vacuously empty). EXCLUDE sets union into one fixed drop set.
+    #     Genome-routed require terms also return their tag → the graded REQUIRE_GT-strength
+    #     re-rank + anchor seeding below: boolean membership GATES, graded relevance ORDERS.
+    topic_log = {'require': [], 'exclude': []}
+    topic_pool_ok = None        # None → no topic gate; else set of mids (union across require terms)
+    topic_exclude_mids = set()  # films dropped by exclude topics (fixed — never relaxed, like gt_exclude_bad)
+    topic_gt_tags = []          # genome-routed require terms → graded re-rank + anchor seeding
     for bucket, hc_key in (('require', 'require_keyword_concepts'), ('exclude', 'exclude_keyword_concepts')):
         raw = hc.get(hc_key)
         for phrase in ([raw] if isinstance(raw, str) else (raw or [])):
             if not isinstance(phrase, str):
                 continue
-            vals, note = resolve_facet(phrase, 'keyword')
-            kw_log[bucket].append((phrase, vals, note))
-            for v in vals:
-                if v not in kw_codes[bucket]:
-                    kw_codes[bucket].append(v)
-    hc = {**hc,
-          'require_keyword_concept_keys': kw_codes['require'],
-          'exclude_keyword_concept_keys': kw_codes['exclude']}
+            members, gtag, note = resolve_topic_term(ctx, phrase, exclude=(bucket == 'exclude'))
+            topic_log[bucket].append((phrase, note, None if members is None else len(members)))
+            if members is None:
+                continue
+            if bucket == 'require':
+                topic_pool_ok = members if topic_pool_ok is None else (topic_pool_ok | members)
+                if gtag and gtag not in topic_gt_tags:
+                    topic_gt_tags.append(gtag)
+            else:
+                topic_exclude_mids |= members
+    # Slot-misroute fallthrough (found live in the step-2 mock loop): a format-ish phrase that is
+    # really a TOPIC ("found-footage style" → require_attributes) resolves to no attribute key and
+    # used to VANISH — the whole request collapsed to popularity. Feed each unresolved attribute
+    # phrase through the topic resolver instead; a hit joins the topic pool exactly as if the term
+    # had been emitted in require_keyword_concepts. The resolver makes the slots converge, so an
+    # extractor slot misroute degrades to the right gate instead of to nothing.
+    for phrase, vals, _ in facet_log['attribute']:
+        if vals:
+            continue
+        members, gtag, tnote = resolve_topic_term(ctx, phrase)
+        topic_log['require'].append((phrase, f'{tnote} (require_attributes fallthrough)',
+                                     None if members is None else len(members)))
+        if members is None:
+            continue
+        topic_pool_ok = members if topic_pool_ok is None else (topic_pool_ok | members)
+        if gtag and gtag not in topic_gt_tags:
+            topic_gt_tags.append(gtag)
+    # The same fallthrough for an OUT-OF-VOCAB require_genome_tags entry ("entirely in the winter"
+    # → require_genome_tags ['winter'], but 'winter' is not a genome tag): today it contributes
+    # nothing to the 5c floor and the demand silently evaporates. The topic resolver catches it —
+    # the plural/singular variant may still land it on a real genome tag, else the concept core /
+    # raw keyword index supply the boolean membership ('winter' → concept, 106 films).
+    for tag in (hc.get('require_genome_tags') or []):
+        if not isinstance(tag, str) or tag in ctx.genome_name_to_idx:
+            continue
+        members, gtag, tnote = resolve_topic_term(ctx, tag)
+        topic_log['require'].append((tag, f'{tnote} (require_genome_tags fallthrough)',
+                                     None if members is None else len(members)))
+        if members is None:
+            continue
+        topic_pool_ok = members if topic_pool_ok is None else (topic_pool_ok | members)
+        if gtag and gtag not in topic_gt_tags:
+            topic_gt_tags.append(gtag)
 
     # 1d. Genre-pool degradation (step C thread 2 — see the L1/L2/L3 constants). Record the WANTED
     #     genre set (require_genres ∪ liked_genres) for the L1 re-rank + L3 diversity caps, and decide
@@ -1439,8 +1645,12 @@ def recommend(ctx, extraction, top_n=TOP_N):
     #    0.35 floor (a binary gate) lets incidental blockbusters through — Star Wars racing=0.36 clears it
     #    and popularity floats it over real racing films (Rush=1.0). Anchoring on the required tag ranks by
     #    taste WITHIN the floor. Scoped to the no-soft-signal case, so Mode-1 (likes) queries are untouched.
+    #    Genome-routed TOPIC terms (the step-2 resolver) join the same hard-subject seeding for the same
+    #    reason: "movies with dogs" is a pure topic ask, and without anchors its boolean pool falls to
+    #    popularity ordering (The Mask over Lassie).
     require_gt = hc.get('require_genome_tags') or []
-    anchor_tags = genome_tags if genome_tags else (require_gt if require_gt else mood_tags)
+    hard_subject_tags = list(require_gt) + [t for t in topic_gt_tags if t not in require_gt]
+    anchor_tags = genome_tags if genome_tags else (hard_subject_tags if hard_subject_tags else mood_tags)
     seed_exclude = set(liked_resolved) | set(disliked_resolved)
     has_likes = bool(liked_resolved)
     per_tag      = ANCHORS_PER_TAG_WITH_LIKES if has_likes else ANCHORS_PER_TAG
@@ -1454,6 +1664,35 @@ def recommend(ctx, extraction, top_n=TOP_N):
         [(t, LIKED_MOVIE_WEIGHT) for t in liked_resolved] +
         [(t, anchor_weight)      for t in anchors]
     )
+
+    # 3b. Step-3 popularity demotion — pool-anchor seeding for BOOLEAN-ONLY topic pools. A resolved
+    #     topic pool whose terms never genome-routed (concept/raw-keyword membership only, so no
+    #     Mode-2 anchors) and with NO other taste signal used to fall to POPULARITY ordering INSIDE
+    #     the pool, floating well-known incidental carriers over the on-topic films (The Mask over
+    #     Lassie; Austin Powers over Das Boot — idx 243). Seed the anchors from the pool's OWN most
+    #     popular members instead: the best-known exemplars of a topic define its taste centroid,
+    #     and the two-tower then ranks the whole pool by coherence with them — popularity demotes
+    #     to picking the exemplars, not ordering the result. Predicate mirrors the fallback flag
+    #     below + a resolved pool, so it fires ONLY where popularity would have: a BARE-GENRE ask
+    #     (require_genres, no topic) keeps its popularity floor untouched — the genre-centroid
+    #     "seed of last resort" was REJECTED by data (popularity IS the correct bare-category floor).
+    if topic_pool_ok and not liked_with_weights and not disliked_resolved \
+            and not liked_genres and not disliked_genres:
+        pool_mids = sorted(
+            (m for m in topic_pool_ok if m in fs['movieId_to_title']),
+            key=lambda m: ctx.pop_rank.get(fs['movieId_to_title'][m], 1 << 30))
+        # With a hard genre also demanded ("winter HORROR"), pick the exemplars from the pool
+        # members that carry it — the taste centroid should be winter-horror, not Home Alone.
+        # Falls back to the whole pool when the on-genre slice is empty (the gate still filters).
+        req_g = hc.get('require_genres') or []
+        if req_g:
+            on_genre = [m for m in pool_mids
+                        if all(g in fs['movieId_to_genres'].get(m, ()) for g in req_g)]
+            pool_mids = on_genre or pool_mids
+        pool_anchors = [fs['movieId_to_title'][m] for m in pool_mids[:ANCHORS_PER_TAG]
+                        if fs['movieId_to_title'][m] not in seed_exclude]
+        anchors = anchors + [t for t in pool_anchors if t not in anchors]   # surfaced in the report
+        liked_with_weights = liked_with_weights + [(t, ANCHOR_MOVIE_WEIGHT) for t in pool_anchors]
 
     # Validate genre names against the model's vocabulary (surface, don't crash).
     genre_vocab = set(fs['genres_ordered'])
@@ -1509,6 +1748,18 @@ def recommend(ctx, extraction, top_n=TOP_N):
             reqv = _genome_relevance(ctx, require_gt)
             if reqv is not None:
                 raw_scores = raw_scores + REQUIRE_GT_RERANK_LAMBDA * reqv.to(raw_scores.device)
+        # topic term: genome-routed free topics from the step-2 resolver — the same REQUIRE_GT
+        # strength (aboutness orders the pool), but MAX over tags rather than mean: sibling topics
+        # are ALTERNATIVES (their member sets OR-unite), and a mean would punish every alternative
+        # for not being the others. De-duped against require_gt so a tag in both is not boosted 2×.
+        topic_rr_tags = [t for t in topic_gt_tags if t not in require_gt]
+        if REQUIRE_GT_RERANK_LAMBDA and topic_rr_tags:
+            tvecs = [v for v in (_genome_relevance(ctx, [t]) for t in topic_rr_tags) if v is not None]
+            if tvecs:
+                tmax = tvecs[0]
+                for v in tvecs[1:]:
+                    tmax = torch.maximum(tmax, v)
+                raw_scores = raw_scores + REQUIRE_GT_RERANK_LAMBDA * tmax.to(raw_scores.device)
         # mood term: Engine-2 affect, gated by its OWN knob so it survives GENOME_RERANK_LAMBDA=0.
         if MOOD_RERANK_LAMBDA and mood_tags:
             mood_boost = _genome_relevance(ctx, mood_tags)
@@ -1565,11 +1816,11 @@ def recommend(ctx, extraction, top_n=TOP_N):
     order = raw_scores.argsort(descending=True).tolist() if not fallback else None
     diversify = bool(wanted_genres)   # step C thread 2 L3: only genre-oriented asks get diversified
 
-    def _run_select(hc_, gt_floor_ok_, diversify_):
-        """Collect up to top_n recs under the given (possibly relaxed) hard constraints + genome floor.
-        Shared by the popularity-fallback and model-ranked paths, and re-called by the relaxation ladder
-        below. gt_exclude_bad / seed_titles / exclusions are captured fixed — never relaxed. Returns
-        (recs, filtered_count)."""
+    def _run_select(hc_, gt_floor_ok_, topic_pool_ok_, diversify_):
+        """Collect up to top_n recs under the given (possibly relaxed) hard constraints + genome floor
+        + topic pool. Shared by the popularity-fallback and model-ranked paths, and re-called by the
+        relaxation ladder below. gt_exclude_bad / topic_exclude_mids / seed_titles / exclusions are
+        captured fixed — never relaxed. Returns (recs, filtered_count)."""
         out, filt = [], 0
         if fallback:
             title_to_mid = fs['title_to_movieId']
@@ -1579,7 +1830,9 @@ def recommend(ctx, extraction, top_n=TOP_N):
                     continue
                 if gt_floor_ok_ is not None and mid not in gt_floor_ok_:
                     filt += 1; continue
-                if mid in gt_exclude_bad:
+                if topic_pool_ok_ is not None and mid not in topic_pool_ok_:
+                    filt += 1; continue
+                if mid in gt_exclude_bad or mid in topic_exclude_mids:
                     filt += 1; continue
                 if not _passes_constraints(mid, fs, hc_, facets):
                     filt += 1; continue
@@ -1599,7 +1852,9 @@ def recommend(ctx, extraction, top_n=TOP_N):
                 continue
             if gt_floor_ok_ is not None and mid not in gt_floor_ok_:
                 filt += 1; continue
-            if mid in gt_exclude_bad:
+            if topic_pool_ok_ is not None and mid not in topic_pool_ok_:
+                filt += 1; continue
+            if mid in gt_exclude_bad or mid in topic_exclude_mids:
                 filt += 1; continue
             if not _passes_constraints(mid, fs, hc_, facets):
                 filt += 1; continue
@@ -1614,7 +1869,7 @@ def recommend(ctx, extraction, top_n=TOP_N):
                         fs['movieId_to_year'].get(mid), float(raw_scores[i])))
         return out, filt
 
-    recs, filtered = _run_select(hc, gt_floor_ok, diversify)
+    recs, filtered = _run_select(hc, gt_floor_ok, topic_pool_ok, diversify)
 
     # Graceful relaxation: when the hard filters empty the pool, progressively drop the SOFTEST require
     # gates — attributes → genome-tag floor → genre → keyword topic — keeping user IDENTITY (people,
@@ -1628,7 +1883,7 @@ def recommend(ctx, extraction, top_n=TOP_N):
     # the UI/trace can label the output "closest matches (relaxed: …)".
     relaxed_constraints = []
     if not recs:
-        cur_hc, cur_floor = dict(hc), gt_floor_ok
+        cur_hc, cur_floor, cur_topic = dict(hc), gt_floor_ok, topic_pool_ok
         for name in ('require_attributes', 'require_genome_tags', 'require_genres', 'require_keyword_concepts'):
             applied = False
             if name == 'require_genome_tags' and cur_floor is not None:
@@ -1637,12 +1892,12 @@ def recommend(ctx, extraction, top_n=TOP_N):
                 cur_hc = {k: v for k, v in cur_hc.items() if k != 'require_attribute_keys'}; applied = True
             elif name == 'require_genres' and (cur_hc.get('require_genres') or cur_hc.get('require_genres_or')):
                 cur_hc = {k: v for k, v in cur_hc.items() if k not in ('require_genres', 'require_genres_or')}; applied = True
-            elif name == 'require_keyword_concepts' and cur_hc.get('require_keyword_concept_keys'):
-                cur_hc = {k: v for k, v in cur_hc.items() if k != 'require_keyword_concept_keys'}; applied = True
+            elif name == 'require_keyword_concepts' and cur_topic is not None:
+                cur_topic = None; applied = True
             if not applied:
                 continue
             relaxed_constraints.append(name)
-            recs, filtered = _run_select(cur_hc, cur_floor, False)
+            recs, filtered = _run_select(cur_hc, cur_floor, cur_topic, False)
             if recs:
                 break
 
@@ -1651,6 +1906,7 @@ def recommend(ctx, extraction, top_n=TOP_N):
         'resolution': resolution_log,
         'people_resolution': people_log,
         'facet_resolution': facet_log,   # country/language/format phrase → resolved codes (step C)
+        'topic_resolution': topic_log,   # free topic term → (route note, member-pool size) (step 2)
         'anchors': anchors,
         'anchor_weight': anchor_weight,
         'mood_tags': mood_tags,          # genome tags routed from a free mood/vibe phrase (Engine-2)

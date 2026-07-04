@@ -83,6 +83,12 @@ def _resolution_lines(report):
         for phrase, vals, note in fr.get(bucket, []):
             arrow = f"→ {vals}" if vals else "→ **(unresolved, dropped)**"
             out.append(f"  - {bucket} `{phrase}` {arrow}  _[{note}]_")
+    tr = report.get('topic_resolution') or {}
+    for bucket in ('require', 'exclude'):
+        for phrase, note, size in tr.get(bucket, []):
+            arrow = (f"→ {note} ({size} films)" if size is not None
+                     else f"→ **(unresolved, dropped)**  _[{note}]_")
+            out.append(f"  - {bucket} topic `{phrase}` {arrow}")
     return out
 
 
@@ -194,6 +200,15 @@ def render_trace(report, utterance, top_n):
     if hc.get('require_genome_tags'):
         f.append(_fmt_kv(f"require_genome_tags — HARD floor (each ≥ {GENOME_HARD_FLOOR})",
                          hc['require_genome_tags']))
+    tr = report.get('topic_resolution') or {}
+    req_topics = [(p, n, s) for p, n, s in tr.get('require', []) if s is not None]
+    exc_topics = [(p, n, s) for p, n, s in tr.get('exclude', []) if s is not None]
+    if req_topics:
+        f.append(_fmt_kv("topic pool — resolver member sets, OR across terms",
+                         ", ".join(f"`{p}` → {n} ({s})" for p, n, s in req_topics)))
+    if exc_topics:
+        f.append(_fmt_kv("topic exclusion — resolver member sets (drop ANY)",
+                         ", ".join(f"`{p}` → {n} ({s})" for p, n, s in exc_topics)))
     exclude_tags = _resolve_exclude_slots(hc)
     if exclude_tags:
         f.append(_fmt_kv(f"exclude_mood / exclude_genome_tags — anti-floor (drop if ≥ {GENOME_EXCLUDE_CEILING} "

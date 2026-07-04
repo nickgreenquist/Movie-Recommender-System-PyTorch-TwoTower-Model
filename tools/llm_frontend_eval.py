@@ -24,6 +24,8 @@ CASE / ASSERTION FORMAT
 """
 import os, sys, json, re
 
+import torch
+
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, _REPO_ROOT)
 
@@ -345,8 +347,20 @@ def _check_assertion(a, recs, meta):
 
 
 # ── runner ───────────────────────────────────────────────────────────────────────────────────────
+_LOCAL_FACETS = os.path.join(_REPO_ROOT, 'llm_features', 'cache', 'facet_store.pt')
+
+
 def run_eval(cases_paths, verbose=False, only_regression=False):
     srv = Serving()
+    # Keep the ruler in lockstep with the CODE under test, not the gated deploy: KEYWORD_CONCEPTS
+    # (src/llm_frontend.py) and the concept-membership table must agree — the require filter is
+    # absent-drops, so a concept the baked serving/ store predates empties the pool and every case
+    # on it reads as a relaxation, not a result. Same single-table swap the mock loop uses
+    # (tools/results/traces/run500/mock_serving.py); serving/ itself stays untouched (export-gated).
+    if srv.ctx.facets is not None and os.path.exists(_LOCAL_FACETS):
+        local = torch.load(_LOCAL_FACETS, map_location='cpu', weights_only=False)
+        if 'movieId_to_keyword_concepts' in local:
+            srv.ctx.facets['movieId_to_keyword_concepts'] = local['movieId_to_keyword_concepts']
     meta = _Meta(srv)
     cases = []
     for p in cases_paths:

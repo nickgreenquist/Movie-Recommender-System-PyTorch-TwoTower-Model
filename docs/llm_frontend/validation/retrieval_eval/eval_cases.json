@@ -3425,13 +3425,14 @@
     "title": "Hunt for Red October, The (1990)",
     "facet": "keyword_concepts",
     "equals": [
-     "submarine"
+     "submarine",
+     "1980s"
     ]
    }
   ],
   "needs_feature": "require_keyword_concepts",
   "built": true,
-  "note": "Keyword facet with a liked SEED: the concept hard-filters to submarine films, the seed shapes ranking WITHIN. all_have_keyword_concept submarine holds for every top-10. Oracle: Hunt for Red October carries exactly ['submarine'].",
+  "note": "Keyword facet with a liked SEED: the concept hard-filters to submarine films, the seed shapes ranking WITHIN. all_have_keyword_concept submarine holds for every top-10. Oracle: Hunt for Red October carries ['submarine','1980s'] (the run500-grade '1980s' setting concept correctly also tags it — it is set in 1984).",
   "mode": "keyword_concept_submarine_seed"
  },
  {
@@ -3461,7 +3462,8 @@
     "title": "Shaun of the Dead (2004)",
     "facet": "keyword_concepts",
     "equals": [
-     "zombie"
+     "zombie",
+     "survival"
     ]
    },
    {
@@ -3502,13 +3504,14 @@
     "facet": "keyword_concepts",
     "equals": [
      "casino",
-     "heist"
+     "heist",
+     "hacker"
     ]
    }
   ],
   "needs_feature": "require_keyword_concepts",
   "built": true,
-  "note": "Keyword facet on a genome-COVERED concept (genome carries 'heist' strongly): the boolean membership pre-filter is still a clean, precise path for a concrete-noun ask and composes with the popularity fallback. Oracle: Ocean's Eleven carries both concepts it earns ('casino' via its keyword + 'heist'), demonstrating multi-concept membership.",
+  "note": "Keyword facet on a genome-COVERED concept (genome carries 'heist' strongly): the boolean membership pre-filter is still a clean, precise path for a concrete-noun ask and composes with the popularity fallback. Oracle: Ocean's Eleven carries the concepts it earns ('casino' + 'heist' + the run500-grade 'hacker' via its hacking subplot keyword), demonstrating multi-concept membership.",
   "mode": "keyword_concept_heist"
  },
  {
@@ -6099,5 +6102,158 @@
   "needs_feature": "none",
   "built": true,
   "note": "run500 idx 492; harvested 1 assertion(s)"
+ },
+ {
+  "utterance": "Movies with dogs in them",
+  "extraction": {
+   "liked_items": [],
+   "disliked_items": [],
+   "liked_genres": [],
+   "disliked_genres": [],
+   "genome_tags": [],
+   "hard_constraints": {
+    "require_genome_tags": [
+     "dogs"
+    ]
+   }
+  },
+  "assertions": [
+   {
+    "type": "min_genome",
+    "tag": "dogs",
+    "k": 10,
+    "min_score": 0.5,
+    "min": 8
+   }
+  ],
+  "needs_feature": "require_genome_tags",
+  "built": true,
+  "note": "The plan's motivating case (hybrid_retrieval_ask_tab_plan step 1): a concrete SUBJECT — not a setting — served by the generalized genome hard floor + REQUIRE_GT re-rank. Pre-generalization this fell through to popularity blockbusters; now every top-10 is a genuine dog film (Lassie/Beethoven/Hachiko, all >=0.96).",
+  "mode": "genome_topic_facet"
+ },
+ {
+  "utterance": "Courtroom dramas",
+  "extraction": {
+   "liked_items": [],
+   "disliked_items": [],
+   "liked_genres": [
+    "Drama"
+   ],
+   "disliked_genres": [],
+   "genome_tags": [],
+   "hard_constraints": {
+    "require_genome_tags": [
+     "courtroom"
+    ],
+    "require_genres": [
+     "Drama"
+    ]
+   }
+  },
+  "assertions": [
+   {
+    "type": "min_genome",
+    "tag": "courtroom",
+    "k": 10,
+    "min_score": 0.5,
+    "min": 8
+   },
+   {
+    "type": "contains_genre",
+    "genre": "Drama",
+    "k": 10,
+    "min": 9
+   }
+  ],
+  "needs_feature": "require_genome_tags",
+  "built": true,
+  "note": "Generalized genome-topic floor COMPOSED with a hard genre gate: courtroom is a genome-only subject (not in the keyword-concept list), Drama is the head-noun genre. Verified: top-10 all courtroom >=0.92 AND all Drama (Verdict, Anatomy of a Murder, A Time to Kill).",
+  "mode": "genome_topic_facet"
+ },
+ {
+  "utterance": "Movies about journalism",
+  "extraction": {
+   "liked_items": [],
+   "disliked_items": [],
+   "liked_genres": [],
+   "disliked_genres": [],
+   "genome_tags": [],
+   "hard_constraints": {
+    "require_genome_tags": [
+     "journalism"
+    ]
+   }
+  },
+  "assertions": [
+   {
+    "type": "min_genome",
+    "tag": "journalism",
+    "k": 10,
+    "min_score": 0.5,
+    "min": 8
+   }
+  ],
+  "needs_feature": "require_genome_tags",
+  "built": true,
+  "note": "Genome-only PROFESSION/theme subject (no concept-list entry): the floor + aboutness re-rank surface All the President's Men / Shattered Glass / Good Night and Good Luck, not popularity. The class the run500 grade flagged as popularity-dump.",
+  "mode": "genome_topic_facet"
+ },
+ {
+  "utterance": "A movie set in high school, something from the 2000s",
+  "extraction": {
+   "liked_items": [],
+   "disliked_items": [],
+   "liked_genres": [],
+   "disliked_genres": [],
+   "genome_tags": [],
+   "hard_constraints": {
+    "require_genome_tags": [
+     "high school"
+    ],
+    "year_min": 2000,
+    "year_max": 2009
+   }
+  },
+  "assertions": [
+   {
+    "type": "min_genome",
+    "tag": "high school",
+    "k": 10,
+    "min_score": 0.5,
+    "min": 8
+   }
+  ],
+  "needs_feature": "require_genome_tags",
+  "built": true,
+  "note": "Genome-topic floor COMPOSED with a year fence: 'high school' is a multi-word genome-only subject (531 films >=0.35 — densest probed axis), the 2000-2009 fence prunes without emptying. Verified: top-10 all 2004-2009, all high-school >=0.96.",
+  "mode": "genome_topic_facet"
+ },
+ {
+  "utterance": "Wedding movies",
+  "extraction": {
+   "liked_items": [],
+   "disliked_items": [],
+   "liked_genres": [],
+   "disliked_genres": [],
+   "genome_tags": [],
+   "hard_constraints": {
+    "require_genome_tags": [
+     "wedding"
+    ]
+   }
+  },
+  "assertions": [
+   {
+    "type": "min_genome",
+    "tag": "wedding",
+    "k": 10,
+    "min_score": 0.5,
+    "min": 8
+   }
+  ],
+  "needs_feature": "require_genome_tags",
+  "built": true,
+  "note": "Genome-only EVENT subject (concept list has no wedding key): 27 Dresses / My Big Fat Greek Wedding / The Wedding Planner, all >=0.84. One of the run500 metadata-gap classes (occasion/subject) now served from the genome index.",
+  "mode": "genome_topic_facet"
  }
 ]
