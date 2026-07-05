@@ -9,9 +9,11 @@ Requires:     serving/model.pth
 
 Generate serving/ with: python main.py export
 """
+import datetime
 import importlib
 import json
 import os
+import threading
 import urllib.parse
 from typing import NamedTuple
 
@@ -55,8 +57,12 @@ _TOTAL_RESULTS = 60     # total movies to fetch (3 pages)
 
 # Conversational ("Ask") tab — natural language → LLM intent extraction → the shared recommend()
 # pipeline. The LLM (Claude Haiku) only parses intent; the trained model still does all retrieval.
-# A light per-session call cap keeps the demo's hosted-LLM bill negligible (plan §Protections).
+# Two light call caps keep the demo's hosted-LLM bill negligible (plan §Protections): per browser
+# session (resets on refresh) and per calendar day across ALL visitors (shared st.cache_resource
+# counter, resets on app restart/redeploy). Both are polite in-app friction — the Anthropic
+# Console spend limit on the key's workspace is the actual bill protection.
 _LLM_SESSION_CAP = 20   # max hosted extraction calls per browser session
+_LLM_DAILY_CAP   = 60   # max hosted extraction calls per day, all sessions combined
 
 # Recommend / Examples popularity-correction A/B — the two separately-trained models the visitor
 # switches between. Prod bakes the Menon α=0.5 logit adjustment into training; the α=0 twin is a
@@ -698,6 +704,16 @@ def _anthropic_api_key():
     return key or os.environ.get('ANTHROPIC_API_KEY')
 
 
+@st.cache_resource
+def _llm_daily_budget():
+    """The global daily call counter behind _LLM_DAILY_CAP. st.cache_resource hands every session
+    in the container the SAME dict, so this counts extraction calls across all visitors (unlike
+    st.session_state, which is per-browser). 'date' rolls the count over at midnight; the lock
+    guards concurrent sessions. Resets on app restart/redeploy — acceptable, the Console spend
+    limit is the hard backstop."""
+    return {'lock': threading.Lock(), 'date': None, 'count': 0}
+
+
 def _report_to_df(report, fs):
     """Adapt src.llm_frontend.recommend()'s report into the poster-feed DataFrame the other tabs
     use (Title / Genres / Top Genome Tags), so the conversational results render as the same cards."""
@@ -773,6 +789,12 @@ def tab_ask(art, posters, tmdb_ids):
         else:
             api_key = _anthropic_api_key()
             calls   = st.session_state.get('ask_calls', 0)
+            budget  = _llm_daily_budget()
+            with budget['lock']:   # roll the day + read together; check-then-increment races
+                today = datetime.date.today().isoformat()   # are tolerable (friction, not a
+                if budget['date'] != today:                 # security boundary)
+                    budget['date'], budget['count'] = today, 0
+                daily_used = budget['count']
             if api_key is None:
                 st.info(
                     "The conversational tab needs an Anthropic API key. Set `ANTHROPIC_API_KEY` in "
@@ -784,6 +806,11 @@ def tab_ask(art, posters, tmdb_ids):
                     f"Per-session limit reached ({_LLM_SESSION_CAP} requests). Refresh to start over "
                     "— this cap keeps the demo's API cost negligible."
                 )
+            elif daily_used >= _LLM_DAILY_CAP:
+                st.warning(
+                    "Today's demo budget is used up — the **Recommend** tab works without the LLM, "
+                    "or come back tomorrow."
+                )
             else:
                 extraction = None
                 try:
@@ -794,6 +821,8 @@ def tab_ask(art, posters, tmdb_ids):
                              f"({type(exc).__name__})")
                 if extraction is not None:
                     st.session_state['ask_calls'] = calls + 1
+                    with budget['lock']:
+                        budget['count'] += 1
                     report = recommend(art.frontend_ctx, extraction, top_n=_TOTAL_RESULTS)
                     _store_results(_report_to_df(report, fs), 'ask')
                     st.session_state['ask_report'] = report

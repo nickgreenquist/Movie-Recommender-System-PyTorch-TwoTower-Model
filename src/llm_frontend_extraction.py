@@ -25,6 +25,11 @@ DEFAULT_MODEL = 'claude-haiku-4-5'
 MAX_TOKENS    = 300          # extraction JSON is tiny; caps cost / runaway generations
 _TOOL_NAME    = 'emit_query'
 
+# Usage object from the most recent extract_query call (None until the first call). Lets
+# verification scripts / debug UIs read the prompt-cache counters (cache_creation_input_tokens,
+# cache_read_input_tokens) without changing extract_query's return shape.
+LAST_USAGE = None
+
 
 def extract_query(utterance, fs=None, *, api_key=None, model=DEFAULT_MODEL, max_tokens=MAX_TOKENS):
     """Call the hosted model once and return the extraction dict (the same shape
@@ -36,6 +41,7 @@ def extract_query(utterance, fs=None, *, api_key=None, model=DEFAULT_MODEL, max_
                 instead of re-reading serving/ (the Streamlit tab passes its cached art.fs).
     api_key:    explicit key; when None the SDK resolves ANTHROPIC_API_KEY from the environment.
     """
+    global LAST_USAGE
     import anthropic  # lazy: only the hosted path needs the SDK installed
 
     system_prompt = build_system_prompt(fs)
@@ -45,7 +51,15 @@ def extract_query(utterance, fs=None, *, api_key=None, model=DEFAULT_MODEL, max_
     response = client.messages.create(
         model=model,
         max_tokens=max_tokens,
-        system=system_prompt,
+        # Prompt caching (5-min TTL): requests render tools → system → messages, so this single
+        # breakpoint on the system block caches the tool schema too. The prompt is byte-identical
+        # across calls (sorted vocab, constant CURRENT_YEAR, stable genre order), so repeat calls
+        # within the TTL read the ~12k-token prefix from cache at ~0.1× input price.
+        system=[{
+            'type': 'text',
+            'text': system_prompt,
+            'cache_control': {'type': 'ephemeral'},
+        }],
         tools=[{
             'name': _TOOL_NAME,
             'description': 'Record the structured query extracted from the user\'s movie request.',
@@ -54,6 +68,7 @@ def extract_query(utterance, fs=None, *, api_key=None, model=DEFAULT_MODEL, max_
         tool_choice={'type': 'tool', 'name': _TOOL_NAME},  # force the tool → guaranteed parseable
         messages=[{'role': 'user', 'content': utterance}],
     )
+    LAST_USAGE = response.usage
 
     for block in response.content:
         if block.type == 'tool_use' and block.name == _TOOL_NAME:
