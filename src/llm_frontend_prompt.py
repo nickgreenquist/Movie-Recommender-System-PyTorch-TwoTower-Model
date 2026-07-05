@@ -438,6 +438,9 @@ require_country ["European"]
 mood ["funny"]
 - "a movie that feels like a lazy Sunday morning" → genome_tags ["feel-good", "heartwarming"] + \
 mood ["cozy"]
+- "what was that movie where a guy's whole life is secretly being filmed for TV" → \
+require_keyword_concepts ["reality tv"] (tip-of-tongue lookups: name the CANONICAL concept for the \
+premise, never the literal surface words — "television show"/"tv" resolve to nothing)
 
 GENRES (closed list — the only valid values for any genre field):
 {genres}

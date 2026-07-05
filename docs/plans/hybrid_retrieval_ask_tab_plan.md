@@ -114,6 +114,69 @@ already computed); **no hand-curation** (terms resolve because they're *in the d
 6. **Streamlit** last: only after both rulers pass on the mock loop, wire into the Ask tab, then the
    gated `serving/` export if needed.
 
+## Mode-1.5 like-X qualifier-refine (designed + BUILT + VALIDATED 2026-07-05, UNCOMMITTED — the bad-136 lever D)
+
+> Outcome (same-extraction A/B on the 30 E-spike idxs, Sonnet judge vs `grades_step4.json`):
+> E-centering alone 11 up / 7 good → **+refine blend 14 up / 2 down / 10 good**; 348 Black Swan
+> bad→GOOD, 380 Gladiator bad→GOOD, 305/324/355/371/394 up; Kiss Kiss Bang Bang #1 for Nice Guys.
+> Both downs (351/377) are extraction-roll degradations (351's roll dropped `require_people:
+> Spielberg` entirely), not the lever. Residual 7 bad D rows = premise-mechanic grain (342
+> piece-together-the-night, 349 mother-daughter, 375 con-vs-FBI chase, 389/395 band hooks) —
+> beyond membership retrieval, queued for narrative dimensions. Ruler 165/165.
+
+**Problem (measured, 19-item D table in `tools/results/traces/run500/bad136_triage.md`):** the
+similarity path (`_content_similar_scores`) fires only on `pure_single_title` — one resolved liked
+title and ZERO other signal. The moment an extraction carries a qualifier (mood, genome_tags,
+liked_genres, a topic), ranking falls back to the user-tower taste path and the qualifier REPLACES
+the title instead of refining it (334 Her + sad → grief dramas; 362 Nice Guys + funny → indie
+comedies, Kiss Kiss Bang Bang lost). The inverse failure: a resolved require topic HARD-gates the
+sim pool into keyword-incidental junk (348 Black Swan + art∪dance → art documentaries). Natural
+experiment from the E-spike measurement run: baseline-good pure-title cases 351/377 regressed on a
+roll where Haiku happened to emit qualifiers — the same mechanism, live.
+
+**Principle (triage lever D):** when a single title resolves, rank by SIMILARITY FIRST; qualifiers
+re-rank WITHIN the neighborhood; a subject gate on a like-X query REFINES (graded re-rank), never
+gates the sim pool.
+
+**Mechanism (v2 — BLEND, not a switch; all in `recommend()`, two new constants):**
+1. `single_title_refine` = exactly one resolved liked title, no dislikes, qualifiers present (the
+   complement of `pure_single_title` within the 1-title case). Two+ titles / any dislike keep the
+   tower centroid path untouched; a seed missing from the matrix → plain tower, as today.
+2. Ranking = **tower + `SIM_REFINE_BLEND = 0.5` × seed-cosine**. v1 (pure seed-cosine + demoted
+   gates) was built first and REJECTED by the ruler (161/165): it broke the PIVOT contract — "I
+   loved The Dark Knight BUT I'm in the mood for something more emotional" requires the mood
+   anchors to dominate the seed's own action neighborhood, and it broke the like-X topic-gate
+   contracts (Donnie Darko + time travel must serve all-10 time travel). The blend arbitrates
+   describe-vs-pivot with no extra machinery: a qualifier that DESCRIBES the seed (Her + sad)
+   boosts the same films the seed-cosine boosts — aligned, the neighborhood tops; a qualifier that
+   PIVOTS away (TDK + heartbreaking) boosts films the seed-cosine doesn't, and wins the gap.
+   λ sweep on the ruler: 0.75 fails the TDK pivot (6/10 Action), 0.5 passes 165/165 while keeping
+   every D-table win (Kiss Kiss Bang Bang #1 for Nice Guys; Vertigo-canon for Rear Window;
+   Mulholland Drive/Persona for Black Swan; Eternal Sunshine for Her).
+3. Subject gates STAY HARD (v1's demotion is what broke the DD/About-Time contracts). Within the
+   pool, ordering goes sim-first: the hard-subject re-rank terms run at
+   **`SIM_REFINE_TOPIC_LAMBDA = 0.75`** instead of `REQUIRE_GT_RERANK_LAMBDA = 2.0` (at 2.0 a
+   far-from-seed 0.9-carrier out-ranks the whole neighborhood: 0.05 + 1.8 beats 0.60 + 0.6). The
+   wave-2 `TOPIC_MATCH_RERANK_BONUS` (+10 band) is skipped under `sim_refine` (it orders a union
+   POOL; on a like-X it would obliterate the seed signal).
+4. Structural facets (genres, year, runtime, ratings, people, country/language/attributes,
+   franchise) and EVERY exclude stay hard and unchanged — excludes are precision, never the
+   dilution problem.
+5. Mode-1.5 tag injection (`mode15_tags`) is zeroed under `sim_refine` (the blend already carries
+   the seed's full genome row; re-injecting its top-6 tags double-counts its dominant axes).
+   `diversify` is forced off (the seed defines the ask, not a genre spread).
+6. Transparency holds with zero changes: echo chips describe INTENT (a 🎯 topic chip does not
+   promise a hard gate), the tail says "ranked by similarity to X" (the seed cosine drives the
+   blend), provenance chips show each film's TRUE relevance on the qualifier tags, and the
+   thin-genome-seed rider (`SIM_SEED_THIN_YEAR`) applies as-is.
+
+**Validation:** ruler 165/165 (after the λ sweep) + mock re-serve of the 30 E-spike idxs (19 D +
+5 E + 6 baseline-good like-X guards) on the SAME `ext_espike/` extractions — isolates the harness
+change from extraction stochasticity — then Sonnet judge vs `grades_step4.json` and a deterministic
+diff vs `records_espike/` for attribution. Success = net up-conversion on the 12 still-bad D rows
+with no guard regressions; 351/377 flipping back toward their baseline sim lists is the expected
+signature (their regression in the E-spike run was qualifier-roll dilution, the exact D mechanism).
+
 ## Validation protocol (the user explicitly asked future-you to remember this)
 
 Every change runs through **both** rulers, always:

@@ -67,6 +67,25 @@ ANCHOR_WEIGHT_WITH_LIKES   = 0.5  # down-weighted vs ANCHOR_MOVIE_WEIGHT so like
 CANDIDATE_POOL        = 400    # retrieve large, post-filter, then surface TOP_N
 TOP_N                 = 15
 
+# 'Movies like X' seeds from the thin-genome era (sparse tag rows shrink toward the corpus prior —
+# see the centering note in build_frontend_context) carry little similarity signal even under the
+# centered metric: an in-hub 2019+ seed like EEAAO is unrescuable because the signal isn't in its
+# row. Presentation-only honesty rider: say the read is weak instead of ranking silently.
+SIM_SEED_THIN_YEAR = 2019
+
+# Mode-1.5 refine (bad-136 lever D; design: docs/plans/hybrid_retrieval_ask_tab_plan.md): a
+# single-title 'like X' WITH qualifiers ranks by tower + SIM_REFINE_BLEND × seed-cosine — the blend,
+# not a switch. Pure seed-cosine broke the ruler's PIVOT contract ("loved The Dark Knight BUT want
+# emotional" — mood anchors must dominate); pure tower is the measured D-table dilution ("like Her,
+# sad" → grief dramas). The blend arbitrates by seed-qualifier coherence with no extra machinery:
+# qualifiers that DESCRIBE the seed boost the same films sim boosts (aligned → neighborhood tops);
+# qualifiers that PIVOT away boost films sim doesn't, and win exactly when the tower+mood signal
+# clears the seed-similarity gap. Hard subject gates STAY (the DD "time travel" contract); only
+# their WITHIN-pool ordering goes sim-first via SIM_REFINE_TOPIC_LAMBDA (2.0 would let a
+# far-from-seed 0.9-carrier out-rank the whole neighborhood: 0.05+1.8 beats 0.60+0.6).
+SIM_REFINE_BLEND        = 0.5
+SIM_REFINE_TOPIC_LAMBDA = 0.75
+
 # Soft genome re-rank (Post-Retrieval Filtering "Source A"). The item embedding clusters by release
 # era + co-watch, so even a CORRECT anchor set drifts to era-neighbours when ranked by cosine alone
 # (a "western" vibe whose anchors are real westerns still surfaces 80s action first; "set in Paris"
@@ -285,8 +304,8 @@ class FrontendContext(NamedTuple):
     pop_rank:           dict          # canonical title → popularity rank (tie-break / fallback)
     genome_name_to_idx: dict          # genome tag NAME → 0-based column in the genome vector
     facets:             dict          # scraped-facet store (people tables) or None if unbaked
-    genome_sim_matrix:  torch.Tensor  # [N, 1128] L2-normed raw genome vectors (row i ↔ all_ids[i]); the
-                                      # Similar-tab genome content space, for 'movies like X' ranking
+    genome_sim_matrix:  torch.Tensor  # [N, 1128] mean-centered + L2-normed genome vectors (row i ↔
+                                      # all_ids[i]); the 'movies like X' content space (see build below)
     genome_norm_to_name: dict         # _norm_name(tag) → tag, the topic resolver's exact-token rung
                                       # (resolve_topic_term), so free terms and vocab normalize alike
 
@@ -301,13 +320,18 @@ def build_frontend_context(model, fs, all_ids, all_embs, ts_inference, facets=No
     people. None (an old serving artifact without the bake) degrades gracefully: people facets in
     an extraction are simply reported unresolved and dropped, leaving the rest of the query intact."""
     gn, gi = fs['genome_tag_names'], fs['genome_tag_to_i']
-    # Raw genome content space (the Similar tab's "Genome Tags → Raw features" cell), L2-normed so a
-    # single matmul against a seed row yields cosine. This — not the combined item embedding, which
-    # clusters by release era / co-watch — is the faithful "movies like X" substrate (Toy Story → the
-    # Pixar films, not the 1995 co-watch cohort). Built once (~40MB); row i ↔ all_ids[i].
+    # Raw genome content space (the Similar tab's "Genome Tags → Raw features" cell), MEAN-CENTERED
+    # then L2-normed so a single matmul against a seed row yields cosine. This — not the combined item
+    # embedding, which clusters by release era / co-watch — is the faithful "movies like X" substrate
+    # (Toy Story → the Pixar films, not the 1995 co-watch cohort). Centering (E lever, 2026-07-05):
+    # thin-tag rows (overwhelmingly 2018+) shrink toward the genome prior and form a mutual ~0.95-cosine
+    # hub near the corpus centroid, flooding any seed whose true neighbors score below ~0.88 (raw Truman
+    # Show → Bo Burnham/AlphaGo; centered → Eternal Sunshine/Pleasantville/Network). Subtracting the
+    # corpus mean removes the shared prior direction; in-hub 2019+ SEEDS stay unrescuable (the signal
+    # isn't in their rows). Built once (~40MB); row i ↔ all_ids[i].
     gt_ctx = fs['movieId_to_genome_tag_context']
-    genome_sim_matrix = F.normalize(
-        torch.stack([torch.as_tensor(gt_ctx[m], dtype=torch.float32) for m in all_ids]), dim=1)
+    genome_raw = torch.stack([torch.as_tensor(gt_ctx[m], dtype=torch.float32) for m in all_ids])
+    genome_sim_matrix = F.normalize(genome_raw - genome_raw.mean(0), dim=1)
     return FrontendContext(
         model=model,
         fs=fs,
@@ -1066,6 +1090,15 @@ MOOD_TAGS = {
     'atmospheric':  ['atmospheric'],
     'surreal':      ['surreal', 'nonlinear'],
     'nostalgic':    ['nostalgic', 'nostalgia', 'bittersweet', 'coming-of-age'],
+    # 'terrifying' is deliberately NOT routed to the 'scary' family: genome creepy/scary/atmospheric
+    # mark spooky-genre ADJACENCY (Hocus Pocus scary=0.77, Beetlejuice creepy=0.87), so an exclude at
+    # the 0.4 ceiling would gut a fun-Halloween pool. disturbing/slasher/serial-killer isolate genuine
+    # terror: on the 30-film halloween concept pool they drop every franchise slasher and keep every
+    # family pick (probed 2026-07-05; It (2017) is the one known leak — no tag separates it cleanly).
+    'terrifying':   ['disturbing', 'slasher', 'serial killer'],
+    # 'patriotism' is NOT a genome tag (it kw-resolves as a topic); the AFFECT routes to national-pride
+    # cinema: inspirational (Invictus/Rudy/Remember the Titans) + us history (Glory/Selma/Lincoln).
+    'patriotic':    ['inspirational', 'us history'],
 }
 # Trigger phrase (normalized, whole-word) → canonical mood key above. Multi-word triggers are matched
 # as contiguous token runs (mirrors _franchise_match's whole-word discipline, so "warm" ⊄ "warmth").
@@ -1084,6 +1117,7 @@ MOOD_ALIASES = {
     'scary': 'scary', 'creepy': 'scary', 'frightening': 'scary', 'spooky': 'scary',
     'eerie': 'scary', 'chilling': 'scary', 'unsettling': 'scary', 'scare me': 'scary',
     'scare': 'scary',
+    'terrifying': 'terrifying',   # whole-word token also catches "genuinely terrifying"
     'suspenseful': 'suspenseful', 'suspense': 'suspenseful', 'tense': 'suspenseful',
     'gripping': 'suspenseful', 'thrilling': 'suspenseful', 'thriller': 'suspenseful',
     'nail biting': 'suspenseful', 'riveting': 'suspenseful',
@@ -1099,6 +1133,7 @@ MOOD_ALIASES = {
     'surreal': 'surreal', 'dreamlike': 'surreal', 'dream like': 'surreal', 'abstract': 'surreal',
     'nostalgic': 'nostalgic', 'nostalgia': 'nostalgic', 'wistful': 'nostalgic',
     'bittersweet': 'nostalgic', 'sentimental': 'nostalgic',
+    'patriotic': 'patriotic', 'patriotism': 'patriotic',
     # Comparative (-er) forms of the base moods — "scarier"/"funnier" are single tokens so the whole-word
     # matcher misses them (unlike "more scary", which already hits the base 'scary'). "darker" is above.
     'scarier': 'scary', 'creepier': 'scary', 'funnier': 'funny', 'sadder': 'cry', 'grimmer': 'dark',
@@ -1866,6 +1901,14 @@ def recommend(ctx, extraction, top_n=TOP_N):
     if pure_single_title:
         mode15_tags = []
 
+    # Mode-1.5 refine (bad-136 lever D): a single liked title WITH qualifiers ALSO ranks by
+    # similarity — the qualifiers re-rank WITHIN the seed's neighborhood instead of replacing it
+    # (the measured Mode-1 anchor-dilution: 'like Her, sad' → grief dramas). Complement of
+    # pure_single_title in the 1-title case; any dislike keeps the tower (ranking must stay
+    # dislike-aware). Design: docs/plans/hybrid_retrieval_ask_tab_plan.md §Mode-1.5.
+    single_title_refine = (len(liked_resolved) == 1 and not disliked_resolved
+                           and not pure_single_title)
+
     # 1b. Resolve people facets (Phase 1: HARD require/exclude only). Names → canonical TMDB
     #     person IDs via the facet store; unresolved names (or no facet store at all) are reported
     #     and dropped, so the rest of the query still runs. The model has no person concept, so
@@ -2101,13 +2144,18 @@ def recommend(ctx, extraction, top_n=TOP_N):
     #      the popularity branch (step 6) ignores these scores, so building the embedding and scoring the
     #      corpus is pure wasted work; skip the forward pass entirely and leave raw_scores None.
     raw_scores = None
-    ranked_by_similarity = False   # True → 'movies like X' ranked by item-item cosine, not the user tower
+    ranked_by_similarity = False   # True → seed cosine drives the ranking (pure 'like X' or a refine blend)
+    sim_refine = False             # True → single-title-with-qualifiers, tower + SIM_REFINE_BLEND × seed cosine
     if not fallback:
-        if pure_single_title:
+        sim_scores = None
+        if pure_single_title or single_title_refine:
             # 'movies like X' — genome content-space cosine off the seed (see _content_similar_scores).
-            raw_scores = _content_similar_scores(ctx, liked_resolved[0])
-            ranked_by_similarity = raw_scores is not None
-        if raw_scores is None:  # not a pure single title, OR seed missing from the matrix → user tower
+            sim_scores = _content_similar_scores(ctx, liked_resolved[0])
+            ranked_by_similarity = sim_scores is not None
+            sim_refine = ranked_by_similarity and single_title_refine
+        if pure_single_title and sim_scores is not None:
+            raw_scores = sim_scores   # pure 'like X': the seed cosine IS the ranking
+        else:   # user tower; a Mode-1.5 refine BLENDS the seed cosine in (see SIM_REFINE_BLEND)
             with torch.no_grad():
                 user_emb = build_user_embedding(
                     ctx.model, fs, liked_with_weights, disliked_resolved, ctx.ts_inference,
@@ -2115,6 +2163,13 @@ def recommend(ctx, extraction, top_n=TOP_N):
                     disliked_movie_value=DISLIKED_MOVIE_WEIGHT,
                 )
             raw_scores = (ctx.all_embs @ user_emb.T).squeeze(-1)
+            if sim_refine:
+                raw_scores = raw_scores + SIM_REFINE_BLEND * sim_scores.to(raw_scores.device)
+
+    # Mode-1.5 refine ACTIVE: zero the Mode-1.5 tag injection — the blend already carries the seed's
+    # full genome row; re-injecting its top tags double-counts its dominant axes.
+    if sim_refine:
+        mode15_tags = []
 
     # 5b. Soft genome re-rank (Source A — see GENOME_RERANK_LAMBDA). Lift films that actually carry
     #     the requested genome tags so a correct anchor/title set isn't out-ranked by the item
@@ -2134,27 +2189,32 @@ def recommend(ctx, extraction, top_n=TOP_N):
         # hard subject term: require_genome_tags re-rank, stronger than the soft term so subject relevance
         # (not co-watch cosine) is the primary ordering WITHIN the 0.35 floor — fixes the thin-axis
         # 'movies about chess' displacement; near-uniform on a dense axis (racing) so anchor order holds.
-        if REQUIRE_GT_RERANK_LAMBDA and require_gt:
+        # Under Mode-1.5 refine the hard-subject strength drops to SIM_REFINE_TOPIC_LAMBDA (see the
+        # constant): the subject must refine the seed's neighborhood, not out-rank it.
+        hard_subject_lambda = SIM_REFINE_TOPIC_LAMBDA if sim_refine else REQUIRE_GT_RERANK_LAMBDA
+        if hard_subject_lambda and require_gt:
             reqv = _genome_relevance(ctx, require_gt)
             if reqv is not None:
-                raw_scores = raw_scores + REQUIRE_GT_RERANK_LAMBDA * reqv.to(raw_scores.device)
+                raw_scores = raw_scores + hard_subject_lambda * reqv.to(raw_scores.device)
         # topic term: genome-routed free topics from the step-2 resolver — the same REQUIRE_GT
         # strength (aboutness orders the pool), but MAX over tags rather than mean: sibling topics
         # are ALTERNATIVES (their member sets OR-unite), and a mean would punish every alternative
         # for not being the others. De-duped against require_gt so a tag in both is not boosted 2×.
         topic_rr_tags = [t for t in topic_gt_tags if t not in require_gt]
-        if REQUIRE_GT_RERANK_LAMBDA and topic_rr_tags:
+        if hard_subject_lambda and topic_rr_tags:
             tvecs = [v for v in (_genome_relevance(ctx, [t]) for t in topic_rr_tags) if v is not None]
             if tvecs:
                 tmax = tvecs[0]
                 for v in tvecs[1:]:
                     tmax = torch.maximum(tmax, v)
-                raw_scores = raw_scores + REQUIRE_GT_RERANK_LAMBDA * tmax.to(raw_scores.device)
+                raw_scores = raw_scores + hard_subject_lambda * tmax.to(raw_scores.device)
         # union match-count ordering (wave 2): with MULTIPLE resolved require topics, films matching
         # MORE of the member sets rank first — a decisive band above every graded term, which then
         # orders within the band (see TOPIC_MATCH_RERANK_BONUS). (count−1) so the bonus is zero for
         # the 1-match films that make up a single-band pool, and the gate itself is unchanged.
-        if TOPIC_MATCH_RERANK_BONUS and len(topic_require_resolved) >= 2:
+        # Skipped under Mode-1.5 refine: the band exists to order a union POOL — on a like-X it
+        # would obliterate the seed's neighborhood.
+        if TOPIC_MATCH_RERANK_BONUS and len(topic_require_resolved) >= 2 and not sim_refine:
             mcounts = torch.tensor(
                 [sum(1 for _, mem, _ in topic_require_resolved if mid in mem)
                  for mid in ctx.all_ids],
@@ -2214,7 +2274,9 @@ def recommend(ctx, extraction, top_n=TOP_N):
     seed_titles = set(liked_resolved) | set(disliked_resolved)
     facets = ctx.facets  # baked facet store (people + F1 structured tables), or None if unbaked
     order = raw_scores.argsort(descending=True).tolist() if not fallback else None
-    diversify = bool(wanted_genres)   # step C thread 2 L3: only genre-oriented asks get diversified
+    # Step C thread 2 L3: only genre-oriented asks get diversified — and never a Mode-1.5 refine
+    # (the seed's similarity ordering IS the answer; a genre spread would shuffle it).
+    diversify = bool(wanted_genres) and not sim_refine
 
     def _run_select(hc_, gt_floor_ok_, topic_pool_ok_, diversify_):
         """Collect up to top_n recs under the given (possibly relaxed) hard constraints + genome floor
@@ -2330,6 +2392,14 @@ def recommend(ctx, extraction, top_n=TOP_N):
     capability_notice = _build_capability_notice(
         extraction, resolution_log, people_log, facet_log, topic_log, unresolved_tags,
         unresolved_moods, fallback, filtered)
+    # Thin-genome-seed honesty rider (see SIM_SEED_THIN_YEAR): fires only on the similarity path,
+    # appended so a resolver-miss notice and this one compose into a single honest line.
+    _seed_year = fs['movieId_to_year'].get(fs['title_to_movieId'].get(liked_resolved[0])) \
+        if ranked_by_similarity else None
+    if _seed_year is not None and int(_seed_year) >= SIM_SEED_THIN_YEAR:
+        too_new = (f'{sim_seed} is newer than most of my content data, so my similarity '
+                   'read on it is weaker than usual.')
+        capability_notice = too_new if capability_notice is None else f'{capability_notice} {too_new}'
     rec_provenance = _rec_provenance(
         ctx, recs, sim_seed, hard_prov_tags,
         [(p, m) for p, m, g in topic_require_resolved if g is None],  # boolean-only topic routes
