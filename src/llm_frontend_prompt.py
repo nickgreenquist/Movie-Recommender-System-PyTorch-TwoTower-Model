@@ -222,8 +222,10 @@ feel/atmosphere/style — NOT broad tags that merely restate a genre you already
 restate-a-genre tags are FORBIDDEN in any mode (they pull off-target): "comedy", "crime", \
 "thriller", "epic", "funny", "romantic", "action", "scary", "dramatic", "adventure". Prefer \
 specific, evocative ones like "quirky", "neo-noir", "atmospheric", "surreal", "stylized", \
-"dreamlike". CONCRETE-TOPIC GUARD (critical): genome_tags are abstract FEEL / atmosphere / style \
-ONLY. A word naming a concrete SUBJECT the film is ABOUT (dogs, chess, submarines, a serial \
+"dreamlike". COMFORT-VIBE choice: a cozy / comfort-watch / "lazy Sunday" ask wants "feel-good" / \
+"heartwarming" (+ mood "cozy") — NEVER "meditative" / "dreamlike" / "slow-paced", which read \
+art-house and swap a comfort list for bleak slow cinema. CONCRETE-TOPIC GUARD (critical): genome_tags \
+are abstract FEEL / atmosphere / style ONLY. A word naming a concrete SUBJECT the film is ABOUT (dogs, chess, submarines, a serial \
 killer, an amusement park, christmas) is never a vibe — it goes in \
 hard_constraints.require_keyword_concepts as a free term, NOT in genome_tags, where it either \
 dilutes the query or is silently dropped. \
@@ -288,12 +290,15 @@ require_attributes, require_country, rating/runtime/franchise, and their exclude
 NESTED INSIDE the hard_constraints object — NEVER emitted at the top level of the extraction. A key \
 placed at the root is silently ignored and the whole filter is lost.
     • year_min / year_max: explicit date limits ("after 2010", "90s movies" → 1990–1999, \
-"recent" → roughly year_min {current_year_minus_10}). Use integers or null.
+"recent" → roughly year_min {current_year_minus_10}; "popular right now" / "what's big right now" → \
+year_min {current_year_minus_3}, the tightest recency window). Use integers or null.
     • require_genres: HARD genre requirement. Use it when a genre is the PRIMARY CATEGORY being \
 requested — the head noun of the ask — not just a taste aside: "only westerns" → ["Western"], \
 and ALSO "comedies from the 80s" → ["Comedy"], "show me horror movies" → ["Horror"], \
-"documentaries about nature" → ["Documentary"]. Every result must contain all of these.
-    • exclude_genres: HARD genre exclusion ("absolutely no horror" → ["Horror"]).
+"documentaries about nature" → ["Documentary"], "animated movies" → ["Animation"] (an animation ask \
+is this GENRE — never the require_attributes value "animated"). Every result must contain all of these.
+    • exclude_genres: HARD genre exclusion ("absolutely no horror" → ["Horror"]; "live-action", \
+"no cartoons" → ["Animation"] — live-action has no facet of its own, it is the ABSENCE of animation).
     • require_people: HARD filter on PEOPLE — every result must involve ALL named people (matched \
 as actor, director, or writer). Use it whenever the request names a person whose films are wanted, \
 in ANY phrasing: "movies with Tom Hanks", "Tom Hanks movies", "I like Tom Hanks movies", "starring \
@@ -319,13 +324,16 @@ doubt, prefer soft genome_tags — an over-eager hard floor empties the pool.
 genome tags to forbid ("no gore" → ["gore"]); exclude_mood takes FREE affect phrases ("nothing sad", "no \
 dark depressing stuff"). Only for an EMPHATIC "absolutely no ___" — a mild preference is not an exclusion.
     • require_country: HARD PRODUCTION-nationality filter — "French films", "Korean cinema", "Scandinavian \
-movies", "foreign" (non-English). Free strings. This is WHO PRODUCED the film, NOT where it is set (see \
-require_genome_tags). "Japanese films" → require_country ["Japanese"]; "movies set in Japan" → \
-require_genome_tags ["japan"].
+movies", "foreign" (non-English). Free strings. Region phrases work too: "Scandinavian" / "East Asian" / \
+"European" ("a European film", "somewhere in Europe" → ["European"]). This is WHO PRODUCED the film, NOT \
+where it is set (see require_genome_tags). "Japanese films" → require_country ["Japanese"]; "movies set \
+in Japan" → require_genome_tags ["japan"].
     • require_language: HARD original-language filter — "in French", "originally Japanese, not dubbed", \
 "Korean-language". Free language names.
     • require_attributes: HARD format/attribute filter — "black and white", "silent", "directed by women", \
-"based on a book", "based on a true story", "anime", "stop motion", "independent / indie".
+"based on a book", "based on a true story", "anime", "stop motion", "independent / indie". Reserve \
+"anime" for JAPANESE-animation asks specifically; a plain "animated / animation" ask is the Animation \
+GENRE (require_genres) and "live-action" is exclude_genres ["Animation"], never an attribute.
     • require_keyword_concepts / exclude_keyword_concepts: HARD content-topic filter — concrete SUBJECTS the \
 film must be ABOUT, as short free lowercase noun terms: "movies about chess" → ["chess"], "movies with \
 dogs" → ["dog"], "submarine movies" → ["submarine"], "something with dinosaurs" → ["dinosaur"]; "no zombie \
@@ -338,7 +346,18 @@ A viewing OCCASION or season is a topic too: "a movie to watch on Christmas Eve"
 holidays" → ["christmas"]; "a Halloween-night movie" → ["halloween"]; "a summer / beach movie" → \
 ["summer"]; "a winter/snowbound story" → ["winter"]. A film SET IN or evoking a decade ("set in the 90s", \
 "80s synthwave aesthetic") is the term "1980s"/"1990s" — but a RELEASE-era ask ("movies FROM the 80s", \
-"90s comedies", "old 80s films") is year_min/year_max, NOT a topic term.
+"90s comedies", "old 80s films") is year_min/year_max, NOT a topic term. "Nostalgic FOR the 90s" / \
+"feels like the 90s" names the decade FEEL, so it is the SETTING term ["1990s"] too, not a release \
+window; and "a western set in modern times" → ["neo western"] (a modern SETTING is never year_min). \
+TERM FORM: the resolver matches exact tokens, so keep each term SHORT and CANONICAL — "space" not \
+"space exploration", "election" not "political campaign", "whodunit" not "whodunit mystery", "dreams" \
+not "stuck in a dream". When unsure the term is known, EMIT IT ANYWAY: an unknown term is reported and \
+degrades honestly, so trying is always safe — NEVER park a concrete subject in unsupported_notes or \
+demote it to a soft tag instead. A subject stays HARD even wrapped in a vibe / nostalgia / \
+effect-on-viewer phrasing: "a cozy small-town vibe" → ["small town"] (+ mood "cozy"), "nostalgic for \
+college life" → ["college"], "makes me want to travel the world" → ["travel"], "that movie where the \
+guy is stuck in a dream" → ["dreams"]. A comedic topic ask pairs the genre gate with the topic: \
+"funny stoner movies" → ["stoner"] + require_genres ["Comedy"].
     • require_max_rating: HARD US content-rating ceiling — one of "G", "PG", "PG-13", "R", "NC-17". \
 "nothing R-rated" → "PG-13"; "kid-friendly" / "nothing too mature" → "PG". Drops anything stricter.
     • require_min_rating: HARD US content-rating FLOOR (mirror of the ceiling) — one of "G", "PG", "PG-13", \
@@ -362,6 +381,14 @@ like crime stuff") is SOFT → liked_genres. Absolutes ("only", "must be", "noth
 always HARD. A hard "no X" goes in exclude_genres. A genre you put in require_genres may also go \
 in liked_genres so the model leans toward it, but a SOFT preference must NEVER go in require_genres.
 
+SOCIAL-CONTEXT REQUESTS ("something to watch with my ___"): mine the TASTE SIGNAL embedded in the \
+social frame and extract it like any other preference — "watch with my teenage son" → liked_genres \
+["Action", "Adventure", "Sci-Fi"]; "my grandfather who served in the military" → \
+require_keyword_concepts ["military"]; "a double date night" → mood ["romantic", "fun"] + liked_genres \
+["Romance", "Comedy"]; "my cousin who loves true crime podcasts" → require_genres ["Crime"] + \
+require_keyword_concepts ["true story"]. Only a PURE social frame with NO taste signal at all ("a movie \
+to watch with my new roommate") stays empty — never invent a preference from the relationship alone.
+
 NOT SUPPORTED — silently ignore these, do not invent fields for them: constraints about specific \
 studios / production companies ("A24 films", "a Pixar movie" as a STUDIO) and streaming availability \
 ("on Netflix", "what's streaming"). Still capture the rest of such a request. (Actors, directors, \
@@ -382,7 +409,35 @@ unsupported_notes ["the dog dies at the end"]; "shot entirely in one take" → u
 ["shot in one take"]. CHECK the fields first — never park something a field CAN express: a \
 twist/tone ask is genome_tags ("a big twist" → ["twist ending"]), a format/credit ask is \
 require_attributes ("black and white", "directed by women"), a concrete subject is \
-require_keyword_concepts. Most requests leave unsupported_notes EMPTY.
+require_keyword_concepts — and when you are unsure the subject term is known, TRY it there anyway \
+(an unknown term is reported and degrades honestly; parking it here guarantees the loss). Notes are \
+for plot MECHANICS and craft techniques, not subjects. Most requests leave unsupported_notes EMPTY.
+
+WORKED ROUTING EXAMPLES (each shows only the fields that matter — the routing patterns above, applied):
+- "a movie with a really cozy, small-town vibe" → require_keyword_concepts ["small town"] + mood ["cozy"]
+- "a very dark, gothic romance vibe" → require_keyword_concepts ["gothic"] + liked_genres ["Romance"] + \
+mood ["dark"]
+- "a sports movie where the underdog wins" → require_keyword_concepts ["underdog"] + mood ["pumped up"]
+- "the main character talks directly to the camera" → require_keyword_concepts \
+["breaking the fourth wall"]
+- "takes place over the course of one single night" → require_keyword_concepts ["one night"]
+- "makes me feel nostalgic for the 90s" → require_keyword_concepts ["1990s"] + mood ["nostalgic"] \
+(feel-of-decade; "movies FROM the 90s" would instead be year_min 1990 / year_max 1999)
+- "a western set in modern times" → require_keyword_concepts ["neo western"] + liked_genres ["Western"]
+- "a political campaign behind the scenes" → require_keyword_concepts ["election"]
+- "a movie about a musician who loses their hearing" → require_keyword_concepts ["musicians", "deaf"]
+- "a romance about two older people who get a second chance" → require_genres ["Romance"] + \
+require_keyword_concepts ["aging", "second chance"]
+- "siblings fighting over an inheritance after a parent dies" → require_keyword_concepts \
+["inheritance"] + liked_genres ["Drama"]
+- "a sci-fi movie about a utopian society that is secretly terrible" → liked_genres ["Sci-Fi"] + \
+require_keyword_concepts ["utopia"] + mood ["dark"]
+- "feels like a vacation somewhere in Europe" → require_keyword_concepts ["vacation"] + \
+require_country ["European"]
+- "funny animated movies for adults" → require_genres ["Animation"] + require_min_rating "R" + \
+mood ["funny"]
+- "a movie that feels like a lazy Sunday morning" → genome_tags ["feel-good", "heartwarming"] + \
+mood ["cozy"]
 
 GENRES (closed list — the only valid values for any genre field):
 {genres}
@@ -400,6 +455,7 @@ def build_system_prompt(fs=None):
     return _SYSTEM_TEMPLATE.format(
         current_year=CURRENT_YEAR,
         current_year_minus_10=CURRENT_YEAR - 10,
+        current_year_minus_3=CURRENT_YEAR - 3,
         genres=json.dumps(genres),
         genome_tags=json.dumps(genome_tags),
     )

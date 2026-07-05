@@ -162,6 +162,20 @@ Every change runs through **both** rulers, always:
 
 ## Already done (context, not tasks — do NOT redo)
 
+- **Bad-136 waves 1+2 — DONE 2026-07-04, committed** (spec:
+  `docs/llm_frontend/ask_tab_wave1_wave2_handoff.md`; per-idx results:
+  `tools/results/traces/run500/wave12_results.md`, local-only). Wave 1 = prompt routing discipline
+  + worked-example bank + social-context block (`src/llm_frontend_prompt.py`), `campaign` homonym
+  denylist, universe-wide `exclude_franchise` via the resolver's genome rung (`src/llm_frontend.py`).
+  Wave 2 = `TOPIC_MATCH_RERANK_BONUS` match-count-first ordering inside the multi-term require-topic
+  union (gate unchanged; single-term pools untouched). Validation: ruler 165/165 after each wave;
+  mock loop vs step-4 baseline — wave 1 **27/40 up** (14 good + 13 partial, 0 down), wave 2 **5/10
+  up** (Orient Express #1 / Cast Away #1 / Thomas Crown #1), 15-idx baseline-good spot-check **0
+  real regressions**. Measurement note: `mock_serving.py` now also patches `keyword_to_movieIds` —
+  the BAKED serving store predates resolver rung 3, so kw-only terms (whodunit / one night /
+  breaking the fourth wall) resolve to nothing on the live deploy until the next export bakes the
+  local facet store. Residual levers queued: MOOD_TAGS gaps ('terrifying', 'patriotic'), 'reality
+  tv' lookup term-form, compound 'family secrets' form, 173 country-primacy ordering.
 - **Build step 1 — DONE 2026-07-03, UNCOMMITTED** (see the step-1 entry above for full detail).
   Files: `src/llm_frontend_prompt.py` (routing + AND discipline), `eval_cases.json` (+5 topic
   cases → ruler is now **165/165**), `tools/llm_frontend_eval.py` (see next bullet). Step-2 evidence

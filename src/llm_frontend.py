@@ -100,6 +100,18 @@ GENOME_HARD_FLOOR     = 0.35
 # all ~1.0) the boost is near-uniform so the anchor/taste order is preserved. Tuned on the ruler.
 REQUIRE_GT_RERANK_LAMBDA = 2.0
 
+# Union match-count ordering for MULTI-term require topics (bad-136 wave 2). Sibling require terms
+# OR their member sets by design (the boxing/MMA cross-channel empty-AND fix) — the right GATE, but
+# the wrong ORDER falls out: a broad sibling ('crime' 1332) drowns a specific one ('train' 44), and
+# cosine/graded ordering never recovers the intersection — Murder on the Orient Express sits in the
+# 12-film train∩crime pool and missed the served list entirely. Add a DECISIVE additive bonus per
+# EXTRA matched require term, so a film matching more of the resolved terms always outranks one
+# matching fewer (a 2-of-2 beats ANY 1-of-2), while the existing graded terms (REQUIRE_GT re-rank,
+# anchor cosine, mood/genre nudges) still order films WITHIN a match-count band. 10.0 comfortably
+# dominates the maximum within-band spread (cosine ≤2 + the stacked re-rank terms ≤~5.5). Single-term
+# topics are untouched — every gated film matches 1 of 1, so the bonus is uniform (and skipped).
+TOPIC_MATCH_RERANK_BONUS = 10.0
+
 # Hard ANTI-floor for negative affect / anti-vibe exclusion (exclude_mood + exclude_genome_tags — the
 # mirror of the require floor above). An emphatic "absolutely nothing dark", "I genuinely cannot handle
 # gore" is a gate, not a nudge: drop any film whose genome relevance on ANY excluded tag clears this
@@ -858,6 +870,8 @@ TOPIC_HOMONYM_DENYLIST = {
     'saw',                # the tool vs the franchise
     'scream', 'screams',  # the affect vs the franchise
     'it',                 # a pronoun echo vs the film
+    'campaign', 'campaigns',  # a POLITICAL-campaign ask vs the military-campaign keyword pool
+                              # (Last Samurai / Kelly's Heroes); the prompt routes it to 'election'
 }
 # Valid raw codes accepted verbatim (the LLM often emits the ISO code directly, e.g. require_original_language="zh").
 _COUNTRY_CODES = set(COUNTRY_ALIASES.values()) | {c for cs in COUNTRY_REGIONS.values() for c in cs}
@@ -1975,6 +1989,23 @@ def recommend(ctx, extraction, top_n=TOP_N):
         topic_require_resolved.append((tag, members, gtag))
         if gtag and gtag not in topic_gt_tags:
             topic_gt_tags.append(gtag)
+    # Franchise-UNIVERSE exclusion widening (bad-136 cluster C): "tired of Marvel" names a cinematic
+    # UNIVERSE, but the collection-based _franchise_match expands a universe alias to its member
+    # COLLECTIONS only — non-MCU Marvel collections (Fantastic Four / Ghost Rider / Blade / Punisher)
+    # pass the exclude, and collection-less members (Elektra, Hulk 2003) can NEVER match. When an
+    # exclude_franchise spec is a franchise_universe_aliases key, ALSO drop films via the topic
+    # resolver ('marvel' is a genome tag; exclude semantics = genome ∪ concept, recall-first), joining
+    # the fixed topic drop set. Plain collection specs ("no Saw movies") are not alias keys, so they
+    # keep the existing collection-only path untouched.
+    fr_aliases = (ctx.facets or {}).get('franchise_universe_aliases') or {}
+    exc_fr_raw = hc.get('exclude_franchise')  # may be True ("no sequels at all") — universe names only
+    for spec in (_slot_vals(exc_fr_raw) if not isinstance(exc_fr_raw, bool) else []):
+        if _norm_name(spec) not in fr_aliases:
+            continue
+        members, _, unote = resolve_topic_term(ctx, spec, exclude=True)
+        if members:
+            topic_exclude_mids |= members
+            topic_log['exclude'].append((spec, f'{unote} (universe exclude_franchise)', len(members)))
 
     # 1d. Genre-pool degradation (step C thread 2 — see the L1/L2/L3 constants). Record the WANTED
     #     genre set (require_genres ∪ liked_genres) for the L1 re-rank + L3 diversity caps, and decide
@@ -2119,6 +2150,16 @@ def recommend(ctx, extraction, top_n=TOP_N):
                 for v in tvecs[1:]:
                     tmax = torch.maximum(tmax, v)
                 raw_scores = raw_scores + REQUIRE_GT_RERANK_LAMBDA * tmax.to(raw_scores.device)
+        # union match-count ordering (wave 2): with MULTIPLE resolved require topics, films matching
+        # MORE of the member sets rank first — a decisive band above every graded term, which then
+        # orders within the band (see TOPIC_MATCH_RERANK_BONUS). (count−1) so the bonus is zero for
+        # the 1-match films that make up a single-band pool, and the gate itself is unchanged.
+        if TOPIC_MATCH_RERANK_BONUS and len(topic_require_resolved) >= 2:
+            mcounts = torch.tensor(
+                [sum(1 for _, mem, _ in topic_require_resolved if mid in mem)
+                 for mid in ctx.all_ids],
+                dtype=torch.float32)
+            raw_scores = raw_scores + TOPIC_MATCH_RERANK_BONUS * (mcounts - 1).clamp_(min=0).to(raw_scores.device)
         # mood term: Engine-2 affect, gated by its OWN knob so it survives GENOME_RERANK_LAMBDA=0.
         if MOOD_RERANK_LAMBDA and mood_tags:
             mood_boost = _genome_relevance(ctx, mood_tags)
