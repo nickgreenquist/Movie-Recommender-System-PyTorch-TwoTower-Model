@@ -714,6 +714,26 @@ def _llm_daily_budget():
     return {'lock': threading.Lock(), 'date': None, 'count': 0}
 
 
+@st.cache_resource
+def _load_ask_examples():
+    """serving/ask_examples.json — the pre-generated example-chip boards (6 roots × 6 refinement
+    children, built by tools/gen_ask_examples.py through the same extract→recommend pipeline the
+    live path runs). A chip click replays a stored report with zero API cost, so the tour works
+    with no key, off the daily budget, and with deterministic boards for live demos. Returns None
+    when the artifact is absent — the chips simply don't render. Ids missing from 'examples'
+    (a partially regenerated artifact) are filtered out rather than crashing a chip."""
+    try:
+        with open('serving/ask_examples.json') as f:
+            data = json.load(f)
+    except Exception:
+        return None
+    known = data.get('examples', {})
+    data['roots'] = [r for r in data.get('roots', []) if r in known]
+    data['tree']  = {r: [c for c in kids if c in known]
+                     for r, kids in data.get('tree', {}).items()}
+    return data if data['roots'] else None
+
+
 def _report_to_df(report, fs):
     """Adapt src.llm_frontend.recommend()'s report into the poster-feed DataFrame the other tabs
     use (Title / Genres / Top Genome Tags), so the conversational results render as the same cards."""
@@ -775,6 +795,42 @@ def tab_ask(art, posters, tmdb_ids):
         "after, so very recent films (2023+) and newer stars may return thin or no results."
     )
 
+    # ── Example chips: a pre-computed 6×6 tour of the pipeline ────────────────
+    # Rendered BEFORE the text_area so a chip click may back-fill st.session_state['ask_text']
+    # (Streamlit forbids writing a widget's state after it has been instantiated this run).
+    # Selecting a root shows its board + a second pills row of refinements; selecting a child
+    # swaps in the child's board; deselecting the child falls back to the parent's board. The
+    # ingest guard ('ask_ex_active') fires only on selection CHANGE, so reruns don't clobber
+    # results, and the live path pins it so a still-highlighted chip can't reclaim live results.
+    examples    = _load_ask_examples()
+    sel_example = None
+    if examples:
+        st.caption(
+            "**Or take the tour** — each chip replays a board pre-computed offline through the "
+            "exact same pipeline (no API call). Picking one also reveals a row of refinements."
+        )
+        root_sel = st.pills(
+            "Example queries", examples['roots'], selection_mode="single",
+            format_func=lambda i: examples['examples'][i]['label'],
+            key='ask_ex_root', label_visibility="collapsed",
+        )
+        child_sel = None
+        if root_sel:
+            # Child row keyed by root: switching roots swaps the widget, resetting the child pick.
+            child_sel = st.pills(
+                "Refinements", examples['tree'].get(root_sel, []), selection_mode="single",
+                format_func=lambda i: "↳ " + examples['examples'][i]['label'],
+                key=f'ask_ex_children_{root_sel}', label_visibility="collapsed",
+            )
+        sel_example = child_sel or root_sel
+        if sel_example and st.session_state.get('ask_ex_active') != sel_example:
+            entry = examples['examples'][sel_example]
+            st.session_state['ask_ex_active'] = sel_example
+            st.session_state['ask_text']      = entry['query']   # back-fill for tweak-and-rerun
+            st.session_state['ask_report']    = entry['report']
+            st.session_state['ask_canned']    = True
+            _store_results(_report_to_df(entry['report'], fs), 'ask')
+
     utterance = st.text_area(
         "What do you feel like watching?",
         key='ask_text', height=90,
@@ -823,12 +879,22 @@ def tab_ask(art, posters, tmdb_ids):
                     st.session_state['ask_calls'] = calls + 1
                     with budget['lock']:
                         budget['count'] += 1
+                    # Live results own the panel: clear the canned flag and pin the ingest
+                    # guard to the current chip selection so it can't re-ingest next rerun.
+                    st.session_state['ask_canned']    = False
+                    st.session_state['ask_ex_active'] = sel_example
                     report = recommend(art.frontend_ctx, extraction, top_n=_TOTAL_RESULTS)
                     _store_results(_report_to_df(report, fs), 'ask')
                     st.session_state['ask_report'] = report
 
     report = st.session_state.get('ask_report')
     if report is not None:
+        if st.session_state.get('ask_canned'):
+            st.caption(
+                "⚡ **Pre-computed example** — generated offline through the same extraction → "
+                "retrieval pipeline, so the tour costs nothing to serve. The query is filled in "
+                "above; edit it and hit Get Recommendations to run the pipeline live."
+            )
         relaxed = report.get('relaxed_constraints') or []
         if relaxed:
             labels = {'require_attributes': 'format', 'require_genome_tags': 'vibe/setting',
