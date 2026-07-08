@@ -1,0 +1,17 @@
+{
+  "genome_tags": [
+    "paranoid",
+    "conspiracy"
+  ],
+  "hard_constraints": {
+    "require_genres": [
+      "Thriller"
+    ],
+    "require_keyword_concepts": [
+      "political",
+      "cover-up"
+    ],
+    "year_min": 1970,
+    "year_max": 1989
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "liked_items": ["Hocus Pocus (1993)", "Casper (1995)"],
+  "liked_genres": ["Comedy", "Family", "Fantasy"],
+  "genome_tags": [],
+  "mood": "fun, playful, family-friendly",
+  "hard_constraints": {
+    "require_keyword_concepts": ["halloween"],
+    "require_max_rating": "PG"
+  }
+}

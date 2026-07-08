@@ -1,0 +1,7 @@
+{
+  "genome_tags": ["feel-good", "heartwarming", "whimsical", "nostalgic"],
+  "mood": ["cozy", "warm", "family-friendly"],
+  "hard_constraints": {
+    "require_keyword_concepts": ["christmas"]
+  }
+}

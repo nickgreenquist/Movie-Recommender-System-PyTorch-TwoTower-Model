@@ -1,0 +1,15 @@
+{
+  "liked_items": [
+    "Marley & Me (2008)",
+    "Hachiko: A Dog's Story (2009)"
+  ],
+  "mood": "make me cry",
+  "hard_constraints": {
+    "require_keyword_concepts": [
+      "dog"
+    ],
+    "exclude_genres": [
+      "Comedy"
+    ]
+  }
+}

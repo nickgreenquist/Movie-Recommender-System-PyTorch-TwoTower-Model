@@ -1,0 +1,7 @@
+{
+  "hard_constraints": {
+    "require_keyword_concepts": [
+      "katana"
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "liked_items": [
+    "Spirited Away (2001)",
+    "My Neighbor Totoro (1988)"
+  ],
+  "disliked_items": [],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "genome_tags": [],
+  "mood": "",
+  "hard_constraints": {},
+  "out_of_domain": false,
+  "unsupported_notes": ""
+}

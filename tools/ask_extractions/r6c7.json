@@ -1,0 +1,13 @@
+{
+  "liked_items": [],
+  "disliked_items": [],
+  "genome_tags": [],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "mood": "",
+  "hard_constraints": {
+    "require_genome_tags": ["wilderness", "solitude"]
+  },
+  "unsupported_notes": "",
+  "out_of_domain": false
+}

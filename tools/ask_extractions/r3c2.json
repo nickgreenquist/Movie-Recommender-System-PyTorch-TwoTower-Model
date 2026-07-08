@@ -1,0 +1,13 @@
+{
+  "liked_items": [],
+  "disliked_items": [],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "genome_tags": ["heartbreaking", "poignant"],
+  "mood": "make me cry",
+  "hard_constraints": {
+    "require_genres": ["Drama"],
+    "require_keyword_concepts": ["cancer", "terminal illness"]
+  },
+  "out_of_domain": false
+}

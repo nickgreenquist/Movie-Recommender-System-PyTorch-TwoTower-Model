@@ -1,0 +1,12 @@
+{
+  "liked_items": [],
+  "disliked_items": [],
+  "genome_tags": ["classic"],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "mood": null,
+  "hard_constraints": {
+    "require_keyword_concepts": ["samurai", "sword fight"]
+  },
+  "unsupported_notes": null
+}

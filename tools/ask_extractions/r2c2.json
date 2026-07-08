@@ -1,0 +1,13 @@
+{
+  "liked_items": [],
+  "disliked_items": [],
+  "genome_tags": ["feel-good", "heartwarming", "cute"],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "mood": ["wholesome"],
+  "hard_constraints": {
+    "require_keyword_concepts": ["christmas"],
+    "require_max_rating": "PG"
+  },
+  "out_of_domain": false
+}

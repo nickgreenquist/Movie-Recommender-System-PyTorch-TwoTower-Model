@@ -1,0 +1,12 @@
+{
+  "liked_items": [],
+  "disliked_items": [],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "genome_tags": [],
+  "mood": [],
+  "hard_constraints": {
+    "require_keyword_concepts": ["christmas", "santa claus"]
+  },
+  "unsupported_notes": ""
+}

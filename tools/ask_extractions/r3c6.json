@@ -1,0 +1,9 @@
+{
+  "liked_items": [],
+  "disliked_items": [],
+  "genome_tags": ["inspirational", "heartwarming", "thought-provoking", "feel-good"],
+  "liked_genres": [],
+  "mood": ["uplifting", "inspirational", "motivational"],
+  "hard_constraints": {},
+  "out_of_domain": false
+}

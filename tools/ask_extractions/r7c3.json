@@ -1,0 +1,12 @@
+{
+  "liked_items": [],
+  "disliked_items": [],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "genome_tags": [],
+  "mood": [],
+  "hard_constraints": {
+    "require_genome_tags": ["new york city"],
+    "require_keyword_concepts": ["1970s", "disco"]
+  }
+}

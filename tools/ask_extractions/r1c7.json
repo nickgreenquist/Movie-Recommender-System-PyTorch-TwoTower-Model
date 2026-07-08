@@ -1,0 +1,16 @@
+{
+  "liked_items": [
+    "South Park: Bigger, Longer & Uncut (1999)",
+    "Waking Life (2001)",
+    "Batman: The Killing Joke (2016)"
+  ],
+  "hard_constraints": {
+    "require_genres": [
+      "Animation"
+    ],
+    "require_min_rating": "R",
+    "require_country": [
+      "American"
+    ]
+  }
+}

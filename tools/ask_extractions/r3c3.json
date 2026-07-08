@@ -1,0 +1,7 @@
+{
+  "genome_tags": ["poignant", "bittersweet"],
+  "hard_constraints": {
+    "require_genres": ["Drama"],
+    "require_attributes": ["based on a true story"]
+  }
+}

@@ -8,14 +8,16 @@ serving/ask_examples.json. The Streamlit Ask tab renders these boards through th
 _report_to_df / _render_ask_debug path as live queries, so a chip click is byte-for-byte
 the live experience minus the hosted LLM call.
 
-EXTRACTION SOURCES (pick one)
-    --from-extractions DIR   read pre-made extraction JSONs (DIR/<id>.json) — e.g. produced by
-                             the no-key Haiku-subagent harness (the /trace pattern; same model
-                             family the hosted call uses, so extractions transfer).
-    --live                   call the hosted extractor (src.llm_frontend_extraction) — needs
-                             ANTHROPIC_API_KEY. 42 sequential calls ride the prompt cache
-                             (~1 write + 41 reads ≈ $0.10). Use to refresh the artifact after
-                             a model promotion / re-export.
+EXTRACTION SOURCES (default: --from-extractions tools/ask_extractions, the committed no-key source)
+    --from-extractions DIR   read pre-made extraction JSONs (DIR/<id>.json). Defaults to the committed
+                             tools/ask_extractions/, so a bare `python tools/gen_ask_examples.py`
+                             rebuilds the artifact with NO API key. Those files come from the no-key
+                             Haiku-subagent harness (the /trace pattern; same model family the hosted
+                             call uses, so extractions transfer) — keep them in sync with the spec.
+    --live                   call the hosted extractor (src.llm_frontend_extraction) instead — needs
+                             ANTHROPIC_API_KEY. 51 sequential calls ride the prompt cache
+                             (~1 write + 50 reads ≈ $0.10). Use only to refresh extractions from the
+                             hosted model; then commit the updated tools/ask_extractions/.
 
 NORMALIZATION (applied to both sources; keeps the artifact schema-faithful)
     - Root-level hard-constraint keys are re-nested under hard_constraints ("schema-flatten",
@@ -25,8 +27,9 @@ NORMALIZATION (applied to both sources; keeps the artifact schema-faithful)
       them array[string]; small models occasionally emit a bare string).
 
 USAGE (from repo root)
-    python tools/gen_ask_examples.py --from-extractions /path/to/extractions [--report out.md]
-    ANTHROPIC_API_KEY=... python tools/gen_ask_examples.py --live
+    python tools/gen_ask_examples.py                     # no key: reads committed tools/ask_extractions/
+    python tools/gen_ask_examples.py --only r4c2,r5c1    # regenerate a subset in place
+    ANTHROPIC_API_KEY=... python tools/gen_ask_examples.py --live   # refresh extractions from hosted
 
 Prints a per-query curation report (extraction gist, honesty flags, top-10 board) — review it
 and reword/swap weak spec entries, then regenerate. --only r4c2,r5c1 regenerates a subset in
@@ -46,8 +49,9 @@ from src.llm_frontend import TOP_N, recommend            # noqa: E402
 from tools.ask_examples_spec import ROOTS, all_entries    # noqa: E402
 from tools.llm_frontend_probe import Serving              # noqa: E402
 
-_ARTIFACT = os.path.join(_REPO_ROOT, 'serving', 'ask_examples.json')
-_TOP_N    = 60   # mirror streamlit_app._TOTAL_RESULTS so canned pagination matches live
+_ARTIFACT     = os.path.join(_REPO_ROOT, 'serving', 'ask_examples.json')
+_EXTRACTIONS  = os.path.join(_REPO_ROOT, 'tools', 'ask_extractions')   # committed default no-key source
+_TOP_N        = 60   # mirror streamlit_app._TOTAL_RESULTS so canned pagination matches live
 
 # Schema-derived field typing (src.llm_frontend_prompt.build_schema): list-typed keys at each
 # level, used to re-nest flattened constraints and coerce stray strings back to lists.
@@ -158,11 +162,12 @@ def _report_lines(entry_id, label, query, extraction, report):
 # ── main ─────────────────────────────────────────────────────────────────────
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[1])
-    src = ap.add_mutually_exclusive_group(required=True)
-    src.add_argument('--from-extractions', metavar='DIR',
-                     help='directory of pre-made <id>.json extraction files')
+    src = ap.add_mutually_exclusive_group()
+    src.add_argument('--from-extractions', metavar='DIR', default=_EXTRACTIONS,
+                     help='directory of pre-made <id>.json extraction files '
+                          '(default: tools/ask_extractions, the committed no-key source)')
     src.add_argument('--live', action='store_true',
-                     help='call the hosted extractor (needs ANTHROPIC_API_KEY)')
+                     help='call the hosted extractor instead (needs ANTHROPIC_API_KEY)')
     ap.add_argument('--only', default=None,
                     help='comma-separated ids to (re)generate; others kept from the artifact')
     ap.add_argument('--report', default=None, help='also write the curation report to this file')

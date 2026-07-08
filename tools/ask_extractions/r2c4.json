@@ -1,0 +1,13 @@
+{
+  "liked_items": [],
+  "disliked_items": [],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "genome_tags": [],
+  "mood": "",
+  "hard_constraints": {
+    "require_genres": ["Animation"],
+    "require_keyword_concepts": ["christmas"],
+    "require_max_rating": "PG"
+  }
+}

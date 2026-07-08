@@ -1,0 +1,12 @@
+{
+  "liked_items": [],
+  "disliked_items": [],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "genome_tags": ["tear jerker", "emotional", "heartbreaking", "poignant"],
+  "mood": ["make me cry"],
+  "hard_constraints": {
+    "require_genres": ["Drama"]
+  },
+  "unsupported_notes": ""
+}

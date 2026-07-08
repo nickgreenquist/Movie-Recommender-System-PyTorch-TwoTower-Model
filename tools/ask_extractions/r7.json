@@ -1,0 +1,14 @@
+{
+  "genome_tags": [
+    "gritty"
+  ],
+  "hard_constraints": {
+    "require_genome_tags": [
+      "new york city"
+    ],
+    "year_max": 1999,
+    "exclude_genres": [
+      "Musical"
+    ]
+  }
+}

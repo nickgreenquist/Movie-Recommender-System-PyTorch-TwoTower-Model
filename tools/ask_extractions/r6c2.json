@@ -1,0 +1,11 @@
+{
+  "liked_items": [
+    "Contagion (2011)",
+    "Outbreak (1995)"
+  ],
+  "hard_constraints": {
+    "require_keyword_concepts": [
+      "pandemic"
+    ]
+  }
+}

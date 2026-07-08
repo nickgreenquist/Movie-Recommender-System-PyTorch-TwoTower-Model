@@ -1,0 +1,13 @@
+{
+  "liked_items": [],
+  "disliked_items": [],
+  "genome_tags": ["noir", "gritty"],
+  "liked_genres": [],
+  "disliked_genres": [],
+  "mood": null,
+  "hard_constraints": {
+    "year_min": 1970,
+    "year_max": 1989,
+    "require_genres": ["Crime", "Drama"]
+  }
+}

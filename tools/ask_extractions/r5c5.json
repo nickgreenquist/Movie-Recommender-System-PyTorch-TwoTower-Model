@@ -1,0 +1,12 @@
+{
+  "hard_constraints": {
+    "require_keyword_concepts": [
+      "mathematician",
+      "professor"
+    ],
+    "exclude_genres": [
+      "Fantasy",
+      "Sci-Fi"
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "mood": "emotionally powerful",
+  "hard_constraints": {
+    "require_genres": ["Drama"],
+    "require_keyword_concepts": ["father-son relationship"]
+  }
+}
