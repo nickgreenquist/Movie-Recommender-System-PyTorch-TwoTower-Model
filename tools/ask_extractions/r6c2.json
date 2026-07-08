@@ -3,9 +3,18 @@
     "Contagion (2011)",
     "Outbreak (1995)"
   ],
+  "genome_tags": [
+    "realistic"
+  ],
   "hard_constraints": {
     "require_keyword_concepts": [
-      "pandemic"
+      "pandemic",
+      "epidemic"
+    ],
+    "exclude_keyword_concepts": [
+      "creature",
+      "monster",
+      "alien"
     ]
   }
 }

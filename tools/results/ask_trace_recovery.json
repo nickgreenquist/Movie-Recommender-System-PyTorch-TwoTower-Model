@@ -1,0 +1,2376 @@
+{
+  "r4c2": [
+    {
+      "utterance": "Films directed by Akira Kurosawa.",
+      "extraction": {
+        "hard_constraints": {
+          "require_people": [
+            "Akira Kurosawa"
+          ]
+        }
+      },
+      "top12": [
+        "Seven Samurai (Shichinin no samurai) (1954)",
+        "Fistful of Dollars, A (Per un pugno di dollari) (1964)",
+        "Ran (1985)",
+        "Rashomon (Rashômon) (1950)",
+        "Yojimbo (1961)",
+        "Magnificent Seven, The (1960)",
+        "Last Man Standing (1996)",
+        "Ikiru (1952)",
+        "Sanjuro (Tsubaki Sanjûrô) (1962)",
+        "Kagemusha (1980)",
+        "Runaway Train (1985)",
+        "Throne of Blood (Kumonosu jô) (1957)"
+      ],
+      "dropped_by_filters": 7351
+    },
+    {
+      "utterance": "Films directed by Akira Kurosawa.",
+      "extraction": {
+        "hard_constraints": {
+          "require_people": [
+            "Akira Kurosawa"
+          ]
+        }
+      },
+      "top12": [
+        "Seven Samurai (Shichinin no samurai) (1954)",
+        "Fistful of Dollars, A (Per un pugno di dollari) (1964)",
+        "Ran (1985)",
+        "Rashomon (Rashômon) (1950)",
+        "Yojimbo (1961)",
+        "Magnificent Seven, The (1960)",
+        "Last Man Standing (1996)",
+        "Ikiru (1952)",
+        "Sanjuro (Tsubaki Sanjûrô) (1962)",
+        "Kagemusha (1980)",
+        "Runaway Train (1985)",
+        "Throne of Blood (Kumonosu jô) (1957)"
+      ],
+      "dropped_by_filters": 7351
+    },
+    {
+      "utterance": "Movies directed by Akira Kurosawa — only films he directed himself.",
+      "extraction": {
+        "hard_constraints": {
+          "require_people": [
+            "Akira Kurosawa"
+          ]
+        }
+      },
+      "top12": [
+        "Seven Samurai (Shichinin no samurai) (1954)",
+        "Fistful of Dollars, A (Per un pugno di dollari) (1964)",
+        "Ran (1985)",
+        "Rashomon (Rashômon) (1950)",
+        "Yojimbo (1961)",
+        "Magnificent Seven, The (1960)",
+        "Last Man Standing (1996)",
+        "Ikiru (1952)",
+        "Sanjuro (Tsubaki Sanjûrô) (1962)",
+        "Kagemusha (1980)",
+        "Runaway Train (1985)",
+        "Throne of Blood (Kumonosu jô) (1957)"
+      ],
+      "dropped_by_filters": 7351
+    },
+    {
+      "utterance": "Movies directed by Akira Kurosawa, like Rashomon, Ran, and Ikiru.",
+      "extraction": {
+        "liked_items": [
+          "Rashomon (1950)",
+          "Ran (1985)",
+          "Ikiru (1952)"
+        ],
+        "hard_constraints": {
+          "require_people": [
+            "Akira Kurosawa"
+          ]
+        }
+      },
+      "top12": [
+        "Throne of Blood (Kumonosu jô) (1957)",
+        "Yojimbo (1961)",
+        "Sanjuro (Tsubaki Sanjûrô) (1962)",
+        "Red Beard (Akahige) (1965)",
+        "Kagemusha (1980)",
+        "Seven Samurai (Shichinin no samurai) (1954)",
+        "High and Low (Tengoku to jigoku) (1963)",
+        "Bad Sleep Well, The (Warui yatsu hodo yoku nemuru) (1960)",
+        "Hidden Fortress, The (Kakushi-toride no san-akunin) (1958)",
+        "Dersu Uzala (1975)",
+        "Stray Dog (Nora inu) (1949)",
+        "Akira Kurosawa's Dreams (Dreams) (1990)"
+      ],
+      "dropped_by_filters": 9353
+    }
+  ],
+  "r6c4": [
+    {
+      "utterance": "Epic disaster movies like Twister, Armageddon, and San Andreas",
+      "extraction": {
+        "liked_items": [
+          "Twister (1996)",
+          "Armageddon (1998)",
+          "San Andreas (2015)"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "disaster"
+          ]
+        }
+      },
+      "top12": [
+        "Deep Impact (1998)",
+        "Meteor (1979)",
+        "Poseidon Adventure, The (1972)",
+        "Core, The (2003)",
+        "Day After Tomorrow, The (2004)",
+        "Dante's Peak (1997)",
+        "2012 (2009)",
+        "Pompeii (2014)",
+        "Into the Storm (2014)",
+        "Swarm, The (1978)",
+        "Earthquake (1974)",
+        "Volcano (1997)"
+      ],
+      "dropped_by_filters": 0
+    },
+    {
+      "utterance": "Disaster movies like The Day After Tomorrow and Deep Impact",
+      "extraction": {
+        "liked_items": [
+          "The Day After Tomorrow (2004)",
+          "Deep Impact (1998)"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "disaster"
+          ]
+        }
+      },
+      "top12": [
+        "Meteor (1979)",
+        "Core, The (2003)",
+        "2012 (2009)",
+        "Armageddon (1998)",
+        "Swarm, The (1978)",
+        "Volcano (1997)",
+        "San Andreas (2015)",
+        "Poseidon (2006)",
+        "Dante's Peak (1997)",
+        "Godzilla (1998)",
+        "Poseidon Adventure, The (1972)",
+        "Concorde: Airport '79, The (1979)"
+      ],
+      "dropped_by_filters": 0
+    },
+    {
+      "utterance": "Disaster movies — epic-scale catastrophes like 2012, Twister, and The Core",
+      "extraction": {
+        "liked_items": [
+          "2012 (2009)",
+          "Twister (1996)",
+          "The Core (2003)"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "disaster"
+          ]
+        }
+      },
+      "top12": [
+        "San Andreas (2015)",
+        "Armageddon (1998)",
+        "Day After Tomorrow, The (2004)",
+        "Deep Impact (1998)",
+        "Poseidon (2006)",
+        "Pompeii (2014)",
+        "Meteor (1979)",
+        "Volcano (1997)",
+        "Swarm, The (1978)",
+        "Knowing (2009)",
+        "Into the Storm (2014)",
+        "Dante's Peak (1997)"
+      ],
+      "dropped_by_filters": 0
+    }
+  ],
+  "r3c3": [
+    {
+      "utterance": "Heartbreaking dramas based on real, true events like 12 Years a Slave and Schindler's List.",
+      "extraction": {
+        "liked_items": [
+          "12 Years a Slave",
+          "Schindler's List"
+        ],
+        "genome_tags": [
+          "poignant",
+          "bittersweet"
+        ],
+        "hard_constraints": {
+          "require_genres": [
+            "Drama"
+          ],
+          "require_attributes": [
+            "based on a true story"
+          ]
+        }
+      },
+      "top12": [
+        "Pianist, The (2002)",
+        "Diving Bell and the Butterfly, The (Scaphandre et le papillon, Le) (2007)",
+        "Awakenings (1990)",
+        "Dead Poets Society (1989)",
+        "Philomena (2013)",
+        "Lion (2016)",
+        "Intouchables (2011)",
+        "Pride (2014)",
+        "Into the Wild (2007)",
+        "City of God (Cidade de Deus) (2002)",
+        "Dallas Buyers Club (2013)",
+        "Amadeus (1984)"
+      ],
+      "dropped_by_filters": 8989
+    },
+    {
+      "utterance": "Emotionally devastating dramas about real historical events and true stories.",
+      "extraction": {
+        "genome_tags": [
+          "poignant",
+          "bittersweet"
+        ],
+        "mood": "devastating",
+        "hard_constraints": {
+          "require_genres": [
+            "Drama"
+          ],
+          "require_attributes": [
+            "based on a true story"
+          ]
+        }
+      },
+      "top12": [
+        "Diving Bell and the Butterfly, The (Scaphandre et le papillon, Le) (2007)",
+        "Philomena (2013)",
+        "Lion (2016)",
+        "Pride (2014)",
+        "Dallas Buyers Club (2013)",
+        "Into the Wild (2007)",
+        "Dead Poets Society (1989)",
+        "Pianist, The (2002)",
+        "The Theory of Everything (2014)",
+        "Lilya 4-Ever (Lilja 4-ever) (2002)",
+        "Victoria & Abdul (2017)",
+        "Embrace of the Serpent (2016)"
+      ],
+      "dropped_by_filters": 8989
+    },
+    {
+      "utterance": "Dramas that break your heart, only based on real events and actual true stories.",
+      "extraction": {
+        "genome_tags": [
+          "poignant",
+          "bittersweet"
+        ],
+        "mood": "heartbreaking",
+        "hard_constraints": {
+          "require_genres": [
+            "Drama"
+          ],
+          "require_attributes": [
+            "based on a true story"
+          ]
+        }
+      },
+      "top12": [
+        "Diving Bell and the Butterfly, The (Scaphandre et le papillon, Le) (2007)",
+        "Lion (2016)",
+        "Pianist, The (2002)",
+        "Philomena (2013)",
+        "Dallas Buyers Club (2013)",
+        "Lilya 4-Ever (Lilja 4-ever) (2002)",
+        "Awakenings (1990)",
+        "Dead Poets Society (1989)",
+        "Into the Wild (2007)",
+        "Pursuit of Happyness, The (2006)",
+        "Pride (2014)",
+        "The Theory of Everything (2014)"
+      ],
+      "dropped_by_filters": 8989
+    },
+    {
+      "utterance": "Based-on-a-true-story dramas that break your heart.",
+      "extraction": {
+        "genome_tags": [
+          "poignant",
+          "bittersweet"
+        ],
+        "hard_constraints": {
+          "require_genres": [
+            "Drama"
+          ],
+          "require_attributes": [
+            "based on a true story"
+          ]
+        }
+      },
+      "top12": [
+        "Diving Bell and the Butterfly, The (Scaphandre et le papillon, Le) (2007)",
+        "Philomena (2013)",
+        "Lion (2016)",
+        "Pride (2014)",
+        "Dallas Buyers Club (2013)",
+        "Into the Wild (2007)",
+        "Dead Poets Society (1989)",
+        "Pianist, The (2002)",
+        "The Theory of Everything (2014)",
+        "Lilya 4-Ever (Lilja 4-ever) (2002)",
+        "Victoria & Abdul (2017)",
+        "Embrace of the Serpent (2016)"
+      ],
+      "dropped_by_filters": 8989
+    }
+  ],
+  "r7c3": [
+    {
+      "utterance": "Like Saturday Night Fever and Studio 54: stories centered on disco nightclubs and the vibrant dance scene.",
+      "extraction": {
+        "liked_items": [
+          "Saturday Night Fever (1977)",
+          "Studio 54 (1998)"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "disco",
+            "nightclub"
+          ]
+        }
+      },
+      "top12": [
+        "Staying Alive (1983)",
+        "Last Days of Disco, The (1998)",
+        "54 (1998)",
+        "Carlito's Way (1993)",
+        "Xanadu (1980)",
+        "Wiz, The (1978)",
+        "Cotton Club, The (1984)",
+        "Gay Divorcee, The (1934)",
+        "24 Hour Party People (2002)",
+        "Runaways, The (2010)",
+        "G.I. Blues (1960)",
+        "Pal Joey (1957)"
+      ],
+      "dropped_by_filters": 625
+    },
+    {
+      "utterance": "The New York City disco and nightclub scene, like Saturday Night Fever and 54.",
+      "extraction": {
+        "liked_items": [
+          "Saturday Night Fever (1977)",
+          "54 (1998)"
+        ],
+        "hard_constraints": {
+          "require_genome_tags": [
+            "new york city"
+          ],
+          "require_keyword_concepts": [
+            "disco",
+            "nightclub"
+          ]
+        }
+      },
+      "top12": [
+        "Last Days of Disco, The (1998)",
+        "Carlito's Way (1993)",
+        "After Hours (1985)",
+        "Bright Lights, Big City (1988)",
+        "Wiz, The (1978)",
+        "25th Hour (2002)",
+        "Prime (2005)",
+        "Cotton Club, The (1984)",
+        "We Own the Night (2007)",
+        "Looking for Mr. Goodbar (1977)",
+        "Liquid Sky (1982)",
+        "American Gangster (2007)"
+      ],
+      "dropped_by_filters": 9361
+    },
+    {
+      "utterance": "Disco dancing and nightclub culture: upbeat, energetic stories like Saturday Night Fever, Last Days of Disco, and 54.",
+      "extraction": {
+        "liked_items": [
+          "Saturday Night Fever (1977)",
+          "Last Days of Disco, The (1998)",
+          "54 (1998)"
+        ],
+        "genome_tags": [
+          "vibrant",
+          "energetic"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "disco",
+            "dancing",
+            "nightclub"
+          ]
+        }
+      },
+      "top12": [
+        "Staying Alive (1983)",
+        "Gay Divorcee, The (1934)",
+        "Xanadu (1980)",
+        "Cotton Club, The (1984)",
+        "Moulin Rouge (2001)",
+        "Simon of the Desert (Simón del desierto) (1965)",
+        "24 Hour Party People (2002)",
+        "Prom Night (1980)",
+        "Gilda (1946)",
+        "White Chicks (2004)",
+        "Great Beauty, The (Grande Bellezza, La) (2013)",
+        "G.I. Blues (1960)"
+      ],
+      "dropped_by_filters": 0
+    }
+  ],
+  "r5c5": [
+    {
+      "utterance": "Movies based on the true stories of real mathematicians and scientists, like A Beautiful Mind and The Imitation Game.",
+      "extraction": {
+        "liked_items": [
+          "A Beautiful Mind (2001)",
+          "The Imitation Game (2014)"
+        ],
+        "hard_constraints": {
+          "require_attributes": [
+            "based on a true story"
+          ],
+          "require_keyword_concepts": [
+            "mathematician",
+            "scientist"
+          ],
+          "exclude_genres": [
+            "Fantasy",
+            "Sci-Fi"
+          ]
+        }
+      },
+      "top12": [
+        "The Man Who Knew Infinity (2016)"
+      ],
+      "dropped_by_filters": 9372
+    },
+    {
+      "utterance": "Movies based on the true stories of real mathematicians and scientists, like A Beautiful Mind and The Imitation Game.",
+      "extraction": {
+        "liked_items": [
+          "A Beautiful Mind (2001)",
+          "The Imitation Game (2014)"
+        ],
+        "hard_constraints": {
+          "require_attributes": [
+            "based on a true story"
+          ],
+          "require_keyword_concepts": [
+            "mathematician",
+            "scientist"
+          ],
+          "exclude_genres": [
+            "Fantasy",
+            "Sci-Fi"
+          ]
+        }
+      },
+      "top12": [
+        "The Man Who Knew Infinity (2016)"
+      ],
+      "dropped_by_filters": 9372
+    },
+    {
+      "utterance": "I want true-story biopics about mathematicians and scientists. No romance or comedy, no fantasy or sci-fi.",
+      "extraction": {
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "mathematician",
+            "scientist"
+          ],
+          "exclude_genres": [
+            "Romance",
+            "Comedy",
+            "Fantasy",
+            "Sci-Fi"
+          ]
+        }
+      },
+      "top12": [
+        "The Imitation Game (2014)",
+        "Hidden Figures (2016)",
+        "San Andreas (2015)",
+        "The Man Who Knew Infinity (2016)",
+        "Dante's Peak (1997)",
+        "Cave of Forgotten Dreams (2010)",
+        "Fermat's Room (La habitación de Fermat) (2007)",
+        "As Above, So Below (2014)",
+        "Transporter 2 (2005)",
+        "Blade (1998)",
+        "Encounters at the End of the World (2008)",
+        "Daybreakers (2010)"
+      ],
+      "dropped_by_filters": 8300
+    },
+    {
+      "utterance": "Biopics about real mathematicians. Exclude romance, comedy, fantasy, and sci-fi.",
+      "extraction": {
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "mathematician"
+          ],
+          "exclude_genres": [
+            "Romance",
+            "Comedy",
+            "Fantasy",
+            "Sci-Fi"
+          ]
+        }
+      },
+      "top12": [
+        "The Imitation Game (2014)",
+        "The Man Who Knew Infinity (2016)",
+        "Fermat's Room (La habitación de Fermat) (2007)",
+        "Proof (2005)"
+      ],
+      "dropped_by_filters": 9371
+    },
+    {
+      "utterance": "Biopics and dramatic character studies of mathematicians and scientists like A Beautiful Mind and Hidden Figures — no action, thrillers, adventure, romance, comedy, fantasy, or sci-fi.",
+      "extraction": {
+        "liked_items": [
+          "A Beautiful Mind",
+          "Hidden Figures"
+        ],
+        "genome_tags": [
+          "biographical",
+          "character study"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "mathematician",
+            "scientist"
+          ],
+          "exclude_genres": [
+            "Action",
+            "Thriller",
+            "Adventure",
+            "Romance",
+            "Comedy",
+            "Fantasy",
+            "Sci-Fi"
+          ]
+        }
+      },
+      "top12": [
+        "The Man Who Knew Infinity (2016)",
+        "Little Man Tate (1991)",
+        "Proof (2005)",
+        "Encounters at the End of the World (2008)",
+        "Cave of Forgotten Dreams (2010)",
+        "Poison (1991)",
+        "Tingler, The (1959)",
+        "Eyes Without a Face (Yeux sans visage, Les) (1959)"
+      ],
+      "dropped_by_filters": 9365
+    },
+    {
+      "utterance": "Quiet, intimate dramas about brilliant mathematicians and scientists—no action, thrillers, adventure, romance, comedy, fantasy, sci-fi, or horror.",
+      "extraction": {
+        "liked_genres": [
+          "Drama"
+        ],
+        "genome_tags": [
+          "intimate",
+          "character study"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "mathematician",
+            "scientist"
+          ],
+          "exclude_genres": [
+            "Action",
+            "Thriller",
+            "Adventure",
+            "Romance",
+            "Comedy",
+            "Fantasy",
+            "Sci-Fi",
+            "Horror"
+          ]
+        }
+      },
+      "top12": [
+        "Poison (1991)",
+        "Cave of Forgotten Dreams (2010)",
+        "Encounters at the End of the World (2008)",
+        "Hidden Figures (2016)",
+        "The Man Who Knew Infinity (2016)",
+        "Proof (2005)",
+        "Little Man Tate (1991)"
+      ],
+      "dropped_by_filters": 9368
+    },
+    {
+      "utterance": "Intellectual character-focused films about mathematicians and scientists like A Beautiful Mind, Hidden Figures, and The Imitation Game—no action, thriller, adventure, romance, comedy, fantasy, sci-fi, or horror.",
+      "extraction": {
+        "liked_items": [
+          "A Beautiful Mind",
+          "Hidden Figures",
+          "The Imitation Game"
+        ],
+        "genome_tags": [
+          "intellectual",
+          "character study",
+          "thought-provoking"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "mathematician",
+            "scientist"
+          ],
+          "exclude_genres": [
+            "Action",
+            "Thriller",
+            "Adventure",
+            "Romance",
+            "Comedy",
+            "Fantasy",
+            "Sci-Fi",
+            "Horror"
+          ]
+        }
+      },
+      "top12": [
+        "The Man Who Knew Infinity (2016)",
+        "Proof (2005)",
+        "Encounters at the End of the World (2008)",
+        "Cave of Forgotten Dreams (2010)",
+        "Little Man Tate (1991)",
+        "Poison (1991)"
+      ],
+      "dropped_by_filters": 9366
+    }
+  ],
+  "r6c2": [
+    {
+      "utterance": "A tense, realistic viral outbreak thriller like Contagion and Outbreak.",
+      "extraction": {
+        "liked_items": [
+          "Contagion (2011)",
+          "Outbreak (1995)"
+        ],
+        "genome_tags": [
+          "realistic"
+        ]
+      },
+      "top12": [
+        "Band of Brothers (2001)",
+        "Margin Call (2011)",
+        "1917 (2019)",
+        "Hurt Locker, The (2008)",
+        "End of Watch (2012)",
+        "Dunkirk (2017)",
+        "Lone Survivor (2013)",
+        "13 Hours (2016)",
+        "Moon (2009)",
+        "Hell or High Water (2016)",
+        "Animal Kingdom (2010)",
+        "Logan (2017)"
+      ],
+      "dropped_by_filters": 0
+    },
+    {
+      "utterance": "A medical outbreak thriller like Contagion and Outbreak — realistic, no creature features.",
+      "extraction": {
+        "liked_items": [
+          "Contagion (2011)",
+          "Outbreak (1995)"
+        ],
+        "genome_tags": [
+          "realistic"
+        ],
+        "hard_constraints": {
+          "exclude_keyword_concepts": [
+            "creature"
+          ]
+        }
+      },
+      "top12": [
+        "Band of Brothers (2001)",
+        "Margin Call (2011)",
+        "1917 (2019)",
+        "Hurt Locker, The (2008)",
+        "End of Watch (2012)",
+        "Dunkirk (2017)",
+        "Lone Survivor (2013)",
+        "13 Hours (2016)",
+        "Moon (2009)",
+        "Hell or High Water (2016)",
+        "Animal Kingdom (2010)",
+        "Logan (2017)"
+      ],
+      "dropped_by_filters": 0
+    },
+    {
+      "utterance": "Pandemic and epidemic outbreak thrillers like Contagion and Outbreak — medical, realistic, no creature horror or aliens.",
+      "extraction": {
+        "liked_items": [
+          "Contagion (2011)",
+          "Outbreak (1995)"
+        ],
+        "genome_tags": [
+          "realistic"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "pandemic",
+            "epidemic"
+          ],
+          "exclude_keyword_concepts": [
+            "creature",
+            "monster",
+            "alien"
+          ]
+        }
+      },
+      "top12": [
+        "28 Days Later (2002)",
+        "Bo Burnham: Inside (2021)",
+        "Longtime Companion (1990)",
+        "It Comes at Night (2017)",
+        "World War Z (2013)",
+        "Carriers (2009)",
+        "Black Death (2010)",
+        "Twelve Monkeys (a.k.a. 12 Monkeys) (1995)",
+        "Cargo (2017)",
+        "Blindness (2008)",
+        "Omega Man, The (1971)",
+        "Exam (2009)"
+      ],
+      "dropped_by_filters": 9
+    },
+    {
+      "utterance": "Realistic medical pandemic thrillers like Contagion and Outbreak — no zombies, no monsters, no comedy.",
+      "extraction": {
+        "liked_items": [
+          "Contagion (2011)",
+          "Outbreak (1995)"
+        ],
+        "genome_tags": [
+          "realistic"
+        ],
+        "hard_constraints": {
+          "exclude_keyword_concepts": [
+            "zombie",
+            "monster"
+          ],
+          "exclude_genres": [
+            "Comedy"
+          ]
+        }
+      },
+      "top12": [
+        "Band of Brothers (2001)",
+        "Margin Call (2011)",
+        "1917 (2019)",
+        "Hurt Locker, The (2008)",
+        "End of Watch (2012)",
+        "Dunkirk (2017)",
+        "Lone Survivor (2013)",
+        "13 Hours (2016)",
+        "Moon (2009)",
+        "Hell or High Water (2016)",
+        "Animal Kingdom (2010)",
+        "Logan (2017)"
+      ],
+      "dropped_by_filters": 0
+    },
+    {
+      "utterance": "Realistic medical outbreak films like Contagion, Outbreak, The Andromeda Strain, Carriers, and Blindness — no zombies, no monsters, no comedy.",
+      "extraction": {
+        "liked_items": [
+          "Contagion (2011)",
+          "Outbreak (1995)",
+          "The Andromeda Strain (1971)",
+          "Carriers (2009)",
+          "Blindness (2008)"
+        ],
+        "genome_tags": [
+          "realistic"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "virus",
+            "outbreak"
+          ],
+          "exclude_keyword_concepts": [
+            "zombie",
+            "monster"
+          ],
+          "exclude_genres": [
+            "Comedy"
+          ]
+        }
+      },
+      "top12": [
+        "And the Band Played On (1993)",
+        "Twelve Monkeys (a.k.a. 12 Monkeys) (1995)",
+        "Invasion, The (2007)",
+        "Cabin Fever (2002)",
+        "Perfect Sense (2011)",
+        "Transporter 2 (2005)",
+        "Mission: Impossible II (2000)",
+        "Cowboy Bebop: The Movie (Cowboy Bebop: Tengoku no Tobira) (2001)",
+        "Rise of the Planet of the Apes (2011)",
+        "Code 46 (2003)",
+        "Infini (2015)",
+        "Pulse (2006)"
+      ],
+      "dropped_by_filters": 57
+    },
+    {
+      "utterance": "Grounded medical-crisis dramas based on real science, like Contagion and Outbreak — no zombies, no monsters, no horror, no sci-fi, no comedy.",
+      "extraction": {
+        "liked_items": [
+          "Contagion (2011)",
+          "Outbreak (1995)"
+        ],
+        "genome_tags": [
+          "realistic",
+          "medical"
+        ],
+        "hard_constraints": {
+          "exclude_keyword_concepts": [
+            "zombie",
+            "monster",
+            "aliens",
+            "science fiction"
+          ],
+          "exclude_genres": [
+            "Comedy",
+            "Horror",
+            "Sci-Fi"
+          ]
+        }
+      },
+      "top12": [
+        "Band of Brothers (2001)",
+        "Margin Call (2011)",
+        "1917 (2019)",
+        "Hurt Locker, The (2008)",
+        "End of Watch (2012)",
+        "Dunkirk (2017)",
+        "Lone Survivor (2013)",
+        "13 Hours (2016)",
+        "Hell or High Water (2016)",
+        "Animal Kingdom (2010)",
+        "Blue Ruin (2013)",
+        "Wind River (2017)"
+      ],
+      "dropped_by_filters": 3
+    }
+  ],
+  "r2c6": [
+    {
+      "utterance": "Gentle, non-scary Halloween movies for young kids, rated G or PG, like Hocus Pocus and Casper.",
+      "extraction": {
+        "liked_items": [
+          "Hocus Pocus (1993)",
+          "Casper (1995)"
+        ],
+        "mood": [
+          "fun",
+          "gentle"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "halloween"
+          ],
+          "require_max_rating": "PG"
+        }
+      },
+      "top12": [
+        "Halloweentown (1998)",
+        "It's the Great Pumpkin, Charlie Brown (1966)",
+        "Nightmare Before Christmas, The (1993)",
+        "Toy Story of Terror (2013)",
+        "Ernest Scared Stupid (1991)",
+        "Hell House LLC (2015)",
+        "Monster House (2006)",
+        "Adventures of Ichabod and Mr. Toad, The (1949)",
+        "Spaced Invaders (1990)",
+        "Arsenic and Old Lace (1944)"
+      ],
+      "dropped_by_filters": 9363
+    },
+    {
+      "utterance": "No horror, nothing frightening or spooky. Kid-friendly Halloween movies like Hocus Pocus and Casper.",
+      "extraction": {
+        "liked_items": [
+          "Hocus Pocus (1993)",
+          "Casper (1995)"
+        ],
+        "mood": [
+          "fun",
+          "family-friendly"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "halloween"
+          ],
+          "require_max_rating": "PG",
+          "exclude_genres": [
+            "Horror"
+          ]
+        }
+      },
+      "top12": [
+        "Halloweentown (1998)",
+        "It's the Great Pumpkin, Charlie Brown (1966)",
+        "Nightmare Before Christmas, The (1993)",
+        "Toy Story of Terror (2013)",
+        "Ernest Scared Stupid (1991)",
+        "Monster House (2006)",
+        "Adventures of Ichabod and Mr. Toad, The (1949)",
+        "Spaced Invaders (1990)",
+        "Arsenic and Old Lace (1944)"
+      ],
+      "dropped_by_filters": 9364
+    },
+    {
+      "utterance": "Halloween movies for children rated G or PG only. No scariness, no horror. Like Hocus Pocus and Casper.",
+      "extraction": {
+        "liked_items": [
+          "Hocus Pocus (1993)",
+          "Casper (1995)"
+        ],
+        "liked_genres": [
+          "Comedy",
+          "Family",
+          "Fantasy"
+        ],
+        "mood": [
+          "fun",
+          "family-friendly"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "halloween"
+          ],
+          "require_max_rating": "PG",
+          "exclude_genres": [
+            "Horror"
+          ]
+        }
+      },
+      "top12": [
+        "Halloweentown (1998)",
+        "Ernest Scared Stupid (1991)",
+        "It's the Great Pumpkin, Charlie Brown (1966)",
+        "Spaced Invaders (1990)",
+        "Arsenic and Old Lace (1944)",
+        "Nightmare Before Christmas, The (1993)",
+        "Toy Story of Terror (2013)",
+        "Monster House (2006)",
+        "Adventures of Ichabod and Mr. Toad, The (1949)"
+      ],
+      "dropped_by_filters": 9364
+    }
+  ],
+  "r2c1": [
+    {
+      "utterance": "Naughty, raunchy, adult R-rated Christmas comedies — nothing for kids. Like Bad Santa, Gremlins, and Krampus.",
+      "extraction": {
+        "liked_items": [
+          "Bad Santa (2003)",
+          "Gremlins (1984)",
+          "Krampus (2015)"
+        ],
+        "genome_tags": [],
+        "liked_genres": [],
+        "disliked_genres": [],
+        "mood": "raunchy, adult",
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "christmas"
+          ],
+          "require_min_rating": "R",
+          "exclude_genres": [
+            "Children"
+          ]
+        }
+      },
+      "top12": [
+        "Rare Exports: A Christmas Tale (Rare Exports) (2010)",
+        "Ref, The (1994)",
+        "Christmas Carol, A (Scrooge) (1951)",
+        "White Christmas (1954)",
+        "Office Christmas Party (2016)",
+        "We're No Angels (1955)",
+        "Black Christmas (2006)",
+        "A Bad Moms Christmas (2017)",
+        "A Very Murray Christmas (2015)",
+        "The Night Before (2015)",
+        "Bishop's Wife, The (1947)",
+        "Bad Santa 2 (2016)"
+      ],
+      "dropped_by_filters": 52
+    },
+    {
+      "utterance": "Adult R-rated Christmas comedies with crude humor — Bad Santa, Gremlins, Krampus. Nothing family-friendly, wholesome, or sentimental.",
+      "extraction": {
+        "liked_items": [
+          "Bad Santa (2003)",
+          "Gremlins (1984)",
+          "Krampus (2015)"
+        ],
+        "genome_tags": [],
+        "liked_genres": [],
+        "disliked_genres": [],
+        "mood": "adult humor, crude, crude humor",
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "christmas"
+          ],
+          "require_min_rating": "R",
+          "exclude_genres": [
+            "Children",
+            "Musical"
+          ]
+        }
+      },
+      "top12": [
+        "Ref, The (1994)",
+        "We're No Angels (1955)",
+        "Rare Exports: A Christmas Tale (Rare Exports) (2010)",
+        "A Bad Moms Christmas (2017)",
+        "Office Christmas Party (2016)",
+        "Christmas Carol, A (Scrooge) (1951)",
+        "The Night Before (2015)",
+        "Bad Santa 2 (2016)",
+        "A Very Murray Christmas (2015)",
+        "Black Christmas (2006)",
+        "Reckless (1995)",
+        "Bishop's Wife, The (1947)"
+      ],
+      "dropped_by_filters": 57
+    },
+    {
+      "utterance": "Dark, cynical, irreverent R-rated Christmas comedies like Bad Santa, Gremlins, and Krampus. Nothing sentimental or wholesome.",
+      "extraction": {
+        "liked_items": [
+          "Bad Santa (2003)",
+          "Gremlins (1984)",
+          "Krampus (2015)"
+        ],
+        "genome_tags": [
+          "dark comedy",
+          "dark humor",
+          "cynical",
+          "irreverent"
+        ],
+        "liked_genres": [
+          "Comedy"
+        ],
+        "disliked_genres": [],
+        "mood": "dark, cynical, irreverent",
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "christmas"
+          ],
+          "require_min_rating": "R",
+          "exclude_genres": [
+            "Children",
+            "Musical"
+          ]
+        }
+      },
+      "top12": [
+        "A Very Murray Christmas (2015)",
+        "Ice Harvest, The (2005)",
+        "Rare Exports: A Christmas Tale (Rare Exports) (2010)",
+        "We're No Angels (1955)",
+        "Ref, The (1994)",
+        "Bishop's Wife, The (1947)",
+        "The Night Before (2015)",
+        "Tangerine (2015)",
+        "Bad Santa 2 (2016)",
+        "A Bad Moms Christmas (2017)",
+        "Office Christmas Party (2016)",
+        "Shop Around the Corner, The (1940)"
+      ],
+      "dropped_by_filters": 9341
+    }
+  ],
+  "r5c4": [
+    {
+      "utterance": "Movies about backpacking and traveling around the world, like The Motorcycle Diaries and The Secret Life of Walter Mitty.",
+      "extraction": {
+        "liked_items": [
+          "The Motorcycle Diaries (2004)",
+          "The Secret Life of Walter Mitty (2013)"
+        ],
+        "liked_genres": [
+          "Adventure",
+          "Drama"
+        ],
+        "genome_tags": [],
+        "mood": [],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "travel",
+            "backpacking"
+          ]
+        }
+      },
+      "top12": [
+        "Hector and the Search for Happiness (2014)",
+        "Endless Summer, The (1966)",
+        "Into the Wild (2007)",
+        "The Way (2010)",
+        "Tracks (2013)",
+        "Kon-Tiki (2012)",
+        "Back to the Future (1985)",
+        "Darjeeling Limited, The (2007)",
+        "Up in the Air (2009)",
+        "Embrace of the Serpent (2016)",
+        "In July (Im Juli) (2000)",
+        "About Time (2013)"
+      ],
+      "dropped_by_filters": 9289
+    },
+    {
+      "utterance": "Movies about epic road trips and adventures around the world.",
+      "extraction": {
+        "liked_genres": [
+          "Adventure"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "road trip",
+            "travel"
+          ]
+        }
+      },
+      "top12": [
+        "The Way (2010)",
+        "Endless Summer, The (1966)",
+        "National Lampoon's Vacation (1983)",
+        "Into the Wild (2007)",
+        "Logan (2017)",
+        "Planes, Trains & Automobiles (1987)",
+        "Paris, Texas (1984)",
+        "Kikujiro (Kikujirô no natsu) (1999)",
+        "Journey to the Center of the Earth (1959)",
+        "Devil's Rejects, The (2005)",
+        "Zombieland (2009)",
+        "Until the End of the World (Bis ans Ende der Welt) (1991)"
+      ],
+      "dropped_by_filters": 9191
+    },
+    {
+      "utterance": "Movies about traveling around the world and going on adventures, nothing with science fiction or time travel.",
+      "extraction": {
+        "liked_items": [],
+        "disliked_items": [],
+        "liked_genres": [
+          "Adventure"
+        ],
+        "disliked_genres": [],
+        "genome_tags": [
+          "travel",
+          "road trip",
+          "freedom",
+          "wilderness"
+        ],
+        "mood": "adventurous, thrilling",
+        "hard_constraints": {
+          "exclude_genres": [
+            "Sci-Fi"
+          ],
+          "exclude_keyword_concepts": [
+            "time travel"
+          ]
+        }
+      },
+      "top12": [
+        "Great Escape, The (1963)",
+        "Lord of the Rings: The Fellowship of the Ring, The (2001)",
+        "Indiana Jones and the Last Crusade (1989)",
+        "Stand by Me (1986)",
+        "The Peanut Butter Falcon (2019)",
+        "Raiders of the Lost Ark (Indiana Jones and the Raiders of the Lost Ark) (1981)",
+        "Deliverance (1972)",
+        "Hunt for Red October, The (1990)",
+        "Monty Python and the Holy Grail (1975)",
+        "Lord of the Rings: The Two Towers, The (2002)",
+        "North by Northwest (1959)",
+        "Hunt for the Wilderpeople (2016)"
+      ],
+      "dropped_by_filters": 96
+    },
+    {
+      "utterance": "Movies about backpacking and traveling around the world, like The Motorcycle Diaries and The Secret Life of Walter Mitty.",
+      "extraction": {
+        "liked_items": [
+          "The Motorcycle Diaries",
+          "The Secret Life of Walter Mitty"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "backpacking",
+            "travel",
+            "around the world"
+          ]
+        }
+      },
+      "top12": [
+        "Eat Pray Love (2010)",
+        "Around the World in 80 Days (1956)",
+        "Endless Summer, The (1966)",
+        "Hector and the Search for Happiness (2014)",
+        "In July (Im Juli) (2000)",
+        "Into the Wild (2007)",
+        "Back to the Future (1985)",
+        "Tracks (2013)",
+        "Planes, Trains & Automobiles (1987)",
+        "The Way (2010)",
+        "Up in the Air (2009)",
+        "Kon-Tiki (2012)"
+      ],
+      "dropped_by_filters": 0
+    },
+    {
+      "utterance": "Road trips and adventures around the world.",
+      "extraction": {
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "road trip",
+            "adventure",
+            "around the world"
+          ]
+        }
+      },
+      "top12": [
+        "Wild Hogs (2007)",
+        "Sure Thing, The (1985)",
+        "National Lampoon's Vacation (1983)",
+        "Guilt Trip, The (2012)",
+        "Harold and Kumar Go to White Castle (2004)",
+        "Planes, Trains & Automobiles (1987)",
+        "Harold & Kumar Escape from Guantanamo Bay (2008)",
+        "Around the World in 80 Days (1956)",
+        "Interstate 60 (2002)",
+        "The Way (2010)",
+        "Thelma & Louise (1991)",
+        "Joe Dirt (2001)"
+      ],
+      "dropped_by_filters": 0
+    },
+    {
+      "utterance": "Movies about traveling around the world and going on adventures, not science fiction.",
+      "extraction": {
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "travel",
+            "around the world",
+            "adventure"
+          ],
+          "exclude_genres": [
+            "Sci-Fi"
+          ]
+        }
+      },
+      "top12": [
+        "Around the World in 80 Days (1956)",
+        "Romancing the Stone (1984)",
+        "Kon-Tiki (2012)",
+        "Crocodile Dundee (1986)",
+        "A Walk in the Woods (2015)",
+        "Secret Life of Walter Mitty, The (2013)",
+        "Up (2009)",
+        "Hector and the Search for Happiness (2014)",
+        "Tracks (2013)",
+        "Endless Summer, The (1966)",
+        "Fantastic Beasts and Where to Find Them (2016)",
+        "Way Back, The (2010)"
+      ],
+      "dropped_by_filters": 10
+    },
+    {
+      "utterance": "Movies about traveling around the world on road trips, no science fiction.",
+      "extraction": {
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "travel",
+            "around the world",
+            "road trip"
+          ],
+          "exclude_genres": [
+            "Sci-Fi"
+          ]
+        }
+      },
+      "top12": [
+        "National Lampoon's Vacation (1983)",
+        "Planes, Trains & Automobiles (1987)",
+        "The Way (2010)",
+        "Paris, Texas (1984)",
+        "Into the Wild (2007)",
+        "Kikujiro (Kikujirô no natsu) (1999)",
+        "Zombieland (2009)",
+        "Eat Pray Love (2010)",
+        "Around the World in 80 Days (1956)",
+        "Sure Thing, The (1985)",
+        "The Fundamentals of Caring (2016)",
+        "Sideways (2004)"
+      ],
+      "dropped_by_filters": 3
+    }
+  ],
+  "r4c6": [
+    {
+      "utterance": "Movies like Kill Bill and Azumi where the main character wields a katana.",
+      "extraction": {
+        "liked_items": [
+          "Kill Bill Vol. 2 (2004)",
+          "Azumi (2003)"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "katana"
+          ]
+        }
+      },
+      "top12": [
+        "Ip Man (2008)",
+        "Vampire Hunter D: Bloodlust (Banpaia hantâ D) (2000)",
+        "Last Samurai, The (2003)",
+        "Blade II (2002)"
+      ],
+      "dropped_by_filters": 9369
+    },
+    {
+      "utterance": "Samurai movies like The Last Samurai and Kill Bill Vol. 2.",
+      "extraction": {
+        "liked_items": [
+          "The Last Samurai (2003)",
+          "Kill Bill Vol. 2 (2004)"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "samurai"
+          ]
+        }
+      },
+      "top12": [
+        "Sword of Doom, The (Dai-bosatsu tôge) (1966)",
+        "Harakiri (Seppuku) (1962)",
+        "13 Assassins (Jûsan-nin no shikaku) (2010)",
+        "Lone Wolf and Cub: Sword of Vengeance (Kozure Ôkami: Kowokashi udekashi tsukamatsuru) (1972)",
+        "Twilight Samurai, The (Tasogare Seibei) (2002)",
+        "Sanjuro (Tsubaki Sanjûrô) (1962)",
+        "Seven Samurai (Shichinin no samurai) (1954)",
+        "Yojimbo (1961)",
+        "Kill Bill: Vol. 1 (2003)",
+        "Blind Swordsman: Zatoichi, The (Zatôichi) (2003)",
+        "Samurai I: Musashi Miyamoto (Miyamoto Musashi) (1954)",
+        "Samurai Fiction (SF: Episode One) (1998)"
+      ],
+      "dropped_by_filters": 3
+    },
+    {
+      "utterance": "Samurai movies with swords and stylized action like The Last Samurai, Kill Bill, 13 Assassins, and Azumi.",
+      "extraction": {
+        "liked_items": [
+          "The Last Samurai (2003)",
+          "Kill Bill Vol. 2 (2004)",
+          "13 Assassins (2010)",
+          "Azumi (2003)"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "samurai",
+            "sword"
+          ]
+        }
+      },
+      "top12": [
+        "Yojimbo (1961)",
+        "Twilight Samurai, The (Tasogare Seibei) (2002)",
+        "Seven Samurai (Shichinin no samurai) (1954)",
+        "Blind Swordsman: Zatoichi, The (Zatôichi) (2003)",
+        "Samurai Fiction (SF: Episode One) (1998)",
+        "Kill Bill: Vol. 1 (2003)",
+        "Samurai I: Musashi Miyamoto (Miyamoto Musashi) (1954)",
+        "Lone Wolf and Cub: Sword of Vengeance (Kozure Ôkami: Kowokashi udekashi tsukamatsuru) (1972)",
+        "Harakiri (Seppuku) (1962)",
+        "Sword of Doom, The (Dai-bosatsu tôge) (1966)",
+        "Sanjuro (Tsubaki Sanjûrô) (1962)",
+        "Sword of the Stranger (Sutorejia: Mukô hadan) (2007)"
+      ],
+      "dropped_by_filters": 3
+    }
+  ],
+  "r4c5": [
+    {
+      "utterance": "Epic movies set in ancient Rome, like Gladiator, Spartacus, and Ben-Hur",
+      "extraction": {
+        "liked_items": [
+          "Gladiator (2000)",
+          "Spartacus (1960)",
+          "Ben-Hur (1959)"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "ancient rome"
+          ]
+        }
+      },
+      "top12": [
+        "Cleopatra (1963)",
+        "Centurion (2010)",
+        "Julius Caesar (1953)",
+        "Robe, The (1953)",
+        "Titus (1999)",
+        "Eagle, The (2011)",
+        "Last Legion, The (2007)",
+        "Fellini Satyricon (1969)",
+        "Caligula (1979)",
+        "Ben-hur (2016)",
+        "Funny Thing Happened on the Way to the Forum, A (1966)",
+        "Twelve Tasks of Asterix, The (Les douze travaux d'Astérix) (1976)"
+      ],
+      "dropped_by_filters": 9356
+    },
+    {
+      "utterance": "Epic movies set in ancient Rome, like Gladiator, Spartacus, and Ben-Hur",
+      "extraction": {
+        "liked_items": [
+          "Gladiator (2000)",
+          "Spartacus (1960)",
+          "Ben-Hur (1959)"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "ancient rome"
+          ]
+        }
+      },
+      "top12": [
+        "Cleopatra (1963)",
+        "Centurion (2010)",
+        "Julius Caesar (1953)",
+        "Robe, The (1953)",
+        "Titus (1999)",
+        "Eagle, The (2011)",
+        "Last Legion, The (2007)",
+        "Fellini Satyricon (1969)",
+        "Caligula (1979)",
+        "Ben-hur (2016)",
+        "Funny Thing Happened on the Way to the Forum, A (1966)",
+        "Twelve Tasks of Asterix, The (Les douze travaux d'Astérix) (1976)"
+      ],
+      "dropped_by_filters": 9356
+    },
+    {
+      "utterance": "Epic movies set in ancient Rome, no cartoons or animation",
+      "extraction": {
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "ancient rome"
+          ],
+          "exclude_genres": [
+            "Animation"
+          ]
+        }
+      },
+      "top12": [
+        "Spartacus (1960)",
+        "Gladiator (2000)",
+        "Ben-Hur (1959)",
+        "Fellini Satyricon (1969)",
+        "Cleopatra (1963)",
+        "Titus (1999)",
+        "Caligula (1979)",
+        "Ben-hur (2016)",
+        "Hail, Caesar! (2016)",
+        "Funny Thing Happened on the Way to the Forum, A (1966)",
+        "Asterix & Obelix: Mission Cleopatra (Astérix & Obélix: Mission Cléopâtre) (2002)",
+        "Julius Caesar (1953)"
+      ],
+      "dropped_by_filters": 9357
+    },
+    {
+      "utterance": "Sword-and-sandal historical epics set in ancient Rome",
+      "extraction": {
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "ancient rome",
+            "sword and sandal"
+          ]
+        }
+      },
+      "top12": [
+        "Spartacus (1960)",
+        "Gladiator (2000)",
+        "Ben-Hur (1959)",
+        "Fellini Satyricon (1969)",
+        "Cleopatra (1963)",
+        "Titus (1999)",
+        "Caligula (1979)",
+        "Ben-hur (2016)",
+        "Hail, Caesar! (2016)",
+        "Funny Thing Happened on the Way to the Forum, A (1966)",
+        "Asterix & Obelix: Mission Cleopatra (Astérix & Obélix: Mission Cléopâtre) (2002)",
+        "Twelve Tasks of Asterix, The (Les douze travaux d'Astérix) (1976)"
+      ],
+      "dropped_by_filters": 9356
+    }
+  ],
+  "r1c6": [
+    {
+      "utterance": "Romantic anime love stories like Your Name and Whisper of the Heart.",
+      "extraction": {
+        "liked_items": [
+          "Your Name (2016)",
+          "Whisper of the Heart (1995)"
+        ],
+        "liked_genres": [
+          "Romance"
+        ],
+        "mood": [],
+        "hard_constraints": {
+          "require_attributes": [
+            "anime"
+          ],
+          "require_genres": [
+            "Romance"
+          ]
+        }
+      },
+      "top12": [
+        "Howl's Moving Castle (Hauru no ugoku shiro) (2004)",
+        "From Up on Poppy Hill (Kokuriko-zaka kara) (2011)",
+        "Garden of Words, The (Koto no ha no niwa) (2013)",
+        "Girl Who Leapt Through Time, The (Toki o kakeru shôjo) (2006)",
+        "Wind Rises, The (Kaze tachinu) (2013)",
+        "5 Centimeters per Second (Byôsoku 5 senchimêtoru) (2007)",
+        "A Silent Voice (2016)",
+        "Millennium Actress (Sennen joyû) (2001)",
+        "Porco Rosso (Crimson Pig) (Kurenai no buta) (1992)",
+        "Weathering with You (2019)",
+        "Place Promised in Our Early Days, The (Kumo no mukô, yakusoku no basho) (2004)",
+        "Mind Game (2004)"
+      ],
+      "dropped_by_filters": 9361
+    },
+    {
+      "utterance": "Romantic anime love stories like Your Name and Whisper of the Heart.",
+      "extraction": {
+        "liked_items": [
+          "Your Name (2016)",
+          "Whisper of the Heart (1995)"
+        ],
+        "liked_genres": [
+          "Romance"
+        ],
+        "mood": [],
+        "hard_constraints": {
+          "require_attributes": [
+            "anime"
+          ],
+          "require_genres": [
+            "Romance"
+          ]
+        }
+      },
+      "top12": [
+        "Howl's Moving Castle (Hauru no ugoku shiro) (2004)",
+        "From Up on Poppy Hill (Kokuriko-zaka kara) (2011)",
+        "Garden of Words, The (Koto no ha no niwa) (2013)",
+        "Girl Who Leapt Through Time, The (Toki o kakeru shôjo) (2006)",
+        "Wind Rises, The (Kaze tachinu) (2013)",
+        "5 Centimeters per Second (Byôsoku 5 senchimêtoru) (2007)",
+        "A Silent Voice (2016)",
+        "Millennium Actress (Sennen joyû) (2001)",
+        "Porco Rosso (Crimson Pig) (Kurenai no buta) (1992)",
+        "Weathering with You (2019)",
+        "Place Promised in Our Early Days, The (Kumo no mukô, yakusoku no basho) (2004)",
+        "Mind Game (2004)"
+      ],
+      "dropped_by_filters": 9361
+    },
+    {
+      "utterance": "Anime movies about falling in love, like Your Name and Whisper of the Heart.",
+      "extraction": {
+        "liked_items": [
+          "Your Name (2016)",
+          "Whisper of the Heart (1995)"
+        ],
+        "liked_genres": [
+          "Romance"
+        ],
+        "mood": [],
+        "hard_constraints": {
+          "require_attributes": [
+            "anime"
+          ],
+          "require_genres": [
+            "Romance"
+          ],
+          "require_keyword_concepts": [
+            "falling in love"
+          ]
+        }
+      },
+      "top12": [
+        "The Big Sick (2017)",
+        "A Star Is Born (2018)",
+        "What If (2013)",
+        "Five Feet Apart (2019)",
+        "Definitely, Maybe (2008)",
+        "Misérables, Les (2012)",
+        "Elizabethtown (2005)",
+        "Notting Hill (1999)",
+        "To the Wonder (2013)",
+        "You've Got Mail (1998)",
+        "Strictly Ballroom (1992)",
+        "Prince & Me, The (2004)"
+      ],
+      "dropped_by_filters": 632
+    },
+    {
+      "utterance": "I want anime romance movies like Your Name and Whisper of the Heart.",
+      "extraction": {
+        "liked_items": [
+          "Your Name (2016)",
+          "Whisper of the Heart (1995)"
+        ],
+        "liked_genres": [
+          "Romance"
+        ],
+        "mood": [],
+        "hard_constraints": {
+          "require_attributes": [
+            "anime"
+          ],
+          "require_genres": [
+            "Romance"
+          ]
+        }
+      },
+      "top12": [
+        "Howl's Moving Castle (Hauru no ugoku shiro) (2004)",
+        "From Up on Poppy Hill (Kokuriko-zaka kara) (2011)",
+        "Garden of Words, The (Koto no ha no niwa) (2013)",
+        "Girl Who Leapt Through Time, The (Toki o kakeru shôjo) (2006)",
+        "Wind Rises, The (Kaze tachinu) (2013)",
+        "5 Centimeters per Second (Byôsoku 5 senchimêtoru) (2007)",
+        "A Silent Voice (2016)",
+        "Millennium Actress (Sennen joyû) (2001)",
+        "Porco Rosso (Crimson Pig) (Kurenai no buta) (1992)",
+        "Weathering with You (2019)",
+        "Place Promised in Our Early Days, The (Kumo no mukô, yakusoku no basho) (2004)",
+        "Mind Game (2004)"
+      ],
+      "dropped_by_filters": 9361
+    }
+  ],
+  "r6c3": [
+    {
+      "utterance": "Movies where aliens invade Earth and humanity fights back, like War of the Worlds and Independence Day. No comedies.",
+      "extraction": {
+        "liked_items": [
+          "War of the Worlds (2005)",
+          "Independence Day (1996)"
+        ],
+        "genome_tags": [
+          "alien invasion"
+        ],
+        "hard_constraints": {
+          "exclude_genres": [
+            "Comedy"
+          ]
+        }
+      },
+      "top12": [
+        "Species (1995)",
+        "Signs (2002)",
+        "Edge of Tomorrow (2014)",
+        "Arrival, The (1996)",
+        "Earth vs. the Flying Saucers (1956)",
+        "District 9 (2009)",
+        "Alien (1979)",
+        "Arrival (2016)",
+        "Aliens (1986)",
+        "Close Encounters of the Third Kind (1977)",
+        "Puppet Masters, The (1994)",
+        "Thing from Another World, The (1951)"
+      ],
+      "dropped_by_filters": 4
+    },
+    {
+      "utterance": "Movies where aliens invade Earth and humanity fights back, like War of the Worlds and Independence Day. No comedies.",
+      "extraction": {
+        "liked_items": [
+          "War of the Worlds (2005)",
+          "Independence Day (1996)"
+        ],
+        "genome_tags": [
+          "alien invasion"
+        ],
+        "hard_constraints": {
+          "exclude_genres": [
+            "Comedy"
+          ]
+        }
+      },
+      "top12": [
+        "Species (1995)",
+        "Signs (2002)",
+        "Edge of Tomorrow (2014)",
+        "Arrival, The (1996)",
+        "Earth vs. the Flying Saucers (1956)",
+        "District 9 (2009)",
+        "Alien (1979)",
+        "Arrival (2016)",
+        "Aliens (1986)",
+        "Close Encounters of the Third Kind (1977)",
+        "Puppet Masters, The (1994)",
+        "Thing from Another World, The (1951)"
+      ],
+      "dropped_by_filters": 4
+    },
+    {
+      "utterance": "Alien invasion of Earth movies, like War of the Worlds and Independence Day. No horror or comedy.",
+      "extraction": {
+        "liked_items": [
+          "War of the Worlds (2005)",
+          "Independence Day (1996)"
+        ],
+        "genome_tags": [
+          "alien invasion"
+        ],
+        "hard_constraints": {
+          "exclude_genres": [
+            "Comedy",
+            "Horror"
+          ]
+        }
+      },
+      "top12": [
+        "Edge of Tomorrow (2014)",
+        "Arrival, The (1996)",
+        "Earth vs. the Flying Saucers (1956)",
+        "District 9 (2009)",
+        "Arrival (2016)",
+        "Close Encounters of the Third Kind (1977)",
+        "Skyline (2010)",
+        "Invaders from Mars (1953)",
+        "Day the Earth Stood Still, The (1951)",
+        "Independence Day: Resurgence (2016)",
+        "Stargate (1994)",
+        "Alien Nation (1988)"
+      ],
+      "dropped_by_filters": 22
+    },
+    {
+      "utterance": "Invasion of Earth by aliens with humanity fighting back, like War of the Worlds and Independence Day. No horror, comedy, or first-contact scenarios.",
+      "extraction": {
+        "liked_items": [
+          "War of the Worlds (2005)",
+          "Independence Day (1996)"
+        ],
+        "genome_tags": [
+          "alien invasion"
+        ],
+        "hard_constraints": {
+          "exclude_genres": [
+            "Comedy",
+            "Horror"
+          ],
+          "exclude_genome_tags": [
+            "first contact"
+          ]
+        }
+      },
+      "top12": [
+        "Returner (Ritaanaa) (2002)",
+        "Terminator 3: Rise of the Machines (2003)",
+        "Reservoir Dogs (1992)",
+        "Seven (a.k.a. Se7en) (1995)",
+        "Predator 2 (1990)",
+        "Escape from L.A. (1996)",
+        "Fight Club (1999)",
+        "Léon: The Professional (a.k.a. The Professional) (Léon) (1994)",
+        "Goodfellas (1990)",
+        "Terminator 2: Judgment Day (1991)",
+        "Serenity (2005)",
+        "Taxi Driver (1976)"
+      ],
+      "dropped_by_filters": 150
+    },
+    {
+      "utterance": "Action-packed alien invasion films like War of the Worlds and Independence Day, with humanity fighting back. No comedy or horror.",
+      "extraction": {
+        "liked_items": [
+          "War of the Worlds (2005)",
+          "Independence Day (1996)"
+        ],
+        "genome_tags": [
+          "alien invasion",
+          "action packed"
+        ],
+        "liked_genres": [
+          "Action",
+          "Sci-Fi"
+        ],
+        "hard_constraints": {
+          "exclude_genres": [
+            "Comedy",
+            "Horror"
+          ]
+        }
+      },
+      "top12": [
+        "Edge of Tomorrow (2014)",
+        "Terminator 3: Rise of the Machines (2003)",
+        "Transformers (2007)",
+        "Stargate (1994)",
+        "Battle: Los Angeles (2011)",
+        "Terminator 2: Judgment Day (1991)",
+        "Battleship (2012)",
+        "Iron Man 2 (2010)",
+        "Arrival, The (1996)",
+        "Planet of the Apes (2001)",
+        "Matrix, The (1999)",
+        "Star Wars: Episode V - The Empire Strikes Back (1980)"
+      ],
+      "dropped_by_filters": 127
+    }
+  ],
+  "r7c1": [
+    {
+      "utterance": "Paranoid government-conspiracy and cover-up thrillers from the 1970s and 80s",
+      "extraction": {
+        "genome_tags": [
+          "paranoid",
+          "conspiracy"
+        ],
+        "hard_constraints": {
+          "require_genres": [
+            "Thriller"
+          ],
+          "require_keyword_concepts": [
+            "government",
+            "cover-up"
+          ],
+          "year_min": 1970,
+          "year_max": 1989
+        }
+      },
+      "top12": [
+        "Marathon Man (1976)",
+        "Rambo: First Blood Part II (1985)",
+        "WarGames (1983)",
+        "Suspect (1987)"
+      ],
+      "dropped_by_filters": 9371
+    },
+    {
+      "utterance": "1970s-80s paranoid thrillers about government conspiracy, like All the President's Men and Three Days of the Condor",
+      "extraction": {
+        "liked_items": [
+          "All the President's Men",
+          "Three Days of the Condor"
+        ],
+        "genome_tags": [
+          "paranoid"
+        ],
+        "hard_constraints": {
+          "require_genres": [
+            "Thriller"
+          ],
+          "require_keyword_concepts": [
+            "government",
+            "conspiracy"
+          ],
+          "year_min": 1970,
+          "year_max": 1989
+        }
+      },
+      "top12": [
+        "Marathon Man (1976)",
+        "Parallax View, The (1974)",
+        "Suspect (1987)",
+        "Blow Out (1981)",
+        "Coma (1978)",
+        "WarGames (1983)",
+        "Day of the Jackal, The (1973)",
+        "China Syndrome, The (1979)",
+        "Odessa File, The (1974)",
+        "Chinatown (1974)",
+        "Tenant, The (Locataire, Le) (1976)",
+        "Boys from Brazil, The (1978)"
+      ],
+      "dropped_by_filters": 9279
+    },
+    {
+      "utterance": "Paranoid government cover-up thrillers from the 70s, like All the President's Men and The Parallax View",
+      "extraction": {
+        "liked_items": [
+          "All the President's Men",
+          "The Parallax View"
+        ],
+        "genome_tags": [
+          "paranoid"
+        ],
+        "hard_constraints": {
+          "require_genres": [
+            "Thriller"
+          ],
+          "require_keyword_concepts": [
+            "cover-up"
+          ],
+          "year_min": 1970,
+          "year_max": 1980
+        }
+      },
+      "top12": [
+        "Night Moves (1975)",
+        "Duel (1971)",
+        "Taxi Driver (1976)",
+        "Three Days of the Condor (3 Days of the Condor) (1975)",
+        "Tenant, The (Locataire, Le) (1976)",
+        "Marathon Man (1976)",
+        "Charley Varrick (1973)",
+        "Sorcerer (1977)",
+        "Straw Dogs (1971)",
+        "Day of the Jackal, The (1973)",
+        "Badlands (1973)",
+        "Chinatown (1974)"
+      ],
+      "dropped_by_filters": 55
+    }
+  ],
+  "r3c1a": [
+    {
+      "utterance": "Harrowing anti-war films that make you cry, like The Pianist, Come and See, and Grave of the Fireflies — absolutely no comedies, no cartoons, no documentaries.",
+      "extraction": {
+        "liked_items": [
+          "The Pianist (2002)",
+          "Come and See (1985)",
+          "Grave of the Fireflies (1988)"
+        ],
+        "genome_tags": [
+          "anti-war"
+        ],
+        "mood": "make you cry",
+        "hard_constraints": {
+          "require_genres": [
+            "War"
+          ],
+          "exclude_genres": [
+            "Comedy",
+            "Animation",
+            "Documentary"
+          ]
+        }
+      },
+      "top12": [
+        "Tae Guk Gi: The Brotherhood of War (Taegukgi hwinalrimyeo) (2004)",
+        "Cross of Iron (1977)",
+        "No Man's Land (2001)",
+        "Prisoner of the Mountains (Kavkazsky plennik) (1996)",
+        "Land of Mine (2015)",
+        "All Quiet on the Western Front (1930)",
+        "Pork Chop Hill (1959)",
+        "Cranes Are Flying, The (Letyat zhuravli) (1957)",
+        "American Sniper (2014)",
+        "Anthropoid (2016)",
+        "Letters from Iwo Jima (2006)",
+        "Train, The (1964)"
+      ],
+      "dropped_by_filters": 9061
+    },
+    {
+      "utterance": "Devastating, tear-jerking war dramas like The Pianist, Come and See, and Grave of the Fireflies — no comedies, no documentaries, no animated films.",
+      "extraction": {
+        "liked_items": [
+          "The Pianist (2002)",
+          "Come and See (1985)",
+          "Grave of the Fireflies (1988)"
+        ],
+        "mood": "make me cry",
+        "hard_constraints": {
+          "require_genres": [
+            "War"
+          ],
+          "exclude_genres": [
+            "Comedy",
+            "Documentary",
+            "Animation"
+          ]
+        }
+      },
+      "top12": [
+        "Incendies (2010)",
+        "Land of Mine (2015)",
+        "Cranes Are Flying, The (Letyat zhuravli) (1957)",
+        "Prisoner of the Mountains (Kavkazsky plennik) (1996)",
+        "Anthropoid (2016)",
+        "Hiroshima Mon Amour (1959)",
+        "Cross of Iron (1977)",
+        "Forbidden Games (Jeux interdits) (1952)",
+        "South Pacific (1958)",
+        "Train, The (1964)",
+        "Ivan's Childhood (a.k.a. My Name is Ivan) (Ivanovo detstvo) (1962)",
+        "Duellists, The (1977)"
+      ],
+      "dropped_by_filters": 9061
+    },
+    {
+      "utterance": "Visceral anti-war dramas that devastate emotionally, like The Pianist, Come and See, and Grave of the Fireflies — no comedies, no cartoons, no documentaries.",
+      "extraction": {
+        "liked_items": [
+          "The Pianist (2002)",
+          "Come and See (1985)",
+          "Grave of the Fireflies (1988)"
+        ],
+        "genome_tags": [
+          "visceral",
+          "anti-war"
+        ],
+        "mood": "emotionally devastating",
+        "hard_constraints": {
+          "require_genres": [
+            "War"
+          ],
+          "exclude_genres": [
+            "Comedy",
+            "Animation",
+            "Documentary"
+          ]
+        }
+      },
+      "top12": [
+        "Cross of Iron (1977)",
+        "Boot, Das (Boat, The) (1981)",
+        "Paths of Glory (1957)",
+        "Prisoner of the Mountains (Kavkazsky plennik) (1996)",
+        "Duellists, The (1977)",
+        "Apocalypse Now (1979)",
+        "Pork Chop Hill (1959)",
+        "Full Metal Jacket (1987)",
+        "Train, The (1964)",
+        "Manchurian Candidate, The (1962)",
+        "Stalingrad (1993)",
+        "Land of Mine (2015)"
+      ],
+      "dropped_by_filters": 9061
+    }
+  ],
+  "r3c1b": [
+    {
+      "utterance": "Modern military war heroes like Lone Survivor, American Sniper, and Black Hawk Down.",
+      "extraction": {
+        "liked_items": [
+          "Lone Survivor (2013)",
+          "American Sniper (2014)",
+          "Black Hawk Down (2001)"
+        ]
+      },
+      "top12": [
+        "13 Hours (2016)",
+        "We Were Soldiers (2002)",
+        "Enemy at the Gates (2001)",
+        "The Siege of Jadotville (2016)",
+        "Pearl Harbor (2001)",
+        "Hacksaw Ridge (2016)",
+        "Zero Dark Thirty (2012)",
+        "Restrepo (2010)",
+        "Tears of the Sun (2003)",
+        "Bat*21 (1988)",
+        "Hurt Locker, The (2008)",
+        "The Great Raid (2005)"
+      ],
+      "dropped_by_filters": 0
+    },
+    {
+      "utterance": "Navy SEAL and special forces movies like Zero Dark Thirty and Act of Valor.",
+      "extraction": {
+        "liked_items": [
+          "Zero Dark Thirty (2012)",
+          "Act of Valor (2012)"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "navy seal",
+            "special forces"
+          ]
+        }
+      },
+      "top12": [
+        "Sicario (2015)",
+        "Elite Squad (Tropa de Elite) (2007)",
+        "The Great Raid (2005)",
+        "First Blood (Rambo: First Blood) (1982)",
+        "A-Team, The (2010)",
+        "Hunted, The (2003)",
+        "Missing in Action (1984)",
+        "Doom (2005)",
+        "Resident Evil (2002)"
+      ],
+      "dropped_by_filters": 9364
+    },
+    {
+      "utterance": "Elite soldiers and snipers in modern warfare, like American Sniper and Lone Survivor.",
+      "extraction": {
+        "liked_items": [
+          "American Sniper (2014)",
+          "Lone Survivor (2013)"
+        ],
+        "hard_constraints": {
+          "require_keyword_concepts": [
+            "sniper",
+            "special forces"
+          ]
+        }
+      },
+      "top12": [
+        "Zero Dark Thirty (2012)",
+        "Hurt Locker, The (2008)",
+        "Enemy at the Gates (2001)",
+        "The Great Raid (2005)",
+        "Jarhead (2005)",
+        "Behind Enemy Lines (2001)",
+        "Elite Squad (Tropa de Elite) (2007)",
+        "Sicario (2015)",
+        "Purge: Anarchy, The (2014)",
+        "Full Metal Jacket (1987)",
+        "Jack Reacher (2012)",
+        "Mud (2012)"
+      ],
+      "dropped_by_filters": 552
+    },
+    {
+      "utterance": "Navy SEAL and special forces movies like Zero Dark Thirty and Act of Valor.",
+      "extraction": {
+        "liked_items": [
+          "Zero Dark Thirty (2012)",
+          "Act of Valor (2012)"
+        ]
+      },
+      "top12": [
+        "Lone Survivor (2013)",
+        "13 Hours (2016)",
+        "Captain Phillips (2013)",
+        "Great Escape, The (1963)",
+        "Argo (2012)",
+        "Rush (2013)",
+        "Sicario (2015)",
+        "Warrior (2011)",
+        "Patriots Day (2016)",
+        "Bridge of Spies (2015)",
+        "Black Hawk Down (2001)",
+        "Fury (2014)"
+      ],
+      "dropped_by_filters": 0
+    }
+  ],
+  "r1c7": [
+    {
+      "utterance": "Adult animation for grown-ups — no kids' cartoons or documentaries — like South Park, Waking Life, and Batman: The Killing Joke.",
+      "extraction": {
+        "liked_items": [
+          "South Park: Bigger, Longer & Uncut (1999)",
+          "Waking Life (2001)",
+          "Batman: The Killing Joke (2016)"
+        ],
+        "hard_constraints": {
+          "require_genres": [
+            "Animation"
+          ],
+          "require_min_rating": "R",
+          "exclude_genres": [
+            "Children",
+            "Documentary"
+          ]
+        }
+      },
+      "top12": [
+        "Cowboy Bebop: The Movie (Cowboy Bebop: Tengoku no Tobira) (2001)",
+        "Sausage Party (2016)",
+        "Team America: World Police (2004)",
+        "Ghost in the Shell (Kôkaku kidôtai) (1995)",
+        "Over the Garden Wall (2013)",
+        "Lupin III: The Castle Of Cagliostro (Rupan sansei: Kariosutoro no shiro) (1979)",
+        "Perfect Blue (1997)",
+        "Ninja Scroll (Jûbei ninpûchô) (1995)",
+        "Creature Comforts (1989)",
+        "Jin Roh: The Wolf Brigade (Jin-Rô) (1998)",
+        "Redline (2009)",
+        "Paprika (Papurika) (2006)"
+      ],
+      "dropped_by_filters": 9289
+    },
+    {
+      "utterance": "Adult animation for grown-ups — no kids' cartoons or documentaries — like South Park, Waking Life, and Batman: The Killing Joke.",
+      "extraction": {
+        "liked_items": [
+          "South Park: Bigger, Longer & Uncut (1999)",
+          "Waking Life (2001)",
+          "Batman: The Killing Joke (2016)"
+        ],
+        "hard_constraints": {
+          "require_genres": [
+            "Animation"
+          ],
+          "require_min_rating": "R",
+          "exclude_genres": [
+            "Children",
+            "Documentary"
+          ]
+        }
+      },
+      "top12": [
+        "Cowboy Bebop: The Movie (Cowboy Bebop: Tengoku no Tobira) (2001)",
+        "Sausage Party (2016)",
+        "Team America: World Police (2004)",
+        "Ghost in the Shell (Kôkaku kidôtai) (1995)",
+        "Over the Garden Wall (2013)",
+        "Lupin III: The Castle Of Cagliostro (Rupan sansei: Kariosutoro no shiro) (1979)",
+        "Perfect Blue (1997)",
+        "Ninja Scroll (Jûbei ninpûchô) (1995)",
+        "Creature Comforts (1989)",
+        "Jin Roh: The Wolf Brigade (Jin-Rô) (1998)",
+        "Redline (2009)",
+        "Paprika (Papurika) (2006)"
+      ],
+      "dropped_by_filters": 9289
+    },
+    {
+      "utterance": "Raunchy, satirical adult animation like South Park, Fritz the Cat, and Sausage Party — not for kids.",
+      "extraction": {
+        "liked_items": [
+          "South Park: Bigger, Longer & Uncut (1999)",
+          "Fritz the Cat (1972)",
+          "Sausage Party (2016)"
+        ],
+        "genome_tags": [
+          "raunchy",
+          "satirical"
+        ],
+        "hard_constraints": {
+          "require_genres": [
+            "Animation"
+          ],
+          "require_min_rating": "R",
+          "exclude_genres": [
+            "Children"
+          ]
+        }
+      },
+      "top12": [
+        "Team America: World Police (2004)",
+        "Rejected (2000)",
+        "Don't Hug Me, I'm Scared (2011)",
+        "Paranoia Agent (2004)",
+        "Family Guy Presents: Something, Something, Something, Dark Side (2009)",
+        "Creature Comforts (1989)",
+        "Cat Soup (Nekojiru-so) (2001)",
+        "Anomalisa (2015)",
+        "Congress, The (2013)",
+        "Tekkonkinkreet (Tekkon kinkurîto) (2006)",
+        "It's Such a Beautiful Day (2011)",
+        "Paprika (Papurika) (2006)"
+      ],
+      "dropped_by_filters": 9287
+    },
+    {
+      "utterance": "Raunchy, satirical adult animation like South Park, Fritz the Cat, and Sausage Party — not for kids.",
+      "extraction": {
+        "liked_items": [
+          "South Park: Bigger, Longer & Uncut (1999)",
+          "Fritz the Cat (1972)",
+          "Sausage Party (2016)"
+        ],
+        "genome_tags": [
+          "raunchy",
+          "satirical"
+        ],
+        "hard_constraints": {
+          "require_genres": [
+            "Animation"
+          ],
+          "require_min_rating": "R",
+          "exclude_genres": [
+            "Children"
+          ]
+        }
+      },
+      "top12": [
+        "Team America: World Police (2004)",
+        "Rejected (2000)",
+        "Don't Hug Me, I'm Scared (2011)",
+        "Paranoia Agent (2004)",
+        "Family Guy Presents: Something, Something, Something, Dark Side (2009)",
+        "Creature Comforts (1989)",
+        "Cat Soup (Nekojiru-so) (2001)",
+        "Anomalisa (2015)",
+        "Congress, The (2013)",
+        "Tekkonkinkreet (Tekkon kinkurîto) (2006)",
+        "It's Such a Beautiful Day (2011)",
+        "Paprika (Papurika) (2006)"
+      ],
+      "dropped_by_filters": 9287
+    },
+    {
+      "utterance": "Satirical adult animated comedies like South Park, Rejected, and Team America — animation for grownups, not kids.",
+      "extraction": {
+        "liked_items": [
+          "South Park: Bigger, Longer & Uncut (1999)",
+          "Rejected (2000)",
+          "Team America: World Police (2004)"
+        ],
+        "genome_tags": [
+          "satirical"
+        ],
+        "hard_constraints": {
+          "require_genres": [
+            "Animation"
+          ],
+          "require_min_rating": "R",
+          "exclude_genres": [
+            "Children"
+          ]
+        }
+      },
+      "top12": [
+        "Family Guy Presents: Something, Something, Something, Dark Side (2009)",
+        "Fritz the Cat (1972)",
+        "Creature Comforts (1989)",
+        "Congress, The (2013)",
+        "Don't Hug Me, I'm Scared (2011)",
+        "Scanner Darkly, A (2006)",
+        "Meet the Feebles (1989)",
+        "Aqua Teen Hunger Force Colon Movie Film for Theaters (2007)",
+        "Alice (Neco z Alenky) (1988)",
+        "Paranoia Agent (2004)",
+        "Sausage Party (2016)",
+        "Heavy Metal (1981)"
+      ],
+      "dropped_by_filters": 9287
+    }
+  ]
+}

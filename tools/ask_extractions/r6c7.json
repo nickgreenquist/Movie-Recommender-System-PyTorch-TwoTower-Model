@@ -1,13 +1,16 @@
 {
-  "liked_items": [],
-  "disliked_items": [],
-  "genome_tags": [],
-  "liked_genres": [],
-  "disliked_genres": [],
-  "mood": "",
+  "liked_items": [
+    "Into the Wild (2007)",
+    "Never Cry Wolf (1983)"
+  ],
   "hard_constraints": {
-    "require_genome_tags": ["wilderness", "solitude"]
-  },
-  "unsupported_notes": "",
-  "out_of_domain": false
+    "exclude_genres": [
+      "Documentary"
+    ],
+    "require_keyword_concepts": [
+      "wilderness",
+      "survival",
+      "nature"
+    ]
+  }
 }

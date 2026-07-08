@@ -1,9 +1,12 @@
 {
   "liked_items": [
-    "Marley & Me (2008)",
-    "Hachiko: A Dog's Story (2009)"
+    "Hachi: A Dog's Story",
+    "My Dog Skip"
   ],
-  "mood": "make me cry",
+  "liked_genres": [
+    "Drama"
+  ],
+  "mood": "emotional",
   "hard_constraints": {
     "require_keyword_concepts": [
       "dog"

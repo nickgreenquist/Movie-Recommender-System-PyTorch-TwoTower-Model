@@ -1,16 +1,19 @@
 {
   "liked_items": [
     "South Park: Bigger, Longer & Uncut (1999)",
-    "Waking Life (2001)",
-    "Batman: The Killing Joke (2016)"
+    "Rejected (2000)",
+    "Team America: World Police (2004)"
+  ],
+  "genome_tags": [
+    "satirical"
   ],
   "hard_constraints": {
     "require_genres": [
       "Animation"
     ],
     "require_min_rating": "R",
-    "require_country": [
-      "American"
+    "exclude_genres": [
+      "Children"
     ]
   }
 }

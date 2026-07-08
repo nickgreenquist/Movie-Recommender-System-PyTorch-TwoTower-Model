@@ -1,7 +1,18 @@
 {
-  "genome_tags": ["poignant", "bittersweet"],
+  "liked_items": [
+    "12 Years a Slave",
+    "Schindler's List"
+  ],
+  "genome_tags": [
+    "poignant",
+    "bittersweet"
+  ],
   "hard_constraints": {
-    "require_genres": ["Drama"],
-    "require_attributes": ["based on a true story"]
+    "require_genres": [
+      "Drama"
+    ],
+    "require_attributes": [
+      "based on a true story"
+    ]
   }
 }

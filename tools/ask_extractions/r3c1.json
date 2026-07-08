@@ -4,11 +4,18 @@
     "Come and See (1985)",
     "Grave of the Fireflies (1988)"
   ],
+  "genome_tags": [
+    "visceral",
+    "anti-war"
+  ],
+  "mood": "emotionally devastating",
   "hard_constraints": {
     "require_genres": [
       "War"
     ],
     "exclude_genres": [
+      "Comedy",
+      "Animation",
       "Documentary"
     ]
   }

@@ -1,15 +1,18 @@
 {
+  "liked_items": [
+    "All the President's Men",
+    "Three Days of the Condor"
+  ],
   "genome_tags": [
-    "paranoid",
-    "conspiracy"
+    "paranoid"
   ],
   "hard_constraints": {
     "require_genres": [
       "Thriller"
     ],
     "require_keyword_concepts": [
-      "political",
-      "cover-up"
+      "government",
+      "conspiracy"
     ],
     "year_min": 1970,
     "year_max": 1989
