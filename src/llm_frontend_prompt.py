@@ -266,8 +266,16 @@ NATIONALITY ("French films" → require_country), a concrete TOPIC ("submarine m
 require_keyword_concepts ["submarine"]), or a FORMAT / RATING / RUNTIME / FRANCHISE facet: set that \
 hard slot and do NOT manufacture vibe tags — the facet is the query.
     • Titles GIVEN in liked_items: the named titles are the real query and they already encode \
-tone, intensity, and era — so use FEW tags (0–2), and only when they add something the titles \
-don't. Decide by HOW the user frames the mood:
+tone, intensity, and era — so use FEW genome_tags (0–2), and only when they add something the titles \
+don't. BUT TITLES NEVER CANCEL A HARD CATEGORY: when the request ALSO has a concrete TOPIC / genre / \
+person / setting HEAD NOUN ("kung-fu movies like Enter the Dragon", "heist films like Heat", \
+"time-loop movies like Edge of Tomorrow", "submarine thrillers like Das Boot"), the exemplar titles \
+seed taste in liked_items AND you STILL set the matching hard slot (require_keyword_concepts / \
+require_genres / require_people / require_genome_tags) — the head noun hard-filters even though titles \
+are present. A concrete SUBJECT that also happens to appear in the genome vocab (kung fu, time loop, \
+disaster, boxing, heist) is STILL a require_keyword_concepts topic, NEVER a genome_tags vibe: named \
+titles must not tempt you to demote it to a soft tag or drop it. Decide the genome_tags by HOW the \
+user frames the mood:
         – EQUATIVE ("just as dark", "same gritty vibe", "similarly intense") merely RESTATES what \
 the named films already convey — emit NO tag for it. Generic restatement words ("dark", \
 "gritty", "grim", "bleak", "intense", "slow", "ominous", "serious") drag results toward a bleak \
@@ -441,6 +449,34 @@ mood ["cozy"]
 - "what was that movie where a guy's whole life is secretly being filmed for TV" → \
 require_keyword_concepts ["reality tv"] (tip-of-tongue lookups: name the CANONICAL concept for the \
 premise, never the literal surface words — "television show"/"tv" resolve to nothing)
+- "heist movies like Heat and Ocean's Eleven" → liked_items ["Heat (1995)", "Ocean's Eleven (2001)"] \
++ require_keyword_concepts ["heist"] (a concrete TOPIC head noun WITH exemplar titles: keep BOTH — the \
+titles seed liked_items, the topic stays a HARD filter; named titles never cancel it)
+- "submarine thrillers like Das Boot and Crimson Tide" → liked_items ["Das Boot (1981)", \
+"Crimson Tide (1995)"] + liked_genres ["Thriller"] + require_keyword_concepts ["submarine"] (SUBJECT \
+the film must be ABOUT → keyword_concepts, not a genome vibe; the genre lean stays SOFT)
+- "classic boxing movies like Rocky and Raging Bull" → liked_items ["Rocky (1976)", \
+"Raging Bull (1980)"] + require_keyword_concepts ["boxing"] (even though "boxing" also exists in the \
+genome vocab, a concrete subject belongs in require_keyword_concepts, NOT genome_tags)
+- "something slow, dreamy and melancholy like In the Mood for Love" → liked_items \
+["In the Mood for Love (2000)"] + genome_tags ["atmospheric", "melancholy", "romantic"] (PURE VIBE with \
+an exemplar title and NO concrete-topic head noun → genome_tags, NO keyword_concepts — contrast the \
+topic cases above)
+
+FULL WORKED EXAMPLES (a request → the EXACT structured object to emit — study both the routing AND the \
+output shape; these are real, high-quality extractions):
+Request: "Martin Scorsese's New York movies."
+Output: {{"hard_constraints": {{"require_people": ["Martin Scorsese"], "require_genome_tags": ["new york city"]}}}}
+Request: "Epic movies set in ancient Rome, no cartoons or animation"
+Output: {{"hard_constraints": {{"require_keyword_concepts": ["ancient rome"], "exclude_genres": ["Animation"]}}}}
+Request: "American animated films like Toy Story, The Lion King, and Shrek."
+Output: {{"liked_items": ["Toy Story (1995)", "The Lion King (1994)", "Shrek (2001)"], "hard_constraints": {{"require_genres": ["Animation"], "require_country": ["American"]}}}}
+Request: "Giant monster destruction movies like Godzilla and Cloverfield."
+Output: {{"liked_items": ["Godzilla (2014)", "Cloverfield (2008)"], "liked_genres": ["Action", "Sci-Fi"], "hard_constraints": {{"require_keyword_concepts": ["giant monster"]}}}}
+Request: "A devastating drama that will absolutely make me sob."
+Output: {{"genome_tags": ["tear jerker", "emotional", "heartbreaking", "poignant"], "mood": ["make me cry"], "hard_constraints": {{"require_genres": ["Drama"]}}}}
+Request: "Christmas movies safe for little kids."
+Output: {{"genome_tags": ["feel-good", "heartwarming", "cute"], "mood": ["wholesome"], "hard_constraints": {{"require_keyword_concepts": ["christmas"], "require_max_rating": "PG"}}}}
 
 GENRES (closed list — the only valid values for any genre field):
 {genres}
