@@ -1,0 +1,11 @@
+{
+  "liked_items": [
+    "Planes, Trains and Automobiles (1987)",
+    "Home for the Holidays (1995)"
+  ],
+  "hard_constraints": {
+    "require_keyword_concepts": [
+      "thanksgiving"
+    ]
+  }
+}

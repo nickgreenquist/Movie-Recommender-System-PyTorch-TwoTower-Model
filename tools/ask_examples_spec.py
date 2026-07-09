@@ -2,7 +2,7 @@
 tools/ask_examples_spec.py — hand-curated query tree for the Ask tab's example chips.
 
 STRUCTURE
-    7 roots × 6 children = 42 SHOWN queries, + 2 backburner leaves (generated but not
+    7 roots × 6 children = 42 SHOWN queries, + 4 backburner leaves (generated but not
     surfaced). Each root is a theme; its children are REFINEMENTS — the natural follow-up
     asks — each phrased as a full standalone query so it (a) pre-generates independently,
     (b) reads correctly when it back-fills the Ask text box, and (c) still works if a user
@@ -25,7 +25,9 @@ CAPABILITY MAP (why these seven — the leaves fan across extraction ROUTES, not
 
 BACKBURNER (see BACKBURNER below)
     Traced-good leaves the curator wants pre-generated but NOT shown yet: Grief (r3c7),
-    Isolation (r6c7), Adult cartoons (r1c7 — edgy non-Disney/Pixar American animation).
+    Isolation (r6c7), Adult cartoons (r1c7 — edgy non-Disney/Pixar American animation),
+    Kids Halloween (r2c6 — kid-safe G/PG; broadening it kept pulling adult/off-theme films, so
+    the clean-but-thin board is generated and held back rather than shown).
     all_entries() yields them so gen_ask_examples.py writes their boards into
     serving/ask_examples.json['examples'], but they are absent from every root's `children`, so
     the generated `tree` (which the Ask tab renders pills from) never surfaces them. To promote
@@ -89,9 +91,8 @@ ROOTS = [
              'query': 'Animated Christmas movies for the whole family.'},
             {'id': 'r2c5', 'label': 'B&W classics',
              'query': 'Black-and-white Christmas classics from the 1940s and 50s.'},
-            {'id': 'r2c6', 'label': 'Kids Halloween',
-             'query': ('Halloween movies for children rated G or PG only. No scariness, '
-                       'no horror. Like Hocus Pocus and Casper.')},
+            {'id': 'r2c7', 'label': 'Thanksgiving',
+             'query': 'Thanksgiving movies about family dinners and dysfunction, like Planes, Trains and Automobiles and Home for the Holidays.'},
         ],
     },
     {
@@ -200,6 +201,9 @@ BACKBURNER = [
      'query': 'Solitary man-versus-nature survival movies, like Into the Wild and Never Cry Wolf. No documentaries.'},
     {'id': 'r1c7', 'label': 'Adult cartoons', 'parent': 'r1',
      'query': 'Satirical adult animated comedies like South Park, Rejected, and Team America — animation for grownups, not kids.'},
+    {'id': 'r2c6', 'label': 'Kids Halloween', 'parent': 'r2',
+     'query': ('Halloween movies for children rated G or PG only. No scariness, '
+               'no horror. Like Hocus Pocus and Casper.')},
 ]
 
 

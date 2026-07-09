@@ -24,7 +24,7 @@
    "r2c3",
    "r2c4",
    "r2c5",
-   "r2c6"
+   "r2c7"
   ],
   "r3": [
    "r3c1",
@@ -9476,44 +9476,31 @@
     "showcase_queries": []
    }
   },
-  "r2c6": {
-   "label": "Kids Halloween",
-   "query": "Halloween movies for children rated G or PG only. No scariness, no horror. Like Hocus Pocus and Casper.",
+  "r2c7": {
+   "label": "Thanksgiving",
+   "query": "Thanksgiving movies about family dinners and dysfunction, like Planes, Trains and Automobiles and Home for the Holidays.",
    "report": {
     "extraction": {
      "liked_items": [
-      "Hocus Pocus (1993)",
-      "Casper (1995)"
-     ],
-     "liked_genres": [
-      "Comedy",
-      "Family",
-      "Fantasy"
-     ],
-     "mood": [
-      "fun",
-      "family-friendly"
+      "Planes, Trains and Automobiles (1987)",
+      "Home for the Holidays (1995)"
      ],
      "hard_constraints": {
       "require_keyword_concepts": [
-       "halloween"
-      ],
-      "require_max_rating": "PG",
-      "exclude_genres": [
-       "Horror"
+       "thanksgiving"
       ]
      }
     },
     "resolution": {
      "liked": [
       [
-       "Hocus Pocus (1993)",
-       "Hocus Pocus (1993)",
-       "exact"
+       "Planes, Trains and Automobiles (1987)",
+       "Planes, Trains & Automobiles (1987)",
+       "fuzzy 0.93"
       ],
       [
-       "Casper (1995)",
-       "Casper (1995)",
+       "Home for the Holidays (1995)",
+       "Home for the Holidays (1995)",
        "exact"
       ]
      ],
@@ -9531,169 +9518,277 @@
     "topic_resolution": {
      "require": [
       [
-       "halloween",
-       "genome 'halloween' \u2229 concept 'halloween'",
-       30
+       "thanksgiving",
+       "keyword 'thanksgiving'",
+       19
       ]
      ],
      "exclude": []
     },
-    "anchors": [
-     "Halloween: Resurrection (Halloween 8) (2002)"
-    ],
+    "anchors": [],
     "anchor_weight": 0.5,
-    "mood_tags": [
-     "humor",
-     "funny",
-     "quirky"
+    "mood_tags": [],
+    "mode15_tags": [
+     "comedy",
+     "road trip",
+     "funniest movies",
+     "hilarious",
+     "highly quotable",
+     "road movie",
+     "dysfunctional family",
+     "robert downey jr"
     ],
-    "mode15_tags": [],
     "ranked_by_similarity": false,
     "unresolved_tags": [],
-    "unknown_genres": [
-     "Family"
-    ],
+    "unknown_genres": [],
     "seed_count": 2,
     "fallback": false,
-    "filtered": 9364,
+    "filtered": 9356,
     "relaxed_constraints": [],
     "recs": [
      [
-      "Halloweentown (1998)",
+      "Son in Law (1993)",
       [
-       "Adventure",
+       "Comedy",
+       "Drama",
+       "Romance"
+      ],
+      "1993",
+      0.3104640543460846
+     ],
+     [
+      "Addams Family Values (1993)",
+      [
        "Children",
        "Comedy",
        "Fantasy"
       ],
-      "1998",
-      2.273954391479492
+      "1993",
+      0.3086318373680115
      ],
      [
-      "Ernest Scared Stupid (1991)",
+      "Grumpy Old Men (1993)",
       [
        "Comedy"
       ],
-      "1991",
-      1.9957720041275024
+      "1993",
+      0.2889948785305023
      ],
      [
-      "It's the Great Pumpkin, Charlie Brown (1966)",
+      "Pieces of April (2003)",
       [
-       "Animation",
-       "Children",
+       "Comedy",
+       "Drama"
+      ],
+      "2003",
+      0.2880973815917969
+     ],
+     [
+      "Enough Said (2013)",
+      [
+       "Comedy",
+       "Drama",
+       "Romance"
+      ],
+      "2013",
+      0.28518056869506836
+     ],
+     [
+      "Tower Heist (2011)",
+      [
+       "Action",
+       "Comedy",
+       "Crime"
+      ],
+      "2011",
+      0.2402133047580719
+     ],
+     [
+      "Hannah and Her Sisters (1986)",
+      [
+       "Comedy",
+       "Drama",
+       "Romance"
+      ],
+      "1986",
+      0.2394428849220276
+     ],
+     [
+      "Jack and Jill (2011)",
+      [
        "Comedy"
       ],
-      "1966",
-      2.1431469917297363
+      "2011",
+      0.23134663701057434
      ],
      [
-      "Spaced Invaders (1990)",
+      "Myth of Fingerprints, The (1997)",
+      [
+       "Comedy",
+       "Drama"
+      ],
+      "1997",
+      0.21126526594161987
+     ],
+     [
+      "Stuck in Love (2012)",
+      [
+       "Comedy",
+       "Drama",
+       "Romance"
+      ],
+      "2012",
+      0.19323445856571198
+     ],
+     [
+      "Gold Rush, The (1925)",
       [
        "Adventure",
        "Comedy",
-       "Sci-Fi"
+       "Romance"
       ],
-      "1990",
-      1.3908368349075317
+      "1925",
+      0.1581520289182663
      ],
      [
-      "Arsenic and Old Lace (1944)",
+      "House of Yes, The (1997)",
       [
        "Comedy",
-       "Mystery",
-       "Thriller"
+       "Drama"
       ],
-      "1944",
-      1.2101554870605469
+      "1997",
+      0.1385890245437622
      ],
      [
-      "Nightmare Before Christmas, The (1993)",
+      "Free Birds (2013)",
       [
+       "Action",
+       "Adventure",
        "Animation",
        "Children",
-       "Fantasy",
-       "Musical"
-      ],
-      "1993",
-      2.0223586559295654
-     ],
-     [
-      "Toy Story of Terror (2013)",
-      [
-       "Animation",
-       "Children",
-       "Comedy"
+       "Comedy",
+       "Sci-Fi"
       ],
       "2013",
-      2.0104458332061768
+      0.06643986701965332
      ],
      [
-      "Monster House (2006)",
+      "Scent of a Woman (1992)",
       [
-       "Animation",
-       "Children",
-       "Fantasy",
-       "Mystery"
+       "Drama"
       ],
-      "2006",
-      1.489129900932312
+      "1992",
+      0.04094783589243889
      ],
      [
-      "Adventures of Ichabod and Mr. Toad, The (1949)",
+      "Ice Storm, The (1997)",
       [
-       "Animation",
-       "Children"
+       "Drama"
       ],
-      "1949",
-      1.348734736442566
+      "1997",
+      0.03596804291009903
+     ],
+     [
+      "Miracle on 34th Street (1947)",
+      [
+       "Comedy",
+       "Drama"
+      ],
+      "1947",
+      0.007858432829380035
+     ],
+     [
+      "The Lodge (2019)",
+      [
+       "Drama",
+       "Horror"
+      ],
+      "2019",
+      -0.003768444061279297
      ]
     ],
     "out_of_domain": false,
     "intent_chips": [
-     "\ud83c\udfac like Hocus Pocus, Casper",
-     "\ud83c\udfaf halloween",
-     "\u2728 fun",
-     "\u2728 family-friendly",
-     "\ud83c\udfad leaning Comedy, Family, Fantasy",
-     "\ud83d\udeab no Horror",
-     "\ud83d\udc6a PG or milder"
+     "\ud83c\udfac like Planes, Trains & Automobiles, Home for the Holidays",
+     "\ud83c\udfaf thanksgiving"
     ],
-    "intent_echo": "Understood: \ud83c\udfac like Hocus Pocus, Casper \u00b7 \ud83c\udfaf halloween \u00b7 \u2728 fun \u00b7 \u2728 family-friendly \u00b7 \ud83c\udfad leaning Comedy, Family, Fantasy \u00b7 \ud83d\udeab no Horror \u00b7 \ud83d\udc6a PG or milder \u2014 ranked by taste match; only 9 films match every filter (showing all of them).",
+    "intent_echo": "Understood: \ud83c\udfac like Planes, Trains & Automobiles, Home for the Holidays \u00b7 \ud83c\udfaf thanksgiving \u2014 ranked by taste match; only 17 films match every filter (showing all of them).",
     "rec_provenance": [
      [
-      "halloween @0.99"
+      "thanksgiving",
+      "comedy"
      ],
      [
-      "halloween @0.87"
+      "thanksgiving",
+      "comedy",
+      "dysfunctional family"
      ],
      [
-      "halloween @0.99"
+      "thanksgiving",
+      "comedy",
+      "funniest movies",
+      "hilarious"
      ],
      [
-      "halloween @0.41"
+      "thanksgiving",
+      "road trip",
+      "dysfunctional family"
      ],
      [
-      "halloween @0.42",
-      "humor",
-      "funny"
+      "thanksgiving"
      ],
      [
-      "halloween @0.97",
-      "quirky"
+      "thanksgiving",
+      "comedy"
      ],
      [
-      "halloween @0.87"
+      "thanksgiving",
+      "comedy",
+      "highly quotable",
+      "dysfunctional family"
      ],
      [
-      "halloween @0.65"
+      "thanksgiving",
+      "comedy"
      ],
      [
-      "halloween @0.63"
+      "thanksgiving",
+      "dysfunctional family"
+     ],
+     [
+      "thanksgiving",
+      "dysfunctional family"
+     ],
+     [
+      "thanksgiving",
+      "comedy",
+      "hilarious",
+      "highly quotable"
+     ],
+     [
+      "thanksgiving",
+      "dysfunctional family"
+     ],
+     [
+      "thanksgiving"
+     ],
+     [
+      "thanksgiving"
+     ],
+     [
+      "thanksgiving",
+      "dysfunctional family"
+     ],
+     [
+      "thanksgiving"
+     ],
+     [
+      "thanksgiving",
+      "dysfunctional family"
      ]
     ],
     "relaxation_notice": null,
-    "capability_notice": "I match themes, topics, people, genres and era \u2014 not specific plot mechanics or niche metadata \u2014 so I couldn't use: \"family-friendly\". Here's my closest read from what did resolve.",
+    "capability_notice": null,
     "showcase_queries": []
    }
   },
@@ -39824,6 +39919,227 @@
     ],
     "relaxation_notice": null,
     "capability_notice": null,
+    "showcase_queries": []
+   }
+  },
+  "r2c6": {
+   "label": "Kids Halloween",
+   "query": "Halloween movies for children rated G or PG only. No scariness, no horror. Like Hocus Pocus and Casper.",
+   "report": {
+    "extraction": {
+     "liked_items": [
+      "Hocus Pocus (1993)",
+      "Casper (1995)"
+     ],
+     "liked_genres": [
+      "Comedy",
+      "Family",
+      "Fantasy"
+     ],
+     "mood": [
+      "fun",
+      "family-friendly"
+     ],
+     "hard_constraints": {
+      "require_keyword_concepts": [
+       "halloween"
+      ],
+      "require_max_rating": "PG",
+      "exclude_genres": [
+       "Horror"
+      ]
+     }
+    },
+    "resolution": {
+     "liked": [
+      [
+       "Hocus Pocus (1993)",
+       "Hocus Pocus (1993)",
+       "exact"
+      ],
+      [
+       "Casper (1995)",
+       "Casper (1995)",
+       "exact"
+      ]
+     ],
+     "disliked": []
+    },
+    "people_resolution": {
+     "require": [],
+     "exclude": []
+    },
+    "facet_resolution": {
+     "country": [],
+     "language": [],
+     "attribute": []
+    },
+    "topic_resolution": {
+     "require": [
+      [
+       "halloween",
+       "genome 'halloween' \u2229 concept 'halloween'",
+       30
+      ]
+     ],
+     "exclude": []
+    },
+    "anchors": [
+     "Halloween: Resurrection (Halloween 8) (2002)"
+    ],
+    "anchor_weight": 0.5,
+    "mood_tags": [
+     "humor",
+     "funny",
+     "quirky"
+    ],
+    "mode15_tags": [],
+    "ranked_by_similarity": false,
+    "unresolved_tags": [],
+    "unknown_genres": [
+     "Family"
+    ],
+    "seed_count": 2,
+    "fallback": false,
+    "filtered": 9364,
+    "relaxed_constraints": [],
+    "recs": [
+     [
+      "Halloweentown (1998)",
+      [
+       "Adventure",
+       "Children",
+       "Comedy",
+       "Fantasy"
+      ],
+      "1998",
+      2.273954391479492
+     ],
+     [
+      "Ernest Scared Stupid (1991)",
+      [
+       "Comedy"
+      ],
+      "1991",
+      1.9957720041275024
+     ],
+     [
+      "It's the Great Pumpkin, Charlie Brown (1966)",
+      [
+       "Animation",
+       "Children",
+       "Comedy"
+      ],
+      "1966",
+      2.1431469917297363
+     ],
+     [
+      "Spaced Invaders (1990)",
+      [
+       "Adventure",
+       "Comedy",
+       "Sci-Fi"
+      ],
+      "1990",
+      1.3908368349075317
+     ],
+     [
+      "Arsenic and Old Lace (1944)",
+      [
+       "Comedy",
+       "Mystery",
+       "Thriller"
+      ],
+      "1944",
+      1.2101554870605469
+     ],
+     [
+      "Nightmare Before Christmas, The (1993)",
+      [
+       "Animation",
+       "Children",
+       "Fantasy",
+       "Musical"
+      ],
+      "1993",
+      2.0223586559295654
+     ],
+     [
+      "Toy Story of Terror (2013)",
+      [
+       "Animation",
+       "Children",
+       "Comedy"
+      ],
+      "2013",
+      2.0104458332061768
+     ],
+     [
+      "Monster House (2006)",
+      [
+       "Animation",
+       "Children",
+       "Fantasy",
+       "Mystery"
+      ],
+      "2006",
+      1.489129900932312
+     ],
+     [
+      "Adventures of Ichabod and Mr. Toad, The (1949)",
+      [
+       "Animation",
+       "Children"
+      ],
+      "1949",
+      1.348734736442566
+     ]
+    ],
+    "out_of_domain": false,
+    "intent_chips": [
+     "\ud83c\udfac like Hocus Pocus, Casper",
+     "\ud83c\udfaf halloween",
+     "\u2728 fun",
+     "\u2728 family-friendly",
+     "\ud83c\udfad leaning Comedy, Family, Fantasy",
+     "\ud83d\udeab no Horror",
+     "\ud83d\udc6a PG or milder"
+    ],
+    "intent_echo": "Understood: \ud83c\udfac like Hocus Pocus, Casper \u00b7 \ud83c\udfaf halloween \u00b7 \u2728 fun \u00b7 \u2728 family-friendly \u00b7 \ud83c\udfad leaning Comedy, Family, Fantasy \u00b7 \ud83d\udeab no Horror \u00b7 \ud83d\udc6a PG or milder \u2014 ranked by taste match; only 9 films match every filter (showing all of them).",
+    "rec_provenance": [
+     [
+      "halloween @0.99"
+     ],
+     [
+      "halloween @0.87"
+     ],
+     [
+      "halloween @0.99"
+     ],
+     [
+      "halloween @0.41"
+     ],
+     [
+      "halloween @0.42",
+      "humor",
+      "funny"
+     ],
+     [
+      "halloween @0.97",
+      "quirky"
+     ],
+     [
+      "halloween @0.87"
+     ],
+     [
+      "halloween @0.65"
+     ],
+     [
+      "halloween @0.63"
+     ]
+    ],
+    "relaxation_notice": null,
+    "capability_notice": "I match themes, topics, people, genres and era \u2014 not specific plot mechanics or niche metadata \u2014 so I couldn't use: \"family-friendly\". Here's my closest read from what did resolve.",
     "showcase_queries": []
    }
   }
