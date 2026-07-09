@@ -140,7 +140,10 @@ def main():
     args = ap.parse_args()
 
     only = set(args.only.split(',')) if args.only else None
-    serving = Serving()
+    # serving_only=True: build boards from serving/ ALONE — the exact metadata the deployed Ask tab
+    # has at API time. Prevents the train/serve skew where a pill is generated against the richer
+    # local facet_store.pt (keyword raw-index / newer concepts) but falls back live (2026-07-09 bug).
+    serving = Serving(serving_only=True)
 
     # Start from the existing artifact so --only swaps merge instead of clobbering.
     artifact = {'generated_with': None, 'roots': [], 'tree': {}, 'examples': {}}

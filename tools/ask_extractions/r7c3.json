@@ -1,11 +1,12 @@
 {
-  "liked_items": [
-    "Saturday Night Fever (1977)"
-  ],
-  "hard_constraints": {
-    "require_keyword_concepts": [
-      "disco",
-      "nightclub"
-    ]
-  }
+ "liked_items": [
+  "Saturday Night Fever (1977)",
+  "The Last Days of Disco (1998)"
+ ],
+ "hard_constraints": {
+  "require_keyword_concepts": [
+   "disco",
+   "nightclub"
+  ]
+ }
 }

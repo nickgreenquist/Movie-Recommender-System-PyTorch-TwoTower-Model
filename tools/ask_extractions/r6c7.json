@@ -1,16 +1,16 @@
 {
-  "liked_items": [
-    "Into the Wild (2007)",
-    "Never Cry Wolf (1983)"
+ "liked_items": [
+  "Into the Wild (2007)",
+  "Never Cry Wolf (1983)"
+ ],
+ "hard_constraints": {
+  "require_keyword_concepts": [
+   "survival",
+   "wilderness",
+   "solitary"
   ],
-  "hard_constraints": {
-    "exclude_genres": [
-      "Documentary"
-    ],
-    "require_keyword_concepts": [
-      "wilderness",
-      "survival",
-      "nature"
-    ]
-  }
+  "exclude_genres": [
+   "Documentary"
+  ]
+ }
 }

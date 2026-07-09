@@ -1,20 +1,21 @@
 {
-  "liked_items": [
-    "All the President's Men",
-    "Three Days of the Condor"
+ "liked_items": [
+  "All the President's Men (1976)",
+  "Three Days of the Condor (1975)"
+ ],
+ "liked_genres": [
+  "Thriller"
+ ],
+ "genome_tags": [
+  "paranoid",
+  "conspiracy",
+  "noir"
+ ],
+ "hard_constraints": {
+  "require_keyword_concepts": [
+   "conspiracy"
   ],
-  "genome_tags": [
-    "paranoid"
-  ],
-  "hard_constraints": {
-    "require_genres": [
-      "Thriller"
-    ],
-    "require_keyword_concepts": [
-      "government",
-      "conspiracy"
-    ],
-    "year_min": 1970,
-    "year_max": 1989
-  }
+  "year_min": 1970,
+  "year_max": 1989
+ }
 }

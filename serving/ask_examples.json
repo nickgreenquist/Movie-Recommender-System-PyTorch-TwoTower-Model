@@ -9478,12 +9478,13 @@
   },
   "r2c7": {
    "label": "Thanksgiving",
-   "query": "Thanksgiving movies about family dinners and dysfunction, like Planes, Trains and Automobiles and Home for the Holidays.",
+   "query": "Movies that take place on Thanksgiving, like Home for the Holidays, Pieces of April, and The Ice Storm.",
    "report": {
     "extraction": {
      "liked_items": [
-      "Planes, Trains and Automobiles (1987)",
-      "Home for the Holidays (1995)"
+      "Home for the Holidays (1995)",
+      "Pieces of April (2003)",
+      "The Ice Storm (1997)"
      ],
      "hard_constraints": {
       "require_keyword_concepts": [
@@ -9494,14 +9495,19 @@
     "resolution": {
      "liked": [
       [
-       "Planes, Trains and Automobiles (1987)",
-       "Planes, Trains & Automobiles (1987)",
-       "fuzzy 0.93"
-      ],
-      [
        "Home for the Holidays (1995)",
        "Home for the Holidays (1995)",
        "exact"
+      ],
+      [
+       "Pieces of April (2003)",
+       "Pieces of April (2003)",
+       "exact"
+      ],
+      [
+       "The Ice Storm (1997)",
+       "Ice Storm, The (1997)",
+       "normalized"
       ]
      ],
      "disliked": []
@@ -9529,79 +9535,31 @@
     "anchor_weight": 0.5,
     "mood_tags": [],
     "mode15_tags": [
-     "comedy",
-     "road trip",
-     "funniest movies",
-     "hilarious",
-     "highly quotable",
-     "road movie",
      "dysfunctional family",
-     "robert downey jr"
+     "robert downey jr",
+     "off-beat comedy",
+     "holiday",
+     "drama",
+     "ensemble cast",
+     "independent film",
+     "multiple storylines"
     ],
     "ranked_by_similarity": false,
     "unresolved_tags": [],
     "unknown_genres": [],
-    "seed_count": 2,
+    "seed_count": 3,
     "fallback": false,
     "filtered": 9356,
     "relaxed_constraints": [],
     "recs": [
      [
-      "Son in Law (1993)",
-      [
-       "Comedy",
-       "Drama",
-       "Romance"
-      ],
-      "1993",
-      0.3104640543460846
-     ],
-     [
-      "Addams Family Values (1993)",
-      [
-       "Children",
-       "Comedy",
-       "Fantasy"
-      ],
-      "1993",
-      0.3086318373680115
-     ],
-     [
-      "Grumpy Old Men (1993)",
-      [
-       "Comedy"
-      ],
-      "1993",
-      0.2889948785305023
-     ],
-     [
-      "Pieces of April (2003)",
+      "Myth of Fingerprints, The (1997)",
       [
        "Comedy",
        "Drama"
       ],
-      "2003",
-      0.2880973815917969
-     ],
-     [
-      "Enough Said (2013)",
-      [
-       "Comedy",
-       "Drama",
-       "Romance"
-      ],
-      "2013",
-      0.28518056869506836
-     ],
-     [
-      "Tower Heist (2011)",
-      [
-       "Action",
-       "Comedy",
-       "Crime"
-      ],
-      "2011",
-      0.2402133047580719
+      "1997",
+      0.6288170218467712
      ],
      [
       "Hannah and Her Sisters (1986)",
@@ -9611,24 +9569,26 @@
        "Romance"
       ],
       "1986",
-      0.2394428849220276
+      0.483501672744751
      ],
      [
-      "Jack and Jill (2011)",
-      [
-       "Comedy"
-      ],
-      "2011",
-      0.23134663701057434
-     ],
-     [
-      "Myth of Fingerprints, The (1997)",
+      "House of Yes, The (1997)",
       [
        "Comedy",
        "Drama"
       ],
       "1997",
-      0.21126526594161987
+      0.4232262372970581
+     ],
+     [
+      "Son in Law (1993)",
+      [
+       "Comedy",
+       "Drama",
+       "Romance"
+      ],
+      "1993",
+      0.32080504298210144
      ],
      [
       "Stuck in Love (2012)",
@@ -9638,7 +9598,77 @@
        "Romance"
       ],
       "2012",
-      0.19323445856571198
+      0.2816873788833618
+     ],
+     [
+      "Enough Said (2013)",
+      [
+       "Comedy",
+       "Drama",
+       "Romance"
+      ],
+      "2013",
+      0.2785850763320923
+     ],
+     [
+      "Scent of a Woman (1992)",
+      [
+       "Drama"
+      ],
+      "1992",
+      0.2665559649467468
+     ],
+     [
+      "Addams Family Values (1993)",
+      [
+       "Children",
+       "Comedy",
+       "Fantasy"
+      ],
+      "1993",
+      0.16134940087795258
+     ],
+     [
+      "The Lodge (2019)",
+      [
+       "Drama",
+       "Horror"
+      ],
+      "2019",
+      0.15063026547431946
+     ],
+     [
+      "Miracle on 34th Street (1947)",
+      [
+       "Comedy",
+       "Drama"
+      ],
+      "1947",
+      0.14288365840911865
+     ],
+     [
+      "Planes, Trains & Automobiles (1987)",
+      [
+       "Comedy"
+      ],
+      "1987",
+      0.12878426909446716
+     ],
+     [
+      "Grumpy Old Men (1993)",
+      [
+       "Comedy"
+      ],
+      "1993",
+      0.08209200948476791
+     ],
+     [
+      "Jack and Jill (2011)",
+      [
+       "Comedy"
+      ],
+      "2011",
+      0.05636172741651535
      ],
      [
       "Gold Rush, The (1925)",
@@ -9648,16 +9678,17 @@
        "Romance"
       ],
       "1925",
-      0.1581520289182663
+      0.00135137140750885
      ],
      [
-      "House of Yes, The (1997)",
+      "Tower Heist (2011)",
       [
+       "Action",
        "Comedy",
-       "Drama"
+       "Crime"
       ],
-      "1997",
-      0.1385890245437622
+      "2011",
+      -0.07959559559822083
      ],
      [
       "Free Birds (2013)",
@@ -9670,90 +9701,55 @@
        "Sci-Fi"
       ],
       "2013",
-      0.06643986701965332
-     ],
-     [
-      "Scent of a Woman (1992)",
-      [
-       "Drama"
-      ],
-      "1992",
-      0.04094783589243889
-     ],
-     [
-      "Ice Storm, The (1997)",
-      [
-       "Drama"
-      ],
-      "1997",
-      0.03596804291009903
-     ],
-     [
-      "Miracle on 34th Street (1947)",
-      [
-       "Comedy",
-       "Drama"
-      ],
-      "1947",
-      0.007858432829380035
-     ],
-     [
-      "The Lodge (2019)",
-      [
-       "Drama",
-       "Horror"
-      ],
-      "2019",
-      -0.003768444061279297
+      -0.18812575936317444
      ]
     ],
     "out_of_domain": false,
     "intent_chips": [
-     "\ud83c\udfac like Planes, Trains & Automobiles, Home for the Holidays",
+     "\ud83c\udfac like Home for the Holidays, Pieces of April, The Ice Storm",
      "\ud83c\udfaf thanksgiving"
     ],
-    "intent_echo": "Understood: \ud83c\udfac like Planes, Trains & Automobiles, Home for the Holidays \u00b7 \ud83c\udfaf thanksgiving \u2014 ranked by taste match; only 17 films match every filter (showing all of them).",
+    "intent_echo": "Understood: \ud83c\udfac like Home for the Holidays, Pieces of April, The Ice Storm \u00b7 \ud83c\udfaf thanksgiving \u2014 ranked by taste match; only 16 films match every filter (showing all of them).",
     "rec_provenance": [
      [
       "thanksgiving",
-      "comedy"
+      "dysfunctional family",
+      "drama",
+      "ensemble cast",
+      "independent film"
      ],
      [
       "thanksgiving",
-      "comedy",
-      "dysfunctional family"
+      "dysfunctional family",
+      "drama",
+      "ensemble cast",
+      "independent film"
      ],
      [
       "thanksgiving",
-      "comedy",
-      "funniest movies",
-      "hilarious"
-     ],
-     [
-      "thanksgiving",
-      "road trip",
-      "dysfunctional family"
+      "dysfunctional family",
+      "off-beat comedy",
+      "independent film",
+      "multiple storylines"
      ],
      [
       "thanksgiving"
      ],
      [
       "thanksgiving",
-      "comedy"
+      "dysfunctional family",
+      "drama",
+      "independent film",
+      "multiple storylines"
      ],
      [
       "thanksgiving",
-      "comedy",
-      "highly quotable",
-      "dysfunctional family"
+      "drama",
+      "independent film"
      ],
      [
       "thanksgiving",
-      "comedy"
-     ],
-     [
-      "thanksgiving",
-      "dysfunctional family"
+      "drama"
      ],
      [
       "thanksgiving",
@@ -9761,30 +9757,37 @@
      ],
      [
       "thanksgiving",
-      "comedy",
-      "hilarious",
-      "highly quotable"
+      "dysfunctional family",
+      "drama"
      ],
      [
       "thanksgiving",
-      "dysfunctional family"
-     ],
-     [
-      "thanksgiving"
-     ],
-     [
-      "thanksgiving"
+      "holiday"
      ],
      [
       "thanksgiving",
-      "dysfunctional family"
-     ],
-     [
-      "thanksgiving"
+      "off-beat comedy",
+      "holiday"
      ],
      [
       "thanksgiving",
-      "dysfunctional family"
+      "holiday"
+     ],
+     [
+      "thanksgiving",
+      "holiday"
+     ],
+     [
+      "thanksgiving",
+      "drama"
+     ],
+     [
+      "thanksgiving",
+      "ensemble cast"
+     ],
+     [
+      "thanksgiving",
+      "holiday"
      ]
     ],
     "relaxation_notice": null,
@@ -10820,7 +10823,7 @@
   },
   "r3c1": {
    "label": "War & loss",
-   "query": "Visceral anti-war dramas that devastate emotionally, like The Pianist, Come and See, and Grave of the Fireflies \u2014 no comedies, no cartoons, no documentaries.",
+   "query": "Harrowing anti-war films about the human cost of combat, like The Pianist, Come and See, and Grave of the Fireflies. War genre only, no comedies, cartoons, or documentaries.",
    "report": {
     "extraction": {
      "liked_items": [
@@ -10829,11 +10832,10 @@
       "Grave of the Fireflies (1988)"
      ],
      "genome_tags": [
+      "harrowing",
+      "anti-war",
       "visceral",
-      "anti-war"
-     ],
-     "mood": [
-      "emotionally devastating"
+      "emotional"
      ],
      "hard_constraints": {
       "require_genres": [
@@ -10880,28 +10882,23 @@
      "exclude": []
     },
     "anchors": [
+     "All Quiet on the Western Front (1930)",
      "Straw Dogs (1971)",
-     "All Quiet on the Western Front (1930)"
+     "Inside Out (2015)"
     ],
     "anchor_weight": 0.5,
     "mood_tags": [],
     "mode15_tags": [],
     "ranked_by_similarity": false,
-    "unresolved_tags": [],
+    "unresolved_tags": [
+     "harrowing"
+    ],
     "unknown_genres": [],
     "seed_count": 3,
     "fallback": false,
     "filtered": 9061,
     "relaxed_constraints": [],
     "recs": [
-     [
-      "Cross of Iron (1977)",
-      [
-       "War"
-      ],
-      "1977",
-      1.131225347518921
-     ],
      [
       "Boot, Das (Boat, The) (1981)",
       [
@@ -10910,33 +10907,15 @@
        "War"
       ],
       "1981",
-      1.1020243167877197
+      1.0327019691467285
      ],
      [
-      "Paths of Glory (1957)",
+      "Cross of Iron (1977)",
       [
-       "Drama",
-       "War"
-      ],
-      "1957",
-      1.0675945281982422
-     ],
-     [
-      "Prisoner of the Mountains (Kavkazsky plennik) (1996)",
-      [
-       "War"
-      ],
-      "1996",
-      0.865834653377533
-     ],
-     [
-      "Duellists, The (1977)",
-      [
-       "Action",
        "War"
       ],
       "1977",
-      0.8058608174324036
+      0.9338797330856323
      ],
      [
       "Apocalypse Now (1979)",
@@ -10946,24 +10925,50 @@
        "War"
       ],
       "1979",
-      1.037143349647522
+      1.0018563270568848
      ],
      [
-      "Pork Chop Hill (1959)",
+      "Prisoner of the Mountains (Kavkazsky plennik) (1996)",
       [
        "War"
       ],
-      "1959",
-      0.7265083193778992
+      "1996",
+      0.7632837295532227
      ],
      [
-      "Full Metal Jacket (1987)",
+      "Land of Mine (2015)",
+      [
+       "War"
+      ],
+      "2015",
+      0.7432661652565002
+     ],
+     [
+      "Ivan's Childhood (a.k.a. My Name is Ivan) (Ivanovo detstvo) (1962)",
       [
        "Drama",
        "War"
       ],
-      "1987",
-      1.005556583404541
+      "1962",
+      0.9984791278839111
+     ],
+     [
+      "Duellists, The (1977)",
+      [
+       "Action",
+       "War"
+      ],
+      "1977",
+      0.7234442234039307
+     ],
+     [
+      "Paths of Glory (1957)",
+      [
+       "Drama",
+       "War"
+      ],
+      "1957",
+      0.992708146572113
      ],
      [
       "Train, The (1964)",
@@ -10973,7 +10978,7 @@
        "War"
       ],
       "1964",
-      0.7068396210670471
+      0.6367632150650024
      ],
      [
       "Manchurian Candidate, The (1962)",
@@ -10983,24 +10988,24 @@
        "War"
       ],
       "1962",
-      0.6450669765472412
+      0.5860395431518555
      ],
      [
-      "Stalingrad (1993)",
+      "Ran (1985)",
       [
        "Drama",
        "War"
       ],
-      "1993",
-      1.0040855407714844
+      "1985",
+      0.9630424380302429
      ],
      [
-      "Land of Mine (2015)",
+      "Anthropoid (2016)",
       [
        "War"
       ],
-      "2015",
-      0.6385895013809204
+      "2016",
+      0.5667684078216553
      ],
      [
       "No Man's Land (2001)",
@@ -11009,16 +11014,15 @@
        "War"
       ],
       "2001",
-      0.9935938715934753
+      0.9459741711616516
      ],
      [
-      "Bridge at Remagen, The (1969)",
+      "Pork Chop Hill (1959)",
       [
-       "Action",
        "War"
       ],
-      "1969",
-      0.5782347917556763
+      "1959",
+      0.5636919736862183
      ],
      [
       "300 (2007)",
@@ -11029,87 +11033,16 @@
        "IMAX"
       ],
       "2007",
-      0.5655754208564758
+      0.5397238731384277
      ],
      [
-      "Ivan's Childhood (a.k.a. My Name is Ivan) (Ivanovo detstvo) (1962)",
+      "Full Metal Jacket (1987)",
       [
        "Drama",
        "War"
       ],
-      "1962",
-      0.9863234162330627
-     ],
-     [
-      "Devil's Brigade, The (1968)",
-      [
-       "War"
-      ],
-      "1968",
-      0.553221583366394
-     ],
-     [
-      "Ran (1985)",
-      [
-       "Drama",
-       "War"
-      ],
-      "1985",
-      0.9693034291267395
-     ],
-     [
-      "Where Eagles Dare (1968)",
-      [
-       "Action",
-       "Adventure",
-       "War"
-      ],
-      "1968",
-      0.5264787673950195
-     ],
-     [
-      "Run Silent Run Deep (1958)",
-      [
-       "War"
-      ],
-      "1958",
-      0.5221776962280273
-     ],
-     [
-      "All Quiet on the Western Front (1930)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "1930",
-      0.9628376364707947
-     ],
-     [
-      "Anthropoid (2016)",
-      [
-       "War"
-      ],
-      "2016",
-      0.520726203918457
-     ],
-     [
-      "Battle of Algiers, The (La battaglia di Algeri) (1966)",
-      [
-       "Drama",
-       "War"
-      ],
-      "1966",
-      0.9518691897392273
-     ],
-     [
-      "Farewell to Arms, A (1932)",
-      [
-       "Romance",
-       "War"
-      ],
-      "1932",
-      0.5074617862701416
+      "1987",
+      0.9324951767921448
      ],
      [
       "American Sniper (2014)",
@@ -11118,35 +11051,67 @@
        "War"
       ],
       "2014",
-      0.5053572654724121
+      0.5304718017578125
      ],
      [
-      "Deer Hunter, The (1978)",
+      "Schindler's List (1993)",
       [
        "Drama",
        "War"
       ],
-      "1978",
-      0.944930374622345
+      "1993",
+      0.9294797778129578
      ],
      [
-      "Heartbreak Ridge (1986)",
+      "Devil's Brigade, The (1968)",
       [
-       "Action",
        "War"
       ],
-      "1986",
-      0.4994369447231293
+      "1968",
+      0.5177233219146729
      ],
      [
-      "Black Hawk Down (2001)",
+      "Greyhound (2020)",
       [
-       "Action",
+       "War"
+      ],
+      "2020",
+      0.5155550241470337
+     ],
+     [
+      "Shame (Skammen) (1968)",
+      [
        "Drama",
        "War"
       ],
-      "2001",
-      0.9410256743431091
+      "1968",
+      0.928769052028656
+     ],
+     [
+      "Bridge at Remagen, The (1969)",
+      [
+       "Action",
+       "War"
+      ],
+      "1969",
+      0.49190184473991394
+     ],
+     [
+      "Hotel Rwanda (2004)",
+      [
+       "Drama",
+       "War"
+      ],
+      "2004",
+      0.9216718077659607
+     ],
+     [
+      "Run Silent Run Deep (1958)",
+      [
+       "War"
+      ],
+      "1958",
+      0.46267521381378174
      ],
      [
       "Horse Soldiers, The (1959)",
@@ -11156,44 +11121,17 @@
        "Western"
       ],
       "1959",
-      0.49834373593330383
+      0.4439088702201843
      ],
      [
-      "U-571 (2000)",
-      [
-       "Action",
-       "Thriller",
-       "War"
-      ],
-      "2000",
-      0.49658820033073425
-     ],
-     [
-      "Shame (Skammen) (1968)",
+      "Incendies (2010)",
       [
        "Drama",
+       "Mystery",
        "War"
       ],
-      "1968",
-      0.9328890442848206
-     ],
-     [
-      "Greyhound (2020)",
-      [
-       "War"
-      ],
-      "2020",
-      0.49374085664749146
-     ],
-     [
-      "Tae Guk Gi: The Brotherhood of War (Taegukgi hwinalrimyeo) (2004)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "2004",
-      0.9237685799598694
+      "2010",
+      0.9094210267066956
      ],
      [
       "Battle of Britain (1969)",
@@ -11201,93 +11139,26 @@
        "War"
       ],
       "1969",
-      0.4858330488204956
+      0.442351371049881
      ],
      [
-      "Flight of the Intruder (1991)",
-      [
-       "Action",
-       "War"
-      ],
-      "1991",
-      0.4818364083766937
-     ],
-     [
-      "Gallipoli (1981)",
+      "Andrei Rublev (Andrey Rublyov) (1969)",
       [
        "Drama",
        "War"
       ],
-      "1981",
-      0.9205332398414612
+      "1969",
+      0.9061893224716187
      ],
      [
-      "Rambo III (1988)",
+      "Where Eagles Dare (1968)",
       [
        "Action",
        "Adventure",
-       "Thriller",
        "War"
       ],
-      "1988",
-      0.4816166162490845
-     ],
-     [
-      "Thin Red Line, The (1998)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "1998",
-      0.9191887974739075
-     ],
-     [
-      "Four Feathers, The (2002)",
-      [
-       "Adventure",
-       "War"
-      ],
-      "2002",
-      0.41981637477874756
-     ],
-     [
-      "Rio Lobo (1970)",
-      [
-       "Adventure",
-       "Romance",
-       "War",
-       "Western"
-      ],
-      "1970",
-      0.37016761302948
-     ],
-     [
-      "Killing Fields, The (1984)",
-      [
-       "Drama",
-       "War"
-      ],
-      "1984",
-      0.9186670184135437
-     ],
-     [
-      "Braddock: Missing in Action III (1988)",
-      [
-       "Action",
-       "War"
-      ],
-      "1988",
-      0.4540407657623291
-     ],
-     [
-      "Winter War (Talvisota) (1989)",
-      [
-       "Drama",
-       "War"
-      ],
-      "1989",
-      0.9182382225990295
+      "1968",
+      0.4244411587715149
      ],
      [
       "Last of the Mohicans, The (1992)",
@@ -11298,89 +11169,47 @@
        "Western"
       ],
       "1992",
-      0.4503471553325653
+      0.4234669506549835
      ],
      [
-      "South Pacific (1958)",
+      "Hiroshima Mon Amour (1959)",
       [
-       "Musical",
+       "Drama",
        "Romance",
        "War"
       ],
-      "1958",
-      0.28437918424606323
+      "1959",
+      0.9018447995185852
      ],
      [
-      "Grand Illusion (La grande illusion) (1937)",
+      "X-Men: First Class (2011)",
+      [
+       "Action",
+       "Adventure",
+       "Sci-Fi",
+       "Thriller",
+       "War"
+      ],
+      "2011",
+      0.4146707057952881
+     ],
+     [
+      "Deer Hunter, The (1978)",
       [
        "Drama",
        "War"
       ],
-      "1937",
-      0.91805499792099
+      "1978",
+      0.900867760181427
      ],
      [
-      "Uncommon Valor (1983)",
-      [
-       "Action",
-       "War"
-      ],
-      "1983",
-      0.4423395097255707
-     ],
-     [
-      "Platoon (1986)",
-      [
-       "Drama",
-       "War"
-      ],
-      "1986",
-      0.9115180969238281
-     ],
-     [
-      "Missing in Action 2: The Beginning (1985)",
-      [
-       "Action",
-       "War"
-      ],
-      "1985",
-      0.42079487442970276
-     ],
-     [
-      "In Love and War (1996)",
+      "Farewell to Arms, A (1932)",
       [
        "Romance",
        "War"
       ],
-      "1996",
-      0.20842255651950836
-     ],
-     [
-      "Patton (1970)",
-      [
-       "Drama",
-       "War"
-      ],
-      "1970",
-      0.9050931930541992
-     ],
-     [
-      "Missing in Action (1984)",
-      [
-       "Action",
-       "War"
-      ],
-      "1984",
-      0.4142647385597229
-     ],
-     [
-      "Andrei Rublev (Andrey Rublyov) (1969)",
-      [
-       "Drama",
-       "War"
-      ],
-      "1969",
-      0.9035645127296448
+      "1932",
+      0.41016286611557007
      ],
      [
       "Overlord (2018)",
@@ -11392,7 +11221,103 @@
        "War"
       ],
       "2018",
-      0.3802469074726105
+      0.4048842787742615
+     ],
+     [
+      "Saving Private Ryan (1998)",
+      [
+       "Action",
+       "Drama",
+       "War"
+      ],
+      "1998",
+      0.8994426131248474
+     ],
+     [
+      "U-571 (2000)",
+      [
+       "Action",
+       "Thriller",
+       "War"
+      ],
+      "2000",
+      0.40360337495803833
+     ],
+     [
+      "Cranes Are Flying, The (Letyat zhuravli) (1957)",
+      [
+       "Drama",
+       "Romance",
+       "War"
+      ],
+      "1957",
+      0.8964762687683105
+     ],
+     [
+      "Rambo III (1988)",
+      [
+       "Action",
+       "Adventure",
+       "Thriller",
+       "War"
+      ],
+      "1988",
+      0.3775506019592285
+     ],
+     [
+      "Braddock: Missing in Action III (1988)",
+      [
+       "Action",
+       "War"
+      ],
+      "1988",
+      0.366299033164978
+     ],
+     [
+      "Forbidden Games (Jeux interdits) (1952)",
+      [
+       "Drama",
+       "War"
+      ],
+      "1952",
+      0.8885179758071899
+     ],
+     [
+      "Uncommon Valor (1983)",
+      [
+       "Action",
+       "War"
+      ],
+      "1983",
+      0.36366280913352966
+     ],
+     [
+      "Downfall (Untergang, Der) (2004)",
+      [
+       "Drama",
+       "War"
+      ],
+      "2004",
+      0.8855879902839661
+     ],
+     [
+      "Heartbreak Ridge (1986)",
+      [
+       "Action",
+       "War"
+      ],
+      "1986",
+      0.3593205511569977
+     ],
+     [
+      "Battle: Los Angeles (2011)",
+      [
+       "Action",
+       "Sci-Fi",
+       "War"
+      ],
+      "2011",
+      0.34596124291419983
      ],
      [
       "Throne of Blood (Kumonosu j\u00f4) (1957)",
@@ -11403,26 +11328,74 @@
        "War"
       ],
       "1957",
-      0.9011642336845398
+      0.8800714612007141
      ],
      [
-      "Bridge on the River Kwai, The (1957)",
+      "Rio Lobo (1970)",
       [
        "Adventure",
-       "Drama",
-       "War"
+       "Romance",
+       "War",
+       "Western"
       ],
-      "1957",
-      0.8857176899909973
+      "1970",
+      0.3177957534790039
      ],
      [
-      "Downfall (Untergang, Der) (2004)",
+      "Letters from Iwo Jima (2006)",
       [
        "Drama",
        "War"
       ],
-      "2004",
-      0.8828474879264832
+      "2006",
+      0.8785009980201721
+     ],
+     [
+      "Missing in Action (1984)",
+      [
+       "Action",
+       "War"
+      ],
+      "1984",
+      0.34090328216552734
+     ],
+     [
+      "South Pacific (1958)",
+      [
+       "Musical",
+       "Romance",
+       "War"
+      ],
+      "1958",
+      0.3111068308353424
+     ],
+     [
+      "Black Hawk Down (2001)",
+      [
+       "Action",
+       "Drama",
+       "War"
+      ],
+      "2001",
+      0.8779133558273315
+     ],
+     [
+      "Four Feathers, The (2002)",
+      [
+       "Adventure",
+       "War"
+      ],
+      "2002",
+      0.3090437054634094
+     ],
+     [
+      "Kagemusha (1980)",
+      [
+       "Drama",
+       "War"
+      ],
+      "1980",
+      0.8770613670349121
      ],
      [
       "Starship Troopers 2: Hero of the Federation (2004)",
@@ -11433,65 +11406,91 @@
        "War"
       ],
       "2004",
-      0.36373171210289
+      0.3403181731700897
      ],
      [
-      "Forbidden Games (Jeux interdits) (1952)",
+      "In Love and War (1996)",
       [
-       "Drama",
+       "Romance",
        "War"
       ],
-      "1952",
-      0.8810205459594727
+      "1996",
+      0.24491305649280548
      ],
      [
-      "Turtles Can Fly (Lakposhtha h\u00e2m parvaz mikonand) (2004)",
+      "Tae Guk Gi: The Brotherhood of War (Taegukgi hwinalrimyeo) (2004)",
       [
+       "Action",
        "Drama",
        "War"
       ],
       "2004",
-      0.8706220984458923
+      0.8726642727851868
+     ],
+     [
+      "Band of Brothers (2001)",
+      [
+       "Action",
+       "Drama",
+       "War"
+      ],
+      "2001",
+      0.8662096261978149
+     ],
+     [
+      "Bridge on the River Kwai, The (1957)",
+      [
+       "Adventure",
+       "Drama",
+       "War"
+      ],
+      "1957",
+      0.8660816550254822
+     ],
+     [
+      "Killing Fields, The (1984)",
+      [
+       "Drama",
+       "War"
+      ],
+      "1984",
+      0.8640941977500916
+     ],
+     [
+      "Stalingrad (1993)",
+      [
+       "Drama",
+       "War"
+      ],
+      "1993",
+      0.8578919768333435
      ]
     ],
     "out_of_domain": false,
     "intent_chips": [
      "\ud83c\udfac like The Pianist, Come and See, Grave of the Fireflies",
-     "\u2728 emotionally devastating",
-     "\u2728 visceral, anti-war",
+     "\u2728 harrowing, anti-war, visceral, emotional",
      "\ud83c\udfad War",
      "\ud83d\udeab no Comedy",
      "\ud83d\udeab no Animation",
      "\ud83d\udeab no Documentary"
     ],
-    "intent_echo": "Understood: \ud83c\udfac like The Pianist, Come and See, Grave of the Fireflies \u00b7 \u2728 emotionally devastating \u00b7 \u2728 visceral, anti-war \u00b7 \ud83c\udfad War \u00b7 \ud83d\udeab no Comedy \u00b7 \ud83d\udeab no Animation \u00b7 \ud83d\udeab no Documentary \u2014 ranked by taste match.",
+    "intent_echo": "Understood: \ud83c\udfac like The Pianist, Come and See, Grave of the Fireflies \u00b7 \u2728 harrowing, anti-war, visceral, emotional \u00b7 \ud83c\udfad War \u00b7 \ud83d\udeab no Comedy \u00b7 \ud83d\udeab no Animation \u00b7 \ud83d\udeab no Documentary \u2014 ranked by taste match.",
     "rec_provenance": [
      [
-      "visceral",
       "anti-war",
-      "War"
-     ],
-     [
       "visceral",
-      "anti-war",
-      "War"
-     ],
-     [
-      "visceral",
-      "anti-war",
+      "emotional",
       "War"
      ],
      [
       "anti-war",
-      "War"
-     ],
-     [
       "visceral",
       "War"
      ],
      [
-      "visceral",
       "anti-war",
+      "visceral",
       "War"
      ],
      [
@@ -11499,29 +11498,26 @@
       "War"
      ],
      [
-      "visceral",
       "anti-war",
-      "War"
-     ],
-     [
-      "visceral",
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "visceral",
-      "anti-war",
+      "emotional",
       "War"
      ],
      [
       "anti-war",
+      "visceral",
       "War"
      ],
      [
       "visceral",
+      "War"
+     ],
+     [
       "anti-war",
+      "visceral",
+      "War"
+     ],
+     [
+      "visceral",
       "War"
      ],
      [
@@ -11529,36 +11525,7 @@
      ],
      [
       "visceral",
-      "War"
-     ],
-     [
-      "visceral",
-      "anti-war",
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "visceral",
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "visceral",
-      "anti-war",
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "visceral",
+      "emotional",
       "War"
      ],
      [
@@ -11566,71 +11533,8 @@
      ],
      [
       "anti-war",
-      "War"
-     ],
-     [
       "visceral",
-      "anti-war",
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "visceral",
-      "anti-war",
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "visceral",
-      "anti-war",
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "visceral",
-      "anti-war",
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "visceral",
-      "anti-war",
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "visceral",
-      "anti-war",
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "visceral",
-      "anti-war",
-      "War"
-     ],
-     [
+      "emotional",
       "War"
      ],
      [
@@ -11642,6 +11546,8 @@
       "War"
      ],
      [
+      "anti-war",
+      "visceral",
       "War"
      ],
      [
@@ -11649,62 +11555,181 @@
       "War"
      ],
      [
-      "War"
-     ],
-     [
       "visceral",
-      "anti-war",
+      "emotional",
       "War"
      ],
      [
       "War"
      ],
      [
-      "War"
-     ],
-     [
-      "visceral",
-      "anti-war",
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "visceral",
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "visceral",
-      "War"
-     ],
-     [
-      "visceral",
-      "anti-war",
-      "War"
-     ],
-     [
-      "visceral",
-      "War"
-     ],
-     [
-      "War"
-     ],
-     [
-      "visceral",
-      "anti-war",
       "War"
      ],
      [
       "anti-war",
+      "visceral",
+      "emotional",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "visceral",
+      "emotional",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "visceral",
+      "emotional",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "visceral",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "visceral",
+      "War"
+     ],
+     [
+      "anti-war",
+      "emotional",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "anti-war",
+      "visceral",
+      "emotional",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "anti-war",
+      "visceral",
+      "emotional",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "emotional",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "anti-war",
+      "visceral",
+      "emotional",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "visceral",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "visceral",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "anti-war",
+      "visceral",
+      "emotional",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "anti-war",
+      "visceral",
+      "emotional",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "visceral",
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "War"
+     ],
+     [
+      "anti-war",
+      "visceral",
+      "emotional",
+      "War"
+     ],
+     [
+      "visceral",
+      "emotional",
+      "War"
+     ],
+     [
+      "anti-war",
+      "visceral",
+      "War"
+     ],
+     [
+      "anti-war",
+      "visceral",
+      "emotional",
+      "War"
+     ],
+     [
+      "anti-war",
+      "visceral",
       "War"
      ]
     ],
     "relaxation_notice": null,
-    "capability_notice": "I match themes, topics, people, genres and era \u2014 not specific plot mechanics or niche metadata \u2014 so I couldn't use: \"emotionally devastating\". Here's my closest read from what did resolve.",
+    "capability_notice": "I match themes, topics, people, genres and era \u2014 not specific plot mechanics or niche metadata \u2014 so I couldn't use: \"harrowing\". Here's my closest read from what did resolve.",
     "showcase_queries": []
    }
   },
@@ -20152,14 +20177,29 @@
   },
   "r4c6": {
    "label": "Modern warriors",
-   "query": "Modern military war heroes like Lone Survivor, American Sniper, and Black Hawk Down.",
+   "query": "Modern combat movies about real soldiers based on true events, like Lone Survivor, American Sniper, and Black Hawk Down. No science fiction.",
    "report": {
     "extraction": {
      "liked_items": [
       "Lone Survivor (2013)",
       "American Sniper (2014)",
       "Black Hawk Down (2001)"
-     ]
+     ],
+     "liked_genres": [
+      "War",
+      "Action",
+      "Drama"
+     ],
+     "hard_constraints": {
+      "require_keyword_concepts": [
+       "military",
+       "true story"
+      ],
+      "exclude_genres": [
+       "Sci-Fi"
+      ],
+      "year_min": 1990
+     }
     },
     "resolution": {
      "liked": [
@@ -20191,10 +20231,24 @@
      "attribute": []
     },
     "topic_resolution": {
-     "require": [],
+     "require": [
+      [
+       "military",
+       "genome 'military'",
+       359
+      ],
+      [
+       "true story",
+       "genome 'true story'",
+       767
+      ]
+     ],
      "exclude": []
     },
-    "anchors": [],
+    "anchors": [
+     "Why We Fight (2005)",
+     "Alive (1993)"
+    ],
     "anchor_weight": 0.5,
     "mood_tags": [],
     "mode15_tags": [
@@ -20212,17 +20266,9 @@
     "unknown_genres": [],
     "seed_count": 3,
     "fallback": false,
-    "filtered": 0,
+    "filtered": 136,
     "relaxed_constraints": [],
     "recs": [
-     [
-      "13 Hours (2016)",
-      [
-       "Drama"
-      ],
-      "2016",
-      0.9886701107025146
-     ],
      [
       "We Were Soldiers (2002)",
       [
@@ -20231,113 +20277,15 @@
        "War"
       ],
       "2002",
-      0.9122283458709717
+      13.116226196289062
      ],
      [
-      "Enemy at the Gates (2001)",
+      "13 Hours (2016)",
       [
-       "Drama",
-       "War"
-      ],
-      "2001",
-      0.8875378370285034
-     ],
-     [
-      "The Siege of Jadotville (2016)",
-      [
-       "Drama",
-       "Thriller"
+       "Drama"
       ],
       "2016",
-      0.8630292415618896
-     ],
-     [
-      "Pearl Harbor (2001)",
-      [
-       "Action",
-       "Drama",
-       "Romance",
-       "War"
-      ],
-      "2001",
-      0.8059334754943848
-     ],
-     [
-      "Hacksaw Ridge (2016)",
-      [
-       "Drama",
-       "War"
-      ],
-      "2016",
-      0.8046714067459106
-     ],
-     [
-      "Zero Dark Thirty (2012)",
-      [
-       "Action",
-       "Drama",
-       "Thriller"
-      ],
-      "2012",
-      0.8009332418441772
-     ],
-     [
-      "Restrepo (2010)",
-      [
-       "Documentary",
-       "War"
-      ],
-      "2010",
-      0.7480499744415283
-     ],
-     [
-      "Tears of the Sun (2003)",
-      [
-       "Action",
-       "Drama",
-       "Thriller"
-      ],
-      "2003",
-      0.7373156547546387
-     ],
-     [
-      "Bat*21 (1988)",
-      [
-       "Drama",
-       "War"
-      ],
-      "1988",
-      0.7325246334075928
-     ],
-     [
-      "Hurt Locker, The (2008)",
-      [
-       "Action",
-       "Drama",
-       "Thriller",
-       "War"
-      ],
-      "2008",
-      0.7255765795707703
-     ],
-     [
-      "The Great Raid (2005)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "2005",
-      0.7201426029205322
-     ],
-     [
-      "Taking Chance (2009)",
-      [
-       "Drama",
-       "War"
-      ],
-      "2009",
-      0.7185040712356567
+      13.033183097839355
      ],
      [
       "Memphis Belle (1990)",
@@ -20347,172 +20295,54 @@
        "War"
       ],
       "1990",
-      0.7176584005355835
+      12.945324897766113
      ],
      [
-      "Valkyrie (2008)",
+      "Hacksaw Ridge (2016)",
       [
        "Drama",
-       "Thriller",
        "War"
       ],
-      "2008",
-      0.7175157070159912
+      "2016",
+      12.94471549987793
      ],
      [
-      "9th Company (2005)",
+      "The Siege of Jadotville (2016)",
+      [
+       "Drama",
+       "Thriller"
+      ],
+      "2016",
+      12.851997375488281
+     ],
+     [
+      "Taking Chance (2009)",
+      [
+       "Drama",
+       "War"
+      ],
+      "2009",
+      12.839272499084473
+     ],
+     [
+      "Jarhead (2005)",
       [
        "Action",
        "Drama",
        "War"
       ],
       "2005",
-      0.7143213748931885
+      12.839160919189453
      ],
      [
-      "Behind Enemy Lines (2001)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "2001",
-      0.7111023664474487
-     ],
-     [
-      "Band of Brothers (2001)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "2001",
-      0.7081828117370605
-     ],
-     [
-      "Flags of Our Fathers (2006)",
-      [
-       "Drama",
-       "War"
-      ],
-      "2006",
-      0.7073534727096558
-     ],
-     [
-      "Unbroken (2014)",
-      [
-       "Drama",
-       "War"
-      ],
-      "2014",
-      0.6994531154632568
-     ],
-     [
-      "Blood Diamond (2006)",
-      [
-       "Action",
-       "Adventure",
-       "Crime",
-       "Drama",
-       "Thriller",
-       "War"
-      ],
-      "2006",
-      0.6966359615325928
-     ],
-     [
-      "Windtalkers (2002)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "2002",
-      0.6945096850395203
-     ],
-     [
-      "Gettysburg (1993)",
-      [
-       "Drama",
-       "War"
-      ],
-      "1993",
-      0.694103479385376
-     ],
-     [
-      "Free State of Jones (2016)",
+      "Zero Dark Thirty (2012)",
       [
        "Action",
        "Drama",
        "Thriller"
       ],
-      "2016",
-      0.6895000338554382
-     ],
-     [
-      "Defiance (2008)",
-      [
-       "Drama",
-       "Thriller",
-       "War"
-      ],
-      "2008",
-      0.6881836652755737
-     ],
-     [
-      "Hart's War (2002)",
-      [
-       "Drama",
-       "War"
-      ],
-      "2002",
-      0.6878522634506226
-     ],
-     [
-      "Fury (2014)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "2014",
-      0.6856677532196045
-     ],
-     [
-      "Deepwater Horizon (2016)",
-      [
-       "Drama"
-      ],
-      "2016",
-      0.683850884437561
-     ],
-     [
-      "Hotel Rwanda (2004)",
-      [
-       "Drama",
-       "War"
-      ],
-      "2004",
-      0.6833903789520264
-     ],
-     [
-      "Flyboys (2006)",
-      [
-       "Action",
-       "Adventure",
-       "Drama",
-       "War"
-      ],
-      "2006",
-      0.6771197319030762
-     ],
-     [
-      "Remember the Titans (2000)",
-      [
-       "Drama"
-      ],
-      "2000",
-      0.6747195720672607
+      "2012",
+      12.815749168395996
      ],
      [
       "K-19: The Widowmaker (2002)",
@@ -20523,20 +20353,303 @@
        "Thriller"
       ],
       "2002",
-      0.6685749292373657
+      12.763851165771484
      ],
      [
-      "Eye in the Sky (2016)",
+      "The Great Raid (2005)",
+      [
+       "Action",
+       "Drama",
+       "War"
+      ],
+      "2005",
+      12.752273559570312
+     ],
+     [
+      "Hurt Locker, The (2008)",
+      [
+       "Action",
+       "Drama",
+       "Thriller",
+       "War"
+      ],
+      "2008",
+      12.735755920410156
+     ],
+     [
+      "Monuments Men, The (2014)",
+      [
+       "Action",
+       "Drama",
+       "War"
+      ],
+      "2014",
+      12.66774845123291
+     ],
+     [
+      "Valkyrie (2008)",
       [
        "Drama",
        "Thriller",
        "War"
       ],
-      "2016",
-      0.6680857539176941
+      "2008",
+      12.637381553649902
      ],
      [
-      "Troy (2004)",
+      "Charlie Wilson's War (2007)",
+      [
+       "Comedy",
+       "Drama",
+       "War"
+      ],
+      "2007",
+      12.621378898620605
+     ],
+     [
+      "Joyeux No\u00ebl (Merry Christmas) (2005)",
+      [
+       "Drama",
+       "War"
+      ],
+      "2005",
+      12.621237754821777
+     ],
+     [
+      "United 93 (2006)",
+      [
+       "Crime",
+       "Drama"
+      ],
+      "2006",
+      12.618330955505371
+     ],
+     [
+      "Flags of Our Fathers (2006)",
+      [
+       "Drama",
+       "War"
+      ],
+      "2006",
+      12.616291046142578
+     ],
+     [
+      "Men of Honor (2000)",
+      [
+       "Drama"
+      ],
+      "2000",
+      12.595673561096191
+     ],
+     [
+      "War Dogs (2016)",
+      [
+       "Comedy"
+      ],
+      "2016",
+      12.568626403808594
+     ],
+     [
+      "9th Company (2005)",
+      [
+       "Action",
+       "Drama",
+       "War"
+      ],
+      "2005",
+      12.510709762573242
+     ],
+     [
+      "Flyboys (2006)",
+      [
+       "Action",
+       "Adventure",
+       "Drama",
+       "War"
+      ],
+      "2006",
+      12.38809871673584
+     ],
+     [
+      "Whiskey Tango Foxtrot (2016)",
+      [
+       "Comedy",
+       "War"
+      ],
+      "2016",
+      12.3193359375
+     ],
+     [
+      "Fair Game (2010)",
+      [
+       "Drama",
+       "Thriller"
+      ],
+      "2010",
+      12.304651260375977
+     ],
+     [
+      "Band of Brothers (2001)",
+      [
+       "Action",
+       "Drama",
+       "War"
+      ],
+      "2001",
+      12.293425559997559
+     ],
+     [
+      "Men Who Stare at Goats, The (2009)",
+      [
+       "Action",
+       "Comedy",
+       "Drama"
+      ],
+      "2009",
+      12.266109466552734
+     ],
+     [
+      "Gettysburg (1993)",
+      [
+       "Drama",
+       "War"
+      ],
+      "1993",
+      12.245770454406738
+     ],
+     [
+      "Enemy at the Gates (2001)",
+      [
+       "Drama",
+       "War"
+      ],
+      "2001",
+      12.220685005187988
+     ],
+     [
+      "U-571 (2000)",
+      [
+       "Action",
+       "Thriller",
+       "War"
+      ],
+      "2000",
+      12.210999488830566
+     ],
+     [
+      "Thirteen Days (2000)",
+      [
+       "Drama",
+       "Thriller",
+       "War"
+      ],
+      "2000",
+      12.16562271118164
+     ],
+     [
+      "The Alamo (2004)",
+      [
+       "Drama",
+       "War",
+       "Western"
+      ],
+      "2004",
+      12.137700080871582
+     ],
+     [
+      "In the Valley of Elah (2007)",
+      [
+       "Drama",
+       "Mystery"
+      ],
+      "2007",
+      12.063045501708984
+     ],
+     [
+      "Windtalkers (2002)",
+      [
+       "Action",
+       "Drama",
+       "War"
+      ],
+      "2002",
+      12.057578086853027
+     ],
+     [
+      "Conspirator, The (2010)",
+      [
+       "Drama"
+      ],
+      "2010",
+      12.00721263885498
+     ],
+     [
+      "JFK (1991)",
+      [
+       "Drama",
+       "Mystery",
+       "Thriller"
+      ],
+      "1991",
+      11.94711971282959
+     ],
+     [
+      "Saving Private Ryan (1998)",
+      [
+       "Action",
+       "Drama",
+       "War"
+      ],
+      "1998",
+      11.939833641052246
+     ],
+     [
+      "Dunkirk (2017)",
+      [
+       "Action",
+       "Drama",
+       "Thriller",
+       "War"
+      ],
+      "2017",
+      11.926708221435547
+     ],
+     [
+      "Water Diviner, The (2014)",
+      [
+       "Action",
+       "Drama",
+       "War"
+      ],
+      "2014",
+      11.859339714050293
+     ],
+     [
+      "Recount (2008)",
+      [
+       "Drama"
+      ],
+      "2008",
+      11.848962783813477
+     ],
+     [
+      "Bloody Sunday (2002)",
+      [
+       "Drama"
+      ],
+      "2002",
+      11.747551918029785
+     ],
+     [
+      "No (2012)",
+      [
+       "Drama"
+      ],
+      "2012",
+      11.713120460510254
+     ],
+     [
+      "King Arthur (2004)",
       [
        "Action",
        "Adventure",
@@ -20544,49 +20657,67 @@
        "War"
       ],
       "2004",
-      0.6669353246688843
+      11.665547370910645
      ],
      [
-      "Green Zone (2010)",
-      [
-       "Action",
-       "Drama",
-       "Thriller",
-       "War"
-      ],
-      "2010",
-      0.6668993234634399
-     ],
-     [
-      "Zulu (1964)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "1964",
-      0.6549524664878845
-     ],
-     [
-      "Saints and Soldiers (2003)",
+      "Hunting Party, The (2007)",
       [
        "Action",
        "Adventure",
+       "Comedy",
+       "Drama",
+       "Thriller"
+      ],
+      "2007",
+      11.607985496520996
+     ],
+     [
+      "12 Strong (2018)",
+      [
        "Drama",
        "War"
       ],
-      "2003",
-      0.6543302536010742
+      "2018",
+      11.50439167022705
      ],
      [
-      "Bridge Too Far, A (1977)",
+      "Heaven & Earth (1993)",
       [
        "Action",
        "Drama",
        "War"
       ],
-      "1977",
-      0.6513864398002625
+      "1993",
+      11.352177619934082
+     ],
+     [
+      "Killer Elite (2011)",
+      [
+       "Action",
+       "Thriller"
+      ],
+      "2011",
+      11.32155990600586
+     ],
+     [
+      "Behind Enemy Lines (2001)",
+      [
+       "Action",
+       "Drama",
+       "War"
+      ],
+      "2001",
+      2.9687001705169678
+     ],
+     [
+      "Tears of the Sun (2003)",
+      [
+       "Action",
+       "Drama",
+       "Thriller"
+      ],
+      "2003",
+      2.863538980484009
      ],
      [
       "Rescue Dawn (2006)",
@@ -20597,17 +20728,113 @@
        "War"
       ],
       "2006",
-      0.647873044013977
+      2.8579723834991455
      ],
      [
-      "U-571 (2000)",
+      "Saints and Soldiers (2003)",
       [
        "Action",
+       "Adventure",
+       "Drama",
+       "War"
+      ],
+      "2003",
+      2.8508498668670654
+     ],
+     [
+      "Unbroken (2014)",
+      [
+       "Drama",
+       "War"
+      ],
+      "2014",
+      2.818727731704712
+     ],
+     [
+      "Defiance (2008)",
+      [
+       "Drama",
        "Thriller",
        "War"
       ],
-      "2000",
-      0.6458213925361633
+      "2008",
+      2.813271999359131
+     ],
+     [
+      "Green Zone (2010)",
+      [
+       "Action",
+       "Drama",
+       "Thriller",
+       "War"
+      ],
+      "2010",
+      2.794084072113037
+     ],
+     [
+      "Courage Under Fire (1996)",
+      [
+       "Action",
+       "Crime",
+       "Drama",
+       "War"
+      ],
+      "1996",
+      2.7801551818847656
+     ],
+     [
+      "Hotel Rwanda (2004)",
+      [
+       "Drama",
+       "War"
+      ],
+      "2004",
+      2.7722551822662354
+     ],
+     [
+      "Free State of Jones (2016)",
+      [
+       "Action",
+       "Drama",
+       "Thriller"
+      ],
+      "2016",
+      2.7685458660125732
+     ],
+     [
+      "Deepwater Horizon (2016)",
+      [
+       "Drama"
+      ],
+      "2016",
+      2.7492992877960205
+     ],
+     [
+      "Eye in the Sky (2016)",
+      [
+       "Drama",
+       "Thriller",
+       "War"
+      ],
+      "2016",
+      2.7485191822052
+     ],
+     [
+      "Invincible (2006)",
+      [
+       "Drama"
+      ],
+      "2006",
+      2.743112087249756
+     ],
+     [
+      "Stop-Loss (2008)",
+      [
+       "Drama",
+       "War"
+      ],
+      "2008",
+      2.7406253814697266
      ],
      [
       "Captain Phillips (2013)",
@@ -20618,571 +20845,421 @@
        "IMAX"
       ],
       "2013",
-      0.6427192687988281
-     ],
-     [
-      "Act of Valor (2012)",
-      [
-       "Action",
-       "Thriller",
-       "War"
-      ],
-      "2012",
-      0.6423629522323608
-     ],
-     [
-      "War Dogs (2016)",
-      [
-       "Comedy"
-      ],
-      "2016",
-      0.6362084150314331
-     ],
-     [
-      "Flame and Citron (Flammen & Citronen) (2008)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "2008",
-      0.6320565342903137
-     ],
-     [
-      "Invincible (2006)",
-      [
-       "Drama"
-      ],
-      "2006",
-      0.6229234337806702
-     ],
-     [
-      "Stop-Loss (2008)",
-      [
-       "Drama",
-       "War"
-      ],
-      "2008",
-      0.6207073926925659
-     ],
-     [
-      "Antwone Fisher (2002)",
-      [
-       "Drama"
-      ],
-      "2002",
-      0.6183743476867676
-     ],
-     [
-      "Jarhead (2005)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "2005",
-      0.6168678998947144
-     ],
-     [
-      "Way Back, The (2010)",
-      [
-       "Drama"
-      ],
-      "2010",
-      0.6160259246826172
-     ],
-     [
-      "Patriots Day (2016)",
-      [
-       "Drama",
-       "Thriller"
-      ],
-      "2016",
-      0.6152209639549255
-     ],
-     [
-      "Men of Honor (2000)",
-      [
-       "Drama"
-      ],
-      "2000",
-      0.615043044090271
-     ],
-     [
-      "Monuments Men, The (2014)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "2014",
-      0.6102701425552368
-     ],
-     [
-      "Longest Day, The (1962)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "1962",
-      0.6048272848129272
-     ],
-     [
-      "The Finest Hours (2016)",
-      [
-       "Drama",
-       "Thriller"
-      ],
-      "2016",
-      0.598523736000061
-     ],
-     [
-      "Greyhound (2020)",
-      [
-       "War"
-      ],
-      "2020",
-      0.5982440710067749
-     ],
-     [
-      "The Pacific (2010)",
-      [
-       "Action",
-       "Adventure",
-       "Drama",
-       "War"
-      ],
-      "2010",
-      0.5968295335769653
-     ],
-     [
-      "Gangs of New York (2002)",
-      [
-       "Crime",
-       "Drama"
-      ],
-      "2002",
-      0.5961953401565552
-     ],
-     [
-      "Tora! Tora! Tora! (1970)",
-      [
-       "Action",
-       "Drama",
-       "War"
-      ],
-      "1970",
-      0.592460036277771
-     ],
-     [
-      "Born on the Fourth of July (1989)",
-      [
-       "Drama",
-       "War"
-      ],
-      "1989",
-      0.5903212428092957
-     ],
-     [
-      "Charlie Wilson's War (2007)",
-      [
-       "Comedy",
-       "Drama",
-       "War"
-      ],
-      "2007",
-      0.5874562859535217
+      2.7300002574920654
      ]
     ],
     "out_of_domain": false,
     "intent_chips": [
-     "\ud83c\udfac like Lone Survivor, American Sniper, Black Hawk Down"
+     "\ud83c\udfac like Lone Survivor, American Sniper, Black Hawk Down",
+     "\ud83c\udfaf military or true story",
+     "\ud83c\udfad leaning War, Action, Drama",
+     "\ud83d\udeab no Sci-Fi",
+     "\ud83d\udcc5 1990 or later"
     ],
-    "intent_echo": "Understood: \ud83c\udfac like Lone Survivor, American Sniper, Black Hawk Down \u2014 ranked by taste match.",
+    "intent_echo": "Understood: \ud83c\udfac like Lone Survivor, American Sniper, Black Hawk Down \u00b7 \ud83c\udfaf military or true story \u00b7 \ud83c\udfad leaning War, Action, Drama \u00b7 \ud83d\udeab no Sci-Fi \u00b7 \ud83d\udcc5 1990 or later \u2014 ranked by taste match.",
     "rec_provenance": [
      [
+      "military @0.91",
+      "true story @0.85",
       "based on a true story",
-      "true story",
       "based on true story",
-      "best war films",
-      "military"
+      "best war films"
      ],
      [
+      "military @0.89",
+      "true story @0.98",
       "based on a true story",
-      "true story",
       "based on true story",
-      "best war films",
-      "military"
+      "best war films"
      ],
      [
+      "military @0.50",
+      "true story @0.93",
       "based on a true story",
-      "true story",
       "based on true story",
-      "best war films",
-      "military"
+      "best war films"
      ],
      [
+      "military @0.72",
+      "true story @0.96",
       "based on a true story",
-      "true story",
       "based on true story",
-      "best war films",
-      "military"
+      "best war films"
      ],
      [
+      "military @0.74",
+      "true story @0.94",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.94",
+      "true story @0.96",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.92",
+      "true story @0.62",
       "best war films",
-      "military",
       "sacrifice",
       "war"
      ],
      [
+      "military @0.83",
+      "true story @0.90",
       "based on a true story",
-      "true story",
       "based on true story",
-      "best war films",
-      "military"
+      "best war films"
      ],
      [
+      "military @0.64",
+      "true story @0.91",
       "based on a true story",
-      "true story",
       "based on true story",
-      "best war films",
-      "military"
+      "best war films"
      ],
      [
+      "military @0.79",
+      "true story @0.85",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.89",
+      "true story @0.47",
+      "based on true story",
       "best war films",
-      "military",
+      "sacrifice"
+     ],
+     [
+      "military @0.62",
+      "true story @0.87",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.45",
+      "true story @0.86",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.41",
+      "true story @0.91",
+      "based on a true story",
+      "based on true story",
+      "war"
+     ],
+     [
+      "military @0.36",
+      "true story @0.91",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.40",
+      "true story @0.95",
+      "based on a true story",
+      "based on true story",
+      "sacrifice"
+     ],
+     [
+      "military @0.83",
+      "true story @0.48",
+      "best war films",
       "sacrifice",
-      "war",
+      "war"
+     ],
+     [
+      "military @0.83",
+      "true story @0.90",
+      "based on a true story",
+      "based on true story",
+      "sacrifice"
+     ],
+     [
+      "military @0.77",
+      "true story @0.97",
+      "based on a true story",
+      "based on true story",
+      "war"
+     ],
+     [
+      "military @0.76",
+      "true story @0.60",
+      "based on true story",
+      "best war films",
+      "sacrifice"
+     ],
+     [
+      "military @0.68",
+      "true story @0.60",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.84",
+      "true story @0.48",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.35",
+      "true story @0.88",
+      "based on a true story",
+      "based on true story",
+      "war"
+     ],
+     [
+      "military @0.62",
+      "true story @0.56",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.86",
+      "true story @0.61",
+      "based on a true story",
+      "based on true story",
       "iraq"
      ],
      [
-      "best war films",
-      "military",
-      "sacrifice",
-      "war",
-      "iraq"
-     ],
-     [
+      "military @0.50",
+      "true story @0.63",
       "based on a true story",
-      "true story",
       "based on true story",
-      "best war films",
-      "military"
+      "best war films"
      ],
      [
-      "based on true story",
-      "best war films",
-      "military",
-      "sacrifice",
-      "war"
-     ],
-     [
+      "military @0.50",
+      "true story @0.60",
       "based on a true story",
-      "true story",
       "based on true story",
-      "best war films",
-      "military"
+      "best war films"
      ],
      [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "best war films",
-      "military"
-     ],
-     [
-      "based on a true story",
-      "true story",
+      "military @0.40",
+      "true story @0.71",
       "based on true story",
       "best war films",
       "sacrifice"
      ],
      [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "best war films",
-      "sacrifice"
-     ],
-     [
-      "true story",
-      "based on true story",
-      "best war films",
-      "military",
-      "sacrifice"
-     ],
-     [
-      "best war films",
-      "military",
-      "sacrifice",
-      "war"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "best war films",
-      "military"
-     ],
-     [
-      "best war films",
-      "military",
-      "sacrifice",
-      "war",
-      "iraq"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "best war films",
-      "war"
-     ],
-     [
-      "based on true story",
-      "best war films",
-      "sacrifice",
-      "war"
-     ],
-     [
-      "best war films",
-      "military",
-      "sacrifice",
-      "war"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "best war films",
-      "sacrifice"
-     ],
-     [
-      "based on a true story",
-      "true story",
+      "military @0.66",
+      "true story @0.61",
       "based on true story",
       "war"
      ],
      [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "best war films",
-      "sacrifice"
-     ],
-     [
-      "best war films",
-      "military",
-      "sacrifice",
-      "war"
-     ],
-     [
-      "best war films",
-      "sacrifice",
-      "war"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "sacrifice"
-     ],
-     [
-      "based on a true story",
-      "true story",
+      "military @0.72",
+      "true story @0.42",
       "based on true story",
       "sacrifice",
       "war"
      ],
      [
+      "military @0.74",
+      "true story @0.42",
       "based on a true story",
-      "true story",
       "based on true story",
-      "best war films",
-      "military"
+      "best war films"
      ],
      [
+      "military @0.50",
+      "true story @0.44",
+      "best war films",
+      "sacrifice",
+      "war"
+     ],
+     [
+      "military @0.67",
+      "true story @0.67",
       "based on a true story",
-      "true story",
+      "based on true story",
+      "war"
+     ],
+     [
+      "military @0.37",
+      "true story @0.76",
+      "based on a true story",
       "based on true story"
      ],
      [
-      "based on a true story",
-      "true story",
+      "military @0.58",
+      "true story @0.36",
       "based on true story",
       "best war films",
-      "military"
+      "sacrifice"
      ],
      [
+      "military @0.54",
+      "true story @0.54",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.52",
+      "true story @0.42",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.47",
+      "true story @0.65",
+      "based on a true story",
+      "based on true story"
+     ],
+     [
+      "military @0.62",
+      "true story @0.47"
+     ],
+     [
+      "military @0.36",
+      "true story @0.59"
+     ],
+     [
+      "military @0.38",
+      "true story @0.48",
+      "sacrifice"
+     ],
+     [
+      "military @0.41",
+      "true story @0.52",
+      "based on true story",
       "best war films",
-      "military",
+      "war"
+     ],
+     [
+      "military @0.40",
+      "true story @0.36",
+      "based on a true story"
+     ],
+     [
+      "military @0.36",
+      "true story @0.39",
+      "best war films",
+      "war"
+     ],
+     [
+      "military @0.46",
+      "true story @0.45",
+      "based on true story"
+     ],
+     [
+      "military @0.95",
+      "true story @0.21",
+      "best war films",
       "sacrifice",
       "war"
      ],
      [
+      "military @0.97",
+      "true story @0.17",
       "best war films",
       "sacrifice",
       "war"
      ],
      [
+      "military @0.24",
+      "true story @0.97",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.25",
+      "true story @0.90",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.28",
+      "true story @0.93",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.12",
+      "true story @0.98",
+      "based on a true story",
+      "based on true story",
+      "best war films"
+     ],
+     [
+      "military @0.94",
+      "true story @0.23",
       "best war films",
-      "military",
       "war",
       "iraq"
      ],
      [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "best war films",
-      "military"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "best war films",
-      "sacrifice"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "best war films",
-      "military"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "best war films",
-      "sacrifice"
-     ],
-     [
-      "true story",
-      "based on true story",
+      "military @0.98",
+      "true story @0.31",
       "best war films",
       "sacrifice",
       "war"
      ],
      [
+      "military @0.25",
+      "true story @0.96",
       "based on a true story",
-      "true story",
       "based on true story",
       "sacrifice"
      ],
      [
-      "military",
+      "military @0.28",
+      "true story @0.95",
+      "based on a true story",
+      "based on true story",
+      "war"
+     ],
+     [
+      "military @0.18",
+      "true story @0.99",
+      "based on a true story",
+      "based on true story",
+      "sacrifice"
+     ],
+     [
+      "military @0.96",
+      "true story @0.20",
+      "best war films",
       "sacrifice",
       "war"
      ],
      [
+      "military @0.02",
+      "true story @0.99",
       "based on a true story",
-      "true story",
-      "based on true story",
-      "military",
-      "war"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "best war films",
-      "war"
-     ],
-     [
-      "based on a true story",
-      "true story",
       "based on true story"
      ],
      [
+      "military @0.98",
+      "true story @0.25",
       "best war films",
-      "military",
       "war",
       "iraq"
      ],
      [
+      "military @0.29",
+      "true story @0.97",
       "based on a true story",
-      "true story",
-      "based on true story"
-     ],
-     [
-      "true story",
-      "best war films",
-      "military",
-      "sacrifice",
-      "war"
-     ],
-     [
-      "based on a true story",
-      "true story",
       "based on true story",
       "sacrifice"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "military",
-      "sacrifice"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "best war films",
-      "military"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "best war films",
-      "military",
-      "sacrifice"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "sacrifice",
-      "war"
-     ],
-     [
-      "best war films",
-      "sacrifice",
-      "war"
-     ],
-     [],
-     [
-      "best war films",
-      "military",
-      "sacrifice",
-      "war"
-     ],
-     [
-      "true story",
-      "based on true story",
-      "best war films",
-      "military",
-      "sacrifice"
-     ],
-     [
-      "based on a true story",
-      "true story",
-      "based on true story",
-      "war",
-      "iraq"
      ]
     ],
     "relaxation_notice": null,
@@ -24288,22 +24365,44 @@
   },
   "r5c4": {
    "label": "World travel",
-   "query": "Movies about traveling around the world and going on adventures, not science fiction.",
+   "query": "Movies about traveling around the world to far-off places, like Around the World in 80 Days, Romancing the Stone, and The Secret Life of Walter Mitty. No science fiction, fantasy, documentaries, or comedies.",
    "report": {
     "extraction": {
+     "liked_items": [
+      "Around the World in 80 Days (1956)",
+      "Romancing the Stone (1984)",
+      "The Secret Life of Walter Mitty (2013)"
+     ],
      "hard_constraints": {
       "require_keyword_concepts": [
-       "travel",
-       "around the world",
-       "adventure"
+       "travel"
       ],
       "exclude_genres": [
-       "Sci-Fi"
+       "Sci-Fi",
+       "Fantasy",
+       "Documentary",
+       "Comedy"
       ]
      }
     },
     "resolution": {
-     "liked": [],
+     "liked": [
+      [
+       "Around the World in 80 Days (1956)",
+       "Around the World in 80 Days (1956)",
+       "exact"
+      ],
+      [
+       "Romancing the Stone (1984)",
+       "Romancing the Stone (1984)",
+       "exact"
+      ],
+      [
+       "The Secret Life of Walter Mitty (2013)",
+       "Secret Life of Walter Mitty, The (2013)",
+       "normalized, 2 matches \u2192 year/pop"
+      ]
+     ],
      "disliked": []
     },
     "people_resolution": {
@@ -24321,101 +24420,115 @@
        "travel",
        "genome 'travel'",
        86
-      ],
-      [
-       "around the world",
-       "keyword 'around the world'",
-       5
-      ],
-      [
-       "adventure",
-       "genome 'adventure'",
-       1743
       ]
      ],
      "exclude": []
     },
     "anchors": [
-     "Endless Summer, The (1966)",
-     "Hector and the Search for Happiness (2014)",
-     "In July (Im Juli) (2000)",
-     "Out of Towners, The (1970)",
-     "Time Traveler's Wife, The (2009)",
-     "Romancing the Stone (1984)",
-     "Goonies, The (1985)",
-     "Raiders of the Lost Ark (Indiana Jones and the Raiders of the Lost Ark) (1981)",
-     "Crimson Pirate, The (1952)",
-     "Kon-Tiki (2012)"
+     "Endless Summer, The (1966)"
     ],
-    "anchor_weight": 1.0,
+    "anchor_weight": 0.5,
     "mood_tags": [],
-    "mode15_tags": [],
+    "mode15_tags": [
+     "70mm",
+     "adapted from:book",
+     "based on a book",
+     "adventure",
+     "chase",
+     "fun movie",
+     "treasure hunt",
+     "romance"
+    ],
     "ranked_by_similarity": false,
     "unresolved_tags": [],
     "unknown_genres": [],
-    "seed_count": 0,
+    "seed_count": 3,
     "fallback": false,
-    "filtered": 19,
+    "filtered": 9349,
     "relaxed_constraints": [],
     "recs": [
      [
-      "Around the World in 80 Days (1956)",
+      "Up in the Air (2009)",
       [
-       "Adventure",
-       "Comedy"
-      ],
-      "1956",
-      21.92600440979004
-     ],
-     [
-      "Romancing the Stone (1984)",
-      [
-       "Action",
-       "Adventure",
-       "Comedy",
+       "Drama",
        "Romance"
       ],
-      "1984",
-      12.335164070129395
+      "2009",
+      1.4182978868484497
      ],
      [
-      "Kon-Tiki (2012)",
+      "Eat Pray Love (2010)",
       [
-       "Adventure",
-       "Documentary",
-       "Drama"
+       "Drama",
+       "Romance"
       ],
-      "2012",
-      12.264259338378906
+      "2010",
+      1.375808835029602
      ],
      [
-      "Crocodile Dundee (1986)",
+      "Tracks (2013)",
       [
        "Adventure",
-       "Comedy"
-      ],
-      "1986",
-      12.101716995239258
-     ],
-     [
-      "A Walk in the Woods (2015)",
-      [
-       "Adventure",
-       "Comedy",
-       "Drama"
-      ],
-      "2015",
-      12.096420288085938
-     ],
-     [
-      "Secret Life of Walter Mitty, The (2013)",
-      [
-       "Adventure",
-       "Comedy",
        "Drama"
       ],
       "2013",
-      12.065366744995117
+      1.3080917596817017
+     ],
+     [
+      "Into the Wild (2007)",
+      [
+       "Action",
+       "Adventure",
+       "Drama"
+      ],
+      "2007",
+      1.3052997589111328
+     ],
+     [
+      "Motorcycle Diaries, The (Diarios de motocicleta) (2004)",
+      [
+       "Adventure",
+       "Drama"
+      ],
+      "2004",
+      1.2253198623657227
+     ],
+     [
+      "Embrace of the Serpent (2016)",
+      [
+       "Adventure",
+       "Drama"
+      ],
+      "2016",
+      1.2236251831054688
+     ],
+     [
+      "Paris, Texas (1984)",
+      [
+       "Drama",
+       "Romance"
+      ],
+      "1984",
+      1.2206422090530396
+     ],
+     [
+      "Poseidon Adventure, The (1972)",
+      [
+       "Action",
+       "Adventure",
+       "Drama"
+      ],
+      "1972",
+      1.217428207397461
+     ],
+     [
+      "Somewhere in Time (1980)",
+      [
+       "Drama",
+       "Romance"
+      ],
+      "1980",
+      1.191117286682129
      ],
      [
       "Up (2009)",
@@ -24426,243 +24539,7 @@
        "Drama"
       ],
       "2009",
-      12.021615982055664
-     ],
-     [
-      "Hector and the Search for Happiness (2014)",
-      [
-       "Adventure",
-       "Comedy",
-       "Drama"
-      ],
-      "2014",
-      12.01264762878418
-     ],
-     [
-      "Tracks (2013)",
-      [
-       "Adventure",
-       "Drama"
-      ],
-      "2013",
-      11.995403289794922
-     ],
-     [
-      "Endless Summer, The (1966)",
-      [
-       "Documentary"
-      ],
-      "1966",
-      11.94552993774414
-     ],
-     [
-      "Fantastic Beasts and Where to Find Them (2016)",
-      [
-       "Fantasy"
-      ],
-      "2016",
-      11.895316123962402
-     ],
-     [
-      "Way Back, The (2010)",
-      [
-       "Drama"
-      ],
-      "2010",
-      11.86535358428955
-     ],
-     [
-      "Zindagi Na Milegi Dobara (2011)",
-      [
-       "Adventure",
-       "Comedy",
-       "Drama",
-       "Romance"
-      ],
-      "2011",
-      11.839869499206543
-     ],
-     [
-      "Lost Horizon (1937)",
-      [
-       "Drama"
-      ],
-      "1937",
-      11.801436424255371
-     ],
-     [
-      "In July (Im Juli) (2000)",
-      [
-       "Comedy",
-       "Romance"
-      ],
-      "2000",
-      11.744429588317871
-     ],
-     [
-      "Motorcycle Diaries, The (Diarios de motocicleta) (2004)",
-      [
-       "Adventure",
-       "Drama"
-      ],
-      "2004",
-      11.710187911987305
-     ],
-     [
-      "Poseidon Adventure, The (1972)",
-      [
-       "Action",
-       "Adventure",
-       "Drama"
-      ],
-      "1972",
-      11.674936294555664
-     ],
-     [
-      "Into the Wild (2007)",
-      [
-       "Action",
-       "Adventure",
-       "Drama"
-      ],
-      "2007",
-      11.605403900146484
-     ],
-     [
-      "Planes, Trains & Automobiles (1987)",
-      [
-       "Comedy"
-      ],
-      "1987",
-      11.599960327148438
-     ],
-     [
-      "Embrace of the Serpent (2016)",
-      [
-       "Adventure",
-       "Drama"
-      ],
-      "2016",
-      11.579813003540039
-     ],
-     [
-      "The Way (2010)",
-      [
-       "Adventure",
-       "Comedy",
-       "Drama"
-      ],
-      "2010",
-      11.471365928649902
-     ],
-     [
-      "Beach, The (2000)",
-      [
-       "Adventure",
-       "Drama"
-      ],
-      "2000",
-      11.38644790649414
-     ],
-     [
-      "Quest for Fire (Guerre du feu, La) (1981)",
-      [
-       "Adventure",
-       "Drama"
-      ],
-      "1981",
-      11.315678596496582
-     ],
-     [
-      "National Lampoon's Vacation (1983)",
-      [
-       "Comedy"
-      ],
-      "1983",
-      11.285882949829102
-     ],
-     [
-      "World's Fastest Indian, The (2005)",
-      [
-       "Drama"
-      ],
-      "2005",
-      11.27694320678711
-     ],
-     [
-      "Eat Pray Love (2010)",
-      [
-       "Drama",
-       "Romance"
-      ],
-      "2010",
-      11.245019912719727
-     ],
-     [
-      "Terminal, The (2004)",
-      [
-       "Comedy",
-       "Drama",
-       "Romance"
-      ],
-      "2004",
-      11.224799156188965
-     ],
-     [
-      "Curious Case of Benjamin Button, The (2008)",
-      [
-       "Drama",
-       "Fantasy",
-       "Mystery",
-       "Romance"
-      ],
-      "2008",
-      11.174246788024902
-     ],
-     [
-      "Safety Not Guaranteed (2012)",
-      [
-       "Comedy",
-       "Drama"
-      ],
-      "2012",
-      11.118781089782715
-     ],
-     [
-      "Encounters at the End of the World (2008)",
-      [
-       "Documentary"
-      ],
-      "2008",
-      11.103547096252441
-     ],
-     [
-      "It Happened One Night (1934)",
-      [
-       "Comedy",
-       "Romance"
-      ],
-      "1934",
-      11.102476119995117
-     ],
-     [
-      "Somewhere in Time (1980)",
-      [
-       "Drama",
-       "Romance"
-      ],
-      "1980",
-      11.07876968383789
-     ],
-     [
-      "Midnight in Paris (2011)",
-      [
-       "Comedy",
-       "Fantasy",
-       "Romance"
-      ],
-      "2011",
-      11.02584457397461
+      1.1373437643051147
      ],
      [
       "Transsiberian (2008)",
@@ -24672,507 +24549,240 @@
        "Thriller"
       ],
       "2008",
-      10.992650032043457
+      1.0898598432540894
      ],
      [
-      "Planes (2013)",
+      "Letters to Juliet (2010)",
       [
-       "Adventure",
-       "Animation",
-       "Comedy"
-      ],
-      "2013",
-      10.932689666748047
-     ],
-     [
-      "North (1994)",
-      [
-       "Comedy"
-      ],
-      "1994",
-      10.861855506896973
-     ],
-     [
-      "Zombieland (2009)",
-      [
-       "Action",
-       "Comedy",
-       "Horror"
-      ],
-      "2009",
-      10.769989013671875
-     ],
-     [
-      "Indiana Jones and the Last Crusade (1989)",
-      [
-       "Action",
-       "Adventure"
-      ],
-      "1989",
-      2.3042733669281006
-     ],
-     [
-      "Indiana Jones and the Temple of Doom (1984)",
-      [
-       "Action",
-       "Adventure",
-       "Fantasy"
-      ],
-      "1984",
-      2.303622245788574
-     ],
-     [
-      "King Solomon's Mines (1985)",
-      [
-       "Adventure",
-       "Comedy"
-      ],
-      "1985",
-      2.266934633255005
-     ],
-     [
-      "Princess Bride, The (1987)",
-      [
-       "Action",
-       "Adventure",
-       "Comedy",
-       "Fantasy",
+       "Drama",
        "Romance"
       ],
-      "1987",
-      2.2306690216064453
+      "2010",
+      1.0847883224487305
      ],
      [
-      "Raiders of the Lost Ark (Indiana Jones and the Raiders of the Lost Ark) (1981)",
+      "Quest for Fire (Guerre du feu, La) (1981)",
       [
-       "Action",
-       "Adventure"
+       "Adventure",
+       "Drama"
       ],
       "1981",
-      2.1916165351867676
+      1.0600721836090088
      ],
      [
-      "Captain Blood (1935)",
+      "Lost Horizon (1937)",
       [
-       "Action",
-       "Adventure",
-       "Romance"
+       "Drama"
       ],
-      "1935",
-      2.19049072265625
+      "1937",
+      1.0494732856750488
      ],
      [
-      "Jewel of the Nile, The (1985)",
+      "Way Back, The (2010)",
       [
-       "Action",
-       "Adventure",
-       "Comedy",
-       "Romance"
+       "Drama"
       ],
-      "1985",
-      2.183415174484253
+      "2010",
+      1.0389119386672974
      ],
      [
-      "Raiders of the Lost Ark: The Adaptation (1989)",
+      "Beach, The (2000)",
       [
-       "Action",
        "Adventure",
-       "Thriller"
+       "Drama"
       ],
-      "1989",
-      2.1709470748901367
+      "2000",
+      0.9875994324684143
      ],
      [
-      "Goonies, The (1985)",
+      "World's Fastest Indian, The (2005)",
       [
-       "Action",
-       "Adventure",
-       "Children",
-       "Comedy",
-       "Fantasy"
-      ],
-      "1985",
-      2.169597864151001
-     ],
-     [
-      "Sahara (2005)",
-      [
-       "Action",
-       "Adventure",
-       "Comedy"
+       "Drama"
       ],
       "2005",
-      2.1659066677093506
+      0.7372841238975525
      ],
      [
-      "Hatari! (1962)",
+      "Sheltering Sky, The (1990)",
       [
-       "Adventure",
-       "Comedy"
+       "Drama"
       ],
-      "1962",
-      2.1431117057800293
+      "1990",
+      0.7349681854248047
      ],
      [
-      "Willow (1988)",
+      "Trip to Bountiful, The (1985)",
       [
-       "Action",
-       "Adventure",
-       "Fantasy"
+       "Drama"
       ],
-      "1988",
-      2.141197681427002
+      "1985",
+      0.7244073748588562
      ],
      [
-      "Treasure Island (1950)",
+      "Detour (1945)",
       [
-       "Adventure",
-       "Children"
+       "Crime",
+       "Film-Noir"
       ],
-      "1950",
-      2.136523723602295
+      "1945",
+      0.7036490440368652
      ],
      [
-      "Man Who Would Be King, The (1975)",
+      "Passenger, The (Professione: reporter) (1975)",
       [
-       "Adventure",
        "Drama"
       ],
       "1975",
-      2.134697914123535
+      0.6702292561531067
      ],
      [
-      "Gunga Din (1939)",
+      "Chungking Express (Chung Hing sam lam) (1994)",
       [
-       "Adventure",
-       "Comedy",
-       "War"
+       "Drama",
+       "Mystery",
+       "Romance"
       ],
-      "1939",
-      2.1193628311157227
+      "1994",
+      0.5613873600959778
      ],
      [
-      "Pirates of the Caribbean: The Curse of the Black Pearl (2003)",
+      "Before Sunrise (1995)",
       [
-       "Action",
-       "Adventure",
-       "Comedy",
-       "Fantasy"
+       "Drama",
+       "Romance"
       ],
-      "2003",
-      2.11826491355896
-     ],
-     [
-      "Firewalker (1986)",
-      [
-       "Adventure"
-      ],
-      "1986",
-      2.114335298538208
-     ],
-     [
-      "Hidalgo (2004)",
-      [
-       "Adventure",
-       "Drama"
-      ],
-      "2004",
-      2.114025831222534
-     ],
-     [
-      "Wind and the Lion, The (1975)",
-      [
-       "Adventure"
-      ],
-      "1975",
-      2.1120221614837646
-     ],
-     [
-      "Crimson Pirate, The (1952)",
-      [
-       "Adventure",
-       "Comedy"
-      ],
-      "1952",
-      2.09779953956604
-     ],
-     [
-      "Lord of the Rings: The Fellowship of the Ring, The (2001)",
-      [
-       "Adventure",
-       "Fantasy"
-      ],
-      "2001",
-      2.097139596939087
-     ],
-     [
-      "Pirates of the Caribbean: Dead Men Tell No Tales (2017)",
-      [
-       "(no genres listed)"
-      ],
-      "2017",
-      2.0911643505096436
-     ],
-     [
-      "Three Musketeers, The (1973)",
-      [
-       "Action",
-       "Adventure",
-       "Comedy"
-      ],
-      "1973",
-      2.0900535583496094
+      "1995",
+      0.5558867454528809
      ]
     ],
     "out_of_domain": false,
     "intent_chips": [
-     "\ud83c\udfaf travel or around the world or adventure",
-     "\ud83d\udeab no Sci-Fi"
+     "\ud83c\udfac like Around the World in 80 Days, Romancing the Stone, The Secret Life of Walter Mitty",
+     "\ud83c\udfaf travel",
+     "\ud83d\udeab no Sci-Fi",
+     "\ud83d\udeab no Fantasy",
+     "\ud83d\udeab no Documentary",
+     "\ud83d\udeab no Comedy"
     ],
-    "intent_echo": "Understood: \ud83c\udfaf travel or around the world or adventure \u00b7 \ud83d\udeab no Sci-Fi \u2014 ranked by taste match.",
+    "intent_echo": "Understood: \ud83c\udfac like Around the World in 80 Days, Romancing the Stone, The Secret Life of Walter Mitty \u00b7 \ud83c\udfaf travel \u00b7 \ud83d\udeab no Sci-Fi \u00b7 \ud83d\udeab no Fantasy \u00b7 \ud83d\udeab no Documentary \u00b7 \ud83d\udeab no Comedy \u2014 ranked by taste match; only 23 films match every filter (showing all of them).",
     "rec_provenance": [
      [
-      "travel @0.46",
-      "adventure @0.89",
-      "around the world"
-     ],
-     [
-      "travel @0.42",
-      "adventure @1.00"
+      "travel @0.65",
+      "adapted from:book",
+      "based on a book",
+      "romance"
      ],
      [
       "travel @0.58",
-      "adventure @0.99"
-     ],
-     [
-      "travel @0.46",
-      "adventure @0.94"
-     ],
-     [
-      "travel @0.37",
-      "adventure @0.90"
-     ],
-     [
-      "travel @0.62",
-      "adventure @0.95"
-     ],
-     [
-      "travel @0.47",
-      "adventure @0.96"
-     ],
-     [
-      "travel @0.83",
-      "adventure @0.91"
+      "adapted from:book",
+      "based on a book"
      ],
      [
       "travel @0.59",
-      "adventure @0.87"
-     ],
-     [
-      "travel @0.92",
-      "adventure @0.63"
-     ],
-     [
-      "travel @0.38",
-      "adventure @0.93"
-     ],
-     [
-      "travel @0.42",
-      "adventure @0.90"
-     ],
-     [
-      "travel @0.39",
-      "adventure @0.89"
-     ],
-     [
-      "travel @0.44",
-      "adventure @0.94"
-     ],
-     [
-      "travel @0.74",
-      "adventure @0.82"
-     ],
-     [
-      "travel @0.65",
-      "adventure @0.85"
-     ],
-     [
-      "travel @0.43",
-      "adventure @0.83"
+      "adapted from:book",
+      "based on a book",
+      "adventure"
      ],
      [
       "travel @0.66",
-      "adventure @0.83"
+      "adapted from:book",
+      "based on a book",
+      "adventure",
+      "chase"
      ],
      [
-      "travel @0.68",
-      "adventure @0.45"
+      "travel @0.65",
+      "adapted from:book",
+      "based on a book",
+      "adventure"
      ],
      [
       "travel @0.69",
-      "adventure @0.79"
+      "adventure"
      ],
      [
-      "travel @0.67",
-      "adventure @0.60"
-     ],
-     [
-      "travel @0.44",
-      "adventure @0.81"
-     ],
-     [
-      "travel @0.38",
-      "adventure @0.58"
-     ],
-     [
-      "travel @0.38",
-      "adventure @0.49"
-     ],
-     [
-      "travel @0.36",
-      "adventure @0.56"
-     ],
-     [
-      "travel @0.58",
-      "adventure @0.26",
-      "around the world"
-     ],
-     [
-      "travel @0.53",
-      "adventure @0.41"
-     ],
-     [
-      "travel @0.48",
-      "adventure @0.61"
-     ],
-     [
-      "travel @0.47",
-      "adventure @0.41"
-     ],
-     [
-      "travel @0.54",
-      "adventure @0.39"
-     ],
-     [
-      "travel @0.48",
-      "adventure @0.41"
-     ],
-     [
-      "travel @0.39",
-      "adventure @0.44"
+      "travel @0.67"
      ],
      [
       "travel @0.43",
-      "adventure @0.42"
-     ],
-     [
-      "travel @0.56",
-      "adventure @0.45"
-     ],
-     [
-      "travel @0.02",
-      "adventure @0.48",
-      "around the world"
+      "70mm",
+      "adventure",
+      "chase",
+      "fun movie"
      ],
      [
       "travel @0.39",
-      "adventure @0.43"
+      "based on a book",
+      "romance"
+     ],
+     [
+      "travel @0.47",
+      "adventure",
+      "chase",
+      "fun movie"
+     ],
+     [
+      "travel @0.56",
+      "chase"
+     ],
+     [
+      "travel @0.45",
+      "romance"
+     ],
+     [
+      "travel @0.38",
+      "70mm",
+      "based on a book",
+      "adventure"
+     ],
+     [
+      "travel @0.44",
+      "adapted from:book",
+      "based on a book",
+      "adventure",
+      "chase"
+     ],
+     [
+      "travel @0.42",
+      "adapted from:book",
+      "based on a book",
+      "adventure"
+     ],
+     [
+      "travel @0.44",
+      "adapted from:book",
+      "based on a book",
+      "adventure"
+     ],
+     [
+      "travel @0.36",
+      "adventure",
+      "chase"
+     ],
+     [
+      "travel @0.37",
+      "70mm",
+      "adapted from:book",
+      "based on a book"
+     ],
+     [
+      "travel @0.35"
+     ],
+     [
+      "travel @0.40",
+      "chase"
+     ],
+     [
+      "travel @0.42"
+     ],
+     [
+      "travel @0.42",
+      "chase",
+      "romance"
      ],
      [
       "travel @0.35",
-      "adventure @0.40"
-     ],
-     [
-      "travel @0.28",
-      "adventure @0.99"
-     ],
-     [
-      "travel @0.20",
-      "adventure @0.99"
-     ],
-     [
-      "travel @0.06",
-      "adventure @0.98"
-     ],
-     [
-      "travel @0.10",
-      "adventure @0.95"
-     ],
-     [
-      "travel @0.27",
-      "adventure @0.99"
-     ],
-     [
-      "travel @0.14",
-      "adventure @0.98"
-     ],
-     [
-      "travel @0.13",
-      "adventure @0.98"
-     ],
-     [
-      "travel @0.03",
-      "adventure @0.95"
-     ],
-     [
-      "travel @0.16",
-      "adventure @0.99"
-     ],
-     [
-      "travel @0.11",
-      "adventure @0.99"
-     ],
-     [
-      "travel @0.10",
-      "adventure @0.96"
-     ],
-     [
-      "travel @0.19",
-      "adventure @0.99"
-     ],
-     [
-      "travel @0.05",
-      "adventure @0.93"
-     ],
-     [
-      "travel @0.33",
-      "adventure @0.98"
-     ],
-     [
-      "travel @0.17",
-      "adventure @0.94"
-     ],
-     [
-      "travel @0.11",
-      "adventure @0.99"
-     ],
-     [
-      "travel @0.13",
-      "adventure @0.99"
-     ],
-     [
-      "travel @0.17",
-      "adventure @0.98"
-     ],
-     [
-      "travel @0.19",
-      "adventure @0.91"
-     ],
-     [
-      "travel @0.13",
-      "adventure @0.99"
-     ],
-     [
-      "travel @0.19",
-      "adventure @0.93"
-     ],
-     [
-      "travel @0.07",
-      "adventure @0.99"
-     ],
-     [
-      "travel @0.06",
-      "adventure @0.88"
+      "romance"
      ]
     ],
     "relaxation_notice": null,
@@ -28333,25 +27943,29 @@
   },
   "r6c2": {
    "label": "Pandemic",
-   "query": "Pandemic and epidemic outbreak thrillers like Contagion and Outbreak \u2014 medical, realistic, no creature horror or aliens.",
+   "query": "Grounded dramas about a deadly pandemic and epidemic spreading, like Contagion and Outbreak. No creature features, zombies, aliens, comedies, or animation.",
    "report": {
     "extraction": {
      "liked_items": [
       "Contagion (2011)",
       "Outbreak (1995)"
      ],
-     "genome_tags": [
-      "realistic"
-     ],
      "hard_constraints": {
+      "require_genres": [
+       "Drama"
+      ],
       "require_keyword_concepts": [
        "pandemic",
        "epidemic"
       ],
+      "exclude_genres": [
+       "Comedy",
+       "Animation"
+      ],
       "exclude_keyword_concepts": [
-       "creature",
-       "monster",
-       "alien"
+       "zombie",
+       "alien",
+       "creature feature"
       ]
      }
     },
@@ -28394,122 +28008,60 @@
      ],
      "exclude": [
       [
-       "creature",
-       "keyword 'creature'",
-       95
-      ],
-      [
-       "monster",
-       "genome 'monster'",
-       552
+       "zombie",
+       "genome 'zombie' \u222a concept 'zombie'",
+       204
       ],
       [
        "alien",
        "genome 'alien' \u222a concept 'alien invasion'",
        360
+      ],
+      [
+       "creature feature",
+       "keyword 'creature feature'",
+       7
       ]
      ]
     },
-    "anchors": [
-     "Band of Brothers (2001)"
-    ],
+    "anchors": [],
     "anchor_weight": 0.5,
     "mood_tags": [],
-    "mode15_tags": [],
+    "mode15_tags": [
+     "virus",
+     "ensemble cast",
+     "natural disaster",
+     "end of the world",
+     "tense",
+     "doctors",
+     "tom clancy",
+     "military"
+    ],
     "ranked_by_similarity": false,
     "unresolved_tags": [],
     "unknown_genres": [],
     "seed_count": 2,
     "fallback": false,
-    "filtered": 9346,
+    "filtered": 9365,
     "relaxed_constraints": [],
     "recs": [
      [
-      "28 Days Later (2002)",
+      "Perfect Sense (2011)",
       [
-       "Action",
-       "Horror",
+       "Drama",
+       "Romance",
        "Sci-Fi"
       ],
-      "2002",
-      10.46573543548584
+      "2011",
+      10.611772537231445
      ],
      [
-      "Bo Burnham: Inside (2021)",
-      [
-       "Comedy"
-      ],
-      "2021",
-      10.447354316711426
-     ],
-     [
-      "Longtime Companion (1990)",
+      "And the Band Played On (1993)",
       [
        "Drama"
       ],
-      "1990",
-      10.412217140197754
-     ],
-     [
-      "It Comes at Night (2017)",
-      [
-       "Horror",
-       "Mystery",
-       "Thriller"
-      ],
-      "2017",
-      10.347217559814453
-     ],
-     [
-      "World War Z (2013)",
-      [
-       "Action",
-       "Drama",
-       "Horror",
-       "IMAX"
-      ],
-      "2013",
-      10.332157135009766
-     ],
-     [
-      "Carriers (2009)",
-      [
-       "Drama",
-       "Horror",
-       "Thriller"
-      ],
-      "2009",
-      10.322951316833496
-     ],
-     [
-      "Black Death (2010)",
-      [
-       "Adventure",
-       "Drama",
-       "Horror",
-       "Mystery"
-      ],
-      "2010",
-      10.311026573181152
-     ],
-     [
-      "Twelve Monkeys (a.k.a. 12 Monkeys) (1995)",
-      [
-       "Mystery",
-       "Sci-Fi",
-       "Thriller"
-      ],
-      "1995",
-      10.274049758911133
-     ],
-     [
-      "Cargo (2017)",
-      [
-       "Drama",
-       "Horror"
-      ],
-      "2017",
-      10.266797065734863
+      "1993",
+      10.518775939941406
      ],
      [
       "Blindness (2008)",
@@ -28520,38 +28072,26 @@
        "Thriller"
       ],
       "2008",
-      10.236851692199707
+      10.592554092407227
      ],
      [
-      "Omega Man, The (1971)",
+      "Longtime Companion (1990)",
       [
-       "Action",
+       "Drama"
+      ],
+      "1990",
+      10.491629600524902
+     ],
+     [
+      "Black Death (2010)",
+      [
+       "Adventure",
        "Drama",
-       "Sci-Fi",
-       "Thriller"
+       "Horror",
+       "Mystery"
       ],
-      "1971",
-      10.23679256439209
-     ],
-     [
-      "Exam (2009)",
-      [
-       "Mystery",
-       "Thriller"
-      ],
-      "2009",
-      10.222603797912598
-     ],
-     [
-      "Doomsday (2008)",
-      [
-       "Action",
-       "Drama",
-       "Sci-Fi",
-       "Thriller"
-      ],
-      "2008",
-      10.220918655395508
+      "2010",
+      10.487198829650879
      ],
      [
       "Painted Veil, The (2006)",
@@ -28560,77 +28100,15 @@
        "Romance"
       ],
       "2006",
-      10.208732604980469
+      10.4005765914917
      ],
      [
-      "And the Band Played On (1993)",
+      "Jezebel (1938)",
       [
        "Drama"
       ],
-      "1993",
-      10.199377059936523
-     ],
-     [
-      "Cowboy Bebop: The Movie (Cowboy Bebop: Tengoku no Tobira) (2001)",
-      [
-       "Action",
-       "Animation",
-       "Sci-Fi",
-       "Thriller"
-      ],
-      "2001",
-      10.178680419921875
-     ],
-     [
-      "Perfect Sense (2011)",
-      [
-       "Drama",
-       "Romance",
-       "Sci-Fi"
-      ],
-      "2011",
-      10.16361141204834
-     ],
-     [
-      "Crazies, The (a.k.a. Code Name: Trixie) (1973)",
-      [
-       "Action",
-       "Drama",
-       "Horror",
-       "Sci-Fi",
-       "Thriller"
-      ],
-      "1973",
-      10.130694389343262
-     ],
-     [
-      "Pearl (2022)",
-      [
-       "Horror",
-       "Mystery",
-       "Thriller"
-      ],
-      "2022",
-      10.121886253356934
-     ],
-     [
-      "Ralph Breaks the Internet (2018)",
-      [
-       "Animation",
-       "Children"
-      ],
-      "2018",
-      10.09811782836914
-     ],
-     [
-      "Transporter 2 (2005)",
-      [
-       "Action",
-       "Crime",
-       "Thriller"
-      ],
-      "2005",
-      10.068961143493652
+      "1938",
+      10.242402076721191
      ],
      [
       "Death in Venice (Morte a Venezia) (1971)",
@@ -28639,180 +28117,68 @@
        "Romance"
       ],
       "1971",
-      10.058937072753906
-     ],
-     [
-      "Mission: Impossible II (2000)",
-      [
-       "Action",
-       "Adventure",
-       "Thriller"
-      ],
-      "2000",
-      10.043181419372559
-     ],
-     [
-      "Osmosis Jones (2001)",
-      [
-       "Action",
-       "Animation",
-       "Comedy",
-       "Crime",
-       "Drama",
-       "Romance",
-       "Thriller"
-      ],
-      "2001",
-      9.993997573852539
-     ],
-     [
-      "Rabid (1977)",
-      [
-       "Horror",
-       "Thriller"
-      ],
-      "1977",
-      9.988271713256836
-     ],
-     [
-      "Cabin Fever (2002)",
-      [
-       "Horror",
-       "Thriller"
-      ],
-      "2002",
-      9.977346420288086
-     ],
-     [
-      "Jezebel (1938)",
-      [
-       "Drama"
-      ],
-      "1938",
-      9.950581550598145
+      10.359257698059082
      ]
     ],
     "out_of_domain": false,
     "intent_chips": [
      "\ud83c\udfac like Contagion, Outbreak",
      "\ud83c\udfaf pandemic or epidemic",
-     "\ud83d\udeab no creature",
-     "\ud83d\udeab no monster",
+     "\ud83d\udeab no zombie",
      "\ud83d\udeab no alien",
-     "\u2728 realistic"
+     "\ud83d\udeab no creature feature",
+     "\ud83c\udfad Drama",
+     "\ud83d\udeab no Comedy",
+     "\ud83d\udeab no Animation"
     ],
-    "intent_echo": "Understood: \ud83c\udfac like Contagion, Outbreak \u00b7 \ud83c\udfaf pandemic or epidemic \u00b7 \ud83d\udeab no creature \u00b7 \ud83d\udeab no monster \u00b7 \ud83d\udeab no alien \u00b7 \u2728 realistic \u2014 ranked by taste match; only 27 films match every filter (showing all of them).",
+    "intent_echo": "Understood: \ud83c\udfac like Contagion, Outbreak \u00b7 \ud83c\udfaf pandemic or epidemic \u00b7 \ud83d\udeab no zombie \u00b7 \ud83d\udeab no alien \u00b7 \ud83d\udeab no creature feature \u00b7 \ud83c\udfad Drama \u00b7 \ud83d\udeab no Comedy \u00b7 \ud83d\udeab no Animation \u2014 ranked by taste match; only 8 films match every filter (showing all of them).",
     "rec_provenance": [
      [
       "pandemic",
       "epidemic",
-      "realistic"
+      "virus",
+      "end of the world",
+      "Drama"
      ],
      [
       "pandemic",
       "epidemic",
-      "realistic"
+      "virus",
+      "doctors",
+      "Drama"
      ],
      [
       "pandemic",
       "epidemic",
-      "realistic"
+      "virus",
+      "natural disaster",
+      "end of the world"
      ],
      [
       "pandemic",
-      "epidemic"
+      "epidemic",
+      "Drama"
      ],
      [
       "pandemic",
-      "epidemic"
+      "epidemic",
+      "Drama"
      ],
      [
       "pandemic",
-      "epidemic"
+      "epidemic",
+      "doctors",
+      "Drama"
      ],
      [
       "pandemic",
-      "epidemic"
+      "epidemic",
+      "Drama"
      ],
      [
       "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
-     ],
-     [
-      "pandemic",
-      "epidemic"
+      "epidemic",
+      "Drama"
      ]
     ],
     "relaxation_notice": null,
@@ -33145,22 +32511,23 @@
   },
   "r7c1": {
    "label": "70s paranoia",
-   "query": "1970s-80s paranoid thrillers about government conspiracy, like All the President's Men and Three Days of the Condor",
+   "query": "Paranoid 1970s and 80s conspiracy thrillers like All the President's Men and Three Days of the Condor.",
    "report": {
     "extraction": {
      "liked_items": [
-      "All the President's Men",
-      "Three Days of the Condor"
+      "All the President's Men (1976)",
+      "Three Days of the Condor (1975)"
+     ],
+     "liked_genres": [
+      "Thriller"
      ],
      "genome_tags": [
-      "paranoid"
+      "paranoid",
+      "conspiracy",
+      "noir"
      ],
      "hard_constraints": {
-      "require_genres": [
-       "Thriller"
-      ],
       "require_keyword_concepts": [
-       "government",
        "conspiracy"
       ],
       "year_min": 1970,
@@ -33170,12 +32537,12 @@
     "resolution": {
      "liked": [
       [
-       "All the President's Men",
        "All the President's Men (1976)",
-       "normalized"
+       "All the President's Men (1976)",
+       "exact"
       ],
       [
-       "Three Days of the Condor",
+       "Three Days of the Condor (1975)",
        "Three Days of the Condor (3 Days of the Condor) (1975)",
        "normalized"
       ]
@@ -33194,11 +32561,6 @@
     "topic_resolution": {
      "require": [
       [
-       "government",
-       "keyword 'government'",
-       35
-      ],
-      [
        "conspiracy",
        "genome 'conspiracy'",
        1255
@@ -33207,7 +32569,9 @@
      "exclude": []
     },
     "anchors": [
-     "Conversation, The (1974)"
+     "Conversation, The (1974)",
+     "Parallax View, The (1974)",
+     "Out of the Past (1947)"
     ],
     "anchor_weight": 0.5,
     "mood_tags": [],
@@ -33217,36 +32581,16 @@
     "unknown_genres": [],
     "seed_count": 2,
     "fallback": false,
-    "filtered": 9279,
+    "filtered": 9197,
     "relaxed_constraints": [],
     "recs": [
-     [
-      "Marathon Man (1976)",
-      [
-       "Crime",
-       "Drama",
-       "Thriller"
-      ],
-      "1976",
-      12.993779182434082
-     ],
      [
       "Parallax View, The (1974)",
       [
        "Thriller"
       ],
       "1974",
-      3.1949026584625244
-     ],
-     [
-      "Suspect (1987)",
-      [
-       "Crime",
-       "Drama",
-       "Thriller"
-      ],
-      "1987",
-      12.083083152770996
+      3.1903064250946045
      ],
      [
       "Blow Out (1981)",
@@ -33255,34 +32599,17 @@
        "Thriller"
       ],
       "1981",
-      2.9720687866210938
+      3.086812734603882
      ],
      [
-      "Coma (1978)",
-      [
-       "Thriller"
-      ],
-      "1978",
-      2.782503366470337
-     ],
-     [
-      "WarGames (1983)",
-      [
-       "Drama",
-       "Sci-Fi",
-       "Thriller"
-      ],
-      "1983",
-      11.420248031616211
-     ],
-     [
-      "Day of the Jackal, The (1973)",
+      "Marathon Man (1976)",
       [
        "Crime",
+       "Drama",
        "Thriller"
       ],
-      "1973",
-      2.864217519760132
+      "1976",
+      2.961721181869507
      ],
      [
       "China Syndrome, The (1979)",
@@ -33291,7 +32618,43 @@
        "Thriller"
       ],
       "1979",
-      2.9682071208953857
+      2.8759753704071045
+     ],
+     [
+      "Package, The (1989)",
+      [
+       "Action",
+       "Thriller"
+      ],
+      "1989",
+      2.8627407550811768
+     ],
+     [
+      "No Way Out (1987)",
+      [
+       "Drama",
+       "Mystery",
+       "Thriller"
+      ],
+      "1987",
+      2.8483073711395264
+     ],
+     [
+      "Coma (1978)",
+      [
+       "Thriller"
+      ],
+      "1978",
+      2.8134984970092773
+     ],
+     [
+      "Day of the Jackal, The (1973)",
+      [
+       "Crime",
+       "Thriller"
+      ],
+      "1973",
+      2.801194667816162
      ],
      [
       "Odessa File, The (1974)",
@@ -33299,18 +32662,7 @@
        "Thriller"
       ],
       "1974",
-      2.7710041999816895
-     ],
-     [
-      "Chinatown (1974)",
-      [
-       "Crime",
-       "Film-Noir",
-       "Mystery",
-       "Thriller"
-      ],
-      "1974",
-      2.7589271068573
+      2.783764600753784
      ],
      [
       "Tenant, The (Locataire, Le) (1976)",
@@ -33321,7 +32673,16 @@
        "Thriller"
       ],
       "1976",
-      2.774376153945923
+      2.7361490726470947
+     ],
+     [
+      "Foul Play (1978)",
+      [
+       "Comedy",
+       "Thriller"
+      ],
+      "1978",
+      2.7168877124786377
      ],
      [
       "Boys from Brazil, The (1978)",
@@ -33331,36 +32692,35 @@
        "Thriller"
       ],
       "1978",
-      2.7019853591918945
+      2.6830554008483887
      ],
      [
-      "No Way Out (1987)",
+      "Conversation, The (1974)",
       [
        "Drama",
-       "Mystery",
+       "Mystery"
+      ],
+      "1974",
+      2.6770806312561035
+     ],
+     [
+      "Fourth Protocol, The (1987)",
+      [
        "Thriller"
       ],
       "1987",
-      2.716718912124634
+      2.6737372875213623
      ],
      [
-      "French Connection, The (1971)",
+      "Chinatown (1974)",
       [
-       "Action",
        "Crime",
+       "Film-Noir",
+       "Mystery",
        "Thriller"
       ],
-      "1971",
-      2.6297667026519775
-     ],
-     [
-      "Package, The (1989)",
-      [
-       "Action",
-       "Thriller"
-      ],
-      "1989",
-      2.6004385948181152
+      "1974",
+      2.658951759338379
      ],
      [
       "Capricorn One (1978)",
@@ -33370,34 +32730,17 @@
        "Thriller"
       ],
       "1978",
-      2.7124252319335938
+      2.6580066680908203
      ],
      [
-      "Fourth Protocol, The (1987)",
+      "F/X (1986)",
       [
-       "Thriller"
-      ],
-      "1987",
-      2.5132200717926025
-     ],
-     [
-      "The Falcon and the Snowman (1985)",
-      [
+       "Action",
        "Crime",
-       "Drama",
        "Thriller"
       ],
-      "1985",
-      2.600285053253174
-     ],
-     [
-      "Foul Play (1978)",
-      [
-       "Comedy",
-       "Thriller"
-      ],
-      "1978",
-      2.510920524597168
+      "1986",
+      2.6322109699249268
      ],
      [
       "Eye of the Needle (1981)",
@@ -33405,7 +32748,7 @@
        "Thriller"
       ],
       "1981",
-      2.457197904586792
+      2.6130011081695557
      ],
      [
       "Looker (1981)",
@@ -33416,17 +32759,7 @@
        "Thriller"
       ],
       "1981",
-      2.4678661823272705
-     ],
-     [
-      "F/X (1986)",
-      [
-       "Action",
-       "Crime",
-       "Thriller"
-      ],
-      "1986",
-      2.4322640895843506
+      2.605027437210083
      ],
      [
       "Black Sunday (1977)",
@@ -33436,7 +32769,84 @@
        "Thriller"
       ],
       "1977",
-      2.429187536239624
+      2.5322186946868896
+     ],
+     [
+      "French Connection, The (1971)",
+      [
+       "Action",
+       "Crime",
+       "Thriller"
+      ],
+      "1971",
+      2.5289852619171143
+     ],
+     [
+      "Klute (1971)",
+      [
+       "Drama",
+       "Mystery"
+      ],
+      "1971",
+      2.5146713256835938
+     ],
+     [
+      "The Falcon and the Snowman (1985)",
+      [
+       "Crime",
+       "Drama",
+       "Thriller"
+      ],
+      "1985",
+      2.495769500732422
+     ],
+     [
+      "Frantic (1988)",
+      [
+       "Crime",
+       "Mystery",
+       "Thriller"
+      ],
+      "1988",
+      2.388880968093872
+     ],
+     [
+      "They Live (1988)",
+      [
+       "Action",
+       "Sci-Fi",
+       "Thriller"
+      ],
+      "1988",
+      2.3495941162109375
+     ],
+     [
+      "Betrayed (1988)",
+      [
+       "Drama",
+       "Thriller"
+      ],
+      "1988",
+      2.368784189224243
+     ],
+     [
+      "Night Moves (1975)",
+      [
+       "Crime",
+       "Thriller"
+      ],
+      "1975",
+      2.3384532928466797
+     ],
+     [
+      "Suspect (1987)",
+      [
+       "Crime",
+       "Drama",
+       "Thriller"
+      ],
+      "1987",
+      2.3609137535095215
      ],
      [
       "Videodrome (1983)",
@@ -33447,39 +32857,27 @@
        "Thriller"
       ],
       "1983",
-      2.3729050159454346
+      2.3320674896240234
      ],
      [
-      "They Live (1988)",
+      "Outland (1981)",
       [
        "Action",
        "Sci-Fi",
        "Thriller"
       ],
-      "1988",
-      2.333564519882202
+      "1981",
+      2.311063528060913
      ],
      [
-      "Invasion of the Body Snatchers (1978)",
+      "Charley Varrick (1973)",
       [
-       "Horror",
-       "Mystery",
-       "Sci-Fi",
-       "Thriller"
-      ],
-      "1978",
-      2.330287456512451
-     ],
-     [
-      "Soylent Green (1973)",
-      [
+       "Crime",
        "Drama",
-       "Mystery",
-       "Sci-Fi",
        "Thriller"
       ],
       "1973",
-      2.324244499206543
+      2.322180986404419
      ],
      [
       "House of Games (1987)",
@@ -33490,27 +32888,7 @@
        "Thriller"
       ],
       "1987",
-      2.2597391605377197
-     ],
-     [
-      "Frantic (1988)",
-      [
-       "Crime",
-       "Mystery",
-       "Thriller"
-      ],
-      "1988",
-      2.2551047801971436
-     ],
-     [
-      "Outland (1981)",
-      [
-       "Action",
-       "Sci-Fi",
-       "Thriller"
-      ],
-      "1981",
-      2.2522590160369873
+      2.299177885055542
      ],
      [
       "Gorky Park (1983)",
@@ -33520,7 +32898,174 @@
        "Thriller"
       ],
       "1983",
-      2.236663579940796
+      2.302706003189087
+     ],
+     [
+      "Dead Men Don't Wear Plaid (1982)",
+      [
+       "Comedy",
+       "Crime",
+       "Thriller"
+      ],
+      "1982",
+      2.2548882961273193
+     ],
+     [
+      "Invasion of the Body Snatchers (1978)",
+      [
+       "Horror",
+       "Mystery",
+       "Sci-Fi",
+       "Thriller"
+      ],
+      "1978",
+      2.1985056400299072
+     ],
+     [
+      "Soylent Green (1973)",
+      [
+       "Drama",
+       "Mystery",
+       "Sci-Fi",
+       "Thriller"
+      ],
+      "1973",
+      2.2802822589874268
+     ],
+     [
+      "In-Laws, The (1979)",
+      [
+       "Action",
+       "Comedy"
+      ],
+      "1979",
+      2.191281318664551
+     ],
+     [
+      "Missing (1982)",
+      [
+       "Drama",
+       "Mystery",
+       "Thriller"
+      ],
+      "1982",
+      2.2383642196655273
+     ],
+     [
+      "Stepford Wives, The (1975)",
+      [
+       "Mystery",
+       "Sci-Fi",
+       "Thriller"
+      ],
+      "1975",
+      2.148500919342041
+     ],
+     [
+      "Dreamscape (1984)",
+      [
+       "Horror",
+       "Sci-Fi",
+       "Thriller"
+      ],
+      "1984",
+      2.1474359035491943
+     ],
+     [
+      "Blue Thunder (1983)",
+      [
+       "Action",
+       "Crime",
+       "Drama"
+      ],
+      "1983",
+      2.2301933765411377
+     ],
+     [
+      "Obsession (1976)",
+      [
+       "Mystery",
+       "Thriller"
+      ],
+      "1976",
+      2.131631374359131
+     ],
+     [
+      "Eiger Sanction, The (1975)",
+      [
+       "Action",
+       "Adventure",
+       "Drama",
+       "Thriller"
+      ],
+      "1975",
+      2.187901496887207
+     ],
+     [
+      "Octopussy (1983)",
+      [
+       "Action",
+       "Adventure",
+       "Thriller"
+      ],
+      "1983",
+      2.0985021591186523
+     ],
+     [
+      "Body Heat (1981)",
+      [
+       "Crime",
+       "Thriller"
+      ],
+      "1981",
+      2.0502705574035645
+     ],
+     [
+      "Eight Men Out (1988)",
+      [
+       "Drama"
+      ],
+      "1988",
+      2.187493324279785
+     ],
+     [
+      "Murder on the Orient Express (1974)",
+      [
+       "Crime",
+       "Mystery",
+       "Thriller"
+      ],
+      "1974",
+      2.0179004669189453
+     ],
+     [
+      "Tucker: The Man and His Dream (1988)",
+      [
+       "Drama"
+      ],
+      "1988",
+      2.176647186279297
+     ],
+     [
+      "Scanners (1981)",
+      [
+       "Horror",
+       "Sci-Fi",
+       "Thriller"
+      ],
+      "1981",
+      1.9935691356658936
+     ],
+     [
+      "Angel Heart (1987)",
+      [
+       "Film-Noir",
+       "Horror",
+       "Mystery",
+       "Thriller"
+      ],
+      "1987",
+      1.9358980655670166
      ],
      [
       "Diva (1981)",
@@ -33532,84 +33077,16 @@
        "Thriller"
       ],
       "1981",
-      2.2357051372528076
+      2.1633310317993164
      ],
      [
-      "Missing (1982)",
-      [
-       "Drama",
-       "Mystery",
-       "Thriller"
-      ],
-      "1982",
-      2.2354323863983154
-     ],
-     [
-      "Stepford Wives, The (1975)",
+      "Andromeda Strain, The (1971)",
       [
        "Mystery",
-       "Sci-Fi",
-       "Thriller"
+       "Sci-Fi"
       ],
-      "1975",
-      2.211399793624878
-     ],
-     [
-      "Night Moves (1975)",
-      [
-       "Crime",
-       "Thriller"
-      ],
-      "1975",
-      2.153557538986206
-     ],
-     [
-      "Salvador (1986)",
-      [
-       "Drama",
-       "Thriller",
-       "War"
-      ],
-      "1986",
-      2.188913345336914
-     ],
-     [
-      "After Hours (1985)",
-      [
-       "Comedy",
-       "Thriller"
-      ],
-      "1985",
-      2.0017566680908203
-     ],
-     [
-      "Charley Varrick (1973)",
-      [
-       "Crime",
-       "Drama",
-       "Thriller"
-      ],
-      "1973",
-      2.172905921936035
-     ],
-     [
-      "Body Heat (1981)",
-      [
-       "Crime",
-       "Thriller"
-      ],
-      "1981",
-      1.9858531951904297
-     ],
-     [
-      "Dreamscape (1984)",
-      [
-       "Horror",
-       "Sci-Fi",
-       "Thriller"
-      ],
-      "1984",
-      1.9699223041534424
+      "1971",
+      1.9246530532836914
      ],
      [
       "Mississippi Burning (1988)",
@@ -33619,7 +33096,62 @@
        "Thriller"
       ],
       "1988",
-      2.1601810455322266
+      2.1054556369781494
+     ],
+     [
+      "After Hours (1985)",
+      [
+       "Comedy",
+       "Thriller"
+      ],
+      "1985",
+      1.8968150615692139
+     ],
+     [
+      "D.O.A. (1988)",
+      [
+       "Film-Noir",
+       "Mystery",
+       "Thriller"
+      ],
+      "1988",
+      1.8605079650878906
+     ],
+     [
+      "Salvador (1986)",
+      [
+       "Drama",
+       "Thriller",
+       "War"
+      ],
+      "1986",
+      2.099564552307129
+     ],
+     [
+      "Cercle Rouge, Le (Red Circle, The) (1970)",
+      [
+       "Crime",
+       "Thriller"
+      ],
+      "1970",
+      1.8545989990234375
+     ],
+     [
+      "Music Box (1989)",
+      [
+       "Drama"
+      ],
+      "1989",
+      2.064490795135498
+     ],
+     [
+      "Body Double (1984)",
+      [
+       "Mystery",
+       "Thriller"
+      ],
+      "1984",
+      1.8414318561553955
      ],
      [
       "Duel (1971)",
@@ -33629,464 +33161,235 @@
        "Thriller"
       ],
       "1971",
-      1.9676406383514404
-     ],
-     [
-      "Betrayed (1988)",
-      [
-       "Drama",
-       "Thriller"
-      ],
-      "1988",
-      2.15259051322937
-     ],
-     [
-      "Octopussy (1983)",
-      [
-       "Action",
-       "Adventure",
-       "Thriller"
-      ],
-      "1983",
-      1.9657940864562988
-     ],
-     [
-      "Dead Men Don't Wear Plaid (1982)",
-      [
-       "Comedy",
-       "Crime",
-       "Thriller"
-      ],
-      "1982",
-      1.9657657146453857
-     ],
-     [
-      "Eiger Sanction, The (1975)",
-      [
-       "Action",
-       "Adventure",
-       "Drama",
-       "Thriller"
-      ],
-      "1975",
-      2.06259822845459
-     ],
-     [
-      "Scanners (1981)",
-      [
-       "Horror",
-       "Sci-Fi",
-       "Thriller"
-      ],
-      "1981",
-      1.9412081241607666
-     ],
-     [
-      "Name of the Rose, The (Name der Rose, Der) (1986)",
-      [
-       "Crime",
-       "Drama",
-       "Mystery",
-       "Thriller"
-      ],
-      "1986",
-      2.003251314163208
-     ],
-     [
-      "Murder on the Orient Express (1974)",
-      [
-       "Crime",
-       "Mystery",
-       "Thriller"
-      ],
-      "1974",
-      1.9298975467681885
-     ],
-     [
-      "Obsession (1976)",
-      [
-       "Mystery",
-       "Thriller"
-      ],
-      "1976",
-      1.8999500274658203
-     ],
-     [
-      "Magnum Force (1973)",
-      [
-       "Action",
-       "Crime",
-       "Drama",
-       "Thriller"
-      ],
-      "1973",
-      1.9164762496948242
-     ],
-     [
-      "Cercle Rouge, Le (Red Circle, The) (1970)",
-      [
-       "Crime",
-       "Thriller"
-      ],
-      "1970",
-      1.8194870948791504
-     ],
-     [
-      "Wicker Man, The (1973)",
-      [
-       "Drama",
-       "Horror",
-       "Mystery",
-       "Thriller"
-      ],
-      "1973",
-      1.8305528163909912
-     ],
-     [
-      "Body Double (1984)",
-      [
-       "Mystery",
-       "Thriller"
-      ],
-      "1984",
-      1.7734355926513672
-     ],
-     [
-      "Angel Heart (1987)",
-      [
-       "Film-Noir",
-       "Horror",
-       "Mystery",
-       "Thriller"
-      ],
-      "1987",
-      1.7619390487670898
-     ],
-     [
-      "Vanishing, The (Spoorloos) (1988)",
-      [
-       "Drama",
-       "Thriller"
-      ],
-      "1988",
-      1.8271656036376953
-     ],
-     [
-      "Jagged Edge (1985)",
-      [
-       "Crime",
-       "Romance",
-       "Thriller"
-      ],
-      "1985",
-      1.6390562057495117
-     ],
-     [
-      "Witness (1985)",
-      [
-       "Drama",
-       "Romance",
-       "Thriller"
-      ],
-      "1985",
-      1.8250219821929932
-     ],
-     [
-      "Dead Calm (1989)",
-      [
-       "Thriller"
-      ],
-      "1989",
-      1.5812923908233643
-     ],
-     [
-      "Sorcerer (1977)",
-      [
-       "Action",
-       "Thriller"
-      ],
-      "1977",
-      1.565232276916504
+      1.7776248455047607
      ]
     ],
     "out_of_domain": false,
     "intent_chips": [
      "\ud83c\udfac like All the President's Men, Three Days of the Condor",
-     "\ud83c\udfaf government or conspiracy",
-     "\u2728 paranoid",
-     "\ud83c\udfad Thriller",
+     "\ud83c\udfaf conspiracy",
+     "\u2728 paranoid, conspiracy, noir",
+     "\ud83c\udfad leaning Thriller",
      "\ud83d\udcc5 1970\u20131989"
     ],
-    "intent_echo": "Understood: \ud83c\udfac like All the President's Men, Three Days of the Condor \u00b7 \ud83c\udfaf government or conspiracy \u00b7 \u2728 paranoid \u00b7 \ud83c\udfad Thriller \u00b7 \ud83d\udcc5 1970\u20131989 \u2014 ranked by taste match.",
+    "intent_echo": "Understood: \ud83c\udfac like All the President's Men, Three Days of the Condor \u00b7 \ud83c\udfaf conspiracy \u00b7 \u2728 paranoid, conspiracy, noir \u00b7 \ud83c\udfad leaning Thriller \u00b7 \ud83d\udcc5 1970\u20131989 \u2014 ranked by taste match.",
     "rec_provenance": [
-     [
-      "conspiracy @0.98",
-      "government",
-      "paranoid",
-      "Thriller"
-     ],
      [
       "conspiracy @1.00",
       "paranoid",
-      "Thriller"
+      "noir"
+     ],
+     [
+      "conspiracy @0.99",
+      "paranoid"
+     ],
+     [
+      "conspiracy @0.98",
+      "paranoid"
+     ],
+     [
+      "conspiracy @0.98",
+      "paranoid"
+     ],
+     [
+      "conspiracy @0.99"
+     ],
+     [
+      "conspiracy @0.97"
+     ],
+     [
+      "conspiracy @0.99",
+      "paranoid"
+     ],
+     [
+      "conspiracy @0.89",
+      "paranoid"
+     ],
+     [
+      "conspiracy @0.96",
+      "paranoid"
+     ],
+     [
+      "conspiracy @0.90",
+      "paranoid"
+     ],
+     [
+      "conspiracy @0.96"
+     ],
+     [
+      "conspiracy @0.93"
+     ],
+     [
+      "conspiracy @0.96",
+      "paranoid"
+     ],
+     [
+      "conspiracy @0.91"
      ],
      [
       "conspiracy @0.87",
-      "government",
-      "Thriller"
+      "paranoid",
+      "noir"
      ],
      [
       "conspiracy @0.99",
-      "paranoid",
-      "Thriller"
+      "paranoid"
      ],
      [
-      "conspiracy @0.99",
-      "paranoid",
-      "Thriller"
+      "conspiracy @0.93"
      ],
      [
-      "conspiracy @0.40",
-      "government",
-      "Thriller"
+      "conspiracy @0.83"
+     ],
+     [
+      "conspiracy @0.98"
+     ],
+     [
+      "conspiracy @0.82",
+      "paranoid"
+     ],
+     [
+      "conspiracy @0.84"
      ],
      [
       "conspiracy @0.89",
       "paranoid",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.98",
-      "paranoid",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.96",
-      "paranoid",
-      "Thriller"
+      "noir"
      ],
      [
       "conspiracy @0.87",
-      "paranoid",
-      "Thriller"
+      "paranoid"
      ],
      [
-      "conspiracy @0.90",
-      "paranoid",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.93",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.97",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.84",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.99",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.99",
-      "paranoid",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.91",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.87",
-      "paranoid",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.96",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.83",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.98",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.93",
-      "Thriller"
+      "conspiracy @0.74"
      ],
      [
       "conspiracy @0.82",
-      "paranoid",
-      "Thriller"
+      "paranoid"
      ],
      [
-      "conspiracy @0.81",
-      "paranoid",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.82",
-      "paranoid",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.73",
-      "paranoid",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.85",
-      "paranoid",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.63",
-      "paranoid",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.74",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.81",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.68",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.80",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.77",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.83",
-      "Thriller"
+      "conspiracy @0.83"
      ],
      [
       "conspiracy @0.59",
       "paranoid",
-      "Thriller"
+      "noir"
      ],
      [
-      "conspiracy @0.71",
-      "Thriller"
+      "conspiracy @0.87"
      ],
      [
-      "conspiracy @0.50",
-      "paranoid",
-      "Thriller"
+      "conspiracy @0.81",
+      "paranoid"
+     ],
+     [
+      "conspiracy @0.81"
      ],
      [
       "conspiracy @0.63",
       "paranoid",
-      "Thriller"
+      "noir"
+     ],
+     [
+      "conspiracy @0.63",
+      "paranoid",
+      "noir"
+     ],
+     [
+      "conspiracy @0.68"
+     ],
+     [
+      "conspiracy @0.70",
+      "noir"
+     ],
+     [
+      "conspiracy @0.73",
+      "paranoid"
+     ],
+     [
+      "conspiracy @0.85",
+      "paranoid"
+     ],
+     [
+      "conspiracy @0.83"
+     ],
+     [
+      "conspiracy @0.77"
+     ],
+     [
+      "conspiracy @0.83"
+     ],
+     [
+      "conspiracy @0.82"
+     ],
+     [
+      "conspiracy @0.88"
+     ],
+     [
+      "conspiracy @0.63"
+     ],
+     [
+      "conspiracy @0.71"
+     ],
+     [
+      "conspiracy @0.72"
      ],
      [
       "conspiracy @0.52",
       "paranoid",
-      "Thriller"
+      "noir"
      ],
      [
-      "conspiracy @0.82",
-      "Thriller"
+      "conspiracy @0.88"
      ],
      [
-      "conspiracy @0.73",
-      "Thriller"
+      "conspiracy @0.61"
      ],
      [
-      "conspiracy @0.42",
-      "paranoid",
-      "Thriller"
+      "conspiracy @0.90"
      ],
      [
-      "conspiracy @0.83",
-      "Thriller"
+      "conspiracy @0.68"
      ],
      [
-      "conspiracy @0.72",
-      "Thriller"
+      "conspiracy @0.49",
+      "noir"
      ],
      [
-      "conspiracy @0.70",
-      "Thriller"
+      "conspiracy @0.80"
      ],
      [
-      "conspiracy @0.71",
-      "Thriller"
+      "conspiracy @0.77",
+      "paranoid"
      ],
      [
-      "conspiracy @0.68",
-      "Thriller"
+      "conspiracy @0.73"
      ],
      [
-      "conspiracy @0.70",
-      "Thriller"
+      "conspiracy @0.50",
+      "paranoid"
      ],
      [
-      "conspiracy @0.61",
-      "Thriller"
+      "conspiracy @0.50"
      ],
      [
-      "conspiracy @0.63",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.59",
-      "Thriller"
+      "conspiracy @0.71"
      ],
      [
       "conspiracy @0.46",
       "paranoid",
-      "Thriller"
+      "noir"
      ],
      [
-      "conspiracy @0.59",
-      "Thriller"
+      "conspiracy @0.87"
      ],
      [
       "conspiracy @0.44",
-      "paranoid",
-      "Thriller"
+      "paranoid"
      ],
      [
-      "conspiracy @0.49",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.48",
-      "paranoid",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.51",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.59",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.49",
-      "Thriller"
-     ],
-     [
-      "conspiracy @0.39",
-      "paranoid",
-      "Thriller"
+      "conspiracy @0.42",
+      "paranoid"
      ]
     ],
     "relaxation_notice": null,
@@ -34295,11 +33598,12 @@
   },
   "r7c3": {
    "label": "Disco era",
-   "query": "The disco nightclub scene and dance-floor culture, like Saturday Night Fever.",
+   "query": "Movies about the disco scene and nightclub nightlife, like Saturday Night Fever and The Last Days of Disco.",
    "report": {
     "extraction": {
      "liked_items": [
-      "Saturday Night Fever (1977)"
+      "Saturday Night Fever (1977)",
+      "The Last Days of Disco (1998)"
      ],
      "hard_constraints": {
       "require_keyword_concepts": [
@@ -34314,6 +33618,11 @@
        "Saturday Night Fever (1977)",
        "Saturday Night Fever (1977)",
        "exact"
+      ],
+      [
+       "The Last Days of Disco (1998)",
+       "Last Days of Disco, The (1998)",
+       "normalized"
       ]
      ],
      "disliked": []
@@ -34345,13 +33654,22 @@
     "anchors": [],
     "anchor_weight": 0.5,
     "mood_tags": [],
-    "mode15_tags": [],
-    "ranked_by_similarity": true,
+    "mode15_tags": [
+     "dancing",
+     "dance",
+     "music",
+     "coming of age",
+     "musical",
+     "new york",
+     "dialogue driven",
+     "dialogue"
+    ],
+    "ranked_by_similarity": false,
     "unresolved_tags": [],
     "unknown_genres": [],
-    "seed_count": 1,
+    "seed_count": 2,
     "fallback": false,
-    "filtered": 6094,
+    "filtered": 6133,
     "relaxed_constraints": [],
     "recs": [
      [
@@ -34362,16 +33680,7 @@
        "Musical"
       ],
       "1983",
-      10.443978309631348
-     ],
-     [
-      "Last Days of Disco, The (1998)",
-      [
-       "Comedy",
-       "Drama"
-      ],
-      "1998",
-      10.409111022949219
+      10.468684196472168
      ],
      [
       "54 (1998)",
@@ -34379,7 +33688,7 @@
        "Drama"
       ],
       "1998",
-      10.375925064086914
+      10.086804389953613
      ],
      [
       "Carlito's Way (1993)",
@@ -34388,7 +33697,16 @@
        "Drama"
       ],
       "1993",
-      10.03538703918457
+      10.078534126281738
+     ],
+     [
+      "Cotton Club, The (1984)",
+      [
+       "Crime",
+       "Musical"
+      ],
+      "1984",
+      0.5001376867294312
      ],
      [
       "Xanadu (1980)",
@@ -34398,7 +33716,7 @@
        "Romance"
       ],
       "1980",
-      0.49674832820892334
+      0.466248095035553
      ],
      [
       "Wiz, The (1978)",
@@ -34410,16 +33728,25 @@
        "Musical"
       ],
       "1978",
-      0.46394455432891846
+      0.41686224937438965
      ],
      [
-      "Cotton Club, The (1984)",
+      "Moulin Rouge (2001)",
       [
-       "Crime",
-       "Musical"
+       "Drama",
+       "Musical",
+       "Romance"
       ],
-      "1984",
-      0.4070560038089752
+      "2001",
+      0.40366899967193604
+     ],
+     [
+      "Bright Lights, Big City (1988)",
+      [
+       "Drama"
+      ],
+      "1988",
+      0.3846021294593811
      ],
      [
       "Gay Divorcee, The (1934)",
@@ -34429,7 +33756,25 @@
        "Romance"
       ],
       "1934",
-      0.3745708763599396
+      0.31765735149383545
+     ],
+     [
+      "After Hours (1985)",
+      [
+       "Comedy",
+       "Thriller"
+      ],
+      "1985",
+      0.2976774573326111
+     ],
+     [
+      "Affair to Remember, An (1957)",
+      [
+       "Drama",
+       "Romance"
+      ],
+      "1957",
+      0.29140692949295044
      ],
      [
       "24 Hour Party People (2002)",
@@ -34439,16 +33784,144 @@
        "Musical"
       ],
       "2002",
-      0.36897391080856323
+      0.26141414046287537
      ],
      [
-      "Runaways, The (2010)",
+      "Road House (1989)",
+      [
+       "Action",
+       "Drama"
+      ],
+      "1989",
+      0.23578670620918274
+     ],
+     [
+      "Party Girl (1995)",
+      [
+       "Comedy"
+      ],
+      "1995",
+      0.23108108341693878
+     ],
+     [
+      "Trainspotting (1996)",
+      [
+       "Comedy",
+       "Crime",
+       "Drama"
+      ],
+      "1996",
+      0.20025452971458435
+     ],
+     [
+      "Harlem Nights (1989)",
+      [
+       "Comedy",
+       "Crime",
+       "Romance"
+      ],
+      "1989",
+      0.18826571106910706
+     ],
+     [
+      "Go (1999)",
+      [
+       "Comedy",
+       "Crime"
+      ],
+      "1999",
+      0.1863052248954773
+     ],
+     [
+      "Blue Velvet (1986)",
       [
        "Drama",
+       "Mystery",
+       "Thriller"
+      ],
+      "1986",
+      0.18166199326515198
+     ],
+     [
+      "Hard Core Logo (1996)",
+      [
+       "Comedy",
+       "Drama"
+      ],
+      "1996",
+      0.16751454770565033
+     ],
+     [
+      "Austin Powers in Goldmember (2002)",
+      [
+       "Comedy"
+      ],
+      "2002",
+      0.16418883204460144
+     ],
+     [
+      "Liquid Sky (1982)",
+      [
+       "Comedy",
+       "Sci-Fi"
+      ],
+      "1982",
+      0.16262364387512207
+     ],
+     [
+      "Looking for Mr. Goodbar (1977)",
+      [
+       "Drama"
+      ],
+      "1977",
+      0.15777941048145294
+     ],
+     [
+      "Be Cool (2005)",
+      [
+       "Comedy",
+       "Crime",
        "Musical"
       ],
-      "2010",
-      0.3685159385204315
+      "2005",
+      0.15621745586395264
+     ],
+     [
+      "After the Thin Man (1936)",
+      [
+       "Comedy",
+       "Crime",
+       "Mystery",
+       "Romance"
+      ],
+      "1936",
+      0.1521255522966385
+     ],
+     [
+      "Acid House, The (1998)",
+      [
+       "Comedy",
+       "Drama"
+      ],
+      "1998",
+      0.1514774113893509
+     ],
+     [
+      "Ball of Fire (1941)",
+      [
+       "Comedy",
+       "Romance"
+      ],
+      "1941",
+      0.14677295088768005
+     ],
+     [
+      "Prom Night (1980)",
+      [
+       "Horror"
+      ],
+      "1980",
+      0.1405552178621292
      ],
      [
       "G.I. Blues (1960)",
@@ -34458,7 +33931,24 @@
        "Romance"
       ],
       "1960",
-      0.35473406314849854
+      0.1402052640914917
+     ],
+     [
+      "Shooting Fish (1997)",
+      [
+       "Comedy",
+       "Romance"
+      ],
+      "1997",
+      0.1390644609928131
+     ],
+     [
+      "Night at the Roxbury, A (1998)",
+      [
+       "Comedy"
+      ],
+      "1998",
+      0.1382046341896057
      ],
      [
       "Pal Joey (1957)",
@@ -34469,87 +33959,7 @@
        "Romance"
       ],
       "1957",
-      0.3325073719024658
-     ],
-     [
-      "Human Traffic (1999)",
-      [
-       "Comedy"
-      ],
-      "1999",
-      0.32321083545684814
-     ],
-     [
-      "Party Girl (1995)",
-      [
-       "Comedy"
-      ],
-      "1995",
-      0.3217168152332306
-     ],
-     [
-      "King Creole (1958)",
-      [
-       "Crime",
-       "Drama",
-       "Musical"
-      ],
-      "1958",
-      0.29097673296928406
-     ],
-     [
-      "Moulin Rouge (2001)",
-      [
-       "Drama",
-       "Musical",
-       "Romance"
-      ],
-      "2001",
-      0.2751748263835907
-     ],
-     [
-      "Hard Core Logo (1996)",
-      [
-       "Comedy",
-       "Drama"
-      ],
-      "1996",
-      0.2718328833580017
-     ],
-     [
-      "Party Monster (2003)",
-      [
-       "Comedy",
-       "Crime",
-       "Drama",
-       "Thriller"
-      ],
-      "2003",
-      0.2174464613199234
-     ],
-     [
-      "Straight Outta Compton (2015)",
-      [
-       "Drama"
-      ],
-      "2015",
-      0.20964807271957397
-     ],
-     [
-      "Prom Night (1980)",
-      [
-       "Horror"
-      ],
-      "1980",
-      0.19825959205627441
-     ],
-     [
-      "Bright Lights, Big City (1988)",
-      [
-       "Drama"
-      ],
-      "1988",
-      0.18806499242782593
+      0.1380109190940857
      ],
      [
       "Boogie Nights (1997)",
@@ -34557,115 +33967,16 @@
        "Drama"
       ],
       "1997",
-      0.1870177537202835
+      0.1342078447341919
      ],
      [
-      "Prime (2005)",
-      [
-       "Comedy",
-       "Drama",
-       "Romance"
-      ],
-      "2005",
-      0.1831374168395996
-     ],
-     [
-      "Be Cool (2005)",
-      [
-       "Comedy",
-       "Crime",
-       "Musical"
-      ],
-      "2005",
-      0.16691166162490845
-     ],
-     [
-      "Night at the Roxbury, A (1998)",
-      [
-       "Comedy"
-      ],
-      "1998",
-      0.15151523053646088
-     ],
-     [
-      "Liquid Sky (1982)",
-      [
-       "Comedy",
-       "Sci-Fi"
-      ],
-      "1982",
-      0.15143105387687683
-     ],
-     [
-      "Road House (1989)",
-      [
-       "Action",
-       "Drama"
-      ],
-      "1989",
-      0.14282560348510742
-     ],
-     [
-      "We Own the Night (2007)",
+      "Lilya 4-Ever (Lilja 4-ever) (2002)",
       [
        "Crime",
        "Drama"
       ],
-      "2007",
-      0.12902423739433289
-     ],
-     [
-      "Entourage (2015)",
-      [
-       "Comedy"
-      ],
-      "2015",
-      0.1287500262260437
-     ],
-     [
-      "White Chicks (2004)",
-      [
-       "Action",
-       "Comedy",
-       "Crime"
-      ],
-      "2004",
-      0.12708458304405212
-     ],
-     [
-      "Harlem Nights (1989)",
-      [
-       "Comedy",
-       "Crime",
-       "Romance"
-      ],
-      "1989",
-      0.1122334748506546
-     ],
-     [
-      "Climax (2018)",
-      [
-       "Drama",
-       "Horror"
-      ],
-      "2018",
-      0.10073564946651459
-     ],
-     [
-      "Thin Line Between Love and Hate, A (1996)",
-      [
-       "Comedy"
-      ],
-      "1996",
-      0.09913890063762665
-     ],
-     [
-      "Soul Plane (2004)",
-      [
-       "Comedy"
-      ],
-      "2004",
-      0.08981940150260925
+      "2002",
+      0.12966933846473694
      ],
      [
       "Hear My Song (1991)",
@@ -34673,16 +33984,34 @@
        "Comedy"
       ],
       "1991",
-      0.07855401933193207
+      0.12421660125255585
      ],
      [
-      "T2: Trainspotting (2017)",
+      "25th Hour (2002)",
       [
        "Crime",
        "Drama"
       ],
-      "2017",
-      0.07663676887750626
+      "2002",
+      0.12288902699947357
+     ],
+     [
+      "Exotica (1994)",
+      [
+       "Drama"
+      ],
+      "1994",
+      0.12020112574100494
+     ],
+     [
+      "Mystery Men (1999)",
+      [
+       "Action",
+       "Comedy",
+       "Fantasy"
+      ],
+      "1999",
+      0.11148719489574432
      ],
      [
       "Vampire's Kiss (1989)",
@@ -34692,121 +34021,27 @@
        "Horror"
       ],
       "1989",
-      0.06827287375926971
+      0.10156906396150589
      ],
      [
-      "Affair to Remember, An (1957)",
-      [
-       "Drama",
-       "Romance"
-      ],
-      "1957",
-      0.057930439710617065
-     ],
-     [
-      "Lilya 4-Ever (Lilja 4-ever) (2002)",
-      [
-       "Crime",
-       "Drama"
-      ],
-      "2002",
-      0.052564457058906555
-     ],
-     [
-      "Looking for Mr. Goodbar (1977)",
-      [
-       "Drama"
-      ],
-      "1977",
-      0.04692232608795166
-     ],
-     [
-      "I've Loved You So Long (Il y a longtemps que je t'aime) (2008)",
-      [
-       "Drama",
-       "Mystery"
-      ],
-      "2008",
-      0.04323289543390274
-     ],
-     [
-      "Ball of Fire (1941)",
-      [
-       "Comedy",
-       "Romance"
-      ],
-      "1941",
-      0.04302499443292618
-     ],
-     [
-      "Starsky & Hutch (2004)",
+      "White Chicks (2004)",
       [
        "Action",
        "Comedy",
-       "Crime",
-       "Thriller"
+       "Crime"
       ],
       "2004",
-      0.03536861762404442
+      0.10020170360803604
      ],
      [
-      "Simon of the Desert (Sim\u00f3n del desierto) (1965)",
+      "King Creole (1958)",
       [
-       "Drama"
+       "Crime",
+       "Drama",
+       "Musical"
       ],
-      "1965",
-      0.0353296622633934
-     ],
-     [
-      "Go (1999)",
-      [
-       "Comedy",
-       "Crime"
-      ],
-      "1999",
-      0.03409697860479355
-     ],
-     [
-      "Birdcage, The (1996)",
-      [
-       "Comedy"
-      ],
-      "1996",
-      0.0328158363699913
-     ],
-     [
-      "Exotica (1994)",
-      [
-       "Drama"
-      ],
-      "1994",
-      0.017248377203941345
-     ],
-     [
-      "Let's Be Cops (2014)",
-      [
-       "Comedy",
-       "Crime"
-      ],
-      "2014",
-      0.01061483845114708
-     ],
-     [
-      "Hellraiser III: Hell on Earth (1992)",
-      [
-       "Horror"
-      ],
-      "1992",
-      -0.004465220496058464
-     ],
-     [
-      "Great Beauty, The (Grande Bellezza, La) (2013)",
-      [
-       "Comedy",
-       "Drama"
-      ],
-      "2013",
-      -0.010551078245043755
+      "1958",
+      0.0963156670331955
      ],
      [
       "Adventures of Pluto Nash, The (2002)",
@@ -34817,16 +34052,95 @@
        "Sci-Fi"
       ],
       "2002",
-      -0.01300450786948204
+      0.08889545500278473
      ],
      [
-      "25th Hour (2002)",
+      "Human Traffic (1999)",
+      [
+       "Comedy"
+      ],
+      "1999",
+      0.08792068064212799
+     ],
+     [
+      "Rififi (Du rififi chez les hommes) (1955)",
       [
        "Crime",
+       "Film-Noir",
+       "Thriller"
+      ],
+      "1955",
+      0.07771991193294525
+     ],
+     [
+      "Party Monster (2003)",
+      [
+       "Comedy",
+       "Crime",
+       "Drama",
+       "Thriller"
+      ],
+      "2003",
+      0.073665089905262
+     ],
+     [
+      "Starsky & Hutch (2004)",
+      [
+       "Action",
+       "Comedy",
+       "Crime",
+       "Thriller"
+      ],
+      "2004",
+      0.05667205527424812
+     ],
+     [
+      "Gilda (1946)",
+      [
+       "Drama",
+       "Film-Noir",
+       "Mystery",
+       "Romance"
+      ],
+      "1946",
+      0.05209822952747345
+     ],
+     [
+      "Prime (2005)",
+      [
+       "Comedy",
+       "Drama",
+       "Romance"
+      ],
+      "2005",
+      0.048014067113399506
+     ],
+     [
+      "Climax (2018)",
+      [
+       "Drama",
+       "Horror"
+      ],
+      "2018",
+      0.03569904714822769
+     ],
+     [
+      "Runaways, The (2010)",
+      [
+       "Drama",
+       "Musical"
+      ],
+      "2010",
+      0.03231106698513031
+     ],
+     [
+      "Great Beauty, The (Grande Bellezza, La) (2013)",
+      [
+       "Comedy",
        "Drama"
       ],
-      "2002",
-      -0.01514570601284504
+      "2013",
+      0.024294644594192505
      ],
      [
       "Bad Company (2002)",
@@ -34836,7 +34150,35 @@
        "Crime"
       ],
       "2002",
-      -0.019394882023334503
+      0.018765732645988464
+     ],
+     [
+      "Collateral (2004)",
+      [
+       "Action",
+       "Crime",
+       "Drama",
+       "Thriller"
+      ],
+      "2004",
+      0.010270006954669952
+     ],
+     [
+      "Birdcage, The (1996)",
+      [
+       "Comedy"
+      ],
+      "1996",
+      0.0017443671822547913
+     ],
+     [
+      "T2: Trainspotting (2017)",
+      [
+       "Crime",
+       "Drama"
+      ],
+      "2017",
+      -0.011150173842906952
      ],
      [
       "Chopper (2000)",
@@ -34845,7 +34187,17 @@
        "Thriller"
       ],
       "2000",
-      -0.030213579535484314
+      -0.016175828874111176
+     ],
+     [
+      "The Batman (2022)",
+      [
+       "Action",
+       "Crime",
+       "Drama"
+      ],
+      "2022",
+      -0.021747559309005737
      ],
      [
       "Birds of Prey (And the Fantabulous Emancipation of One Harley Quinn) (2020)",
@@ -34855,306 +34207,290 @@
        "Crime"
       ],
       "2020",
-      -0.03249487653374672
+      -0.03761701658368111
      ],
      [
-      "Acid House, The (1998)",
-      [
-       "Comedy",
-       "Drama"
-      ],
-      "1998",
-      -0.032748788595199585
-     ],
-     [
-      "Trainspotting (1996)",
-      [
-       "Comedy",
-       "Crime",
-       "Drama"
-      ],
-      "1996",
-      -0.03408842533826828
-     ],
-     [
-      "Austin Powers in Goldmember (2002)",
+      "Thin Line Between Love and Hate, A (1996)",
       [
        "Comedy"
       ],
-      "2002",
-      -0.03924044221639633
+      "1996",
+      -0.03761960193514824
      ],
      [
-      "American Gangster (2007)",
+      "Soul Plane (2004)",
       [
-       "Crime",
-       "Drama",
-       "Thriller"
+       "Comedy"
       ],
-      "2007",
-      -0.04318680614233017
+      "2004",
+      -0.0620240792632103
      ],
      [
-      "Mystery Men (1999)",
+      "Straight Outta Compton (2015)",
       [
-       "Action",
-       "Comedy",
-       "Fantasy"
+       "Drama"
       ],
-      "1999",
-      -0.045246392488479614
+      "2015",
+      -0.07092827558517456
      ]
     ],
     "out_of_domain": false,
     "intent_chips": [
-     "\ud83c\udfac like Saturday Night Fever",
+     "\ud83c\udfac like Saturday Night Fever, The Last Days of Disco",
      "\ud83c\udfaf disco or nightclub"
     ],
-    "intent_echo": "Understood: \ud83c\udfac like Saturday Night Fever \u00b7 \ud83c\udfaf disco or nightclub \u2014 ranked by similarity to Saturday Night Fever.",
+    "intent_echo": "Understood: \ud83c\udfac like Saturday Night Fever, The Last Days of Disco \u00b7 \ud83c\udfaf disco or nightclub \u2014 ranked by taste match.",
     "rec_provenance": [
      [
-      "\u2248 Saturday Night Fever",
       "disco",
-      "nightclub"
+      "nightclub",
+      "dancing",
+      "dance"
      ],
      [
-      "\u2248 Saturday Night Fever",
       "disco",
-      "nightclub"
+      "nightclub",
+      "new york"
      ],
      [
-      "\u2248 Saturday Night Fever",
       "disco",
-      "nightclub"
+      "nightclub",
+      "new york",
+      "dialogue"
      ],
      [
-      "\u2248 Saturday Night Fever",
+      "nightclub",
+      "dancing",
+      "dance",
+      "music",
+      "musical"
+     ],
+     [
       "disco",
+      "dancing",
+      "dance",
+      "music",
+      "musical"
+     ],
+     [
+      "disco",
+      "music",
+      "musical",
+      "new york"
+     ],
+     [
+      "nightclub",
+      "dancing",
+      "dance",
+      "music",
+      "musical"
+     ],
+     [
+      "nightclub",
+      "new york"
+     ],
+     [
+      "nightclub",
+      "dancing",
+      "dance",
+      "musical",
+      "dialogue driven"
+     ],
+     [
+      "nightclub",
+      "new york",
+      "dialogue"
+     ],
+     [
+      "nightclub",
+      "new york",
+      "dialogue"
+     ],
+     [
+      "nightclub",
+      "dancing",
+      "dance",
+      "music",
+      "musical"
+     ],
+     [
+      "nightclub",
+      "dialogue"
+     ],
+     [
       "nightclub"
      ],
      [
-      "\u2248 Saturday Night Fever",
+      "nightclub",
+      "dialogue"
+     ],
+     [
+      "nightclub"
+     ],
+     [
+      "nightclub",
+      "dialogue"
+     ],
+     [
+      "nightclub",
+      "dialogue"
+     ],
+     [
+      "nightclub",
+      "music"
+     ],
+     [
+      "nightclub"
+     ],
+     [
+      "disco",
+      "dialogue"
+     ],
+     [
       "disco"
      ],
      [
-      "\u2248 Saturday Night Fever",
+      "nightclub"
+     ],
+     [
+      "nightclub",
+      "dialogue"
+     ],
+     [
+      "nightclub"
+     ],
+     [
+      "nightclub",
+      "dialogue"
+     ],
+     [
+      "disco",
+      "dancing"
+     ],
+     [
+      "nightclub",
+      "music",
+      "musical"
+     ],
+     [
+      "nightclub",
+      "dialogue"
+     ],
+     [
+      "nightclub"
+     ],
+     [
+      "nightclub",
+      "music",
+      "musical"
+     ],
+     [
+      "disco",
+      "coming of age",
+      "dialogue driven",
+      "dialogue"
+     ],
+     [
+      "nightclub"
+     ],
+     [
+      "nightclub"
+     ],
+     [
+      "nightclub",
+      "new york",
+      "dialogue"
+     ],
+     [
+      "nightclub",
+      "dialogue"
+     ],
+     [
+      "disco",
+      "dialogue"
+     ],
+     [
+      "nightclub"
+     ],
+     [
+      "nightclub",
+      "dancing"
+     ],
+     [
+      "nightclub",
+      "musical"
+     ],
+     [
+      "nightclub"
+     ],
+     [
+      "nightclub",
+      "dialogue"
+     ],
+     [
+      "nightclub",
+      "dialogue"
+     ],
+     [
+      "nightclub"
+     ],
+     [
       "disco"
      ],
      [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
+      "nightclub",
+      "dancing",
+      "dialogue"
      ],
      [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
+      "nightclub",
+      "new york"
      ],
      [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
       "disco"
      ],
      [
-      "\u2248 Saturday Night Fever",
+      "nightclub",
+      "music",
+      "coming of age"
+     ],
+     [
+      "nightclub",
+      "dialogue"
+     ],
+     [
       "nightclub"
      ],
      [
-      "\u2248 Saturday Night Fever",
-      "disco"
+      "nightclub",
+      "dialogue"
      ],
      [
-      "\u2248 Saturday Night Fever",
       "nightclub"
      ],
      [
-      "\u2248 Saturday Night Fever",
       "nightclub"
      ],
      [
-      "\u2248 Saturday Night Fever",
+      "nightclub",
+      "dialogue"
+     ],
+     [
+      "nightclub",
+      "dialogue"
+     ],
+     [
       "nightclub"
      ],
      [
-      "\u2248 Saturday Night Fever",
-      "disco"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
       "nightclub"
      ],
      [
-      "\u2248 Saturday Night Fever",
       "nightclub"
      ],
      [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "disco"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "disco"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "disco"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "nightclub"
-     ],
-     [
-      "\u2248 Saturday Night Fever",
-      "disco"
+      "nightclub",
+      "music"
      ]
     ],
     "relaxation_notice": null,
@@ -37997,7 +37333,7 @@
   },
   "r6c7": {
    "label": "Isolation",
-   "query": "Solitary man-versus-nature survival movies, like Into the Wild and Never Cry Wolf. No documentaries.",
+   "query": "Solitary survival movies about a person alone in the wilderness, like Into the Wild and Never Cry Wolf. No documentaries.",
    "report": {
     "extraction": {
      "liked_items": [
@@ -38005,13 +37341,13 @@
       "Never Cry Wolf (1983)"
      ],
      "hard_constraints": {
+      "require_keyword_concepts": [
+       "survival",
+       "wilderness",
+       "solitary"
+      ],
       "exclude_genres": [
        "Documentary"
-      ],
-      "require_keyword_concepts": [
-       "wilderness",
-       "survival",
-       "nature"
       ]
      }
     },
@@ -38042,27 +37378,26 @@
     "topic_resolution": {
      "require": [
       [
-       "wilderness",
-       "genome 'wilderness'",
-       334
-      ],
-      [
        "survival",
        "genome 'survival' \u2229 concept 'survival'",
        149
       ],
       [
-       "nature",
-       "genome 'nature'",
-       51
+       "wilderness",
+       "genome 'wilderness'",
+       334
+      ],
+      [
+       "solitary",
+       "no match",
+       null
       ]
      ],
      "exclude": []
     },
     "anchors": [
-     "Alone in the Wilderness (2004)",
      "Grey, The (2012)",
-     "Planet Earth (2006)"
+     "Alone in the Wilderness (2004)"
     ],
     "anchor_weight": 0.5,
     "mood_tags": [],
@@ -38081,7 +37416,7 @@
     "unknown_genres": [],
     "seed_count": 2,
     "fallback": false,
-    "filtered": 14,
+    "filtered": 16,
     "relaxed_constraints": [],
     "recs": [
      [
@@ -38091,72 +37426,7 @@
        "Drama"
       ],
       "2015",
-      22.44171905517578
-     ],
-     [
-      "Jeremiah Johnson (1972)",
-      [
-       "Western"
-      ],
-      "1972",
-      22.190095901489258
-     ],
-     [
-      "Bear, The (Ours, L') (1988)",
-      [
-       "Adventure",
-       "Children",
-       "Drama"
-      ],
-      "1988",
-      22.04180335998535
-     ],
-     [
-      "Walkabout (1971)",
-      [
-       "Adventure",
-       "Drama"
-      ],
-      "1971",
-      22.01613426208496
-     ],
-     [
-      "Edge, The (1997)",
-      [
-       "Adventure",
-       "Drama"
-      ],
-      "1997",
-      21.971824645996094
-     ],
-     [
-      "The Survivalist (2015)",
-      [
-       "Drama",
-       "Sci-Fi",
-       "Thriller"
-      ],
-      "2015",
-      21.967458724975586
-     ],
-     [
-      "Deliverance (1972)",
-      [
-       "Adventure",
-       "Drama",
-       "Thriller"
-      ],
-      "1972",
-      21.955270767211914
-     ],
-     [
-      "Tracks (2013)",
-      [
-       "Adventure",
-       "Drama"
-      ],
-      "2013",
-      12.540371894836426
+      12.398155212402344
      ],
      [
       "Hunt for the Wilderpeople (2016)",
@@ -38165,7 +37435,7 @@
        "Comedy"
       ],
       "2016",
-      12.477479934692383
+      12.34630012512207
      ],
      [
       "Life of Pi (2012)",
@@ -38175,7 +37445,17 @@
        "IMAX"
       ],
       "2012",
-      12.265486717224121
+      12.33687686920166
+     ],
+     [
+      "Road, The (2009)",
+      [
+       "Adventure",
+       "Drama",
+       "Thriller"
+      ],
+      "2009",
+      12.302949905395508
      ],
      [
       "Alive (1993)",
@@ -38183,7 +37463,40 @@
        "Drama"
       ],
       "1993",
-      12.263397216796875
+      12.268355369567871
+     ],
+     [
+      "Grey, The (2012)",
+      [
+       "Action",
+       "Drama"
+      ],
+      "2012",
+      12.236572265625
+     ],
+     [
+      "Wild (2014)",
+      [
+       "Drama"
+      ],
+      "2014",
+      12.211845397949219
+     ],
+     [
+      "Jeremiah Johnson (1972)",
+      [
+       "Western"
+      ],
+      "1972",
+      12.191679000854492
+     ],
+     [
+      "Cast Away (2000)",
+      [
+       "Drama"
+      ],
+      "2000",
+      12.169244766235352
      ],
      [
       "Dunkirk (2017)",
@@ -38194,60 +37507,16 @@
        "War"
       ],
       "2017",
-      12.239006996154785
+      12.126358032226562
      ],
      [
-      "Road, The (2009)",
-      [
-       "Adventure",
-       "Drama",
-       "Thriller"
-      ],
-      "2009",
-      12.235382080078125
-     ],
-     [
-      "Cast Away (2000)",
-      [
-       "Drama"
-      ],
-      "2000",
-      12.217669486999512
-     ],
-     [
-      "Dersu Uzala (1975)",
+      "Walkabout (1971)",
       [
        "Adventure",
        "Drama"
       ],
-      "1975",
-      12.202323913574219
-     ],
-     [
-      "Grey, The (2012)",
-      [
-       "Action",
-       "Drama"
-      ],
-      "2012",
-      12.179256439208984
-     ],
-     [
-      "Wild (2014)",
-      [
-       "Drama"
-      ],
-      "2014",
-      12.17262077331543
-     ],
-     [
-      "Alaska (1996)",
-      [
-       "Adventure",
-       "Children"
-      ],
-      "1996",
-      12.078447341918945
+      "1971",
+      12.06772518157959
      ],
      [
       "Poseidon Adventure, The (1972)",
@@ -38257,23 +37526,26 @@
        "Drama"
       ],
       "1972",
-      12.073686599731445
+      12.052488327026367
      ],
      [
-      "Green Room (2015)",
+      "Alaska (1996)",
       [
-       "(no genres listed)"
+       "Adventure",
+       "Children"
       ],
-      "2015",
-      12.017959594726562
+      "1996",
+      12.045583724975586
      ],
      [
-      "Captain Fantastic (2016)",
+      "Bear, The (Ours, L') (1988)",
       [
+       "Adventure",
+       "Children",
        "Drama"
       ],
-      "2016",
-      11.999094009399414
+      "1988",
+      12.022286415100098
      ],
      [
       "Southern Comfort (1981)",
@@ -38283,7 +37555,17 @@
        "War"
       ],
       "1981",
-      11.995796203613281
+      11.998858451843262
+     ],
+     [
+      "Deliverance (1972)",
+      [
+       "Adventure",
+       "Drama",
+       "Thriller"
+      ],
+      "1972",
+      11.996014595031738
      ],
      [
       "Mad Max: Fury Road (2015)",
@@ -38294,7 +37576,42 @@
        "Thriller"
       ],
       "2015",
-      11.972591400146484
+      11.995590209960938
+     ],
+     [
+      "Edge, The (1997)",
+      [
+       "Adventure",
+       "Drama"
+      ],
+      "1997",
+      11.989852905273438
+     ],
+     [
+      "Hunter, The (2011)",
+      [
+       "Drama"
+      ],
+      "2011",
+      11.982508659362793
+     ],
+     [
+      "The Survivalist (2015)",
+      [
+       "Drama",
+       "Sci-Fi",
+       "Thriller"
+      ],
+      "2015",
+      11.979464530944824
+     ],
+     [
+      "Green Room (2015)",
+      [
+       "(no genres listed)"
+      ],
+      "2015",
+      11.952095985412598
      ],
      [
       "Flight of the Phoenix, The (1965)",
@@ -38304,25 +37621,7 @@
        "Drama"
       ],
       "1965",
-      11.952959060668945
-     ],
-     [
-      "Far From Home: The Adventures of Yellow Dog (1995)",
-      [
-       "Adventure",
-       "Children"
-      ],
-      "1995",
-      11.93726921081543
-     ],
-     [
-      "The Shallows (2016)",
-      [
-       "Drama",
-       "Thriller"
-      ],
-      "2016",
-      11.91861343383789
+      11.9489164352417
      ],
      [
       "Arctic (2018)",
@@ -38331,24 +37630,7 @@
        "Thriller"
       ],
       "2018",
-      11.911178588867188
-     ],
-     [
-      "Hunter, The (2011)",
-      [
-       "Drama"
-      ],
-      "2011",
-      11.908573150634766
-     ],
-     [
-      "Ravenous (1999)",
-      [
-       "Horror",
-       "Thriller"
-      ],
-      "1999",
-      11.896446228027344
+      11.928832054138184
      ],
      [
       "Frozen (2010)",
@@ -38358,7 +37640,7 @@
        "Thriller"
       ],
       "2010",
-      11.893381118774414
+      11.924647331237793
      ],
      [
       "Animal Factory (2000)",
@@ -38367,46 +37649,42 @@
        "Drama"
       ],
       "2000",
-      11.865303993225098
+      11.900382995605469
      ],
      [
-      "Lord of the Rings: The Return of the King, The (2003)",
+      "Captain Fantastic (2016)",
       [
-       "Action",
-       "Adventure",
-       "Drama",
-       "Fantasy"
-      ],
-      "2003",
-      11.86506175994873
-     ],
-     [
-      "Embrace of the Serpent (2016)",
-      [
-       "Adventure",
        "Drama"
       ],
       "2016",
-      11.839940071105957
+      11.889297485351562
      ],
      [
-      "Swiss Army Man (2016)",
+      "The Shallows (2016)",
       [
-       "Comedy",
        "Drama",
-       "Romance"
+       "Thriller"
       ],
       "2016",
-      11.835599899291992
+      11.87048625946045
      ],
      [
-      "Aguirre: The Wrath of God (Aguirre, der Zorn Gottes) (1972)",
+      "Far From Home: The Adventures of Yellow Dog (1995)",
       [
        "Adventure",
-       "Drama"
+       "Children"
       ],
-      "1972",
-      11.83292007446289
+      "1995",
+      11.851832389831543
+     ],
+     [
+      "Ravenous (1999)",
+      [
+       "Horror",
+       "Thriller"
+      ],
+      "1999",
+      11.850272178649902
      ],
      [
       "Dawn of the Dead (2004)",
@@ -38417,7 +37695,17 @@
        "Thriller"
       ],
       "2004",
-      11.758528709411621
+      11.750598907470703
+     ],
+     [
+      "Swiss Army Man (2016)",
+      [
+       "Comedy",
+       "Drama",
+       "Romance"
+      ],
+      "2016",
+      11.709786415100098
      ],
      [
       "Eight Below (2006)",
@@ -38428,25 +37716,7 @@
        "Romance"
       ],
       "2006",
-      11.749751091003418
-     ],
-     [
-      "Dog Soldiers (2002)",
-      [
-       "Action",
-       "Horror"
-      ],
-      "2002",
-      11.685001373291016
-     ],
-     [
-      "Flight of the Phoenix (2004)",
-      [
-       "Action",
-       "Adventure"
-      ],
-      "2004",
-      11.684221267700195
+      11.699825286865234
      ],
      [
       "Shoot to Kill (1988)",
@@ -38455,7 +37725,7 @@
        "Adventure"
       ],
       "1988",
-      11.645914077758789
+      11.650293350219727
      ],
      [
       "Troll Hunter, The (Trolljegeren) (2010)",
@@ -38464,16 +37734,16 @@
        "Horror"
       ],
       "2010",
-      11.618095397949219
+      11.649100303649902
      ],
      [
-      "Rabbit-Proof Fence (2002)",
+      "Dog Soldiers (2002)",
       [
-       "Adventure",
-       "Drama"
+       "Action",
+       "Horror"
       ],
       "2002",
-      11.605231285095215
+      11.646186828613281
      ],
      [
       "Eden Lake (2008)",
@@ -38482,16 +37752,25 @@
        "Thriller"
       ],
       "2008",
-      11.5731840133667
+      11.645427703857422
      ],
      [
-      "Lord of the Rings: The Fellowship of the Ring, The (2001)",
+      "Rabbit-Proof Fence (2002)",
       [
        "Adventure",
-       "Fantasy"
+       "Drama"
       ],
-      "2001",
-      11.56056022644043
+      "2002",
+      11.618532180786133
+     ],
+     [
+      "Flight of the Phoenix (2004)",
+      [
+       "Action",
+       "Adventure"
+      ],
+      "2004",
+      11.613142967224121
      ],
      [
       "Hell in the Pacific (1968)",
@@ -38500,27 +37779,7 @@
        "War"
       ],
       "1968",
-      11.543033599853516
-     ],
-     [
-      "Adventures of Milo and Otis, The (Koneko monogatari) (1986)",
-      [
-       "Adventure",
-       "Children",
-       "Comedy",
-       "Drama"
-      ],
-      "1986",
-      11.527798652648926
-     ],
-     [
-      "Bone Tomahawk (2015)",
-      [
-       "Horror",
-       "Western"
-      ],
-      "2015",
-      11.512358665466309
+      11.531571388244629
      ],
      [
       "Thing, The (1982)",
@@ -38531,27 +37790,18 @@
        "Thriller"
       ],
       "1982",
-      11.442742347717285
+      11.502167701721191
      ],
      [
-      "Far Off Place, A (1993)",
+      "Adventures of Milo and Otis, The (Koneko monogatari) (1986)",
       [
        "Adventure",
        "Children",
-       "Drama",
-       "Romance"
-      ],
-      "1993",
-      11.432945251464844
-     ],
-     [
-      "Crocodile Dundee (1986)",
-      [
-       "Adventure",
-       "Comedy"
+       "Comedy",
+       "Drama"
       ],
       "1986",
-      11.414666175842285
+      11.478597640991211
      ],
      [
       "3:10 to Yuma (2007)",
@@ -38562,24 +37812,16 @@
        "Western"
       ],
       "2007",
-      11.412466049194336
+      11.454631805419922
      ],
      [
-      "The Red Turtle (2016)",
+      "Bone Tomahawk (2015)",
       [
-       "Animation"
+       "Horror",
+       "Western"
       ],
-      "2016",
-      11.41110897064209
-     ],
-     [
-      "Alpha (2018)",
-      [
-       "Adventure",
-       "Thriller"
-      ],
-      "2018",
-      11.376997947692871
+      "2015",
+      11.43035888671875
      ],
      [
       "Lord of the Flies (1963)",
@@ -38589,7 +37831,18 @@
        "Thriller"
       ],
       "1963",
-      11.358147621154785
+      11.402702331542969
+     ],
+     [
+      "Far Off Place, A (1993)",
+      [
+       "Adventure",
+       "Children",
+       "Drama",
+       "Romance"
+      ],
+      "1993",
+      11.386290550231934
      ],
      [
       "Lost Horizon (1937)",
@@ -38597,35 +37850,25 @@
        "Drama"
       ],
       "1937",
-      11.337726593017578
+      11.37313175201416
      ],
      [
-      "Mirror, The (Zerkalo) (1975)",
+      "Crocodile Dundee (1986)",
       [
-       "Drama"
-      ],
-      "1975",
-      11.327676773071289
-     ],
-     [
-      "Days of Heaven (1978)",
-      [
-       "Drama"
-      ],
-      "1978",
-      11.296782493591309
-     ],
-     [
-      "Princess Mononoke (Mononoke-hime) (1997)",
-      [
-       "Action",
        "Adventure",
-       "Animation",
-       "Drama",
-       "Fantasy"
+       "Comedy"
       ],
-      "1997",
-      11.269351959228516
+      "1986",
+      11.344087600708008
+     ],
+     [
+      "Alpha (2018)",
+      [
+       "Adventure",
+       "Thriller"
+      ],
+      "2018",
+      11.284496307373047
      ],
      [
       "Blue Lagoon, The (1980)",
@@ -38635,7 +37878,7 @@
        "Romance"
       ],
       "1980",
-      11.255166053771973
+      11.23894214630127
      ],
      [
       "Jungle (2017)",
@@ -38645,384 +37888,450 @@
        "Drama"
       ],
       "2017",
-      11.226649284362793
+      11.196944236755371
+     ],
+     [
+      "Tracks (2013)",
+      [
+       "Adventure",
+       "Drama"
+      ],
+      "2013",
+      2.593008041381836
+     ],
+     [
+      "Way Back, The (2010)",
+      [
+       "Drama"
+      ],
+      "2010",
+      2.550318717956543
+     ],
+     [
+      "Pianist, The (2002)",
+      [
+       "Drama",
+       "War"
+      ],
+      "2002",
+      2.478604555130005
+     ],
+     [
+      "127 Hours (2010)",
+      [
+       "Adventure",
+       "Drama",
+       "Thriller"
+      ],
+      "2010",
+      2.477440357208252
+     ],
+     [
+      "The Martian (2015)",
+      [
+       "Adventure",
+       "Drama",
+       "Sci-Fi"
+      ],
+      "2015",
+      2.3798131942749023
+     ],
+     [
+      "Rescue Dawn (2006)",
+      [
+       "Action",
+       "Adventure",
+       "Drama",
+       "War"
+      ],
+      "2006",
+      2.2681093215942383
+     ],
+     [
+      "Lone Survivor (2013)",
+      [
+       "Action",
+       "Drama",
+       "Thriller",
+       "War"
+      ],
+      "2013",
+      2.2538952827453613
+     ],
+     [
+      "Dersu Uzala (1975)",
+      [
+       "Adventure",
+       "Drama"
+      ],
+      "1975",
+      2.220001697540283
+     ],
+     [
+      "Everest (2015)",
+      [
+       "Adventure",
+       "Drama",
+       "Thriller"
+      ],
+      "2015",
+      2.2129054069519043
+     ],
+     [
+      "Jurassic Park (1993)",
+      [
+       "Action",
+       "Adventure",
+       "Sci-Fi",
+       "Thriller"
+      ],
+      "1993",
+      2.1864349842071533
      ]
     ],
     "out_of_domain": false,
     "intent_chips": [
      "\ud83c\udfac like Into the Wild, Never Cry Wolf",
-     "\ud83c\udfaf wilderness or survival or nature",
+     "\ud83c\udfaf survival or wilderness or solitary",
      "\ud83d\udeab no Documentary"
     ],
-    "intent_echo": "Understood: \ud83c\udfac like Into the Wild, Never Cry Wolf \u00b7 \ud83c\udfaf wilderness or survival or nature \u00b7 \ud83d\udeab no Documentary \u2014 ranked by taste match.",
+    "intent_echo": "Understood: \ud83c\udfac like Into the Wild, Never Cry Wolf \u00b7 \ud83c\udfaf survival or wilderness or solitary \u00b7 \ud83d\udeab no Documentary \u2014 ranked by taste match.",
     "rec_provenance": [
      [
-      "wilderness @0.94",
       "survival @0.98",
-      "nature @0.54",
+      "wilderness @0.94",
       "solitude",
-      "based on true story"
-     ],
-     [
-      "wilderness @0.98",
-      "survival @0.94",
-      "nature @0.44",
-      "solitude",
-      "alaska"
-     ],
-     [
-      "wilderness @0.92",
-      "survival @0.75",
-      "nature @0.79",
-      "alaska",
+      "based on true story",
       "based on a book"
      ],
      [
-      "wilderness @0.93",
-      "survival @0.73",
-      "nature @0.62",
-      "solitude"
-     ],
-     [
+      "survival @0.77",
       "wilderness @0.97",
-      "survival @0.98",
-      "nature @0.40",
-      "alaska"
-     ],
-     [
-      "wilderness @0.68",
-      "survival @0.97",
-      "nature @0.38",
-      "solitude"
-     ],
-     [
-      "wilderness @0.91",
-      "survival @0.86",
-      "nature @0.42",
+      "solitude",
       "adapted from:book",
       "based on a book"
      ],
      [
-      "wilderness @0.98",
-      "survival @0.84",
-      "nature @0.57",
-      "solitude",
-      "based on true story"
-     ],
-     [
-      "wilderness @0.97",
-      "survival @0.77",
-      "nature @0.21",
-      "solitude",
-      "adapted from:book"
-     ],
-     [
-      "wilderness @0.43",
       "survival @0.89",
-      "nature @0.23",
+      "wilderness @0.43",
       "solitude",
-      "adapted from:book"
+      "adapted from:book",
+      "based on a book"
      ],
      [
+      "survival @0.96",
+      "wilderness @0.53",
+      "solitude",
+      "adapted from:book",
+      "based on a book"
+     ],
+     [
+      "survival @0.98",
       "wilderness @0.64",
-      "survival @0.98",
-      "nature @0.04",
       "based on true story",
-      "adapted from:book"
-     ],
-     [
-      "wilderness @0.37",
-      "survival @0.91",
-      "nature @0.05",
-      "based on true story"
-     ],
-     [
-      "wilderness @0.53",
-      "survival @0.96",
-      "nature @0.09",
-      "solitude",
-      "adapted from:book"
-     ],
-     [
-      "wilderness @0.38",
-      "survival @0.96",
-      "nature @0.09",
-      "solitude"
-     ],
-     [
-      "wilderness @0.93",
-      "survival @0.62",
-      "nature @0.64",
-      "solitude",
+      "adapted from:book",
       "based on a book"
      ],
      [
-      "wilderness @0.94",
       "survival @0.99",
-      "nature @0.15",
-      "solitude",
-      "alaska"
-     ],
-     [
-      "wilderness @0.87",
-      "survival @0.57",
-      "nature @0.21",
-      "solitude",
-      "based on true story"
-     ],
-     [
-      "wilderness @0.98",
-      "survival @0.49",
-      "nature @0.22",
-      "alaska"
-     ],
-     [
-      "wilderness @0.55",
-      "survival @0.96",
-      "nature @0.07"
-     ],
-     [
-      "wilderness @0.55",
-      "survival @0.92",
-      "nature @0.04"
-     ],
-     [
-      "wilderness @0.81",
-      "survival @0.66",
-      "nature @0.29",
-      "solitude",
-      "based on book"
-     ],
-     [
       "wilderness @0.94",
-      "survival @0.96",
-      "nature @0.08"
+      "solitude",
+      "alaska"
      ],
      [
-      "wilderness @0.47",
-      "survival @0.86",
-      "nature @0.06"
-     ],
-     [
-      "wilderness @0.36",
-      "survival @0.92",
-      "nature @0.04"
-     ],
-     [
-      "wilderness @0.96",
-      "survival @0.51",
-      "nature @0.04"
-     ],
-     [
-      "wilderness @0.45",
-      "survival @0.94",
-      "nature @0.09",
-      "solitude"
-     ],
-     [
-      "wilderness @0.91",
-      "survival @0.59",
-      "nature @0.08",
-      "solitude"
-     ],
-     [
-      "wilderness @0.91",
-      "survival @0.68",
-      "nature @0.13",
-      "adapted from:book",
-      "based on a book"
-     ],
-     [
-      "wilderness @0.88",
-      "survival @0.79",
-      "nature @0.07"
-     ],
-     [
-      "wilderness @0.50",
-      "survival @0.94",
-      "nature @0.03"
-     ],
-     [
-      "wilderness @0.86",
-      "survival @0.60",
-      "nature @0.05",
-      "nudity (full frontal - brief)"
-     ],
-     [
-      "wilderness @0.63",
-      "survival @0.38",
-      "nature @0.37",
-      "adapted from:book",
-      "based on a book"
-     ],
-     [
-      "wilderness @0.77",
-      "survival @0.64",
-      "nature @0.64",
-      "solitude"
-     ],
-     [
-      "wilderness @0.81",
-      "survival @0.54",
-      "nature @0.07",
-      "solitude"
-     ],
-     [
-      "wilderness @0.79",
-      "survival @0.53",
-      "nature @0.56",
-      "solitude"
-     ],
-     [
-      "wilderness @0.40",
-      "survival @0.89",
-      "nature @0.03"
-     ],
-     [
-      "wilderness @0.83",
-      "survival @0.76",
-      "nature @0.09",
-      "based on true story"
-     ],
-     [
-      "wilderness @0.83",
-      "survival @0.79",
-      "nature @0.03"
-     ],
-     [
-      "wilderness @0.37",
-      "survival @0.83",
-      "nature @0.05"
-     ],
-     [
-      "wilderness @0.85",
-      "survival @0.82",
-      "nature @0.03"
-     ],
-     [
-      "wilderness @0.78",
-      "survival @0.47",
-      "nature @0.20"
-     ],
-     [
-      "wilderness @0.43",
-      "survival @0.56",
-      "nature @0.07",
+      "survival @0.57",
+      "wilderness @0.87",
+      "solitude",
       "based on true story",
       "adapted from:book"
      ],
      [
-      "wilderness @0.45",
-      "survival @0.82",
-      "nature @0.02"
-     ],
-     [
-      "wilderness @0.53",
-      "survival @0.54",
-      "nature @0.35",
-      "adapted from:book",
-      "based on a book"
-     ],
-     [
-      "wilderness @0.38",
-      "survival @0.76",
-      "nature @0.05"
-     ],
-     [
-      "wilderness @0.77",
-      "survival @0.43",
-      "nature @0.14"
-     ],
-     [
-      "wilderness @0.58",
-      "survival @0.64",
-      "nature @0.03"
-     ],
-     [
-      "wilderness @0.38",
-      "survival @0.73",
-      "nature @0.04",
-      "adapted from:book",
-      "based on book"
-     ],
-     [
-      "wilderness @0.40",
-      "survival @0.63",
-      "nature @0.06",
+      "survival @0.94",
+      "wilderness @0.98",
+      "solitude",
       "alaska",
       "adapted from:book"
      ],
      [
-      "wilderness @0.44",
-      "survival @0.77",
-      "nature @0.06",
+      "survival @0.96",
+      "wilderness @0.38",
       "solitude"
      ],
      [
-      "wilderness @0.43",
-      "survival @0.54",
-      "nature @0.03",
-      "based on a book"
+      "survival @0.91",
+      "wilderness @0.37",
+      "based on true story"
      ],
      [
-      "wilderness @0.30",
-      "survival @0.58",
-      "nature @0.53",
+      "survival @0.73",
+      "wilderness @0.93",
       "solitude"
      ],
      [
-      "wilderness @0.66",
-      "survival @0.42",
-      "nature @0.13"
+      "survival @0.96",
+      "wilderness @0.55"
      ],
      [
-      "wilderness @0.60",
-      "survival @0.62",
-      "nature @0.17",
-      "adapted from:book",
-      "based on a book"
+      "survival @0.49",
+      "wilderness @0.98",
+      "alaska"
      ],
      [
-      "wilderness @0.52",
-      "survival @0.63",
-      "nature @0.16",
-      "solitude",
-      "adapted from:book"
-     ],
-     [
-      "wilderness @0.40",
-      "survival @0.06",
-      "nature @0.60",
-      "solitude"
-     ],
-     [
-      "wilderness @0.57",
-      "survival @0.28",
-      "nature @0.38",
-      "solitude"
-     ],
-     [
-      "wilderness @0.46",
-      "survival @0.36",
-      "nature @0.56"
-     ],
-     [
-      "wilderness @0.46",
-      "survival @0.69",
-      "nature @0.16",
+      "survival @0.75",
+      "wilderness @0.92",
+      "alaska",
       "based on a book",
       "based on book"
      ],
      [
-      "wilderness @0.48",
+      "survival @0.96",
+      "wilderness @0.94"
+     ],
+     [
+      "survival @0.86",
+      "wilderness @0.91",
+      "adapted from:book",
+      "based on a book",
+      "based on book"
+     ],
+     [
+      "survival @0.86",
+      "wilderness @0.47"
+     ],
+     [
+      "survival @0.98",
+      "wilderness @0.97",
+      "alaska"
+     ],
+     [
+      "survival @0.68",
+      "wilderness @0.91",
+      "adapted from:book",
+      "based on a book"
+     ],
+     [
+      "survival @0.97",
+      "wilderness @0.68",
+      "solitude"
+     ],
+     [
+      "survival @0.92",
+      "wilderness @0.55"
+     ],
+     [
+      "survival @0.92",
+      "wilderness @0.36"
+     ],
+     [
       "survival @0.59",
-      "nature @0.03",
+      "wilderness @0.91",
+      "solitude"
+     ],
+     [
+      "survival @0.94",
+      "wilderness @0.50"
+     ],
+     [
+      "survival @0.60",
+      "wilderness @0.86",
+      "nudity (full frontal - brief)"
+     ],
+     [
+      "survival @0.66",
+      "wilderness @0.81",
+      "solitude",
+      "based on book"
+     ],
+     [
+      "survival @0.94",
+      "wilderness @0.45",
+      "solitude"
+     ],
+     [
+      "survival @0.51",
+      "wilderness @0.96"
+     ],
+     [
+      "survival @0.79",
+      "wilderness @0.88"
+     ],
+     [
+      "survival @0.89",
+      "wilderness @0.40"
+     ],
+     [
+      "survival @0.54",
+      "wilderness @0.81",
+      "solitude"
+     ],
+     [
+      "survival @0.76",
+      "wilderness @0.83",
+      "based on true story"
+     ],
+     [
+      "survival @0.82",
+      "wilderness @0.85"
+     ],
+     [
+      "survival @0.47",
+      "wilderness @0.78"
+     ],
+     [
+      "survival @0.79",
+      "wilderness @0.83"
+     ],
+     [
+      "survival @0.82",
+      "wilderness @0.45"
+     ],
+     [
+      "survival @0.56",
+      "wilderness @0.43",
+      "based on true story",
+      "adapted from:book",
+      "based on a book"
+     ],
+     [
+      "survival @0.83",
+      "wilderness @0.37"
+     ],
+     [
+      "survival @0.76",
+      "wilderness @0.38"
+     ],
+     [
+      "survival @0.73",
+      "wilderness @0.38",
+      "adapted from:book",
+      "based on book"
+     ],
+     [
+      "survival @0.43",
+      "wilderness @0.77"
+     ],
+     [
+      "survival @0.54",
+      "wilderness @0.43",
+      "based on a book"
+     ],
+     [
+      "survival @0.64",
+      "wilderness @0.58"
+     ],
+     [
+      "survival @0.62",
+      "wilderness @0.60",
+      "adapted from:book",
+      "based on a book",
+      "based on book"
+     ],
+     [
+      "survival @0.63",
+      "wilderness @0.40",
+      "alaska",
+      "adapted from:book",
+      "based on a book"
+     ],
+     [
+      "survival @0.63",
+      "wilderness @0.52",
+      "solitude",
+      "adapted from:book",
+      "based on a book"
+     ],
+     [
+      "survival @0.77",
+      "wilderness @0.44",
+      "solitude"
+     ],
+     [
+      "survival @0.42",
+      "wilderness @0.66"
+     ],
+     [
+      "survival @0.69",
+      "wilderness @0.46",
+      "based on a book",
+      "based on book"
+     ],
+     [
+      "survival @0.59",
+      "wilderness @0.48",
       "based on true story",
       "based on a book"
+     ],
+     [
+      "survival @0.84",
+      "wilderness @0.98",
+      "solitude",
+      "based on true story",
+      "adapted from:book"
+     ],
+     [
+      "survival @0.99",
+      "wilderness @0.89",
+      "solitude",
+      "based on true story",
+      "adapted from:book"
+     ],
+     [
+      "survival @0.96",
+      "wilderness @0.32",
+      "solitude",
+      "nudity (full frontal - brief)",
+      "based on true story"
+     ],
+     [
+      "survival @0.95",
+      "wilderness @0.90",
+      "solitude",
+      "based on true story",
+      "based on a book"
+     ],
+     [
+      "survival @0.96",
+      "wilderness @0.34",
+      "solitude",
+      "adapted from:book",
+      "based on a book"
+     ],
+     [
+      "survival @0.95",
+      "wilderness @0.42",
+      "based on true story"
+     ],
+     [
+      "survival @0.92",
+      "wilderness @0.30",
+      "based on true story",
+      "based on a book",
+      "based on book"
+     ],
+     [
+      "survival @0.62",
+      "wilderness @0.93",
+      "solitude",
+      "based on a book",
+      "based on book"
+     ],
+     [
+      "survival @0.95",
+      "wilderness @0.35",
+      "based on true story",
+      "based on a book",
+      "based on book"
+     ],
+     [
+      "survival @0.87",
+      "wilderness @0.43",
+      "adapted from:book",
+      "based on a book",
+      "based on book"
      ]
     ],
     "relaxation_notice": null,
-    "capability_notice": null,
+    "capability_notice": "I match themes, topics, people, genres and era \u2014 not specific plot mechanics or niche metadata \u2014 so I couldn't use: \"solitary\". Here's my closest read from what did resolve.",
     "showcase_queries": []
    }
   },

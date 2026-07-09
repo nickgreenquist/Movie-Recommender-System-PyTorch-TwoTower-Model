@@ -20,6 +20,8 @@ python main.py export saved_models/PROD_best_softmax_genome_tags_llm_features_po
 ```
 Export bakes the LLM feature buffer into `serving/feature_store.pt` (the `data/llm_features_*.pt` tensor is gitignored / absent on Streamlit Cloud), so the deployed app rebuilds the genome+LLM user tower from `serving/` alone — `streamlit_app.py` never reads `data/`.
 
+**⚠️ TRAIN/SERVE SKEW — iterate on LLM-front-end prompts against SERVING DATA ONLY (learned the hard way 2026-07-09).** Export also bakes the **facet store** into `serving/feature_store.pt['facets']` — including the `require_keyword_concepts` resolver tables `movieId_to_keyword_concepts` (curated concepts) and `keyword_to_movieIds` (the raw-TMDB index, rung 3 of `resolve_topic_term`). These lag the local `llm_features/cache/facet_store.pt` whenever concepts grow between gated exports. The deployed Ask tab resolves keywords against `serving/` ALONE, so a keyword-only pill (no `liked_items` anchor) whose term isn't a genome tag (e.g. `ancient rome`, `mathematician`) **falls back to popular titles live** if its table isn't baked — even though it looks perfect locally. `tools/llm_frontend_probe.py:Serving` **overlays** the local store by default, which MASKS this; **always pass `Serving(serving_only=True)` when generating or grading Ask-tab pills** (`gen_ask_examples.py` and `ask_live_vs_frozen.py` now do). After ANY change to `KEYWORD_CONCEPTS` / the facet build, **re-export** so `serving/` matches, then regenerate pills. `liked_items` (named-title) anchors always resolve live via the two-tower — only the keyword/facet *resolver tables* are at risk.
+
 ## Running the Code
 
 ```bash

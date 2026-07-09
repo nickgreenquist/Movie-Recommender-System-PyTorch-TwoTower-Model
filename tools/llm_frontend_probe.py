@@ -79,7 +79,14 @@ class Serving:
     UI-only matrices — the Streamlit conversational tab will instead pass its cached
     Artifacts to build_frontend_context rather than reloading serving/ from disk."""
 
-    def __init__(self):
+    def __init__(self, serving_only=False):
+        # serving_only=True builds the ctx from serving/ ALONE — NO local facet_store.pt overlay —
+        # so the harness sees EXACTLY the metadata the deployed Streamlit app has at serving time.
+        # This is MANDATORY for Ask-tab prompt iteration: iterating against the local (overlaid)
+        # store tests keyword/facet membership that is NOT baked into serving/, a train/serve skew
+        # that silently made pills look reproducible while they fell back live (the 2026-07-09
+        # ancient-rome / mathematician fallback bug). Default False preserves /trace + ruler behavior.
+        self._serving_only = serving_only
         self.fs = torch.load(os.path.join(_SERVING, 'feature_store.pt'), weights_only=False)
         me      = torch.load(os.path.join(_SERVING, 'movie_embeddings.pt'), weights_only=False)
         cfg     = self.fs['model_config']
@@ -106,7 +113,9 @@ class Serving:
         # deployed app only ever sees fs['facets'] — this disk fallback is harness-only.
         facets = self.fs.get('facets')
         fp = os.path.join(_REPO_ROOT, 'llm_features', 'cache', 'facet_store.pt')
-        if facets is None:
+        if self._serving_only:
+            pass  # serving-only: use exactly fs['facets'] as baked; never overlay the local store.
+        elif facets is None:
             if os.path.exists(fp):
                 facets = torch.load(fp, weights_only=False)
         elif os.path.exists(fp):

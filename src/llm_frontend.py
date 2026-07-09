@@ -2154,12 +2154,17 @@ def recommend(ctx, extraction, top_n=TOP_N):
     #     Lassie; Austin Powers over Das Boot — idx 243). Seed the anchors from the pool's OWN most
     #     popular members instead: the best-known exemplars of a topic define its taste centroid,
     #     and the two-tower then ranks the whole pool by coherence with them — popularity demotes
-    #     to picking the exemplars, not ordering the result. Predicate mirrors the fallback flag
-    #     below + a resolved pool, so it fires ONLY where popularity would have: a BARE-GENRE ask
-    #     (require_genres, no topic) keeps its popularity floor untouched — the genre-centroid
-    #     "seed of last resort" was REJECTED by data (popularity IS the correct bare-category floor).
-    if topic_pool_ok and not liked_with_weights and not disliked_resolved \
-            and not liked_genres and not disliked_genres:
+    #     to picking the exemplars, not ordering the result. Fires on any resolved topic pool with NO
+    #     actual SEED (no liked_items, no genome/Mode-2 anchors, no disliked_items). A soft liked_genres/
+    #     disliked_genres is a re-rank that NEVER seeds the user embedding, so a pool carrying only a
+    #     genre lean STILL has no taste centroid and floats popular incidental carriers (Caligula over
+    #     Spartacus) — the seeding must fire THROUGH it. The old predicate ALSO excluded the soft genres
+    #     ("mirroring the fallback flag"), but that flag is blind here: fallback=False on a genre lean,
+    #     yet the ranking IS popularity — so a stray soft genre the LIVE extractor adds (that the clean
+    #     canned pill omits) silently dropped BOTH the report anchors and the ranking, making the live
+    #     Ask tab diverge from its own pill (2026-07-09). A BARE-GENRE ask (require_genres, no topic) has
+    #     no topic_pool_ok, so it still keeps its popularity floor untouched.
+    if topic_pool_ok and not liked_with_weights and not disliked_resolved:
         pool_mids = sorted(
             (m for m in topic_pool_ok if m in fs['movieId_to_title']),
             key=lambda m: ctx.pop_rank.get(fs['movieId_to_title'][m], 1 << 30))

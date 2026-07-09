@@ -92,7 +92,7 @@ ROOTS = [
             {'id': 'r2c5', 'label': 'B&W classics',
              'query': 'Black-and-white Christmas classics from the 1940s and 50s.'},
             {'id': 'r2c7', 'label': 'Thanksgiving',
-             'query': 'Thanksgiving movies about family dinners and dysfunction, like Planes, Trains and Automobiles and Home for the Holidays.'},
+             'query': 'Movies that take place on Thanksgiving, like Home for the Holidays, Pieces of April, and The Ice Storm.'},
         ],
     },
     {
@@ -100,9 +100,9 @@ ROOTS = [
         'query': 'A devastating drama that will absolutely make me sob.',
         'children': [
             {'id': 'r3c1', 'label': 'War & loss',
-             'query': ('Visceral anti-war dramas that devastate emotionally, like The Pianist, '
-                       'Come and See, and Grave of the Fireflies — no comedies, no cartoons, '
-                       'no documentaries.')},
+             'query': ('Harrowing anti-war films about the human cost of combat, like The Pianist, '
+                       'Come and See, and Grave of the Fireflies. War genre only, no comedies, '
+                       'cartoons, or documentaries.')},
             {'id': 'r3c2', 'label': 'Terminal illness',
              'query': 'Cancer and terminal-illness dramas that wreck you.'},
             {'id': 'r3c3', 'label': 'True story',
@@ -130,7 +130,7 @@ ROOTS = [
             {'id': 'r4c5', 'label': 'Ancient Rome',
              'query': 'Epic movies set in ancient Rome, no cartoons or animation'},
             {'id': 'r4c6', 'label': 'Modern warriors',
-             'query': 'Modern military war heroes like Lone Survivor, American Sniper, and Black Hawk Down.'},
+             'query': 'Modern combat movies about real soldiers based on true events, like Lone Survivor, American Sniper, and Black Hawk Down. No science fiction.'},
         ],
     },
     {
@@ -144,7 +144,9 @@ ROOTS = [
             {'id': 'r5c3', 'label': 'Space travel',
              'query': 'Space travel movies like Interstellar and Gravity.'},
             {'id': 'r5c4', 'label': 'World travel',
-             'query': 'Movies about traveling around the world and going on adventures, not science fiction.'},
+             'query': ('Movies about traveling around the world to far-off places, like Around the '
+                       'World in 80 Days, Romancing the Stone, and The Secret Life of Walter Mitty. '
+                       'No science fiction, fantasy, documentaries, or comedies.')},
             {'id': 'r5c5', 'label': 'Math biopics',
              'query': 'Movies about mathematicians, no documentaries or sci-fi.'},
             {'id': 'r5c6', 'label': 'Mind-benders',
@@ -159,7 +161,7 @@ ROOTS = [
             {'id': 'r6c1', 'label': 'Zombie',
              'query': 'Zombie apocalypse movies like 28 Days Later and Dawn of the Dead.'},
             {'id': 'r6c2', 'label': 'Pandemic',
-             'query': 'Pandemic and epidemic outbreak thrillers like Contagion and Outbreak — medical, realistic, no creature horror or aliens.'},
+             'query': 'Grounded dramas about a deadly pandemic and epidemic spreading, like Contagion and Outbreak. No creature features, zombies, aliens, comedies, or animation.'},
             {'id': 'r6c3', 'label': 'Alien invasion',
              'query': 'Alien invasion of Earth movies, like War of the Worlds and Independence Day. No horror or comedy.'},
             {'id': 'r6c4', 'label': 'Disaster',
@@ -175,11 +177,11 @@ ROOTS = [
         'query': 'Gritty New York City movies from before 2000, no musicals.',
         'children': [
             {'id': 'r7c1', 'label': '70s paranoia',
-             'query': "1970s-80s paranoid thrillers about government conspiracy, like All the President's Men and Three Days of the Condor"},
+             'query': "Paranoid 1970s and 80s conspiracy thrillers like All the President's Men and Three Days of the Condor."},
             {'id': 'r7c2', 'label': 'Scorsese',
              'query': "Martin Scorsese's New York movies."},
             {'id': 'r7c3', 'label': 'Disco era',
-             'query': 'The disco nightclub scene and dance-floor culture, like Saturday Night Fever.'},
+             'query': 'Movies about the disco scene and nightclub nightlife, like Saturday Night Fever and The Last Days of Disco.'},
             {'id': 'r7c4', 'label': 'Woody Allen',
              'query': "Woody Allen's New York comedies."},
             {'id': 'r7c5', 'label': '60s Paris',
@@ -198,7 +200,7 @@ BACKBURNER = [
     {'id': 'r3c7', 'label': 'Grief', 'parent': 'r3',
      'query': 'Aching movies about grief and moving on.'},
     {'id': 'r6c7', 'label': 'Isolation', 'parent': 'r6',
-     'query': 'Solitary man-versus-nature survival movies, like Into the Wild and Never Cry Wolf. No documentaries.'},
+     'query': 'Solitary survival movies about a person alone in the wilderness, like Into the Wild and Never Cry Wolf. No documentaries.'},
     {'id': 'r1c7', 'label': 'Adult cartoons', 'parent': 'r1',
      'query': 'Satirical adult animated comedies like South Park, Rejected, and Team America — animation for grownups, not kids.'},
     {'id': 'r2c6', 'label': 'Kids Halloween', 'parent': 'r2',
