@@ -1828,9 +1828,58 @@ def _content_similar_scores(ctx, title):
     return (ctx.genome_sim_matrix @ q.T).squeeze(-1)      # [N] cosine scores, aligned to ctx.all_ids
 
 
+# ── extraction normalization (schema-flatten repair) ─────────────────────────
+# The forced-tool extractor OCCASIONALLY emits hard-constraint keys at the ROOT of the object
+# instead of nested under `hard_constraints` (a small-model drift). recommend() reads filters ONLY
+# from `hard_constraints`, so an unrepaired flatten silently DROPS the filter — a keyword-only query
+# ("movies about mathematicians") then loses its entire signal and falls back to popularity. The
+# canned-board generator (tools/gen_ask_examples.py) already repairs this; doing it HERE, at the
+# single choke point every caller passes through, makes the live hosted path byte-identical to the
+# pre-generated pill a user clicked. Key typing is schema-derived (src.llm_frontend_prompt.build_schema).
+_TOP_LIST_KEYS = {'liked_items', 'disliked_items', 'genome_tags', 'liked_genres',
+                  'disliked_genres', 'mood', 'unsupported_notes'}
+_HC_LIST_KEYS  = {'require_genres', 'exclude_genres', 'require_people', 'exclude_people',
+                  'require_genome_tags', 'exclude_genome_tags', 'exclude_mood',
+                  'require_country', 'require_language', 'require_attributes',
+                  'require_keyword_concepts', 'exclude_keyword_concepts',
+                  'require_franchise', 'exclude_franchise',
+                  'require_composers', 'exclude_composers'}
+_HC_SCALAR_KEYS = {'year_min', 'year_max', 'require_max_rating', 'require_min_rating',
+                   'max_runtime', 'min_runtime', 'min_vote_average'}
+
+
+def _listify(v):
+    """Coerce a stray comma-string into the list the schema declares for an array field."""
+    if isinstance(v, str):
+        return [p.strip() for p in v.split(',') if p.strip()]
+    return v
+
+
+def normalize_extraction(ex):
+    """Repair known small-model drift so an extraction matches the shape recommend() consumes:
+    re-nest root-level hard-constraint keys under `hard_constraints`, and coerce stray strings into
+    the arrays the schema declares. Idempotent; returns a new dict (the input is not mutated)."""
+    ex = dict(ex)
+    hc = dict(ex.get('hard_constraints') or {})
+    for key in list(ex.keys()):                       # schema-flatten repair: root → nested
+        if key in _HC_LIST_KEYS or key in _HC_SCALAR_KEYS:
+            hc.setdefault(key, ex.pop(key))
+    for key in _TOP_LIST_KEYS & set(ex):
+        ex[key] = _listify(ex[key])
+    for key in _HC_LIST_KEYS & set(hc):
+        hc[key] = _listify(hc[key])
+    if hc:
+        ex['hard_constraints'] = hc
+    return ex
+
+
 def recommend(ctx, extraction, top_n=TOP_N):
     """Run one extraction object through the full v1 pipeline. Returns a report dict
     (UI-agnostic — the harness CLI and the Streamlit tab each render it their own way)."""
+    # Repair schema-flatten drift (hard-constraint keys emitted at the root) BEFORE anything reads
+    # filters — otherwise a flattened keyword-only query silently loses its signal and falls back to
+    # popularity, so the live board would diverge from the canned pill built on the same prompt.
+    extraction = normalize_extraction(extraction)
     # Step-4e out-of-domain catch: the extractor flagged a request that isn't asking for movies at
     # all ("a game with dogs"). Decline honestly — empty recs, an explicit echo, showcase chips —
     # instead of dumping a popularity list that pretends to be an answer.

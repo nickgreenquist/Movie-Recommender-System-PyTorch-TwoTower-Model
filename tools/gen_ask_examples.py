@@ -45,7 +45,7 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from src.llm_frontend import TOP_N, recommend            # noqa: E402
+from src.llm_frontend import TOP_N, recommend, normalize_extraction   # noqa: E402
 from tools.ask_examples_spec import ROOTS, all_entries    # noqa: E402
 from tools.llm_frontend_probe import Serving              # noqa: E402
 
@@ -53,43 +53,9 @@ _ARTIFACT     = os.path.join(_REPO_ROOT, 'serving', 'ask_examples.json')
 _EXTRACTIONS  = os.path.join(_REPO_ROOT, 'tools', 'ask_extractions')   # committed default no-key source
 _TOP_N        = 60   # mirror streamlit_app._TOTAL_RESULTS so canned pagination matches live
 
-# Schema-derived field typing (src.llm_frontend_prompt.build_schema): list-typed keys at each
-# level, used to re-nest flattened constraints and coerce stray strings back to lists.
-_TOP_LIST_KEYS = {'liked_items', 'disliked_items', 'genome_tags', 'liked_genres',
-                  'disliked_genres', 'mood', 'unsupported_notes'}
-_HC_LIST_KEYS  = {'require_genres', 'exclude_genres', 'require_people', 'exclude_people',
-                  'require_genome_tags', 'exclude_genome_tags', 'exclude_mood',
-                  'require_country', 'require_language', 'require_attributes',
-                  'require_keyword_concepts', 'exclude_keyword_concepts',
-                  'require_franchise', 'exclude_franchise',
-                  'require_composers', 'exclude_composers'}
-_HC_SCALAR_KEYS = {'year_min', 'year_max', 'require_max_rating', 'require_min_rating',
-                   'max_runtime', 'min_runtime', 'min_vote_average'}
-
-
-# ── extraction normalization ─────────────────────────────────────────────────
-def _listify(v):
-    """Coerce a stray string into the list the schema declares (split multi-phrase strings)."""
-    if isinstance(v, str):
-        return [p.strip() for p in v.split(',') if p.strip()]
-    return v
-
-
-def normalize_extraction(ex):
-    """Repair known small-model drift so the stored extraction matches the schema shape the
-    hosted forced-tool call produces. Returns a new dict; the input is not mutated."""
-    ex = dict(ex)
-    hc = dict(ex.get('hard_constraints') or {})
-    for key in list(ex.keys()):                       # schema-flatten repair: root → nested
-        if key in _HC_LIST_KEYS or key in _HC_SCALAR_KEYS:
-            hc.setdefault(key, ex.pop(key))
-    for key in _TOP_LIST_KEYS & set(ex):
-        ex[key] = _listify(ex[key])
-    for key in _HC_LIST_KEYS & set(hc):
-        hc[key] = _listify(hc[key])
-    if hc:
-        ex['hard_constraints'] = hc
-    return ex
+# NOTE: normalize_extraction (the schema-flatten repair) now lives in src.llm_frontend and runs
+# inside recommend() itself, so the live hosted path applies the SAME repair as these canned boards.
+# Imported above and still called here so the printed curation gist reflects the normalized shape.
 
 
 # ── JSON sanitization ────────────────────────────────────────────────────────
