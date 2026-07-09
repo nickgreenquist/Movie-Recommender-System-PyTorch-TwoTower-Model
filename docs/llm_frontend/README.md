@@ -21,7 +21,7 @@ next to the code (see "Where things landed" below).
 | `validation/llm_frontend_haiku_validation.md` | The **v1→v5 mass-Haiku validation writeup** (results) | done |
 | `validation/retrieval_eval/` | Facet/retrieval regression cases + reports — **live input** to `tools/llm_frontend_eval.py` (169 cases, 80 promoted from the 500-query run) | live eval data |
 | `validation/v4_resume/` *(local-only, gitignored)*, `validation/v5/` | Validation-run artifacts (cases, judge scripts, summaries) | archive |
-| `validation/ask_ai_holes/` | **500 real Ask-AI prompts** (`harvest_500_prompts.json`) + oracle-rec/coverage harness | done — seeded the run500 quality program |
+| **`validation/test_prompts_500.md`** | **The 500 test prompts** — realistic Ask queries + per-prompt intent, the reusable prompt-iteration test set | live test asset |
 
 Working docs deleted after ship (`facet_store_plan.md`, `hybrid_retrieval_ask_tab_plan.md`, the
 `ask_tab_*_handoff` series, validation resume notes) live in git history (removed in `425c633`).
@@ -40,9 +40,10 @@ against the historical doc via `git show 425c633^:docs/llm_frontend/facet_store_
 - **Eval / regression:** `tools/llm_frontend_eval.py` over `validation/retrieval_eval/eval_cases.json`;
   read-only pill-vs-live grader `tools/ask_live_vs_frozen.py --k 3`; single-query live trace
   `tools/llm_frontend_trace.py` (the `/trace` skill).
-- **The 500-query quality program:** prompt set `validation/ask_ai_holes/harvest_500_prompts.json`
-  (committed — reused for prompt testing); run artifacts local-only in `tools/results/traces/run500/`
-  (gitignored). Headline: good-board rate 32.0% → 50.8% across the tuning waves.
+- **The 500-query quality program:** prompt set `validation/test_prompts_500.md` (committed — the
+  reusable test set; the original `ask_ai_holes/` harvest harness + run results were pruned to git
+  history post-launch); run artifacts local-only in `tools/results/traces/run500/` (gitignored).
+  Headline: good-board rate 32.0% → 50.8% across the tuning waves.
 - **Back bookend (LLM explanations):** deferred by decision — build nothing; per-rec provenance is
   preserved for it.
 
