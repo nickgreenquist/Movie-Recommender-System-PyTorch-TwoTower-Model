@@ -1,5 +1,9 @@
 # LLM Conversational Front-End for Two-Tower Recommender
 
+> **STATUS (2026-07-09): SHIPPED.** v1 + v1.5 are live in the deployed app (Ask tab launched).
+> This document is the original design spec, kept as a record — for the post-launch layout see
+> [`README.md`](./README.md) in this directory.
+
 ## Feature Summary
 
 Add a natural-language input layer on top of an existing deployed two-tower recommender (start with the Movie or Steam model). The user types a free-form request in plain English. A small, fast hosted LLM parses that request into the structured input the trained two-tower model expects. The two-tower model does the actual retrieval. The user sees recommendations from the trained model — never raw LLM output.

@@ -7,7 +7,7 @@ STRUCTURE
     asks — each phrased as a full standalone query so it (a) pre-generates independently,
     (b) reads correctly when it back-fills the Ask text box, and (c) still works if a user
     edits it and reruns live. Every leaf below was traced through the real Haiku→two-tower
-    pipeline before it earned a slot (worksheet: ask_leaf_candidates_v3.md).
+    pipeline before it earned a slot (apply loop + routing learnings: tools/ask_extractions/README.md).
 
     id      stable key ('r3', 'r3c2', …) — the artifact and the UI reference queries by id,
             so labels/queries can be reworded without invalidating a pre-generated report.

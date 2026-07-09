@@ -22,6 +22,8 @@ Export bakes the LLM feature buffer into `serving/feature_store.pt` (the `data/l
 
 **⚠️ TRAIN/SERVE SKEW — iterate on LLM-front-end prompts against SERVING DATA ONLY (learned the hard way 2026-07-09).** Export also bakes the **facet store** into `serving/feature_store.pt['facets']` — including the `require_keyword_concepts` resolver tables `movieId_to_keyword_concepts` (curated concepts) and `keyword_to_movieIds` (the raw-TMDB index, rung 3 of `resolve_topic_term`). These lag the local `llm_features/cache/facet_store.pt` whenever concepts grow between gated exports. The deployed Ask tab resolves keywords against `serving/` ALONE, so a keyword-only pill (no `liked_items` anchor) whose term isn't a genome tag (e.g. `ancient rome`, `mathematician`) **falls back to popular titles live** if its table isn't baked — even though it looks perfect locally. `tools/llm_frontend_probe.py:Serving` **overlays** the local store by default, which MASKS this; **always pass `Serving(serving_only=True)` when generating or grading Ask-tab pills** (`gen_ask_examples.py` and `ask_live_vs_frozen.py` now do). After ANY change to `KEYWORD_CONCEPTS` / the facet build, **re-export** so `serving/` matches, then regenerate pills. `liked_items` (named-title) anchors always resolve live via the two-tower — only the keyword/facet *resolver tables* are at risk.
 
+**Ask tab (launched 2026-07-09, stable):** 7 roots + 42 leaf pills + 4 hidden backburner = 53 pre-generated boards in `serving/ask_examples.json`, built by `python tools/gen_ask_examples.py` (no API key) from committed frozen extractions `tools/ask_extractions/<id>.json` (spec: `tools/ask_examples_spec.py`). Boards are pinned by those extractions — bare regen only, **never `--live`** (re-extracts everything and destroys curation). Pill↔live honesty was verified pill-by-pill pre-launch; grade drift read-only via `tools/ask_live_vs_frozen.py --k 3`. Tuning rule (prompt-only, never hand-write extraction JSON) + routing learnings: `tools/ask_extractions/README.md`. After a model promotion: re-export, bare-regen boards, re-eyeball. Design/validation record: `docs/llm_frontend/`.
+
 ## Running the Code
 
 ```bash
@@ -136,6 +138,7 @@ All get `ts_max_bin` (most recent timestamp). Horror & Sci-Fi are most genre-dri
 - Adam for MSE — user tower collapse.
 - Shuffle in rollback dataset build — biases toward popular.
 - Dataset cap > 20/user — null MRR, +4GB RAM.
+- Soft negatives (removed in v3) — do not bring back.
 
 ## LLM-vs-Genome Ablation
 Narrative `docs/llm_vs_genome_ablation/llm_vs_genome_ablation.md`; full record + checkpoint→model map `docs/plans/llm_vs_genome_ablation_plan.md`. Question: does an item content vector help, genome vs LLM-extracted, on genome's 132 axes? Verdict (low-variance, seeded, α=0): content beats the CF floor in the stripped `BASE_TOWERS=idonly` setting (C′<A′<B′, LLM +3.0%); in the rich base the lift vanishes (content is redundant with curated genre/tags). LLM ≥ genome on every tier of both corpora — LLM features are less redundant with cheap metadata, i.e. more genuinely additive. Model D (genome+LLM) shows no clear additive benefit; prod is a separate α=0.5 portfolio deployment of the D architecture, not metrics-driven.

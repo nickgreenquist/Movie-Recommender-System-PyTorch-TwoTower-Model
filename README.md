@@ -150,10 +150,11 @@ A few deliberate choices:
 - **The LLM's output is never shown to you.** It's consumed internally to build the model's input and then discarded — so there's no channel to use the demo as a free general-purpose chatbot, and "LLM as plumbing, not product" stays concrete. (A debug expander can reveal the parsed fields for the curious.)
 - **A small model, on purpose.** Parsing one short message into JSON doesn't need a frontier model; Haiku does it at ~10–20× lower cost. A typical extraction call is well under a cent.
 - **Structured output + caps.** The extraction is a *forced tool call* against a JSON schema, so the pipeline never breaks on malformed output; output is capped at ~300 tokens and a per-session call limit keeps the bill negligible.
+- **Guided examples are pre-generated.** The tab's example-pill tour (7 themes × 6 refinements) ships its LLM extractions frozen in-repo ([`tools/ask_extractions/`](tools/ask_extractions/)) with boards pre-computed through the same retrieval path as live queries — instant to click, no API key needed.
 
 The extraction prompt was tuned and validated **entirely in-repo against the trained model** before any API wiring — the reusable harness is [`tools/llm_frontend_probe.py`](tools/llm_frontend_probe.py) (`python tools/llm_frontend_probe.py --smoke`), and the shared retrieval pipeline both it and the app import is [`src/llm_frontend.py`](src/llm_frontend.py).
 
-**Rollout:** v1 (shipped) — titles + mood + year/genre filters. v1.5 — richer post-retrieval filters (director, content rating, runtime, *"actually set in Paris"*) from a baked facet store. v2 — explanations, multi-turn. See [`docs/llm_frontend/llm_frontend_plan.md`](docs/llm_frontend/llm_frontend_plan.md).
+**Rollout:** v1 + v1.5 (shipped) — titles + mood + year/genre filters, plus hard facet filters from a baked facet store: directors and actors, keyword topics (*"movies about ancient Rome"*), content-rating ceilings and floors, runtime windows. v2 — explanations, multi-turn. See [`docs/llm_frontend/llm_frontend_plan.md`](docs/llm_frontend/llm_frontend_plan.md).
 
 ### Enabling it locally
 
@@ -278,9 +279,10 @@ Full write-up — pipeline, mechanism (*why* it works), cost breakdown, and limi
 │   ├── inference.py        # build a user vector from a few liked movies → rank the catalog
 │   ├── export.py           # bake checkpoint → device-agnostic serving/ artifacts
 │   └── checkpoint.py       # config-from-state_dict loader (no separate config file needed)
-├── llm_features/           # self-built content pipeline: scrape → LLM-extract → tensor
-├── serving/                # exported artifacts the app loads (model, embeddings, feature store, posters)
-├── docs/                   # write-ups — the LLM-vs-genome experiment (+ plans/)
+├── llm_features/           # self-built content pipeline: scrape → LLM-extract → tensor (+ facet store)
+├── serving/                # exported artifacts the app loads (model, embeddings, feature store, posters, Ask-tab example boards)
+├── tools/                  # dev/analysis scripts — canary batches, LLM front-end probe/trace/eval, Ask-tab pill generator
+├── docs/                   # write-ups — the LLM front-end docs, the LLM-vs-genome experiment (+ plans/)
 └── tests/                  # model shape tests
 ```
 

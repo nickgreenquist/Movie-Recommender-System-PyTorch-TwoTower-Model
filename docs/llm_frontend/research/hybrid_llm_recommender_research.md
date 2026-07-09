@@ -3,7 +3,7 @@
 > **Provenance / grounding note.** This document is a verbatim transcription of a Gemini Deep
 > Research report (shared at `https://gemini.google.com/share/10a6abf17f97`), captured
 > 2026-06-28. It is preserved here as a **grounding source** for this repo's LLM conversational
-> front-end work (see `../llm_frontend_plan.md`, `../validation/haiku_validation_handoff.md`, `src/llm_frontend.py`).
+> front-end work (see `../llm_frontend_plan.md`, `../validation/llm_frontend_haiku_validation.md`, `src/llm_frontend.py`).
 > The report's running example — *"atmospheric sci-fi like Blade Runner but no horror"* parsed →
 > anchored → fed to a PyTorch Two-Tower user tower → HNSW retrieval → LLM re-rank — is exactly the
 > architecture this project is building.
