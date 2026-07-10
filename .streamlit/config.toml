@@ -1,0 +1,6 @@
+# Demo theme — dark, poster-forward (posters read like a streaming product on dark, and the
+# placeholder tiles are already #1e1e1e). Indigo accent so selected pills/chips read as brand,
+# not Streamlit's default error-red. Streamlit Cloud picks this file up from the repo.
+[theme]
+base = "dark"
+primaryColor = "#818CF8"

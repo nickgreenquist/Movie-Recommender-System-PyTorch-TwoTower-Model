@@ -22,6 +22,7 @@ import pandas as pd
 import plotly.colors as pcolors
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
 import torch
 import torch.nn.functional as F
 
@@ -422,17 +423,20 @@ def _show_results(result_key: str, posters, fs, tmdb_ids) -> None:
         st.dataframe(page_df, use_container_width=True, hide_index=True)
     else:
         titles = page_df['Title'].tolist()
-        for row_start in range(0, len(titles), _POSTER_COLS):
-            row_titles = titles[row_start:row_start + _POSTER_COLS]
-            cols = st.columns(_POSTER_COLS)
-            for col, title in zip(cols, row_titles):
-                clean_title = title.replace('  ◀ ANCHOR', '').replace('  ◀ anchor', '')
-                mid  = fs['title_to_movieId'].get(clean_title)
-                url  = (posters.get(str(mid)) or '') if mid else ''
-                link = _tmdb_url(mid, tmdb_ids, clean_title)
-                with col:
-                    st.html(_poster_div(url, link))
-                    st.caption(title)
+        # Keyed container (class st-key-<key>_grid): the mobile 3-across CSS override in the
+        # global style block targets these grids without touching other column layouts.
+        with st.container(key=f'{result_key}_grid'):
+            for row_start in range(0, len(titles), _POSTER_COLS):
+                row_titles = titles[row_start:row_start + _POSTER_COLS]
+                cols = st.columns(_POSTER_COLS)
+                for col, title in zip(cols, row_titles):
+                    clean_title = title.replace('  ◀ ANCHOR', '').replace('  ◀ anchor', '')
+                    mid  = fs['title_to_movieId'].get(clean_title)
+                    url  = (posters.get(str(mid)) or '') if mid else ''
+                    link = _tmdb_url(mid, tmdb_ids, clean_title)
+                    with col:
+                        st.html(_poster_div(url, link))
+                        st.caption(title)
 
     _show_more_button(result_key, shown, len(df))
 
@@ -475,6 +479,10 @@ def _render_rec_model_toggle(rec_models, key):
         st.caption("⚠️ Popularity correction **off** — watch popular blockbusters crowd out niche, "
                    "on-genre picks. This is a failure mode common in recommender models, where the "
                    "model learns to 'play it safe' by often recommending popular movies.")
+    else:
+        st.caption("Popularity correction **on** — a training-time logit adjustment (α = 0.5) "
+                   "counteracts the popularity bias the model would otherwise learn from the "
+                   "ratings data. Flip it off to see the difference.")
 
 
 # ── Tab: Recommend ────────────────────────────────────────────────────────────
@@ -483,8 +491,7 @@ def tab_recommend(rec_models, fs, all_ids, ts_inference, posters, tmdb_ids):
     st.caption(
         "Select movies you love and optionally refine with genome tags. "
         "The model builds your taste embedding from the movies' content — curated genome tags plus "
-        "web-scraped, LLM-extracted features — and scores every movie in the corpus. "
-        "To learn how the model works, see the About tab."
+        "web-scraped, LLM-extracted features — and scores every movie in the corpus."
     )
     all_titles = fs['popularity_ordered_titles']
 
@@ -492,8 +499,8 @@ def tab_recommend(rec_models, fs, all_ids, ts_inference, posters, tmdb_ids):
     if st.session_state.pop('_clear_rec', False):
         for key in ('rec_liked', 'rec_genome_tags'):
             st.session_state[key] = []
-        for key in ('rec_df', 'rec_shown', 'rec_anchor_caption', 'rec_query', 'rec_seed_key',
-                    'rec_alpha'):
+        for key in ('rec_df', 'rec_shown', 'rec_query', 'rec_seed_key',
+                    'rec_alpha', '_rec_scroll'):
             st.session_state.pop(key, None)
 
     liked_titles = st.multiselect("Favorite Movies", all_titles, key='rec_liked',
@@ -515,20 +522,30 @@ def tab_recommend(rec_models, fs, all_ids, ts_inference, posters, tmdb_ids):
 
     st.markdown("""
         <style>
-        div[data-testid="stButton"] > button[kind="secondary"] {
+        div[data-testid="stButton"] > button[kind="primary"] {
             display: block;
             margin: 1rem auto;
-            padding: 0.75rem 3rem;
-            font-size: 1.2rem;
+            padding: 0.6rem 1.5rem;
+            font-size: 1.05rem;
             font-weight: 600;
+            white-space: nowrap;   /* keep the CTA on one line inside its column */
         }
+        /* The one-shot scroll helper (components.html, height 0) still costs a flex-gap slot;
+           collapse its element container so it never adds blank space above the results. */
+        div[data-testid="stElementContainer"]:has(iframe[height="0"]) { display: none; }
+        /* Scroll targets for the one-shot results scroll — keep them clear of the toolbar. */
+        .st-key-rec_alpha, .st-key-rec_grid { scroll-margin-top: 2rem; }
         </style>
     """, unsafe_allow_html=True)
-    _, btn_col, clear_col = st.columns([2, 1, 2])
-    if clear_col.button("Clear All", use_container_width=False):
+    _, btn_col, clear_col = st.columns([2, 1, 2], vertical_alignment="center")
+    # Clear All renders only once there is something to clear — on the empty form it read as
+    # clutter and competed visually with the primary CTA.
+    has_state = bool(liked_titles or selected_genome_tags
+                     or st.session_state.get('rec_df') is not None)
+    if has_state and clear_col.button("Clear All"):
         st.session_state['_clear_rec'] = True
         st.rerun()
-    if btn_col.button("Get Recommendations", use_container_width=True):
+    if btn_col.button("Get Recommendations", type="primary", use_container_width=True):
         if not liked_titles and not selected_genome_tags:
             st.warning("Select at least one movie or genome tag.")
         else:
@@ -560,15 +577,30 @@ def tab_recommend(rec_models, fs, all_ids, ts_inference, posters, tmdb_ids):
             # Store the model-independent query (likes + anchors). The score block below (re)runs it
             # against whichever α variant is selected, so flipping the toggle re-ranks the SAME
             # query immediately — no need to re-press the button.
+            anchors_by_tag = {}
+            for tag, title in anchor_tag_title_pairs:
+                anchors_by_tag.setdefault(tag, []).append(title)
+            # Captions are committed WITH the query so they always describe the results on
+            # screen, even after the user edits the form without re-running. Wording matches
+            # the Examples tab ("Because you like…"), keeping the two tabs' results blocks twins.
             st.session_state['rec_query'] = {
                 'liked_with_weights': (
                     [(t, _LIKED_MOVIE)  for t in liked_titles] +
                     [(t, _ANCHOR_MOVIE) for _, t in anchor_tag_title_pairs]
                 ),
                 'exclude_titles': liked_titles,
+                'liked_caption': (
+                    "Because you like these movies: " + ", ".join(liked_titles)
+                    if liked_titles else None),
+                'tags_caption': (
+                    "Because you like these genome tags: " + ", ".join(selected_genome_tags)
+                    if selected_genome_tags else None),
+                # grouped per tag ("cyberpunk: A, B, C · dystopia: X, Y") — repeating the tag
+                # on every anchor made the caption twice as long for no information
                 'anchor_caption': (
                     "Genome anchors — " + " · ".join(
-                        f"{tag}: {title}" for tag, title in anchor_tag_title_pairs)
+                        f"{tag}: " + ", ".join(titles)
+                        for tag, titles in anchors_by_tag.items())
                     if anchor_tag_title_pairs else None),
             }
 
@@ -586,17 +618,25 @@ def tab_recommend(rec_models, fs, all_ids, ts_inference, posters, tmdb_ids):
             df = _score_movies(user_emb, all_ids, all_embs, fs,
                                exclude_titles=query['exclude_titles'])
             _store_results(df, 'rec')
-            if query['anchor_caption']:
-                st.session_state['rec_anchor_caption'] = query['anchor_caption']
-            else:
-                st.session_state.pop('rec_anchor_caption', None)
             st.session_state['rec_seed_key'] = cache_key
+            st.session_state['_rec_scroll']  = True   # fresh results → scroll them into view
 
     if 'rec_df' in st.session_state:
         _render_rec_model_toggle(rec_models, 'rec_alpha')
-        caption = st.session_state.get('rec_anchor_caption')
-        if caption:
-            st.caption(caption)
+        for cap in ('liked_caption', 'tags_caption', 'anchor_caption'):
+            if query and query.get(cap):
+                st.caption(query[cap])
+        # One-shot smooth scroll to the fresh results, which render below the fold. The script
+        # runs in components.html's same-origin iframe, so it can reach the parent document.
+        # Target: the α-toggle's keyed container (top of the results section), falling back to
+        # the poster grid when only one model is loaded and the toggle doesn't render.
+        if st.session_state.pop('_rec_scroll', False):
+            components.html(
+                "<script>const d = window.parent.document;"
+                "(d.querySelector('.st-key-rec_alpha') || d.querySelector('.st-key-rec_grid'))"
+                "?.scrollIntoView({behavior: 'smooth', block: 'start'});</script>",
+                height=0,
+            )
     _show_results('rec', posters, fs, tmdb_ids)
 
 
@@ -672,14 +712,21 @@ def tab_recommend_examples(rec_models, fs, all_ids, ts_inference, posters, tmdb_
                                           [t for _, t in anchor_tag_title_pairs])
         _store_results(df, 'examples')
         if anchor_tag_title_pairs:
-            st.session_state['examples_anchor_caption'] = "Genome anchors: " + ", ".join(
-                title for _, title in anchor_tag_title_pairs
-            )
+            # same grouped format as the Recommend tab ("tag: A, B, C · tag: X, Y")
+            anchors_by_tag = {}
+            for tag, title in anchor_tag_title_pairs:
+                anchors_by_tag.setdefault(tag, []).append(title)
+            st.session_state['examples_anchor_caption'] = (
+                "Genome anchors — " + " · ".join(
+                    f"{tag}: " + ", ".join(titles)
+                    for tag, titles in anchors_by_tag.items()))
         else:
             st.session_state.pop('examples_anchor_caption', None)
         st.session_state['examples_profile'] = (selected_profile, variant)
 
-    st.subheader(f"Recommendations for: {selected_profile}")
+    # No "Recommendations for: <profile>" heading — the selectbox above already names the
+    # profile, and the "Because you like…" captions carry the seeds (matches the Recommend
+    # tab, which is likewise heading-less).
     if fav_movies:
         st.caption("Because you like these movies: " + ", ".join(fav_movies))
     if genome_tags:
@@ -749,17 +796,27 @@ def _report_to_df(report, fs):
     return pd.DataFrame(rows)
 
 
+def _badges(names, color):
+    """Markdown badge chips (`:color-badge[…]`) for a list of labels. Square brackets would
+    terminate the directive early, so they are folded to parens."""
+    return " ".join(f":{color}-badge[{str(n).replace('[', '(').replace(']', ')')}]" for n in names)
+
+
 def _render_ask_debug(report):
     """A collapsed expander showing how the request was interpreted — the structured fields the LLM
     produced and what they resolved to. The plan keeps raw LLM output out of the default UI (no
-    free-chatbot channel); this panel is opt-in, for the portfolio narrative of how the layer works."""
+    free-chatbot channel); this panel is opt-in, for the portfolio narrative of how the layer works.
+    It leads with the pipeline's own intent chips (the human-readable echo of every parsed slot);
+    the raw extraction JSON sits behind a toggle so the default view reads as product, not debug."""
     ex  = report['extraction']
     res = report['resolution']
-    with st.expander("How your request was interpreted (the model's input — normally hidden)"):
+    with st.expander("Under the hood — what the model was told (normally hidden)"):
         st.caption(
             "The LLM only fills in the structured fields below; the trained two-tower model does the "
             "actual retrieval. This panel is here for transparency — end users never see LLM output."
         )
+        if report.get('intent_chips'):
+            st.markdown("**Understood as:** " + _badges(report['intent_chips'], 'blue'))
         liked    = [c for _, c, _ in res['liked'] if c]
         disliked = [c for _, c, _ in res['disliked'] if c]
         dropped  = [r for r, c, _ in res['liked'] + res['disliked'] if not c]
@@ -769,16 +826,13 @@ def _render_ask_debug(report):
             st.markdown("**Resolved dislikes:** " + ", ".join(disliked))
         if report['anchors']:
             st.markdown(f"**Mood anchors** (weight {report['anchor_weight']}): "
-                        + ", ".join(report['anchors']))
-        hc = ex.get('hard_constraints') or {}
-        if any(hc.get(k) for k in ('year_min', 'year_max', 'require_genres', 'exclude_genres')):
-            st.markdown(f"**Hard post-filters:** `{hc}`")
+                        + _badges(report['anchors'], 'gray'))
         if dropped:
             st.markdown("**Titles not matched in the catalog (dropped):** " + ", ".join(dropped))
         if report['fallback']:
             st.markdown("_No usable taste signal extracted — showing popular titles._")
-        st.markdown("**Raw extraction (consumed internally):**")
-        st.json(ex)
+        if st.toggle("Show raw extraction (consumed internally)", key='ask_raw_extraction'):
+            st.json(ex)
 
 
 def _ask_clear_results():
@@ -823,11 +877,13 @@ def _on_ask_leaf_change():
 
 
 def _ask_title(query):
-    """Results-heading text for a request: the prompt itself, whitespace-collapsed and capped so a
-    long sentence stays a tidy one-line heading. Used for both canned chips and live searches, so
-    the heading always echoes the prompt that produced the results."""
+    """Results-heading text for a LIVE request: the prompt itself, whitespace-collapsed and capped
+    at a word boundary so a long sentence stays a tidy heading that never cuts mid-title
+    ("…Hachi: A Do…"). Canned chips skip this and echo their short pill label instead."""
     q = " ".join((query or "").split())
-    return (q[:80] + "…") if len(q) > 80 else q
+    if len(q) <= 80:
+        return q
+    return q[:80].rsplit(' ', 1)[0] + "…"
 
 
 def tab_ask(art, posters, tmdb_ids):
@@ -837,10 +893,9 @@ def tab_ask(art, posters, tmdb_ids):
         "an era, genres to include or avoid. A small, fast LLM (Claude Haiku) translates your words "
         "into the model's input; the **trained two-tower model does all the recommending**."
     )
-    st.caption(
-        "📀 Catalog: MovieLens 32M (movies with 200+ ratings) — coverage effectively ends around "
-        "2019, so most films after that simply aren't in the dataset."
-    )
+    # (The MovieLens-catalog caveat renders as a footnote at the bottom of the tab — it's a
+    # caveat, not a headline, and the old second caption pushed the input box below the fold
+    # on phones.)
 
     # ── Search bar (Enter to submit; no button) ───────────────────────────────
     # An st.chat_input styled like Claude/ChatGPT/Gemini: a single rounded field with a
@@ -869,9 +924,19 @@ def tab_ask(art, posters, tmdb_ids):
     # selection CHANGE, so reruns don't clobber results, and the live path pins it so a
     # still-highlighted chip can't reclaim live results.
     examples    = _load_ask_examples()
+    # First load only: light the Samurai theme pill so the landing tab opens with a board
+    # already on screen instead of an empty panel. Widget state is seeded BEFORE st.pills
+    # renders (legal); programmatic writes don't fire on_change, so 'ask_open_theme' is set by
+    # hand. The one-shot guard keeps a user's deliberate deselect-to-empty from re-seeding.
+    if examples and not st.session_state.get('_ask_seeded'):
+        st.session_state['_ask_seeded'] = True
+        if 'ask_ex_root' not in st.session_state and 'ask_report' not in st.session_state:
+            default = 'r4' if 'r4' in examples['examples'] else examples['roots'][0]
+            st.session_state['ask_ex_root']    = default   # "Samurai duels & honor"
+            st.session_state['ask_open_theme'] = default
     sel_example = None
     if examples:
-        st.caption("**Suggested prompts** — pre-computed.")
+        st.caption("**Suggested prompts** — try one, results are instant.")
         root_sel = st.pills(
             "Themes", examples['roots'], selection_mode="single",
             format_func=lambda i: examples['examples'][i]['label'],
@@ -883,10 +948,11 @@ def tab_ask(art, posters, tmdb_ids):
         child_sel  = None
         if open_theme:
             # Row keyed by open theme: switching themes swaps the widget, resetting the pick. The
-            # visible "Similar to: <theme>" label ties the row to the theme that opened it —
-            # without it, the second pill row reads as disconnected.
+            # visible "Riffing on: <theme>" label ties the row to the theme that opened it —
+            # without it, the second pill row reads as disconnected. ("Riffing", not "Similar":
+            # the children are deliberate drifts off the theme, not refinements of it.)
             child_sel = st.pills(
-                f"Similar to: **{examples['examples'][open_theme]['label']}**",
+                f"Riffing on: **{examples['examples'][open_theme]['label']}**",
                 examples['tree'].get(open_theme, []), selection_mode="single",
                 format_func=lambda i: examples['examples'][i]['label'],
                 key=f'ask_ex_children_{open_theme}', on_change=_on_ask_leaf_change,
@@ -897,7 +963,7 @@ def tab_ask(art, posters, tmdb_ids):
             st.session_state['ask_ex_active'] = sel_example
             st.session_state['ask_chat']      = entry['query']   # prefill the bar (editable; won't auto-submit)
             st.session_state['ask_report']    = entry['report']
-            st.session_state['ask_title']     = _ask_title(entry['query'])   # heading echoes the prompt
+            st.session_state['ask_title']     = entry['label']   # heading echoes the short chip label
             _store_results(_report_to_df(entry['report'], fs), 'ask')
 
     # Render the search bar into its top slot now that sel_example is known. chat_input
@@ -958,7 +1024,9 @@ def tab_ask(art, posters, tmdb_ids):
     if report is not None:
         title = st.session_state.get('ask_title')
         if title:
-            st.subheader(f"Recommendations for: {title}")
+            # h4, not st.subheader — the full prompt already sits in the input box just above,
+            # so a smaller echo is enough to anchor the results.
+            st.markdown(f"#### Recommendations for: {title}")
         relaxed = report.get('relaxed_constraints') or []
         if relaxed:
             labels = {'require_attributes': 'format', 'require_genome_tags': 'vibe/setting',
@@ -968,6 +1036,10 @@ def tab_ask(art, posters, tmdb_ids):
                     f"relaxed: **{dropped}**. Identity filters (people, franchise, rating, year) were kept.")
         _render_ask_debug(report)
     _show_results('ask', posters, fs, tmdb_ids)
+    st.caption(
+        "Catalog: MovieLens 32M (movies with 200+ ratings) — coverage effectively ends around "
+        "2019, so most films after that simply aren't in the dataset."
+    )
 
 
 # ── Tab: Similar ──────────────────────────────────────────────────────────────
@@ -1604,7 +1676,7 @@ def tab_about():
 
 # ── Layout ────────────────────────────────────────────────────────────────────
 
-st.set_page_config(page_title="Movie Recommender", layout="wide")
+st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wide")
 st.markdown("""
     <style>
     /* Keep the tab bar on one horizontally-scrollable line on mobile.
@@ -1616,10 +1688,14 @@ st.markdown("""
         white-space: nowrap;
         flex-wrap: nowrap;
     }
-    /* Prevent any content from causing horizontal page overflow on mobile */
-    .main .block-container {
+    /* Prevent any content from causing horizontal page overflow on mobile; pull the whole
+       page up — Streamlit's default ~6rem top padding wastes a third of the first screen.
+       (stMainBlockContainer is the current testid; .main .block-container kept for older builds.) */
+    .main .block-container,
+    div[data-testid="stMainBlockContainer"] {
         overflow-x: hidden;
         max-width: 100%;
+        padding-top: 2.5rem;
     }
     table {
         display: block;
@@ -1656,6 +1732,23 @@ st.markdown("""
     }
     a.cover-link { transition: filter .15s ease, transform .15s ease; cursor: pointer; }
     a.cover-link:hover { filter: brightness(1.12); transform: scale(1.02); }
+    /* Poster grids (_show_results wraps them in containers keyed <tab>_grid): keep a 3-across
+       grid on phones instead of Streamlit's default column stacking, which renders ONE giant
+       full-width poster per row. Scoped to the *_grid containers so button rows and other
+       column layouts keep their normal mobile behavior. */
+    @media (max-width: 640px) {
+        div[class*="st-key-"][class*="_grid"] div[data-testid="stHorizontalBlock"] {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        div[class*="st-key-"][class*="_grid"] div[data-testid="stColumn"] {
+            /* flex-grow 0: a 5-poster row wraps to 3 + 2 — the 2 leftovers must stay
+               one-third wide, not stretch to fill the row */
+            flex: 0 0 calc(33.333% - 0.34rem) !important;
+            min-width: calc(33.333% - 0.34rem) !important;
+            width: calc(33.333% - 0.34rem) !important;
+        }
+    }
     /* About tab: a wide, page-aligned column. The container is width="stretch" so it
        fills the content area; this cap keeps prose lines readable on a wide monitor.
        On a phone the parent is narrower than the cap, so the column stays full-width. */
@@ -1677,19 +1770,23 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
-st.title("Movie Recommender")
+# Slim header: h2 instead of st.title's h1 and a single credit line, so the tab bar and
+# actual content sit higher on every view (the old block cost ~250px, wrapping on phones).
+st.markdown("## Movie Recommender")
 art = load_artifacts()
 
 st.markdown(
     "<small>Two-Tower neural network · Built with "
     "<a href='https://grouplens.org/datasets/movielens/32m/' target='_blank'>MovieLens 32M</a>"
-    " and <a href='https://pytorch.org' target='_blank'>PyTorch</a><br>"
+    " and <a href='https://pytorch.org' target='_blank'>PyTorch</a> · "
     "Code: <a href='https://github.com/nickgreenquist/Movie-Recommender-System-PyTorch-TwoTower-Model' target='_blank'>GitHub</a></small>",
     unsafe_allow_html=True,
 )
 
-recommend_tab, ask_tab, examples_tab, similar_tab, genres_tab, genome_tab, map_tab, about_tab = st.tabs(
-    ["Recommend", "Ask", "Examples", "Similar", "Genres", "Genome", "Map", "About"]
+# Ask leads: its pre-computed pill boards put posters on screen in one click (and showcase
+# the LLM front-end + two-tower together), where Recommend's cold start is an empty form.
+ask_tab, recommend_tab, examples_tab, similar_tab, genres_tab, genome_tab, map_tab, about_tab = st.tabs(
+    ["Ask", "Recommend", "Examples", "Similar", "Genres", "Genome", "Map", "About"]
 )
 
 with recommend_tab:
