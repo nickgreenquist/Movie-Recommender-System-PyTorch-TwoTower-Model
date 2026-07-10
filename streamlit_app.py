@@ -10,6 +10,7 @@ Requires:     serving/model.pth
 Generate serving/ with: python main.py export
 """
 import datetime
+import html
 import importlib
 import json
 import os
@@ -52,7 +53,6 @@ _DISLIKED_GENRE = -2.0
 _ANCHOR_MOVIE   =  1.0
 _ANCHORS_PER_TAG = 5
 
-_POSTER_COLS   = 5      # poster grid columns
 _PAGE_SIZE     = 20     # movies per page
 _TOTAL_RESULTS = 60     # total movies to fetch (3 pages)
 
@@ -423,20 +423,20 @@ def _show_results(result_key: str, posters, fs, tmdb_ids) -> None:
         st.dataframe(page_df, use_container_width=True, hide_index=True)
     else:
         titles = page_df['Title'].tolist()
-        # Keyed container (class st-key-<key>_grid): the mobile 3-across CSS override in the
-        # global style block targets these grids without touching other column layouts.
+        # One continuous CSS grid (.poster-grid in the global style block: 5-across on desktop,
+        # 3-across on phones) — NOT st.columns(5) per set of 5, which the phone layout would
+        # wrap into a lopsided 3+2 within every set. The keyed container (class
+        # st-key-<key>_grid) survives as the results-scroll target.
+        cells = []
+        for title in titles:
+            clean_title = title.replace('  ◀ ANCHOR', '').replace('  ◀ anchor', '')
+            mid  = fs['title_to_movieId'].get(clean_title)
+            url  = (posters.get(str(mid)) or '') if mid else ''
+            link = _tmdb_url(mid, tmdb_ids, clean_title)
+            cells.append("<div>" + _poster_div(url, link) +
+                         f"<div class='poster-caption'>{html.escape(title)}</div></div>")
         with st.container(key=f'{result_key}_grid'):
-            for row_start in range(0, len(titles), _POSTER_COLS):
-                row_titles = titles[row_start:row_start + _POSTER_COLS]
-                cols = st.columns(_POSTER_COLS)
-                for col, title in zip(cols, row_titles):
-                    clean_title = title.replace('  ◀ ANCHOR', '').replace('  ◀ anchor', '')
-                    mid  = fs['title_to_movieId'].get(clean_title)
-                    url  = (posters.get(str(mid)) or '') if mid else ''
-                    link = _tmdb_url(mid, tmdb_ids, clean_title)
-                    with col:
-                        st.html(_poster_div(url, link))
-                        st.caption(title)
+            st.html("<div class='poster-grid'>" + "".join(cells) + "</div>")
 
     _show_more_button(result_key, shown, len(df))
 
@@ -1732,21 +1732,25 @@ st.markdown("""
     }
     a.cover-link { transition: filter .15s ease, transform .15s ease; cursor: pointer; }
     a.cover-link:hover { filter: brightness(1.12); transform: scale(1.02); }
-    /* Poster grids (_show_results wraps them in containers keyed <tab>_grid): keep a 3-across
-       grid on phones instead of Streamlit's default column stacking, which renders ONE giant
-       full-width poster per row. Scoped to the *_grid containers so button rows and other
-       column layouts keep their normal mobile behavior. */
+    /* Results poster grid (_show_results): one CONTINUOUS grid so posters flow across
+       page-size boundaries — 5-across on desktop, 3-across on phones. (st.columns(5) per
+       set of 5 wrapped into a lopsided 3+2 within every set on phones.) */
+    .poster-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1rem;
+    }
+    .poster-caption {
+        margin-top: 0.25rem;
+        font-size: 0.8rem;
+        line-height: 1.35;
+        opacity: 0.6;               /* match st.caption's faded look, whatever the theme */
+        word-break: break-word;
+    }
     @media (max-width: 640px) {
-        div[class*="st-key-"][class*="_grid"] div[data-testid="stHorizontalBlock"] {
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        div[class*="st-key-"][class*="_grid"] div[data-testid="stColumn"] {
-            /* flex-grow 0: a 5-poster row wraps to 3 + 2 — the 2 leftovers must stay
-               one-third wide, not stretch to fill the row */
-            flex: 0 0 calc(33.333% - 0.34rem) !important;
-            min-width: calc(33.333% - 0.34rem) !important;
-            width: calc(33.333% - 0.34rem) !important;
+        .poster-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.6rem;
         }
     }
     /* About tab: a wide, page-aligned column. The container is width="stretch" so it
