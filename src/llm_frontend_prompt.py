@@ -1,6 +1,6 @@
 """
 src/llm_frontend_prompt.py — extraction prompt + structured-output schema for the
-LLM conversational front-end (v1).
+LLM conversational front-end (v1 + v1.5 facet slots).
 
 The LLM's ONLY job is to translate a free-text movie request into the structured query
 that the two-tower model's user tower consumes (see src/llm_frontend.py and
@@ -223,7 +223,7 @@ restate-a-genre tags are FORBIDDEN in any mode (they pull off-target): "comedy",
 "thriller", "epic", "funny", "romantic", "action", "scary", "dramatic", "adventure". Prefer \
 specific, evocative ones like "quirky", "neo-noir", "atmospheric", "surreal", "stylized", \
 "dreamlike". COMFORT-VIBE choice: a cozy / comfort-watch / "lazy Sunday" ask wants "feel-good" / \
-"heartwarming" (+ mood "cozy") — NEVER "meditative" / "dreamlike" / "slow-paced", which read \
+"heartwarming" (+ mood "cozy") — NEVER "meditative" / "dreamlike" / "slow paced", which read \
 art-house and swap a comfort list for bleak slow cinema. CONCRETE-TOPIC GUARD (critical): genome_tags \
 are abstract FEEL / atmosphere / style ONLY. A word naming a concrete SUBJECT the film is ABOUT (dogs, chess, submarines, a serial \
 killer, an amusement park, christmas) is never a vibe — it goes in \
@@ -244,8 +244,8 @@ two hours"): the tags ARE the query, so ALWAYS emit 3–5 specific mood/style ta
 a SOFT liked_genres, AND even when you ALSO capture a year / runtime / rating fence (that fence is applied \
 SEPARATELY and NEVER replaces the vibe; an implied genre stays SOFT in liked_genres, NEVER require_genres). \
 A bare taste preference is a weak signal on its own, so add concrete vibe tags \
-(romance → "intimate", "heartfelt", "bittersweet"; crime → "noir", "detective", "hardboiled"; war \
-→ "anti-war", "visceral", "harrowing"). Never leave genome_tags empty for a pure-vibe/taste request.
+(romance → "intimate", "sentimental", "bittersweet"; crime → "noir", "detective", "gangsters"; war \
+→ "anti-war", "visceral", "brutal"). Never leave genome_tags empty for a pure-vibe/taste request.
         – HARD-CATEGORY request (the HEAD NOUN is a genre → require_genres, a named person → \
 require_people, or a concrete topic / setting / nationality / format / franchise → its slot — "comedies \
 from the 80s", "show me horror movies", "Tom Hanks movies", "recent thrillers", "submarine movies"): the \
@@ -459,7 +459,7 @@ the film must be ABOUT → keyword_concepts, not a genome vibe; the genre lean s
 "Raging Bull (1980)"] + require_keyword_concepts ["boxing"] (even though "boxing" also exists in the \
 genome vocab, a concrete subject belongs in require_keyword_concepts, NOT genome_tags)
 - "something slow, dreamy and melancholy like In the Mood for Love" → liked_items \
-["In the Mood for Love (2000)"] + genome_tags ["atmospheric", "melancholy", "romantic"] (PURE VIBE with \
+["In the Mood for Love (2000)"] + genome_tags ["atmospheric", "melancholy", "bittersweet"] (PURE VIBE with \
 an exemplar title and NO concrete-topic head noun → genome_tags, NO keyword_concepts — contrast the \
 topic cases above)
 
