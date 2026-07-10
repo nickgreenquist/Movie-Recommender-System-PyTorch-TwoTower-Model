@@ -33,7 +33,7 @@ The payoff: the same frozen model serves recommendations for *anyone* — includ
 - 🧮 **Full-softmax training** with **logit-adjusted popularity correction** ([Menon et al., ICLR 2021](https://arxiv.org/abs/2007.07314)) — **8.7× higher MRR** than the MSE baseline, with popular blockbusters surfacing *only when relevant*.
 - 🧬 **Two content fingerprints per movie, fused in the item tower:** the dataset's **1,128 curated genome tags** *and* **132 features I built myself** — web-scraped from TMDB + Wikipedia and scored 0–1 by an LLM.
 - 💰 **A cost lesson, in a side experiment**: I also put those self-built LLM features head-to-head against MovieLens's premium hand-curated genome tags — a one-day, ~$0 pipeline vs. fifteen years of community data. ([see the deep-dive →](#-200-vs-200k-item-content-features-with-an-llm-instead-of-hand-labeled-tagging))
-- 🚀 **Live, interactive Streamlit app** with poster grids, pre-built taste personas, "similar movies," and an embedding-space explorer.
+- 🚀 **Live, interactive Streamlit app** that lands on a natural-language **Ask** tab — an LLM front-end over the trained model — plus poster grids, pre-built taste personas, "similar movies," and an embedding-space explorer.
 - 🍏 **Apple Silicon (MPS) accelerated** training/eval (~145 it/s), with device-agnostic CPU export for cloud serving.
 
 ---
@@ -130,11 +130,12 @@ Pick a few movies you love and the model builds your taste vector and ranks the 
 
 The [Streamlit app](https://movie-recommender-system-two-tower-model.streamlit.app/) has several tabs:
 
+- **Ask** (the landing tab) — describe what you want in plain English; a small LLM parses your request into the model's input and the trained model recommends (the LLM is the interface, never the recommender). Opens with a guided tour of pre-generated example boards — instant, no API key needed. [More ↓](#-natural-language-input--the-llm-front-end)
 - **Recommend** — pick your favorite movies (and optionally nudge with genome tags) → ranked poster grid.
-- **Ask** — describe what you want in plain English; a small LLM parses your request into the model's input and the trained model recommends (the LLM is the interface, never the recommender). [More ↓](#-natural-language-input--the-llm-front-end)
 - **Examples** — pre-built taste personas (Sci-Fi, Horror, Comedy, Heist, …) to see the model's range instantly.
 - **Similar** — nearest neighbors of any movie in the 128-dim embedding space.
 - **Genres** / **Genome** — probe what the *item tower* learned about genres and genome tags.
+- **Map** — the whole catalog as an interactive 3D point cloud of the item tower's learned content embeddings, colored by genre.
 - **About** — the full architecture, training, and popularity-correction write-up.
 
 ---
@@ -149,16 +150,16 @@ A few deliberate choices:
 
 - **The LLM's output is never shown to you.** It's consumed internally to build the model's input and then discarded — so there's no channel to use the demo as a free general-purpose chatbot, and "LLM as plumbing, not product" stays concrete. (A debug expander can reveal the parsed fields for the curious.)
 - **A small model, on purpose.** Parsing one short message into JSON doesn't need a frontier model; Haiku does it at ~10–20× lower cost. A typical extraction call is well under a cent.
-- **Structured output + caps.** The extraction is a *forced tool call* against a JSON schema, so the pipeline never breaks on malformed output; output is capped at ~300 tokens and a per-session call limit keeps the bill negligible.
-- **Guided examples are pre-generated.** The tab's example-pill tour (7 themes × 6 refinements) ships its LLM extractions frozen in-repo ([`tools/ask_extractions/`](tools/ask_extractions/)) with boards pre-computed through the same retrieval path as live queries — instant to click, no API key needed.
+- **Structured output + caps.** The extraction is a *forced tool call* against a JSON schema, so the pipeline never breaks on malformed output; output is capped at ~300 tokens, and per-session plus global-daily call caps keep the bill negligible.
+- **Guided examples are pre-generated.** The tab lands with an example board already lit: 7 theme pills, each opening 6 related prompts. Every board ships pre-computed in [`serving/ask_examples.json`](serving/) — built from LLM extractions frozen in-repo ([`tools/ask_extractions/`](tools/ask_extractions/)) through the *same* retrieval path as live queries — so clicking a pill is instant, deterministic, and needs no API key.
 
 The extraction prompt was tuned and validated **entirely in-repo against the trained model** before any API wiring — the reusable harness is [`tools/llm_frontend_probe.py`](tools/llm_frontend_probe.py) (`python tools/llm_frontend_probe.py --smoke`), and the shared retrieval pipeline both it and the app import is [`src/llm_frontend.py`](src/llm_frontend.py).
 
-**Rollout:** v1 + v1.5 (shipped) — titles + mood + year/genre filters, plus hard facet filters from a baked facet store: directors and actors, keyword topics (*"movies about ancient Rome"*), content-rating ceilings and floors, runtime windows. v2 — explanations, multi-turn. See [`docs/llm_frontend/llm_frontend_plan.md`](docs/llm_frontend/llm_frontend_plan.md).
+**Rollout:** v1 + v1.5 shipped and live as the app's landing tab — titles + mood + year/genre filters, plus hard facet filters from a baked facet store: directors and actors, keyword topics (*"movies about ancient Rome"*), content-rating ceilings and floors, runtime windows. v2 — explanations, multi-turn. See [`docs/llm_frontend/llm_frontend_plan.md`](docs/llm_frontend/llm_frontend_plan.md).
 
 ### Enabling it locally
 
-The Ask tab needs an Anthropic API key (everything else in the app runs without one):
+Free-typed Ask queries need an Anthropic API key — the pre-generated example boards, and everything else in the app, run without one:
 
 ```bash
 cp .streamlit/secrets.toml.example .streamlit/secrets.toml   # then paste your key
@@ -180,7 +181,7 @@ pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 
-> The conversational **Ask** tab needs an Anthropic API key — see [Natural-language input](#-natural-language-input--the-llm-front-end). Every other tab runs without one.
+> Typing your own **Ask**-tab queries needs an Anthropic API key — see [Natural-language input](#-natural-language-input--the-llm-front-end). The Ask tab's pre-generated example boards, and every other tab, run without one.
 
 ### Reproduce the model from scratch
 

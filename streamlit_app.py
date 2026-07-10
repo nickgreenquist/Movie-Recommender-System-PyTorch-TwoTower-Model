@@ -763,7 +763,7 @@ def _llm_daily_budget():
 
 @st.cache_resource
 def _load_ask_examples():
-    """serving/ask_examples.json — the pre-generated example-chip boards (6 theme roots × 6
+    """serving/ask_examples.json — the pre-generated example-chip boards (7 theme roots × 6
     related-prompt children, built by tools/gen_ask_examples.py through the same extract→recommend pipeline the
     live path runs). A chip click replays a stored report with zero API cost, so the tour works
     with no key, off the daily budget, and with deterministic boards for live demos. Returns None
@@ -911,7 +911,7 @@ def tab_ask(art, posters, tmdb_ids):
     # pinned to the page bottom (its default in the main body).
     search_slot = st.container()
 
-    # ── Suggestions UNDER the bar: a pre-computed 6×6 tour of the pipeline ─────
+    # ── Suggestions UNDER the bar: a pre-computed 7×6 tour of the pipeline ─────
     # A shallow tree: a row of THEMES, each revealing a row of related prompts — each prompt a
     # standalone query with its own board, thematically adjacent to the theme, NOT a refinement of
     # it. Exactly ONE pill is ever lit = the active board: selecting a theme shows its headline and
@@ -1621,6 +1621,7 @@ def tab_about():
 | `movie_embeddings.pt` | precomputed 128-dim item embeddings for the whole catalog; the item tower never runs at request time |
 | `feature_store.pt` | vocabs, index maps, model config + baked content-feature buffers, so the user tower rebuilds with no `data/` directory |
 | `posters.json` / `tmdb_ids.json` | TMDB poster URLs + id map for the result cards |
+| `ask_examples.json` | the *Ask* tab's pre-generated example boards — frozen LLM extractions + results, computed offline through the same retrieval path as a live query |
 """, unsafe_allow_html=True)
         st.markdown(
             "Two serving details worth noting:\n"
@@ -1646,12 +1647,29 @@ def tab_about():
             "action tentpoles. That is exactly the failure mode the α=0.5 model is trained to fix."
         )
 
+        st.header("The Ask tab — LLM as interface, not recommender")
+        st.markdown(
+            "The landing tab adds a natural-language layer on top of the same retrieval path. A "
+            "small, fast LLM (**Claude Haiku**) parses your sentence into the structured input the "
+            "user tower already consumes — liked/disliked titles, mood as genome-tag anchors, hard "
+            "year / genre / people / topic filters — via a **forced tool call against a JSON "
+            "schema**, so malformed output can never break the pipeline. The trained two-tower "
+            "model still does all the retrieval; the LLM's output is consumed internally and never "
+            "shown (the *Under the hood* expander on each result reveals the parsed fields, for "
+            "the curious).\n"
+            "- **The suggested-prompt boards are pre-generated.** Every theme pill and related "
+            "prompt replays a board computed offline through the same extract → recommend pipeline "
+            "as a live query — instant, deterministic, and **no API key needed**.\n"
+            "- **Typed queries are budgeted.** Free-form requests call the hosted LLM behind "
+            "per-session and global daily caps, which keeps the demo's API cost negligible."
+        )
+
         st.header("What each tab demonstrates")
         st.markdown("""
 | Tab | What it shows |
 |---|---|
+| **Ask** | The landing tab: plain-English requests, parsed by a small LLM into the model's input — with an instant, pre-generated example-board tour. See the section above. |
 | **Recommend** | Build a taste vector from your *own* picks (optionally nudged with genome tags) → ranked poster grid. Cold-start-free serving in action. |
-| **Ask** | Type a request in plain English; a small, fast LLM (Claude Haiku) parses it into the model's input and the trained two-tower model does the retrieval. The LLM is the **interface, not the recommender** — its output is never shown to you. |
 | **Examples** | Pre-built taste personas (Sci-Fi, Horror, Heist, …) to see the model's range without typing anything. |
 | **Similar** | Nearest neighbors of any movie in the 128-dim space — with a learned-embedding vs. raw-feature toggle, over genome or LLM content. |
 | **Genres** / **Genome** | Probe what the *item tower itself* encodes — query its genre and genome-tag sub-spaces directly. |
