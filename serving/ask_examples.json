@@ -69,7 +69,7 @@
  },
  "examples": {
   "r1": {
-   "label": "Anime",
+   "label": "Anime, Ghibli to Akira",
    "query": "Breathtaking anime films, from Studio Ghibli's warmth to the neon chaos of Akira and Ghost in the Shell.",
    "report": {
     "extraction": {
@@ -995,7 +995,7 @@
    }
   },
   "r1c1": {
-   "label": "Ghibli",
+   "label": "Studio Ghibli classics",
    "query": "Studio Ghibli movies like Spirited Away and My Neighbor Totoro.",
    "report": {
     "extraction": {
@@ -2104,7 +2104,7 @@
    }
   },
   "r1c2": {
-   "label": "Adult anime",
+   "label": "Dark, violent adult anime",
    "query": "Dark, violent adult anime like Akira, Ghost in the Shell, and Ninja Scroll.",
    "report": {
     "extraction": {
@@ -3210,7 +3210,7 @@
    }
   },
   "r1c3": {
-   "label": "American animation",
+   "label": "American animation, Pixar to Shrek",
    "query": "American animated films like Toy Story, The Lion King, and Shrek.",
    "report": {
     "extraction": {
@@ -4329,7 +4329,7 @@
    }
   },
   "r1c4": {
-   "label": "Stop-motion",
+   "label": "Handmade stop-motion worlds",
    "query": "Stop-motion animated films like Coraline and Fantastic Mr. Fox.",
    "report": {
     "extraction": {
@@ -5028,7 +5028,7 @@
    }
   },
   "r1c5": {
-   "label": "Anime action",
+   "label": "High-energy anime action",
    "query": "High-energy anime action like Cowboy Bebop and Redline.",
    "report": {
     "extraction": {
@@ -5604,7 +5604,7 @@
    }
   },
   "r1c6": {
-   "label": "Anime romance",
+   "label": "Anime love stories",
    "query": "Romantic anime love stories like Your Name and Whisper of the Heart.",
    "report": {
     "extraction": {
@@ -5912,7 +5912,7 @@
    }
   },
   "r2": {
-   "label": "Christmas",
+   "label": "Christmas by the tree",
    "query": "Cozy Christmas movies to watch by the tree.",
    "report": {
     "extraction": {
@@ -6840,7 +6840,7 @@
    }
   },
   "r2c1": {
-   "label": "R-rated",
+   "label": "R-rated, nothing wholesome",
    "query": "Dark, cynical, irreverent R-rated Christmas comedies like Bad Santa, Gremlins, and Krampus. Nothing sentimental or wholesome.",
    "report": {
     "extraction": {
@@ -7359,7 +7359,7 @@
    }
   },
   "r2c2": {
-   "label": "Kid-safe",
+   "label": "Safe for little kids",
    "query": "Christmas movies safe for little kids.",
    "report": {
     "extraction": {
@@ -8225,7 +8225,7 @@
    }
   },
   "r2c3": {
-   "label": "Santa",
+   "label": "Starring Santa himself",
    "query": "Christmas movies where Santa Claus is a main character.",
    "report": {
     "extraction": {
@@ -9072,7 +9072,7 @@
    }
   },
   "r2c4": {
-   "label": "Animated",
+   "label": "Animated family Christmas",
    "query": "Animated Christmas movies for the whole family.",
    "report": {
     "extraction": {
@@ -9327,7 +9327,7 @@
    }
   },
   "r2c5": {
-   "label": "B&W classics",
+   "label": "1940s black-and-white classics",
    "query": "Black-and-white Christmas classics from the 1940s and 50s.",
    "report": {
     "extraction": {
@@ -9477,7 +9477,7 @@
    }
   },
   "r2c7": {
-   "label": "Thanksgiving",
+   "label": "Thanksgiving family gatherings",
    "query": "Movies that take place on Thanksgiving, like Home for the Holidays, Pieces of April, and The Ice Storm.",
    "report": {
     "extraction": {
@@ -9796,7 +9796,7 @@
    }
   },
   "r3": {
-   "label": "Good cry",
+   "label": "Make me sob",
    "query": "A devastating drama that will absolutely make me sob.",
    "report": {
     "extraction": {
@@ -10822,7 +10822,7 @@
    }
   },
   "r3c1": {
-   "label": "War & loss",
+   "label": "The human cost of war",
    "query": "Harrowing anti-war films about the human cost of combat, like The Pianist, Come and See, and Grave of the Fireflies. War genre only, no comedies, cartoons, or documentaries.",
    "report": {
     "extraction": {
@@ -11734,7 +11734,7 @@
    }
   },
   "r3c2": {
-   "label": "Terminal illness",
+   "label": "Illness dramas that wreck you",
    "query": "Cancer and terminal-illness dramas that wreck you.",
    "report": {
     "extraction": {
@@ -12743,7 +12743,7 @@
    }
   },
   "r3c3": {
-   "label": "True story",
+   "label": "Heartbreaking true stories",
    "query": "Heartbreaking dramas based on real, true events like 12 Years a Slave and Schindler's List.",
    "report": {
     "extraction": {
@@ -13601,7 +13601,7 @@
    }
   },
   "r3c4": {
-   "label": "Dog movies",
+   "label": "Dogs that break your heart",
    "query": "Emotional dramas about the bond between a person and their dog, like Hachi: A Dog's Story and My Dog Skip. No comedies.",
    "report": {
     "extraction": {
@@ -14221,7 +14221,7 @@
    }
   },
   "r3c5": {
-   "label": "Father & son",
+   "label": "Father\u2013son gut punches",
    "query": "Father-and-son dramas that hit hard.",
    "report": {
     "extraction": {
@@ -15062,7 +15062,7 @@
    }
   },
   "r3c6": {
-   "label": "Inspiring",
+   "label": "Be a better person",
    "query": "Movies that inspire you to be a better person.",
    "report": {
     "extraction": {
@@ -16044,7 +16044,7 @@
    }
   },
   "r4": {
-   "label": "Samurai",
+   "label": "Samurai duels & honor",
    "query": "Classic samurai films full of sword duels and honor.",
    "report": {
     "extraction": {
@@ -16986,7 +16986,7 @@
    }
   },
   "r4c1": {
-   "label": "Kung fu",
+   "label": "Old-school kung fu",
    "query": "Classic kung-fu movies like Enter the Dragon and Drunken Master.",
    "report": {
     "extraction": {
@@ -17632,7 +17632,7 @@
    }
   },
   "r4c2": {
-   "label": "Kurosawa",
+   "label": "Directed by Kurosawa",
    "query": "Movies directed by Akira Kurosawa, like Rashomon, Ran, and Ikiru.",
    "report": {
     "extraction": {
@@ -18013,7 +18013,7 @@
    }
   },
   "r4c3": {
-   "label": "Knights",
+   "label": "Knights & medieval battles",
    "query": "Knights and medieval battles like Braveheart and Kingdom of Heaven.",
    "report": {
     "extraction": {
@@ -19031,7 +19031,7 @@
    }
   },
   "r4c4": {
-   "label": "American samurai",
+   "label": "Westerns, the American samurai",
    "query": "Lone-gunslinger Westerns \u2014 the American samurai.",
    "report": {
     "extraction": {
@@ -19884,7 +19884,7 @@
    }
   },
   "r4c5": {
-   "label": "Ancient Rome",
+   "label": "Gladiators & Roman epics",
    "query": "Epic movies set in ancient Rome, no cartoons or animation",
    "report": {
     "extraction": {
@@ -20176,7 +20176,7 @@
    }
   },
   "r4c6": {
-   "label": "Modern warriors",
+   "label": "Real soldiers, true stories",
    "query": "Modern combat movies about real soldiers based on true events, like Lone Survivor, American Sniper, and Black Hawk Down. No science fiction.",
    "report": {
     "extraction": {
@@ -21268,7 +21268,7 @@
    }
   },
   "r5": {
-   "label": "Time travel",
+   "label": "Nothing but time travel",
    "query": "Movies where time travel is the whole point, like Back to the Future and Primer.",
    "report": {
     "extraction": {
@@ -22367,7 +22367,7 @@
    }
   },
   "r5c1": {
-   "label": "Time loops",
+   "label": "Stuck in a time loop",
    "query": "Groundhog Day-style time loops, like Edge of Tomorrow.",
    "report": {
     "extraction": {
@@ -22636,7 +22636,7 @@
    }
   },
   "r5c2": {
-   "label": "Comedies",
+   "label": "Time travel, played for laughs",
    "query": "Time-travel comedies like Bill & Ted and Hot Tub Time Machine.",
    "report": {
     "extraction": {
@@ -23265,7 +23265,7 @@
    }
   },
   "r5c3": {
-   "label": "Space travel",
+   "label": "Voyages into deep space",
    "query": "Space travel movies like Interstellar and Gravity.",
    "report": {
     "extraction": {
@@ -24364,7 +24364,7 @@
    }
   },
   "r5c4": {
-   "label": "World travel",
+   "label": "Wanderlust & far-off places",
    "query": "Movies about traveling around the world to far-off places, like Around the World in 80 Days, Romancing the Stone, and The Secret Life of Walter Mitty. No science fiction, fantasy, documentaries, or comedies.",
    "report": {
     "extraction": {
@@ -24791,7 +24791,7 @@
    }
   },
   "r5c5": {
-   "label": "Math biopics",
+   "label": "Beautiful minds & mathematicians",
    "query": "Movies about mathematicians, no documentaries or sci-fi.",
    "report": {
     "extraction": {
@@ -24947,7 +24947,7 @@
    }
   },
   "r5c6": {
-   "label": "Mind-benders",
+   "label": "Brain-melting physics puzzles",
    "query": "Brain-melting physics puzzles like Primer.",
    "report": {
     "extraction": {
@@ -25783,7 +25783,7 @@
    }
   },
   "r6": {
-   "label": "End of the world",
+   "label": "Humanity's final days",
    "query": "End-of-the-world movies about humanity's final days, like Children of Men and The Road.",
    "report": {
     "extraction": {
@@ -26875,7 +26875,7 @@
    }
   },
   "r6c1": {
-   "label": "Zombie",
+   "label": "Full-on zombie apocalypse",
    "query": "Zombie apocalypse movies like 28 Days Later and Dawn of the Dead.",
    "report": {
     "extraction": {
@@ -27942,7 +27942,7 @@
    }
   },
   "r6c2": {
-   "label": "Pandemic",
+   "label": "Grounded pandemic dramas",
    "query": "Grounded dramas about a deadly pandemic and epidemic spreading, like Contagion and Outbreak. No creature features, zombies, aliens, comedies, or animation.",
    "report": {
     "extraction": {
@@ -28187,7 +28187,7 @@
    }
   },
   "r6c3": {
-   "label": "Alien invasion",
+   "label": "Alien invasions of Earth",
    "query": "Alien invasion of Earth movies, like War of the Worlds and Independence Day. No horror or comedy.",
    "report": {
     "extraction": {
@@ -29028,7 +29028,7 @@
    }
   },
   "r6c4": {
-   "label": "Disaster",
+   "label": "Epic disaster spectacle",
    "query": "Epic disaster movies like Twister, Armageddon, and San Andreas",
    "report": {
     "extraction": {
@@ -30105,7 +30105,7 @@
    }
   },
   "r6c5": {
-   "label": "Wasteland",
+   "label": "Bleak wasteland survival",
    "query": "Bleak post-apocalyptic wasteland survival, like Mad Max and The Road.",
    "report": {
     "extraction": {
@@ -31199,7 +31199,7 @@
    }
   },
   "r6c6": {
-   "label": "Giant monsters",
+   "label": "Giant monsters level cities",
    "query": "Giant monster destruction movies like Godzilla and Cloverfield.",
    "report": {
     "extraction": {
@@ -31688,7 +31688,7 @@
    }
   },
   "r7": {
-   "label": "Gritty NYC",
+   "label": "Gritty pre-2000 New York",
    "query": "Gritty New York City movies from before 2000, no musicals.",
    "report": {
     "extraction": {
@@ -32510,7 +32510,7 @@
    }
   },
   "r7c1": {
-   "label": "70s paranoia",
+   "label": "Paranoid '70s conspiracy thrillers",
    "query": "Paranoid 1970s and 80s conspiracy thrillers like All the President's Men and Three Days of the Condor.",
    "report": {
     "extraction": {
@@ -33398,7 +33398,7 @@
    }
   },
   "r7c2": {
-   "label": "Scorsese",
+   "label": "Scorsese's New York",
    "query": "Martin Scorsese's New York movies.",
    "report": {
     "extraction": {
@@ -33597,7 +33597,7 @@
    }
   },
   "r7c3": {
-   "label": "Disco era",
+   "label": "Disco & nightclub nightlife",
    "query": "Movies about the disco scene and nightclub nightlife, like Saturday Night Fever and The Last Days of Disco.",
    "report": {
     "extraction": {
@@ -34499,7 +34499,7 @@
    }
   },
   "r7c4": {
-   "label": "Woody Allen",
+   "label": "Woody Allen's New York",
    "query": "Woody Allen's New York comedies.",
    "report": {
     "extraction": {
@@ -34860,7 +34860,7 @@
    }
   },
   "r7c5": {
-   "label": "60s Paris",
+   "label": "Smoky 1960s Paris",
    "query": "Atmospheric older films set in 1960s Paris.",
    "report": {
     "extraction": {
@@ -35381,7 +35381,7 @@
    }
   },
   "r7c6": {
-   "label": "Urban decay",
+   "label": "Grime, crime & decay",
    "query": "Grimy, decaying-city crime dramas of the 70s and 80s.",
    "report": {
     "extraction": {
@@ -36283,7 +36283,7 @@
    }
   },
   "r3c7": {
-   "label": "Grief",
+   "label": "Grief and moving on",
    "query": "Aching movies about grief and moving on.",
    "report": {
     "extraction": {
@@ -37332,7 +37332,7 @@
    }
   },
   "r6c7": {
-   "label": "Isolation",
+   "label": "Alone in the wilderness",
    "query": "Solitary survival movies about a person alone in the wilderness, like Into the Wild and Never Cry Wolf. No documentaries.",
    "report": {
     "extraction": {
@@ -38336,7 +38336,7 @@
    }
   },
   "r1c7": {
-   "label": "Adult cartoons",
+   "label": "Animation for grownups",
    "query": "Satirical adult animated comedies like South Park, Rejected, and Team America \u2014 animation for grownups, not kids.",
    "report": {
     "extraction": {
@@ -39232,7 +39232,7 @@
    }
   },
   "r2c6": {
-   "label": "Kids Halloween",
+   "label": "Halloween without the horror",
    "query": "Halloween movies for children rated G or PG only. No scariness, no horror. Like Hocus Pocus and Casper.",
    "report": {
     "extraction": {
