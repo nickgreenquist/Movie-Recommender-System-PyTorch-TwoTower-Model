@@ -6,9 +6,9 @@ Builds the six Pydantic schemas the grouped extraction calls validate against �
 one per anti-fatigue group (THEMES, TONE, SETTING, PROVENANCE, RECEPTION, VISUAL)
 — directly from data/llm_schema_dimensions.json (produced by derive_schema.py).
 The JSON is the single source of truth for which dimensions exist, so the models
-are generated dynamically rather than hand-typed: 116 fields across 6 classes that
+are generated dynamically rather than hand-typed: 132 fields across 6 classes that
 must stay in lock-step with the derived schema would rot the moment the schema is
-re-derived. See docs/plans/llm_vs_genome_ablation_plan.md (Stage 2, schemas.py).
+re-derived. See docs/plans/llm_vs_genome_ablation_plan.md.
 
 Each dimension becomes a `float` field constrained to [0.0, 1.0] with the genome
 tags it derives from as its description — that gloss is what tells the extraction

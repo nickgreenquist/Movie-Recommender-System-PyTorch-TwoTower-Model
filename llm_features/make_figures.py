@@ -1,5 +1,5 @@
 """
-Stage 6 — Figures for the LLM-vs-genome writeup (results/llm_vs_genome_ablation.md).
+Stage 6 — Figures for the LLM-vs-genome writeup (docs/llm_vs_genome_ablation/llm_vs_genome_ablation.md).
 
 Generates two publication-quality PNGs into tools/results/figures/:
 
@@ -14,9 +14,10 @@ Generates two publication-quality PNGs into tools/results/figures/:
                              Pearson correlations (shared-axis agreement).
 
 Figure 1 uses the low-variance (seeded, 160k-step) base + rich whole-corpus MRR
-(α=0; see the ablation plan "Phase B" section / eval_results). Figure 2 recomputes the
-132 correlations with the same logic as feature_level_analysis.py and caches them to
-tools/results/figures/feature_agreement_r.json (so re-runs skip the slow features load).
+(α=0; see the ablation plan / eval_results). Figure 2 recomputes the 132 correlations
+with the same logic as feature_level_analysis.py and caches them to the COMMITTED
+docs/llm_vs_genome_ablation/figures/feature_agreement_r.json (so re-runs — including
+on a fresh clone — skip the slow features load).
 
 Usage (from repo root):
     CORPUS=full python -m llm_features.make_figures
@@ -30,7 +31,8 @@ import numpy as np
 from matplotlib.colors import Normalize
 
 FIG_DIR = 'tools/results/figures'
-R_CACHE = os.path.join(FIG_DIR, 'feature_agreement_r.json')
+# committed cache — fig2 regenerates from a fresh clone without the slow features load
+R_CACHE = 'docs/llm_vs_genome_ablation/figures/feature_agreement_r.json'
 
 # floor / genome / llm — colourblind-safe
 C_COLOR, A_COLOR, B_COLOR = '#9aa0a6', '#3b6db5', '#e08a3c'

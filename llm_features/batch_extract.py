@@ -1,5 +1,6 @@
 """
-Phase-0 batch extraction driver — intended to be run BY a Claude Code (Sonnet) session.
+Phase-0 25-movie CALIBRATION HARNESS — run BY a Claude Code (Sonnet) session.
+NOT the full-corpus driver (that fan-out drove cc_extract.py directly).
 
 The session running this script IS the extractor: it reads the feed + prompts for one
 movie at a time, scores every feature in each group, and calls --save with a JSON dict.
@@ -146,7 +147,7 @@ def cmd_show(movie_id: int = None):
 
 
 def cmd_save(movie_id: int, scores_json: str):
-    """Validate + cache scores for one movie (mirrors manual_extract.ingest)."""
+    """Validate + cache scores for one movie (same contract as cc_extract.ingest)."""
     scores = json.loads(scores_json)
     merged = ingest(movie_id, scores, model_tag=MODEL_TAG)
     nz = {k: v for k, v in merged.items() if v > 0}

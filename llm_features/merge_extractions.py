@@ -11,7 +11,7 @@ overwrite one another.
 
 Also runs a light cross-group consistency / calibration scan (contradictory tone pairs,
 all-zero extractions) so a broken extraction is caught here, before it silently becomes a
-training tensor. See docs/plans/llm_vs_genome_ablation_plan.md (Stage 3).
+training tensor. See docs/plans/llm_vs_genome_ablation_plan.md.
 
 Usage (standalone — no API / GPU):
     python -m llm_features.merge_extractions                    # DEFAULT_TAG
@@ -37,7 +37,7 @@ DEFAULT_TAG = 'claude-code-sonnet'
 
 # Tone pairs that should not BOTH be high in a sane extraction (mutually exclusive in
 # practice). Flagged, not corrected — a few percent is LLM noise; many across the corpus
-# is an extraction-setup bug worth investigating before training (plan Stage 3).
+# is an extraction-setup bug worth investigating before training.
 CONTRADICTIONS = [
     ('feel_good', 'bleak'),
     ('feel_good', 'disturbing'),

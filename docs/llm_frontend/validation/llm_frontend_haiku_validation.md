@@ -5,6 +5,10 @@ recommendations** at scale, run entirely inside Claude Code (Haiku subagents as 
 for the hosted `claude-haiku-4-5` forced-tool call) *before* wiring the hosted API key. This is the
 plan's "Testing In Claude Code Before Any API" loop, scaled up. Date: 2026-06-27/28.
 
+> **Status (2026-07-10): historical snapshot.** The v5 prompt validated here shipped with the
+> Ask tab on 2026-07-09 and has since grown the full v1.5 facet layer —
+> `src/llm_frontend_prompt.py` is the live prompt, many generations past v5.
+
 ## TL;DR
 
 - Built a **160-utterance** adversarial eval set (14 categories) and ran the full pipeline twice:
@@ -407,7 +411,7 @@ Scripts (session scratchpad, not committed): `wf_extract.js` (Stage 1), `run_rec
 lives in `wf_extract.js`. Consider committing a curated subset + a `--eval` mode on
 `tools/llm_frontend_probe.py` as a portfolio artifact.
 
-The **full v4 run is durably preserved** in `docs/llm_frontend/validation/v4_resume/`:
+The full v4 run is kept **locally only** in `docs/llm_frontend/validation/v4_resume/` (gitignored — not available from a clone):
 `extractions_v4_full.json` (Stage 1), `cases_v4_full/case_*.json` (Stage 2, 160 cases),
 `wf_judge_v4_full.js` + `judge_summary_v4_full.json` (Stage 3), `compare_v4.py` (the 3-way diff), and
 `judge_summary{,_v1,_v3_full}.json` for v1/v3. Re-judge: `Workflow(scriptPath:
@@ -427,10 +431,10 @@ The **full v4 run is durably preserved** in `docs/llm_frontend/validation/v4_res
   category moves (soft_genre +0.86, constraint −0.60) and the severity counts. Multi-seed error bars
   (3 judges/case → mean ± std) are the cheapest next confidence step but were deferred to protect the
   usage window.
-- **Current working tree = v5** (= the conditional Mode-2 tag-gate + head-noun→`require_genres` +
+- **As of this writeup (2026-06-28), the working tree = v5** (= the conditional Mode-2 tag-gate + head-noun→`require_genres` +
   the v4 harness year-guard). v5 is the best extraction measured and is kept; the residual recs gap is
   harness-side anchor re-weighting (residual #1), not a further prompt. The v5 recs comparison is on
   the **32-case subset** where the gate changes behavior (constraint/soft_genre/family/era) — a full
   160-case v5 judge was deferred for budget; the subset is exactly where the rule operates and the
   extraction-quality wins it inherits (resolution, require_genres) were already full-set in v3/v4.
-- **Nothing committed.** All changes are in the working tree pending review.
+- **Nothing committed at the time of the run** — all changes were working-tree-only pending review. *(Since committed; the Ask tab launched 2026-07-09.)*

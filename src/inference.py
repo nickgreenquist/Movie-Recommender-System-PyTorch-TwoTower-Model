@@ -14,7 +14,7 @@ import torch
 
 
 # Explicit-genre override weights (Streamlit only — canary passes no genres, so these are
-# inert there). Mirror streamlit_app.py's _LIKED_GENRE / _DISLIKED_GENRE.
+# inert there).
 LIKED_GENRE_VALUE    =  4.0
 DISLIKED_GENRE_VALUE = -2.0
 

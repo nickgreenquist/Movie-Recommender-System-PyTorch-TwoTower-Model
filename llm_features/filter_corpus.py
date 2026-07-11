@@ -5,8 +5,8 @@ Filters the full MovieLens corpus down to the most-rated ~4-5k movies for the
 Phase 1 pilot of the LLM-vs-genome content-feature ablation, and writes the
 resulting movieId list to data/llm_experiment_movies_phase1.json. Every Phase 1
 stage (scrape -> extract -> train all three models) operates on this reduced
-list so the approach can be validated cheaply before committing to full-corpus
-extraction. See docs/plans/llm_vs_genome_ablation_plan.md (Stage 0).
+list — it let the approach be validated cheaply before the full-corpus
+extraction (both since completed). See docs/plans/llm_vs_genome_ablation_plan.md.
 
 This is the ONLY place the phase1 *filter* lives. src/corpus.py provides the
 artifact-naming plumbing (the '_phase1' filename suffix) but deliberately does

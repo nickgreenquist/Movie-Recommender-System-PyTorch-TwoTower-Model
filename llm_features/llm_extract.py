@@ -3,12 +3,12 @@ Stage 2 (extraction) — Grouped structured feature extraction  (LLM-vs-genome a
 
 Runs the six grouped extraction calls per movie against Claude, validating each call
 against its Pydantic group schema (schemas.py) via structured output, and caches the
-per-(group, model, movie) result. This is the spot-check / bake-off driver: the
-default run is the small calibration test the plan gates the full $100 run behind —
-3 recognisable movies through BOTH Sonnet 4.6 and Haiku 4.5, with calibration stats
-and a measured-token cost projection so the cheaper model can be chosen empirically.
-See docs/plans/llm_vs_genome_ablation_plan.md (Stage 2, "LLM choice — test, don't
-assume" + "Validation pass before scaling").
+per-(group, model, movie) result. RETAINED AS THE METERED-API REPRODUCTION PATH ONLY:
+the paid Sonnet-vs-Haiku bake-off this driver was built to run was DROPPED, and every
+committed result (ablation + prod tensor) came from cc_extract.py (Claude-Code Sonnet,
+no API). Kept so a future corpus can be extracted over the wire with measured cost;
+the default run is a 3-movie calibration test. See
+docs/plans/llm_vs_genome_ablation_plan.md ("LLM choice — bake-off dropped").
 
 Design notes:
   • Structured output via client.messages.parse(output_format=<group model>): every
@@ -58,8 +58,8 @@ DEFAULT_TEST_MOVIES = [1, 2, 296]   # Toy Story, Jumanji, Pulp Fiction — easy 
 
 # ── Bake-off models + pricing ────────────────────────────────────────────────
 
-# (input $/MTok, output $/MTok) — current pay-as-you-go pricing. Output dominates;
-# Haiku output is 3× cheaper than Sonnet, which is the whole reason for the bake-off.
+# (input $/MTok, output $/MTok) — pay-as-you-go pricing. Output dominates; Haiku output
+# being 3× cheaper than Sonnet was the motivation for the (since-dropped) bake-off.
 MODELS = [
     ('claude-sonnet-4-6', 'Sonnet 4.6', 3.0, 15.0),
     ('claude-haiku-4-5',  'Haiku 4.5',  1.0,  5.0),
@@ -187,7 +187,7 @@ def cache_path(group_key: str, model_id: str, movie_id: int) -> str:
 def extract_movie(client, model_id: str, record: dict, force: bool):
     """
     Run all six groups for one movie under one model. Returns (merged_features,
-    usages) where merged_features is the 116-dim dict and usages is the per-group
+    usages) where merged_features is the 132-dim dict and usages is the per-group
     usage list (cached groups contribute their stored usage). Per-group results are
     cached to cache/llm_groups/{group}/{model}/{movieId}.json.
     """
@@ -240,7 +240,7 @@ def _cost(usages: list, in_price: float, out_price: float) -> float:
 
 
 def _calibration(features: dict) -> dict:
-    """Distribution stats over the 116 scores — the 0.5-defaulting / range-use tell."""
+    """Distribution stats over the 132 scores — the 0.5-defaulting / range-use tell."""
     vals = [features[k] for k in FEATURE_ORDER if k in features]
     n = len(vals) or 1
     return {
@@ -278,7 +278,7 @@ def report(results: dict, movie_titles: dict) -> None:
                   f"≈0.5={c['near_half']} ≥0.5={c['high']}")
             print("      top: " + ', '.join(f"{n}={v:.2f}" for n, v in tops))
 
-        # Cross-model divergence on the shared 116-vector.
+        # Cross-model divergence on the shared 132-vector.
         if all(movie_id in results.get(m[0], {}) for m in MODELS):
             a = results[MODELS[0][0]][movie_id][0]
             b = results[MODELS[1][0]][movie_id][0]

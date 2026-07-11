@@ -19,8 +19,8 @@ next to the code (see "Where things landed" below).
 | `research/hybrid_llm_recommender_research.md` | Prior-art survey (Gemini Deep Research) the plan is grounded on | reference |
 | `research/bookend_llm_framework.md` | The Bookend-LLM production-pattern writeup a colleague sanity-checked us against | reference |
 | `validation/llm_frontend_haiku_validation.md` | The **v1→v5 mass-Haiku validation writeup** (results) | done |
-| `validation/retrieval_eval/` | Facet/retrieval regression cases + reports — **live input** to `tools/llm_frontend_eval.py` (169 cases, 80 promoted from the 500-query run) | live eval data |
-| `validation/v4_resume/` *(local-only, gitignored)*, `validation/v5/` | Validation-run artifacts (cases, judge scripts, summaries) | archive |
+| `validation/retrieval_eval/eval_cases.json` | Facet/retrieval regression suite — **live input** to `tools/llm_frontend_eval.py` (174 cases, incl. 80 promoted from the 500-query run; the per-wave `eval_group_*` files + step reports were folded in and pruned to git history) | live eval data |
+| `validation/v4_resume/` *(local-only, gitignored)*, `validation/v5/` *(pruned to git history 2026-07-10)* | Validation-run scaffolding (cases, judge scripts, summaries) — the citable result is the haiku-validation writeup above | pruned |
 | **`validation/test_prompts_500.md`** | **The 500 test prompts** — realistic Ask queries + per-prompt intent, the reusable prompt-iteration test set | live test asset |
 
 Working docs deleted after ship (`facet_store_plan.md`, `hybrid_retrieval_ask_tab_plan.md`, the

@@ -1,14 +1,12 @@
 """
-Stage 2 (Claude-Code extraction) — Phase-0 feature extraction WITHOUT the API
-                                    (LLM-vs-genome ablation)
+Stage 2 (Claude-Code extraction) — THE CANONICAL EXTRACTOR  (LLM-vs-genome ablation)
 
-A bridge that lets a Claude Code session (Sonnet — via subagents or parallel terminals)
-do the six-group extraction the API path (llm_extract.py) will later do over the wire,
-so a full-corpus Model B can be trained NOW, before ANTHROPIC_API_KEY / the paid bake-off
-is set up. It is a DRY-RUN yielding a provisional, OPTIMISTIC Model B (Claude-Code Sonnet
-WITH thinking is likely stronger than API Sonnet with thinking disabled, and it carries no
-per-call cost measurement) — the official, cost-measured result still comes from the API
-bake-off. See docs/plans/llm_vs_genome_ablation_plan.md.
+Lets a Claude Code session (Sonnet — via subagents or parallel terminals) do the
+six-group extraction without an API key. This driver produced every committed result:
+the full-corpus 'claude-code-sonnet' cache behind the ablation AND the prod LLM feature
+tensor. The originally planned paid API bake-off (llm_extract.py, Sonnet vs Haiku) was
+dropped — llm_extract.py is retained only as the metered-API reproduction path.
+See docs/plans/llm_vs_genome_ablation_plan.md.
 
 Namespacing: writes under model tag 'claude-code-sonnet' →
 cache/llm_groups/<group>/claude-code-sonnet/<movieId>.json — physically separate from the
@@ -18,8 +16,8 @@ and build_features.py can pick which tag to turn into a tensor.
 It reuses the EXACT artifacts of the API path — format_for_prompt (the feed), the six
 grouped system prompts (prompts.SYSTEM_PROMPTS), and the Pydantic group schemas
 (schemas.py) — and validates every ingested movie against those schemas. So the only thing
-that differs from the API run is WHO produced the scores; the features are structurally
-identical and the API result drops in later as a clean swap.
+that differs from an API run is WHO produced the scores; the features are structurally
+identical, so an API-extracted tensor would drop in as a clean swap if ever needed.
 
 This module is the reusable CORE (feed_for / system_prompt_for / ingest / list_remaining);
 the actual scoring is done by a Claude Code agent that reads a movie's feed + the six group

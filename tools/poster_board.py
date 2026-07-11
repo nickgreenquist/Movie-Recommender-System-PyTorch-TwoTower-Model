@@ -7,7 +7,7 @@ poster badged with the movie's raw ratings.csv count so the head→tail shift is
 visible at a glance. Recommendation lists are the exact `main.py canary` output
 for the two prod checkpoints; this script is the visualization layer over them.
 
-    python tools/poster_board.py        # → docs/popularity_bias/poster_board.html
+    python tools/poster_board.py        # → tools/results/figures/poster_board.html (gitignored)
 """
 import json
 import os
@@ -470,10 +470,10 @@ def _slug(name):
 if __name__ == '__main__':
     import sys
     lk = _load_lookups()
-    os.makedirs('docs/popularity_bias', exist_ok=True)
-    with open('docs/popularity_bias/poster_board.html', 'w') as f:
+    os.makedirs('tools/results/figures', exist_ok=True)
+    with open('tools/results/figures/poster_board.html', 'w') as f:
         f.write(build_html(lk))
-    print("  → wrote docs/popularity_bias/poster_board.html")
+    print("  → wrote tools/results/figures/poster_board.html")
 
     # --split DIR : also emit one standalone HTML per persona (for screenshotting).
     if '--split' in sys.argv:

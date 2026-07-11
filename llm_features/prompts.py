@@ -1,10 +1,10 @@
 """
 Stage 2 (prompts) — Six grouped extraction prompts  (LLM-vs-genome ablation)
 
-One static system prompt per anti-fatigue group. Splitting the 116 dimensions into
+One static system prompt per anti-fatigue group. Splitting the 132 dimensions into
 six focused calls is the documented mitigation for the "lost in the middle" failure
-mode — a single 116-field call gives careful values to the first ~25 fields then
-defaults the rest to 0.5. See docs/plans/llm_vs_genome_ablation_plan.md (Stage 2).
+mode — a single 132-field call gives careful values to the first ~25 fields then
+defaults the rest to 0.5. See docs/plans/llm_vs_genome_ablation_plan.md.
 
 The static instructions (shared calibration rules + per-group guidance + the
 enumerated feature list with genome glosses) live in the SYSTEM block so they can be

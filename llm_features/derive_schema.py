@@ -6,8 +6,7 @@ Turns data/top_genome_tags_by_discriminability.csv (1,128 genome tags ranked by
 std_score = separating power) into the deduped, bucketed dimension list the LLM
 extraction will score per movie, and writes it to data/llm_schema_dimensions.json
 for schemas.py (Pydantic) + prompts.py to consume. See
-docs/plans/llm_vs_genome_ablation_plan.md (Stage 2, "Derive the schema from genome
-discriminability").
+docs/plans/llm_vs_genome_ablation_plan.md.
 
 WHY derive instead of hand-invent: the experiment asks "can an LLM match genome on
 the SAME content axes?". Inventing dimensions would measure different axes and make

@@ -1,17 +1,19 @@
 """
-tools/llm_frontend_probe.py — v1 test harness for the LLM conversational front-end.
+tools/llm_frontend_probe.py — no-API test harness for the LLM conversational front-end.
 
 PURPOSE
-    Validate the natural-language → two-tower pipeline END-TO-END *before* any hosted
-    API or Streamlit wiring (see docs/llm_frontend/llm_frontend_plan.md → "Testing In Claude Code Before
-    Any API"). The flow under test:
+    Drive the natural-language → two-tower pipeline END-TO-END without hosted-API or
+    Streamlit wiring. Built pre-launch (docs/llm_frontend/llm_frontend_plan.md → "Testing
+    In Claude Code Before Any API"); still the standing dev harness behind
+    gen_ask_examples.py, ask_live_vs_frozen.py, llm_frontend_eval.py and llm_frontend_trace.py.
+    The flow under test:
 
         free-text utterance
           → LLM extraction (done OUTSIDE this script, by a Haiku subagent in the
             Claude Code loop; this script only consumes the structured JSON)
           → the shared pipeline (src/llm_frontend.py), driven by this harness: resolve
             titles, synthesize a Mode-2 query from genome tags, build the user embedding
-            via the real serving model, rank the corpus, apply v1 post-filters (year + genre)
+            via the real serving model, rank the corpus, apply the hard-constraint post-filters
           → top-N recommendations FROM THE TRAINED MODEL (never raw LLM output).
 
     The harness is serving/-only: it loads exactly what the deployed Streamlit app
@@ -21,14 +23,22 @@ PURPOSE
     recommendations here match what the app would produce for the same model input.
     It never reads data/. Short MPS/CPU inference — safe to run directly.
 
-EXTRACTION JSON (v1 schema — what the LLM is asked to produce; all fields optional)
+    ⚠ Facet tables: by default Serving() OVERLAYS the local llm_features/cache/facet_store.pt
+    on top of the baked serving copy — convenient while iterating, but it MASKS train/serve
+    skew. Pass Serving(serving_only=True) (as gen_ask_examples.py / ask_live_vs_frozen.py do)
+    to resolve against exactly what the deployed app ships.
+
+EXTRACTION JSON (core schema; all fields optional. The live prompt adds facet slots on
+    top — require/exclude_people, require_genome_tags, require/exclude_keyword_concepts,
+    country/language/format, content-rating floor+ceiling, runtime, franchise, mood, … —
+    src/llm_frontend_prompt.py is the authoritative schema.)
     {
       "liked_items":    ["Inception", "Interstellar"],   # titles → fuzzy-matched to catalog
       "disliked_items": ["The Notebook"],                # titles → fuzzy-matched to catalog
       "genome_tags":    ["atmospheric", "melancholy"],   # Mode-2 mood → anchor movies (closed vocab)
       "liked_genres":   ["Sci-Fi"],                      # soft taste signal → user genre tower
       "disliked_genres":["Horror"],                      # soft taste signal → user genre tower
-      "hard_constraints": {                              # post-retrieval filters (v1: year + genre only)
+      "hard_constraints": {                              # post-retrieval filters (year/genre shown; live schema has more)
         "year_min": 2010,
         "year_max": null,
         "require_genres": ["Sci-Fi"],                    # rec must contain ALL of these
@@ -38,8 +48,7 @@ EXTRACTION JSON (v1 schema — what the LLM is asked to produce; all fields opti
 
     Soft vs hard genre: a *taste* preference ("I like sci-fi") belongs in liked_genres
     (shapes the embedding); a *hard* filter ("only sci-fi", "no horror") belongs in
-    require_genres / exclude_genres (drops candidates after retrieval). v1.5 adds
-    director / content-rating constraints once that metadata is baked into serving/.
+    require_genres / exclude_genres (drops candidates after retrieval).
 
 USAGE (run from repo root)
     python tools/llm_frontend_probe.py --json '{"liked_items":["Inception"]}'

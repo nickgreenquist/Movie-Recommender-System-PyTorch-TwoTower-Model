@@ -6,9 +6,9 @@ PURPOSE
     model has no concept of: people ("Tom Hanks movies", "directed by Sofia Coppola", "scored by
     Hans Zimmer") AND the cheap structured "F1" facets already sitting in the scrape — US content
     rating, runtime, franchise/collection membership, and the TMDB vote_average quality signal.
-    These are the `unsupported` request class the extraction prompt currently drops, leaving an
-    empty query that falls back to popularity. See docs/llm_frontend/facet_store_plan.md
-    (Expansion II, "Non-API build campaign" step A) and the residual list in
+    These were the `unsupported` request class the v1 extraction prompt dropped (empty query →
+    popularity fallback); the shipped v1.5 prompt emits them as facet slots that resolve against
+    these tables. Design record: docs/llm_frontend/llm_frontend_plan.md; residual list in
     docs/llm_frontend/validation/llm_frontend_haiku_validation.md.
 
     All facets come entirely from the TMDB metadata we already scraped for the LLM-feature pipeline
@@ -79,7 +79,7 @@ from src.llm_frontend import (  # noqa: E402  (single normalization / format+key
 # Reverse of FORMAT_ATTR_KEYWORDS ({canonical attr: [TMDB keyword name…]}) → {tmdb keyword (lower):
 # canonical attr}, so a film's keyword list can be scanned to the compact attribute membership the
 # format facet gates on. EXACT lowercase keyword match only (never substring — the resolver and the
-# TMDB tagger both use the whole clean keyword; see facet_store_plan overturned #4).
+# TMDB tagger both use the whole clean keyword; substring matching was tried and overturned).
 _TMDB_KEYWORD_TO_ATTR = {
     kw.lower(): attr for attr, kws in FORMAT_ATTR_KEYWORDS.items() for kw in kws}
 

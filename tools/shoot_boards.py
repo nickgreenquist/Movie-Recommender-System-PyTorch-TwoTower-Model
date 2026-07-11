@@ -1,7 +1,8 @@
 """
-Screenshot each per-persona poster board (docs/popularity_bias/poster_board.html is the interactive
-combined page; this renders the standalone single-persona pages from
-`poster_board.py --split` and saves a tight PNG per board for the blog).
+Screenshot each per-persona poster board (tools/results/figures/poster_board.html is the
+interactive combined page; this renders the standalone single-persona pages from
+`poster_board.py --split` and saves a tight PNG per board for the blog — outputs are
+gitignored; the published boards live with the blog, not in this repo).
 
 Drives a headless Google Chrome with a throwaway profile (so it never collides with the
 Playwright-MCP browser lock), then crops the uniform #0d1117 margin to the content bbox
@@ -51,10 +52,11 @@ def shoot(slug, out_png):
     im = Image.open(raw).convert("RGB")
     bbox = ImageChops.difference(im, Image.new("RGB", im.size, BG)).getbbox()
     out = im.crop(bbox) if bbox else im
-    out.save(f"docs/popularity_bias/figures/{out_png}")
-    print(f"  → docs/popularity_bias/figures/{out_png}  ({out.size[0]}x{out.size[1]})")
+    out.save(f"tools/results/figures/{out_png}")
+    print(f"  → tools/results/figures/{out_png}  ({out.size[0]}x{out.size[1]})")
 
 
 if __name__ == "__main__":
+    os.makedirs("tools/results/figures", exist_ok=True)
     for slug, out in BOARDS:
         shoot(slug, out)

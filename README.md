@@ -30,7 +30,7 @@ The payoff: the same frozen model serves recommendations for *anyone* — includ
 
 - 🧊 **Cold-start-free by design** — no user-ID lookup; new users are embedded from a few liked movies at inference time.
 - 🏗️ **Two-tower architecture** — separate user & item towers project into a shared 128-dim space; recommendation = cosine similarity. Item embeddings are precomputed once, so scoring the whole catalog is a single matrix multiply.
-- 🧮 **Full-softmax training** with **logit-adjusted popularity correction** ([Menon et al., ICLR 2021](https://arxiv.org/abs/2007.07314)) — **8.7× higher MRR** than the MSE baseline, with popular blockbusters surfacing *only when relevant*.
+- 🧮 **Full-softmax training** with **logit-adjusted popularity correction** ([Menon et al., ICLR 2021](https://arxiv.org/abs/2007.07314)) — **8.5× higher MRR** than the MSE baseline, with popular blockbusters surfacing *only when relevant*.
 - 🧬 **Two content fingerprints per movie, fused in the item tower:** the dataset's **1,128 curated genome tags** *and* **132 features I built myself** — web-scraped from TMDB + Wikipedia and scored 0–1 by an LLM.
 - 💰 **A cost lesson, in a side experiment**: I also put those self-built LLM features head-to-head against MovieLens's premium hand-curated genome tags — a one-day, ~$0 pipeline vs. fifteen years of community data. ([see the deep-dive →](#-200-vs-200k-item-content-features-with-an-llm-instead-of-hand-labeled-tagging))
 - 🚀 **Live, interactive Streamlit app** that lands on a natural-language **Ask** tab — an LLM front-end over the trained model — plus poster grids, pre-built taste personas, "similar movies," and an embedding-space explorer.
@@ -105,18 +105,18 @@ Full softmax has a structural bias: popular movies appear in *every* batch as ha
 
 ## 📊 Results
 
-**The modeling win.** Switching from an MSE rating-regression baseline to full-softmax retrieval with popularity correction is dramatic — **~8.7× MRR** and ~8× Hit Rate@10:
+**The modeling win.** Switching from an MSE rating-regression baseline to full-softmax retrieval with popularity correction is dramatic — **~8.5× MRR** and ~8× Hit Rate@10:
 
 | Metric | MSE baseline | **Two-Tower Softmax (α=0.5)** |
 |---|---|---|
-| Hit Rate@1 | 0.43% | **5.99%** |
-| Hit Rate@5 | 1.68% | **15.49%** |
-| Hit Rate@10 | 2.70% | **22.06%** |
-| Hit Rate@20 | 4.26% | **30.44%** |
-| Hit Rate@50 | 7.36% | **44.38%** |
-| **MRR** | 0.0133 | **0.1153** |
+| Hit Rate@1 | 0.43% | **5.86%** |
+| Hit Rate@5 | 1.68% | **15.26%** |
+| Hit Rate@10 | 2.70% | **21.74%** |
+| Hit Rate@20 | 4.26% | **30.05%** |
+| Hit Rate@50 | 7.36% | **43.92%** |
+| **MRR** | 0.0133 | **0.1132** |
 
-<sub>Held-out *rollback* eval: for each held-out user, context = prior watches, target = next watch.</sub>
+<sub>Held-out *rollback* eval: for each held-out user, context = prior watches, target = next watch. Both columns are the deployed checkpoints' committed artifacts in `eval_results/` (`PROD_best_softmax_…080719.txt`, `OLD_PROD_best_mse_…202808.txt`).</sub>
 
 ---
 

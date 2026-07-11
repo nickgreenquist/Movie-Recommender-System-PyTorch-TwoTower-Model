@@ -203,7 +203,7 @@ reference tiers:* Whole 0.1121 / HEAD 0.1159 / Q4 0.1234 / Q3 0.0133 / TAIL 0.00
   `last_liked`. Production value depends on whether "what the user just watched" is known and
   session-correlated at serve time.
 - **Not a prod comparison.** The recency arms (~0.14 whole-corpus) exceed the rich prod model's
-  reported rollback MRR (0.1123), but that's confounded — arms are `idonly`/α=0/200k while prod is the
+  reported rollback MRR (0.1132), but that's confounded — arms are `idonly`/α=0/200k while prod is the
   rich `both`/`all` base at α=0.5 (which deliberately trades offline MRR for less popularity drift).
   What it *does* suggest: `last_watched` is a large enough lever that adding it to the rich base would
   likely help (untested here).

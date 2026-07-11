@@ -394,36 +394,6 @@ def build_user_genome_context(user_type: str, fs: FeatureStore) -> 'np.ndarray':
     return weighted_sum
 
 
-def probe_genome_context(fs: FeatureStore, top_n: int = 15) -> None:
-    """Print the top genome tags for each canary user to validate the feature."""
-    # index → tag name
-    idx_to_name = {i: fs.genome_tag_names[tid] for tid, i in fs.genome_tag_to_i.items()}
-
-    print('\n' + '═' * 70)
-    print('GENOME CONTEXT PROBE — top genome tags per canary user')
-    print('═' * 70)
-
-    for user_type in USER_TYPE_TO_FAVORITE_MOVIES:
-        ctx = build_user_genome_context(user_type, fs)
-        top_indices = np.argsort(ctx)[::-1][:top_n]
-
-        fav_movies  = USER_TYPE_TO_FAVORITE_MOVIES[user_type]
-        dis_movies  = USER_TYPE_TO_DISLIKED_MOVIES[user_type]
-        genre_tags  = USER_TYPE_TO_GENOME_TAGS.get(user_type, [])
-        anchor_titles = _get_anchor_titles(fs, genre_tags, exclude=set(fav_movies))
-
-        print(f'\n── {user_type} ' + '─' * max(0, 50 - len(user_type)))
-        print(f'  Liked:   {", ".join(fav_movies[:4])}{"..." if len(fav_movies) > 4 else ""}')
-        if dis_movies:
-            print(f'  Disliked: {", ".join(dis_movies[:3])}')
-        if anchor_titles:
-            print(f'  Anchors: {", ".join(anchor_titles[:4])}{"..." if len(anchor_titles) > 4 else ""}')
-        print(f'  {"Rank":<4}  {"Genome Tag":<30}  Score')
-        print(f'  {"────":<4}  {"──────────":<30}  ─────')
-        for rank, idx in enumerate(top_indices, 1):
-            print(f'  {rank:<4}  {idx_to_name[idx]:<30}  {ctx[idx]:.4f}')
-
-
 # ── Embedding probes ──────────────────────────────────────────────────────────
 
 def probe_genre(model: MovieRecommender, genre: str, fs: FeatureStore,

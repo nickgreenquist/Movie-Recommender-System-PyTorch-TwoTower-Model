@@ -1,7 +1,7 @@
 """
 Movie Recommender — Streamlit app.
 
-Run locally:  streamlit run app.py
+Run locally:  streamlit run streamlit_app.py
 Requires:     serving/model.pth
               serving/movie_embeddings.pt
               serving/feature_store.pt
@@ -11,7 +11,6 @@ Generate serving/ with: python main.py export
 """
 import datetime
 import html
-import importlib
 import json
 import os
 import threading
@@ -27,8 +26,6 @@ import streamlit.components.v1 as components
 import torch
 import torch.nn.functional as F
 
-import src.evaluate
-importlib.reload(src.evaluate)
 from src.evaluate import (
     USER_TYPE_TO_FAVORITE_MOVIES,
     USER_TYPE_TO_DISLIKED_MOVIES,
@@ -41,11 +38,10 @@ from src.model import MovieRecommender
 
 EXAMPLE_PROFILES = list(USER_TYPE_TO_FAVORITE_MOVIES.keys())
 
-# Rating values — mirror evaluate.py canary constants
+# Rating values — mirror evaluate.py canary constants (genre-override weights live in
+# src/inference.py: LIKED_GENRE_VALUE / DISLIKED_GENRE_VALUE)
 _LIKED_MOVIE    =  2.0
 _DISLIKED_MOVIE = -2.0
-_LIKED_GENRE    =  4.0
-_DISLIKED_GENRE = -2.0
 # Genome anchor movies are synthetic/implicit — we use more of them (5 per tag) to push
 # the model toward the selected tags, but each one carries half the weight of an explicitly
 # chosen favorite movie. A user saying "this is my favorite" is a stronger signal than

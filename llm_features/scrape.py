@@ -7,7 +7,7 @@ selects the movie list — 'full' (default; the whole >200-ratings corpus from
 data/base_movies.parquet, ~9,375 movies) or 'phase1' (the reduced >1000 list,
 data/llm_experiment_movies_phase1.json, 4,461 movies). The cache is movieId-keyed
 and shared across corpora, so a 'full' run scrapes only what phase1 hasn't already
-cached. See docs/plans/llm_vs_genome_ablation_plan.md (Stage 1).
+cached. See docs/plans/llm_vs_genome_ablation_plan.md.
 
 Source stack is deliberately lean — TMDB + Wikipedia, no OMDb / IMDB-page
 scraping / prestige indicators (those are deferred to before the full run):

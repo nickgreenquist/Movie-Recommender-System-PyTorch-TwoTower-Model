@@ -15,8 +15,8 @@ EXTRACTION SOURCES (default: --from-extractions tools/ask_extractions, the commi
                              Haiku-subagent harness (the /trace pattern; same model family the hosted
                              call uses, so extractions transfer) — keep them in sync with the spec.
     --live                   call the hosted extractor (src.llm_frontend_extraction) instead — needs
-                             ANTHROPIC_API_KEY. 51 sequential calls ride the prompt cache
-                             (~1 write + 50 reads ≈ $0.10). Use only to refresh extractions from the
+                             ANTHROPIC_API_KEY. 53 sequential calls ride the prompt cache
+                             (~1 write + 52 reads ≈ $0.10). Use only to refresh extractions from the
                              hosted model; then commit the updated tools/ask_extractions/.
 
 NORMALIZATION (applied to both sources; keeps the artifact schema-faithful)
