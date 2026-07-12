@@ -36,14 +36,6 @@ The prompt and resolution logic were tuned against 500 synthetic queries generat
 
 *Click the suggested prompt "Samurai duels & honor" and a board of samurai films renders below (Seven Samurai, Yojimbo, Musashi Miyamoto, Rashomon, Throne of Blood). That click also opens a second row, "Riffing on: Samurai duels & honor," six related pills including "Directed by Kurosawa."*
 
-Click that second-row pill and the board swaps, no page reload:
-
-<p align="center">
-  <img src="figures/fig2_kurosawa_results.png" alt="The 'Recommendations for: Directed by Kurosawa' results grid: two rows of ten posters, all films actually directed by Akira Kurosawa" width="820">
-</p>
-
-*Ten posters deep this time: Throne of Blood, Yojimbo, Sanjuro, Red Beard, Kagemusha, Seven Samurai, High and Low, The Bad Sleep Well, The Hidden Fortress, Dersu Uzala. Every one actually directed by Kurosawa.*
-
 ## LLM as Interpreter, not Recommender
 An LLM can't rank a catalog of thousands of movies by itself. There's no reliable scoring against items outside the handful it can name, and no guarantee the titles it recites even exist in the corpus. So this project never asks it to. One design choice worth stating explicitly: **the LLM's own words never reach you, either.** There's no AI-written answer, no chatbot response rendered anywhere. The model's entire job stops at filling in the structured object that just became the results above. A "Show raw extraction" toggle in the app makes this verifiable rather than asserted:
 
@@ -68,6 +60,140 @@ A few results were unexpected:
 - **Haiku is enough.** No frontier model was ever run head-to-head against it here. The case for Haiku is task fit (filling in a schema, not chain-of-thought) plus a roughly 3x cost gap to Sonnet and 5x to Opus (at list price), not a measured win over either.
 - **The metadata carries more of the load than the model.** Person, studio, and keyword filters only work because a scraped metadata table exists for the LLM's output to resolve against. Before that table existed, those fields were silently dropped. The LLM is only as good as what it has to point at.
 - **Chasing perfect routing isn't the goal, and the gaps are specific rather than vague.** Named titles, directors, genres, and specific themes ("chess," "heist," "time loop") route reliably. Mood-only requests, place names ("movies set in Rome"), and thin niche keywords are the hardest cases: a term that only matches a handful of films corpus-wide will surface all of them regardless of fit, since there's nothing else to rank against.
+
+## More Real Examples
+
+A grab bag of pills, expand for the prompt and the top 5 posters:
+
+<details>
+<summary><strong>Nothing but time travel</strong></summary>
+
+**Prompt:** "Movies where time travel is the whole point, like Back to the Future and Primer."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/hQq8xZe5uLjFzSBt4LanNP7SQjl.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/crzoVQnMzIrRfHtQw0tLBirNfVg.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/r67KzlHkdiwe3fBWzImEkNOg1Y.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/zdxQRP7mzczMJBwKnv8MCPRq7rQ.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/38Xr1JnV1ZcLQ55zmdSp6n475cZ.jpg" width="90">
+</p>
+
+**Top 5:** Back to the Future Part II (1989), Back to the Future Part III (1990), Frequently Asked Questions About Time Travel (2009), Timecrimes (Cronocrímenes, Los) (2007), Predestination (2014)
+
+</details>
+
+<details>
+<summary><strong>Christmas by the tree</strong></summary>
+
+**Prompt:** "Cozy Christmas movies to watch by the tree."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/oOleziEempUPu96jkGs0Pj6tKxj.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/34nSHYqmb7222tiqiuKqKJmZiQa.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/2sMpffmvoJlW7WBcvyHTPR9DEsj.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/yF7SNheAGWavNnjbAronedwjC1N.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/7ir0iRuPK9OEuH569cp0nF5CJce.jpg" width="90">
+</p>
+
+**Top 5:** Elf (2003), A Christmas Story (1983), The Bishop's Wife (1947), Arthur Christmas (2011), How the Grinch Stole Christmas! (1966)
+
+</details>
+
+<details>
+<summary><strong>Gritty pre-2000 New York</strong></summary>
+
+**Prompt:** "Gritty New York City movies from before 2000, no musicals."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/rex4oaiSCD8UQg9204R6hQcFrX9.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/vNhywp9w1DVG6BytxKp4kjtaaGC.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/d6YZpBq4BhQr1K985J3CuL1cA8J.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/ckklq45UxUkwgHve9xItXqXr06r.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/1MyH4MJAJZJbb6wDVeOc2bTECtK.jpg" width="90">
+</p>
+
+**Top 5:** The Naked City (1948), The Taking of Pelham One Two Three (1974), The Warriors (1979), Midnight Cowboy (1969), King of New York (1990)
+
+</details>
+
+<details>
+<summary><strong>Studio Ghibli classics</strong></summary>
+
+**Prompt:** "Studio Ghibli movies like Spirited Away and My Neighbor Totoro."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/41XxSsJc5OrulP0m7TrrUeO2hoz.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/tcrkfB8SRPQCgwI88hQScua6nxh.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/cMYCDADoLKLbB83g4WnJegaZimC.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/13kOl2v0nD2OLbVSHnHk8GUFEhO.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/Aufa4YdZIv4AXpR9rznwVA5SEfd.jpg" width="90">
+</p>
+
+**Top 5:** Laputa: Castle in the Sky (Tenkû no shiro Rapyuta) (1986), Nausicaä of the Valley of the Wind (Kaze no tani no Naushika) (1984), Princess Mononoke (Mononoke-hime) (1997), Howl's Moving Castle (Hauru no ugoku shiro) (2004), Kiki's Delivery Service (Majo no takkyûbin) (1989)
+
+</details>
+
+<details>
+<summary><strong>Make me sob</strong></summary>
+
+**Prompt:** "A devastating drama that will absolutely make me sob."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/qKnsyaJZLXfiL2JhIJEkpA8C3LU.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/jJiGGbuLW8IkEnh5073maEmIr7V.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/o9VXYOuaJxCEKOxbA86xqtwmqYn.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/yAhoeIwwtPxJ7uf9HLIMHIqWFnL.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/1ONOsIo5gby9hABPdknL7OAYBLm.jpg" width="90">
+</p>
+
+**Top 5:** Short Term 12 (2013), Still Alice (2014), Manchester by the Sea (2016), The Good Lie (2014), Wit (2001)
+
+</details>
+
+<details>
+<summary><strong>Full-on zombie apocalypse</strong></summary>
+
+**Prompt:** "Zombie apocalypse movies like 28 Days Later and Dawn of the Dead."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/xxp0qcZ3n2YA53SIzWilDSfIaA4.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/bi7SO5F4VyyGQTlxQirbH1dwKzW.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/jwXrKFO20FTvA7mHqnTvMXSznDS.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/oix0aNv1lvW3nUGspUyvSIBlpbs.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/way9dOm4dM2sm9UMcu2PEXMTX0q.jpg" width="90">
+</p>
+
+**Top 5:** Land of the Dead (2005), Day of the Dead (1985), Undead (2003), 28 Weeks Later (2007), Resident Evil: Apocalypse (2004)
+
+</details>
+
+<details>
+<summary><strong>Old-school kung fu</strong></summary>
+
+**Prompt:** "Classic kung-fu movies like Enter the Dragon and Drunken Master."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/9VFYDWYnAhXAgyqgs94lwNmMBbk.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/dkBQC0jmkmTOJJMgwsBdgkzZ6Ry.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/m7AIITQ624sfldI4SsX4htXPH1f.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/dlcipCOa9hlfBBz7kCAyjsf3q0E.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/8TmkTiHOTAyAjmbtDVi5f78a5ow.jpg" width="90">
+</p>
+
+**Top 5:** The Big Boss (Fists of Fury) (Tang shan da xiong) (1971), Once Upon a Time in China (Wong Fei Hung) (1991), The Way of the Dragon (a.k.a. Return of the Dragon) (Meng long guo jiang) (1972), Fist of Fury (Chinese Connection, The) (Jing wu men) (1972), Once Upon a Time in China III (Wong Fei-hung tsi sam: Siwong tsangba) (1993)
+
+</details>
+
+<details>
+<summary><strong>Stuck in a time loop</strong></summary>
+
+**Prompt:** "Groundhog Day-style time loops, like Edge of Tomorrow."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/nTr0lvAzeQmUjgSgDEHTJpnrxTz.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/mU4VeXVK18JtCZsy7i0zczlA9p7.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/cRlMrbc4Iof7vN0ZqHwJnMBYBLi.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/eowzonDJMCuNXoJGVkP9Z7oCmiM.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/wGHoYDswvx96PVF43qFErVAnQHS.jpg" width="90">
+</p>
+
+**Top 5:** Source Code (2011), ARQ (2016), Triangle (2009), Before I Fall (2017), Synchronicity (2015)
+
+</details>
+
+<details>
+<summary><strong>Scorsese's New York</strong></summary>
+
+**Prompt:** "Martin Scorsese's New York movies."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/1nD40aUcPAxYdE1WxERrTjZuFGe.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/eamOBurHBu0MIxohTIVcfxmZ6Z7.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/ekstpH614fwDX8DUln1a2Opz0N8.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/9msfwOeGc9uL1iRRTBdEf15XonC.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/mViGEH5dfsAnUgJmce1RJkFycAi.jpg" width="90">
+</p>
+
+**Top 5:** New York, New York (1977), After Hours (1985), Taxi Driver (1976), Mean Streets (1973), New York Stories (1989)
+
+</details>
+
+<details>
+<summary><strong>Dogs that break your heart</strong></summary>
+
+**Prompt:** "Emotional dramas about the bond between a person and their dog, like Hachi: A Dog's Story and My Dog Skip. No comedies."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/Xe7AB0ffhGPSdBZ4qJ9AKJfllL.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/5I7SYsNQmZRZpQ2MAarIQYU9vaX.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/wRB0cTPBIWHEq4FmWuX6voagePf.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/A4lH22nlFF7MdalGfcvSrlC1ttt.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/cVtF8SW4zMbculTXD52RDvmQAAR.jpg" width="90">
+</p>
+
+**Top 5:** Old Yeller (1957), Umberto D. (1952), Shiloh (1997), Amores Perros (Love's a Bitch) (2000), Wendy and Lucy (2008)
+
+</details>
 
 ## Try It
 
