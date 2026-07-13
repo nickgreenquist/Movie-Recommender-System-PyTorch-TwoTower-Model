@@ -58,6 +58,7 @@ Removing `item_embedding_tower` (genre clustering) · pooling the 128-dim projec
 ## Working style
 
 - **Git:** commit only when asked; never commit+push in one command — commit, then ask before pushing.
+- **Blog posts ship with a LinkedIn counterpart:** most `docs/<topic>/` narratives carry a `<topic>_linkedin_post.txt` beside them — the copy Nick actually pastes into LinkedIn. Hand-written, `.txt` so it copies clean. **Never prune these** (a "superseded files" sweep deleted all three in 889379f; recovered 2026-07-12).
 - **Changes that need retraining to validate** (hyperparams, loss, dataset logic, architecture): write code, smoke-test, then **stop** — no commits, no results-table updates until the user runs train → canary → eval and confirms. You verify imports/shapes/smoke only.
 - **Never launch a full `python main.py train` yourself** (background or Workflow) — Claude-spawned jobs run ~10× slower (macOS deprioritizes detached processes). Hand the exact env+command to the user. Short MPS jobs (eval, canary, probe) in the background are fine.
 - **Don't touch `streamlit_app.py` or `src/export.py` until a model change is verified good** (train → canary → eval → only then export/app).
