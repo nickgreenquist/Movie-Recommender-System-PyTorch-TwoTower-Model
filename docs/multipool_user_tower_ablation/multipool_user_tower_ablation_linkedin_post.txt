@@ -1,0 +1,21 @@
+Recency Is All You Need: A 12-Model Experiment on User-History Representation for Two-Tower Retrieval in Recommenders.
+
+The standard way to build a user's vector in two-tower recommenders (pool the whole interaction history into one embedding (YouTube, 2016)) throws away the single most predictive signal.
+
+I swapped the user tower of my movie recommender 12 ways, each differing only in which slices of history feed the user vector: whole history, liked/disliked movies, rating-weighted movies, or just the last movie watched. Same architecture and training (MovieLens 32M).
+
+Three findings (none expected):
+
+1. Adding the most-recently-watched movie lifted MRR +22%. One recent item nearly matched the ENTIRE summed history.
+
+2. Valence doesn't help. The liked/disliked/rating-weighted channels behind a 4-pool tower add nothing over plain sum pool.
+
+3. The drop-off past that one item is exactly why the field moved from pooling to Transformers (FMC → FPMC → SASRec).
+
+#RecommenderSystems
+
+Full writeup below ↓
+
+FIRST COMMENT (ignore for char count):
+Full method + 12-arm results:
+https://nickgreenquist.com/blog/projects/2026/06/17/recency-user-history-two-tower-ablation/

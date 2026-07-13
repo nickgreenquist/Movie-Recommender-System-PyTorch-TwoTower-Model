@@ -1,0 +1,24 @@
+$200 vs $200k: Generating Item Features With an LLM Instead of Hand Tagging
+
+Two-tower retrieval models can run solely on item-ID embeddings, but almost every industry model adds item features. The challenge? Human-curated feature tagging is prohibitively expensive.
+
+I ran a controlled experiment on MovieLens 32M to test a cheaper alternative: scrape raw web text for items, use an LLM to score features, and run a head-to-head evaluation. Same architecture, same training, same eval, only content varied.
+
+The results using Mean Reciprocal Rank (MRR):
+
+1. Base model (no movie features): 0.1121
+2. Curated tags (Genome): 0.1148
+3. LLM features: 0.1155
+
+The $200 LLM pipeline matched 15 years of human curation at a fraction of the cost. 
+
+Why? The LLM successfully extracted deep latent item features from web text: genre nuances, specific eras, and plot tropes. 
+
+For most teams the tagging path isn't just expensive — it's unavailable. LLMs make item features accessible to every team.
+
+Full writeup below. ↓
+
+
+FIRST COMMENT (ignore for char count):
+Full methodology, evaluation details, and dataset configurations here: 
+https://nickgreenquist.com/blog/projects/2026/06/10/llm-vs-genome-content-features/
