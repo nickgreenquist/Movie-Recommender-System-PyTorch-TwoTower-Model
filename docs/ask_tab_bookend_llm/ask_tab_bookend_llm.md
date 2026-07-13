@@ -3,32 +3,34 @@
 > **TL;DR:** LLMs are becoming a core part of how industry recommendation systems work: Netflix's natural-language search, Spotify's AI playlists. This project brings that same idea to movies: describe what you want in your own words, and let an LLM translate it into a query a standard recommender retrieval system can serve.
 
 ## Background
-**Netflix** is beta-testing a natural-language search that turns "something funny and upbeat" into a refinable list of titles. Type more into the same box and it narrows the results further instead of starting over. **Spotify**'s AI playlist tools take a sentence like "science explainers for my morning run" and hand back a generated queue, weighed against your listening history unless you tell it not to. Both use the LLM for the same narrow job: turning what you typed into a query. The recommendation system already in place, not the LLM, decides what you actually see.
+**Netflix** is beta-testing a natural-language search that turns "something funny and upbeat" into a refinable list of titles. Type more into the same box and it narrows the results further; you don't start over. **Spotify**'s AI playlist tools take a sentence like "science explainers for my morning run" and hand back a generated queue, weighed against your listening history unless you tell it not to. Both use the LLM for one narrow job, turning what you typed into a query. The recommender that was already there still decides what comes back.
 
-## Why Not Just Use an LLM for the Whole Recommendation Problem?
+## Why Not Use an LLM for the Whole Recommendation Problem?
 
-A reasonable objection: why not just ask ChatGPT or Gemini for "movies like Rashomon" directly? Because they already know the answer: frontier LLMs have absorbed IMDb and Letterboxd along with everything else, which makes movies a convenient, checkable showcase, not the general case. A real industrial recommender runs over a catalog the LLM has never seen: proprietary, sized in the millions, too large for any context window. It can't recommend from memory it doesn't have. This architecture (LLM extracts intent, a trained retrieval model that has actually seen the corpus does the matching) is built for that case: the recommendation problem companies actually have, not a toy dataset an LLM already memorized.
+Why not just ask ChatGPT or Gemini for "movies like Rashomon" directly? Because it already knows the answer. Frontier LLMs have absorbed IMDb and Letterboxd along with everything else, which is what makes movies a convenient, checkable showcase, and also what makes them unrepresentative. An industrial recommender runs over a proprietary catalog the LLM has never seen, sized in the millions and far too large for any context window. The model has no memory to recommend from. That is the catalog this architecture is built for. The LLM extracts intent; a trained retrieval model that has seen the corpus does the matching.
 
 ### Why Not Fine-Tune Instead?
 
-Fine-tuning an LLM on the catalog doesn't close the gap either. Generative recommenders that decode item names directly have a documented failure mode: hallucinated items that don't exist in the catalog. They're also far more expensive at serving scale: Indeed's fine-tuned GPT-3.5 recommender ran [6.7 seconds per inference](https://eugeneyan.com/writing/recsys-llm/), too slow for online use, and had to be swapped for a lightweight classifier in production. And [Spotify's own generative-retrieval research](https://research.atspotify.com/2024/10/bridging-search-and-recommendation-with-generative-retrieval) found it consistently lagged specialized baselines like SASRec and BERT4Rec: text similarity alone doesn't capture collaborative-filtering signal.
+Fine-tuning an LLM on the catalog doesn't close the gap either. Generative recommenders that decode item names directly hallucinate titles the catalog doesn't contain, and they cost far more to serve. Indeed's fine-tuned GPT-3.5 recommender ran [6.7 seconds per inference](https://eugeneyan.com/writing/recsys-llm/), too slow to put online, and was swapped for a lightweight classifier in production. [Spotify's own generative-retrieval research](https://research.atspotify.com/2024/10/bridging-search-and-recommendation-with-generative-retrieval) found the approach consistently lagged specialized baselines like SASRec and BERT4Rec. My read is that text similarity alone doesn't capture collaborative-filtering signal.
 
 ## Why This Helps
 
-This interface solves two different problems. A brand-new user has no history. Most recommenders need weeks of clicks before they're any good, and this project's model was built to skip that: a handful of liked movies is enough, no retraining, no user-ID lookup. But describing "a handful of liked movies" is exactly what a chat box is for. The other problem is the opposite: an existing user who knows what they want, and whose want doesn't match their usual feed. "Something to watch with my nephew this weekend" or "movies like Rashomon but not so bleak" won't surface by scrolling a For You row, and it isn't a search-bar query either. There's no exact title to type. This sits in the middle, between a feed you can't steer and a search bar that only takes exact titles: describe it, get recommendations back.
+The first problem is the cold start. Most recommenders need weeks of clicks before they're any good, and this project's model was built to skip that. A handful of liked movies is enough, with no retraining and no user-ID lookup. Describing a few movies you liked is exactly what a chat box is for.
+
+The other user is the one who already has a history and wants something outside it. "Something to watch with my nephew this weekend" or "movies like Rashomon but not so bleak" won't surface in a For You row, and there's no title to type into a search bar. The Ask tab is for that gap. You describe what you're after and get a board back.
 
 The business case:
 
 - **Cuts new-user churn.** A good result on day one, no weeks of clicks required.
-- **Catches high-intent users search can't serve.** Real intent, no exact title: search dead-ends, Ask doesn't.
-- **Explainability comes for free.** The extraction already exists; showing it back costs nothing extra.
+- **Catches high-intent users search can't serve.** They know what they want and can't name a title, so the search bar dead-ends on them. A sentence is enough for Ask.
+- **Explainability comes for free.** The extraction already exists; showing it back to the user costs nothing.
 - **Handles fuzzy titles and vague intent.** Misspellings, half-remembered titles, "I don't know exactly what I want."
-- **Gives users a sense of control.** Steer results directly instead of waiting on the algorithm.
+- **Lets users steer.** They can push the results where they want them without waiting for the algorithm to catch on.
 
 ## Design
-This project sits a small hosted LLM in front of a trained two-tower movie recommender. Type "classic samurai films full of sword duels and honor," or "movies directed by Akira Kurosawa, like Rashomon, Ran, and Ikiru," and Claude Haiku reads it and fills in one structured object behind the scenes: liked titles, genres, people, mood, hard constraints like year range or rating floor. A deterministic pipeline resolves that structured object into weighted movie anchors and filters, and the trained model does **100%** of the actual retrieval and ranking.
+This project sits a small hosted LLM in front of a trained two-tower movie recommender. Type "classic samurai films full of sword duels and honor," or "movies directed by Akira Kurosawa, like Rashomon, Ran, and Ikiru," and Claude Haiku reads it and fills in a single structured object behind the scenes: liked titles, genres, people, mood, and hard constraints like a year range or a rating floor. A deterministic pipeline resolves that object into weighted movie anchors, hard filters, and re-rank terms. The trained model does the retrieval and the scoring, and nothing generative ever touches the ranking.
 
-The prompt and resolution logic were tuned against 500 synthetic queries generated to look like what a real user might actually type, on top of my own manual testing along the way. That pass moved the "good board" rate, boards where both an LLM judge and my own manual review agreed the recommendations actually matched the query's intent, from 32.0% to 50.8%.
+The prompt and the resolution logic were tuned against 500 synthetic queries generated to look like what a user would type, alongside my own manual testing. That pass moved the "good board" rate (boards where an LLM judge and my own review agreed the recommendations matched the query's intent) from 32.0% to 50.8%.
 
 <p align="center">
   <img src="figures/fig1_landing.png" alt="The Ask tab: a chat-style search bar, a row of theme pills, a second row of related pills once a theme is open, and a results grid below" width="820">
@@ -36,34 +38,34 @@ The prompt and resolution logic were tuned against 500 synthetic queries generat
 
 *Click the suggested prompt "Samurai duels & honor" and a board of samurai films renders below (Seven Samurai, Yojimbo, Musashi Miyamoto, Rashomon, Throne of Blood). That click also opens a second row, "Riffing on: Samurai duels & honor," six related pills including "Directed by Kurosawa."*
 
-## LLM as Interpreter, not Recommender
-An LLM can't rank a catalog of thousands of movies by itself. There's no reliable scoring against items outside the handful it can name, and no guarantee the titles it recites even exist in the corpus. So this project never asks it to. One design choice worth stating explicitly: **the LLM's own words never reach you, either.** There's no AI-written answer, no chatbot response rendered anywhere. The model's entire job stops at filling in the structured object that just became the results above. A "Show raw extraction" toggle in the app makes this verifiable rather than asserted:
+## Where the LLM Stops
+An LLM can't rank a catalog of thousands of movies by itself. There's no reliable scoring against items outside the few it can name, and no guarantee the titles it recites exist in the corpus at all. So the project never asks it to. Its words never reach the user either. There's no AI-written answer and no chatbot response rendered anywhere in the app; the model's job ends when the structured object is filled in, and everything past that point is the recommender. The "Show raw extraction" toggle lets you check that yourself:
 
 <p align="center">
   <img src="figures/fig3_raw_extraction.png" alt="The Ask tab's debug expander open, showing the LLM's actual structured JSON output for a query about films directed by Akira Kurosawa" width="820">
 </p>
 
-*"Under the hood," normally collapsed. `liked_items` resolved to exact titles with years, a nested `hard_constraints.require_people` field carrying the director's name. This is the entire LLM output for the query above, a JSON object rather than a sentence. Nothing here was composed as prose; it's tool-call arguments.*
+*"Under the hood," normally collapsed. `liked_items` resolved to exact titles with years; a nested `hard_constraints.require_people` field carries the director's name. This is the entire LLM output for the query above: tool-call arguments, no prose.*
 
 ## Cost
 
-Every live query is one Haiku call: about 12k tokens of system prompt and schema, a short user query, up to 300 tokens back. At Haiku 4.5's list price ($1/M input tokens, $5/M output tokens), a cold call (no cache hit) runs about **$0.017**. A warm call, hitting the 5-minute prompt cache on that 12k-token prefix, drops to about **$0.003**, roughly **6x cheaper**, since a cache read costs a tenth of normal input price against a 1.25x premium to write it. At the rate caps (20 queries per session, 60 per day across all visitors), the worst case (every single call a cache miss) is about **$1/day** for the entire public demo. In practice caching keeps it well under that.
+Every live query is one Haiku call: about 12k tokens of system prompt and schema, a short user query, and up to 300 tokens back. At Haiku 4.5's list price ($1/M input tokens, $5/M output tokens), a cold call with no cache hit runs about **$0.017**. A warm call hits the 5-minute prompt cache on that 12k-token prefix and drops to about **$0.003**, roughly **6x cheaper**. A cache read costs a tenth of normal input price; writing the cache costs a 1.25x premium once. At the rate caps (20 queries per session, 60 per day across all visitors), the worst case, where every call misses the cache, is about **$1/day** for the entire public demo. In practice caching keeps it well under that.
 
-That math changes at real product scale. 10k daily users firing a couple of free-text queries each is 20k live calls a day: **$2k-$10k a month** depending on cache hit rate, not the rounding error it is at demo traffic. The fix is avoiding the call, not shrinking it: semantic caching (GPTCache, Redis LangCache) catches near-duplicate queries and reuses the prior extraction instead of re-calling the model. Mining real query logs to pre-resolve the most common patterns into that same cache, an expanded lookup table rather than a curated set of UI pills, is the other lever.
+The math changes at product scale. 10k daily users firing a couple of free-text queries each is 20k live calls a day, or **$2k-$10k a month** depending on cache hit rate. At that point you stop optimizing the call and start avoiding it. Semantic caching (GPTCache, Redis LangCache) catches near-duplicate queries and reuses the prior extraction instead of re-calling the model. The other lever is mining query logs to pre-resolve the most common patterns into that same cache, turning the demo's hand-curated pills into a lookup table nobody has to curate.
 
-## What We Learned
+## What I Learned
 
-A few results were unexpected:
+What came out of the tuning, including a couple of things I'd rather have measured:
 
-- **Few-shot examples move the needle, new rules don't.** Adding worked examples to the prompt fixed a keyword-routing failure that more instructions couldn't.
-- **Extended thinking added nothing.** This is a narrow structured-extraction task, not open-ended reasoning. Forced tool use with thinking off is both cheaper and just as accurate.
-- **Haiku is enough.** No frontier model was ever run head-to-head against it here. The case for Haiku is task fit (filling in a schema, not chain-of-thought) plus a roughly 3x cost gap to Sonnet and 5x to Opus (at list price), not a measured win over either.
-- **The metadata carries more of the load than the model.** Person, studio, and keyword filters only work because a scraped metadata table exists for the LLM's output to resolve against. Before that table existed, those fields were silently dropped. The LLM is only as good as what it has to point at.
-- **Chasing perfect routing isn't the goal, and the gaps are specific rather than vague.** Named titles, directors, genres, and specific themes ("chess," "heist," "time loop") route reliably. Mood-only requests, place names ("movies set in Rome"), and thin niche keywords are the hardest cases: a term that only matches a handful of films corpus-wide will surface all of them regardless of fit, since there's nothing else to rank against.
+- **Few-shot examples beat more instructions.** A keyword-routing failure survived every rule I wrote at it, then went away once I added worked examples to the prompt.
+- **Extended thinking added nothing.** Filling in a schema is a narrow extraction task, not open-ended reasoning. Forced tool use with thinking off is cheaper, and I never saw it cost accuracy.
+- **Haiku is enough, though I never proved it.** No frontier model was ever run head-to-head against it here. The case is task fit (schema-filling, not chain-of-thought) plus a roughly 3x cost gap to Sonnet and 5x to Opus at list price.
+- **The metadata carries more of the load than the model.** Person, studio, and keyword filters only work because a scraped metadata table exists for the LLM's output to resolve against. Before those tables existed, a request like "directed by Kurosawa" had nowhere to land, and the extraction silently dropped it while happily answering the rest of the query.
+- **The remaining failures are specific.** Perfect routing was never the target, and what's left is narrow. Named titles, directors, genres, and concrete themes ("chess," "heist," "time loop") route reliably. Where it struggles is mood-only requests, place names like "movies set in Rome," and thin niche keywords. A term that matches only a few films corpus-wide will surface all of them regardless of fit, because there's nothing left to rank against.
 
 ## More Real Examples
 
-Six root pills, each paired with one of its leaf pills, expand for the prompt and the top 5 posters:
+Six root pills, each paired with one of its leaf pills. Expand any of them for the prompt and the top 5 posters:
 
 <details>
 <summary><strong>Anime, Ghibli to Akira</strong></summary>
@@ -223,4 +225,4 @@ Six root pills, each paired with one of its leaf pills, expand for the prompt an
 
 ## Try It
 
-**[Try it in the Ask tab of the live demo.](https://movie-recommender-system-two-tower-model.streamlit.app/)** For how it actually works under the hood (the schema, the resolution pipeline, the tradeoffs behind keeping the LLM's output invisible), see the About tab in the app, or the [GitHub README](../../README.md).
+**[Try it in the Ask tab of the live demo.](https://movie-recommender-system-two-tower-model.streamlit.app/)** For how it works under the hood (the schema, the resolution pipeline, the tradeoffs behind keeping the LLM's output invisible), see the About tab in the app, or the [GitHub README](../../README.md).
