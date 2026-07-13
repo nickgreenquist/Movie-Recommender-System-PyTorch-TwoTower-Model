@@ -1,0 +1,23 @@
+How I built an LLM-Powered recommendation feature for movies.
+
+Industry is moving in this direction: Netflix and Spotify let you search by describing what you're in the mood for.
+
+How mine works: You type a sentence and Claude Haiku creates a structured object (liked titles, genres, people, mood, hard constraints). A deterministic pipeline resolves that into movie anchors, filters, and re-rank terms, and a traditional two-tower model does the retrieval and the scoring.
+
+Two important notes:
+
+1. The LLM never writes a word to the user (no chatbot). It also never ranks anything or needs to read the entire corpus into context.
+
+2. My current prompt costs about $0.017 per cold call and $0.003 warm (with caching).
+
+But wait, why not just have the LLM do everything? It works for movies (they are all over its training data), but a real catalog is millions of proprietary items it has never seen and can't fit in context. It will also happily recommend titles you don't carry.
+
+Try it yourself below. ↓
+
+
+FIRST COMMENT (ignore for char count):
+Try it:
+https://movie-recommender-system-two-tower-model.streamlit.app/
+
+Full technical writeup:
+https://nickgreenquist.com/blog/projects/2026/07/12/llm-search-discovery-movie-recommender/
