@@ -63,44 +63,18 @@ A few results were unexpected:
 
 ## More Real Examples
 
-A grab bag of pills, expand for the prompt and the top 5 posters:
+Six root pills, each paired with one of its leaf pills, expand for the prompt and the top 5 posters:
 
 <details>
-<summary><strong>Nothing but time travel</strong></summary>
+<summary><strong>Anime, Ghibli to Akira</strong></summary>
 
-**Prompt:** "Movies where time travel is the whole point, like Back to the Future and Primer."
-
-<p align="center">
-<img src="https://image.tmdb.org/t/p/w342/hQq8xZe5uLjFzSBt4LanNP7SQjl.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/crzoVQnMzIrRfHtQw0tLBirNfVg.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/r67KzlHkdiwe3fBWzImEkNOg1Y.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/zdxQRP7mzczMJBwKnv8MCPRq7rQ.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/38Xr1JnV1ZcLQ55zmdSp6n475cZ.jpg" width="90">
-</p>
-
-**Top 5:** Back to the Future Part II (1989), Back to the Future Part III (1990), Frequently Asked Questions About Time Travel (2009), Timecrimes (Cronocrímenes, Los) (2007), Predestination (2014)
-
-</details>
-
-<details>
-<summary><strong>Christmas by the tree</strong></summary>
-
-**Prompt:** "Cozy Christmas movies to watch by the tree."
+**Prompt:** "Breathtaking anime films, from Studio Ghibli's warmth to the neon chaos of Akira and Ghost in the Shell."
 
 <p align="center">
-<img src="https://image.tmdb.org/t/p/w342/oOleziEempUPu96jkGs0Pj6tKxj.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/34nSHYqmb7222tiqiuKqKJmZiQa.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/2sMpffmvoJlW7WBcvyHTPR9DEsj.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/yF7SNheAGWavNnjbAronedwjC1N.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/7ir0iRuPK9OEuH569cp0nF5CJce.jpg" width="90">
+<img src="https://image.tmdb.org/t/p/w342/bLUUr474Go1DfeN1HLjE3rnZXBq.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/cMYCDADoLKLbB83g4WnJegaZimC.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/41XxSsJc5OrulP0m7TrrUeO2hoz.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/1ZJRbLDVr90KLtKdmTT4WZhT26E.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/41WtqvaObaYE3RuqgBfQFPV3aV1.jpg" width="90">
 </p>
 
-**Top 5:** Elf (2003), A Christmas Story (1983), The Bishop's Wife (1947), Arthur Christmas (2011), How the Grinch Stole Christmas! (1966)
-
-</details>
-
-<details>
-<summary><strong>Gritty pre-2000 New York</strong></summary>
-
-**Prompt:** "Gritty New York City movies from before 2000, no musicals."
-
-<p align="center">
-<img src="https://image.tmdb.org/t/p/w342/rex4oaiSCD8UQg9204R6hQcFrX9.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/vNhywp9w1DVG6BytxKp4kjtaaGC.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/d6YZpBq4BhQr1K985J3CuL1cA8J.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/ckklq45UxUkwgHve9xItXqXr06r.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/1MyH4MJAJZJbb6wDVeOc2bTECtK.jpg" width="90">
-</p>
-
-**Top 5:** The Naked City (1948), The Taking of Pelham One Two Three (1974), The Warriors (1979), Midnight Cowboy (1969), King of New York (1990)
+**Top 5:** Paprika (Papurika) (2006), Princess Mononoke (Mononoke-hime) (1997), Laputa: Castle in the Sky (Tenkû no shiro Rapyuta) (1986), Ghost in the Shell 2: Innocence (a.k.a. Innocence) (Inosensu) (2004), Metropolis (2001)
 
 </details>
 
@@ -118,6 +92,32 @@ A grab bag of pills, expand for the prompt and the top 5 posters:
 </details>
 
 <details>
+<summary><strong>Christmas by the tree</strong></summary>
+
+**Prompt:** "Cozy Christmas movies to watch by the tree."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/oOleziEempUPu96jkGs0Pj6tKxj.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/34nSHYqmb7222tiqiuKqKJmZiQa.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/2sMpffmvoJlW7WBcvyHTPR9DEsj.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/yF7SNheAGWavNnjbAronedwjC1N.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/7ir0iRuPK9OEuH569cp0nF5CJce.jpg" width="90">
+</p>
+
+**Top 5:** Elf (2003), A Christmas Story (1983), The Bishop's Wife (1947), Arthur Christmas (2011), How the Grinch Stole Christmas! (1966)
+
+</details>
+
+<details>
+<summary><strong>Starring Santa himself</strong></summary>
+
+**Prompt:** "Christmas movies where Santa Claus is a main character."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/g3JfCGX9fgHwmmKFhRzu7BYc29d.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/tZvGQF2623FD0MZgvOy18J5d7x5.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/9hTYFvEDnajUIbpdfc3fO6bZq2Y.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/hvV2rI60qOYELT7tHHLpxtafnBZ.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/pvaWMSRzRwtcxyHKNLX6phiQp8d.jpg" width="90">
+</p>
+
+**Top 5:** Prancer (1989), Santa Claus: The Movie (1985), I'll Be Home For Christmas (1998), The Santa Clause (1994), The Santa Clause 3: The Escape Clause (2006)
+
+</details>
+
+<details>
 <summary><strong>Make me sob</strong></summary>
 
 **Prompt:** "A devastating drama that will absolutely make me sob."
@@ -131,28 +131,54 @@ A grab bag of pills, expand for the prompt and the top 5 posters:
 </details>
 
 <details>
-<summary><strong>Full-on zombie apocalypse</strong></summary>
+<summary><strong>Dogs that break your heart</strong></summary>
 
-**Prompt:** "Zombie apocalypse movies like 28 Days Later and Dawn of the Dead."
+**Prompt:** "Emotional dramas about the bond between a person and their dog, like Hachi: A Dog's Story and My Dog Skip. No comedies."
 
 <p align="center">
-<img src="https://image.tmdb.org/t/p/w342/xxp0qcZ3n2YA53SIzWilDSfIaA4.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/bi7SO5F4VyyGQTlxQirbH1dwKzW.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/jwXrKFO20FTvA7mHqnTvMXSznDS.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/oix0aNv1lvW3nUGspUyvSIBlpbs.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/way9dOm4dM2sm9UMcu2PEXMTX0q.jpg" width="90">
+<img src="https://image.tmdb.org/t/p/w342/Xe7AB0ffhGPSdBZ4qJ9AKJfllL.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/5I7SYsNQmZRZpQ2MAarIQYU9vaX.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/wRB0cTPBIWHEq4FmWuX6voagePf.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/A4lH22nlFF7MdalGfcvSrlC1ttt.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/cVtF8SW4zMbculTXD52RDvmQAAR.jpg" width="90">
 </p>
 
-**Top 5:** Land of the Dead (2005), Day of the Dead (1985), Undead (2003), 28 Weeks Later (2007), Resident Evil: Apocalypse (2004)
+**Top 5:** Old Yeller (1957), Umberto D. (1952), Shiloh (1997), Amores Perros (Love's a Bitch) (2000), Wendy and Lucy (2008)
 
 </details>
 
 <details>
-<summary><strong>Old-school kung fu</strong></summary>
+<summary><strong>Samurai duels & honor</strong></summary>
 
-**Prompt:** "Classic kung-fu movies like Enter the Dragon and Drunken Master."
+**Prompt:** "Classic samurai films full of sword duels and honor."
 
 <p align="center">
-<img src="https://image.tmdb.org/t/p/w342/9VFYDWYnAhXAgyqgs94lwNmMBbk.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/dkBQC0jmkmTOJJMgwsBdgkzZ6Ry.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/m7AIITQ624sfldI4SsX4htXPH1f.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/dlcipCOa9hlfBBz7kCAyjsf3q0E.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/8TmkTiHOTAyAjmbtDVi5f78a5ow.jpg" width="90">
+<img src="https://image.tmdb.org/t/p/w342/lOMGc8bnSwQhS4XyE1S99uH8NXf.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/tN7kYPjRhDolpui9sc9Eq9n5b2O.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/2nCSzKqOslKrsvUHb2T1jsuh2eQ.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/vL7Xw04nFMHwnvXRFCmYYAzMUvY.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/zaZFMNxJST0TtPd68yF7fNt1he8.jpg" width="90">
 </p>
 
-**Top 5:** The Big Boss (Fists of Fury) (Tang shan da xiong) (1971), Once Upon a Time in China (Wong Fei Hung) (1991), The Way of the Dragon (a.k.a. Return of the Dragon) (Meng long guo jiang) (1972), Fist of Fury (Chinese Connection, The) (Jing wu men) (1972), Once Upon a Time in China III (Wong Fei-hung tsi sam: Siwong tsangba) (1993)
+**Top 5:** Seven Samurai (Shichinin no samurai) (1954), Yojimbo (1961), Samurai I: Musashi Miyamoto (Miyamoto Musashi) (1954), Rashomon (Rashômon) (1950), Throne of Blood (Kumonosu jô) (1957)
+
+</details>
+
+<details>
+<summary><strong>Directed by Kurosawa</strong></summary>
+
+**Prompt:** "Movies directed by Akira Kurosawa, like Rashomon, Ran, and Ikiru."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/zaZFMNxJST0TtPd68yF7fNt1he8.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/tN7kYPjRhDolpui9sc9Eq9n5b2O.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/zW47oIH3bc3ggmmmzTvKqM4Fqjk.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/iYNH3Re0JSypoYaWvZtERUnNaJL.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/fJgqj9s8HNZz9zwX6femVJn8HEB.jpg" width="90">
+</p>
+
+**Top 5:** Throne of Blood (Kumonosu jô) (1957), Yojimbo (1961), Sanjuro (Tsubaki Sanjûrô) (1962), Red Beard (Akahige) (1965), Kagemusha (1980)
+
+</details>
+
+<details>
+<summary><strong>Nothing but time travel</strong></summary>
+
+**Prompt:** "Movies where time travel is the whole point, like Back to the Future and Primer."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/hQq8xZe5uLjFzSBt4LanNP7SQjl.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/crzoVQnMzIrRfHtQw0tLBirNfVg.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/r67KzlHkdiwe3fBWzImEkNOg1Y.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/zdxQRP7mzczMJBwKnv8MCPRq7rQ.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/38Xr1JnV1ZcLQ55zmdSp6n475cZ.jpg" width="90">
+</p>
+
+**Top 5:** Back to the Future Part II (1989), Back to the Future Part III (1990), Frequently Asked Questions About Time Travel (2009), Timecrimes (Cronocrímenes, Los) (2007), Predestination (2014)
 
 </details>
 
@@ -170,6 +196,19 @@ A grab bag of pills, expand for the prompt and the top 5 posters:
 </details>
 
 <details>
+<summary><strong>Gritty pre-2000 New York</strong></summary>
+
+**Prompt:** "Gritty New York City movies from before 2000, no musicals."
+
+<p align="center">
+<img src="https://image.tmdb.org/t/p/w342/rex4oaiSCD8UQg9204R6hQcFrX9.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/vNhywp9w1DVG6BytxKp4kjtaaGC.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/d6YZpBq4BhQr1K985J3CuL1cA8J.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/ckklq45UxUkwgHve9xItXqXr06r.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/1MyH4MJAJZJbb6wDVeOc2bTECtK.jpg" width="90">
+</p>
+
+**Top 5:** The Naked City (1948), The Taking of Pelham One Two Three (1974), The Warriors (1979), Midnight Cowboy (1969), King of New York (1990)
+
+</details>
+
+<details>
 <summary><strong>Scorsese's New York</strong></summary>
 
 **Prompt:** "Martin Scorsese's New York movies."
@@ -179,19 +218,6 @@ A grab bag of pills, expand for the prompt and the top 5 posters:
 </p>
 
 **Top 5:** New York, New York (1977), After Hours (1985), Taxi Driver (1976), Mean Streets (1973), New York Stories (1989)
-
-</details>
-
-<details>
-<summary><strong>Dogs that break your heart</strong></summary>
-
-**Prompt:** "Emotional dramas about the bond between a person and their dog, like Hachi: A Dog's Story and My Dog Skip. No comedies."
-
-<p align="center">
-<img src="https://image.tmdb.org/t/p/w342/Xe7AB0ffhGPSdBZ4qJ9AKJfllL.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/5I7SYsNQmZRZpQ2MAarIQYU9vaX.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/wRB0cTPBIWHEq4FmWuX6voagePf.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/A4lH22nlFF7MdalGfcvSrlC1ttt.jpg" width="90"> <img src="https://image.tmdb.org/t/p/w342/cVtF8SW4zMbculTXD52RDvmQAAR.jpg" width="90">
-</p>
-
-**Top 5:** Old Yeller (1957), Umberto D. (1952), Shiloh (1997), Amores Perros (Love's a Bitch) (2000), Wendy and Lucy (2008)
 
 </details>
 
