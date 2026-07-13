@@ -33,7 +33,7 @@ reproduce the board; that honesty was verified pill-by-pill before launch (2026-
    that system prompt to the query, and writes the JSON here as `<id>.json`.
 3. `python tools/gen_ask_examples.py --only <id>` to regenerate just that board; eyeball the top-10.
 
-Never run `gen_ask_examples.py --live` — it re-extracts every pill and destroys the curated frozen
+Never run `gen_ask_examples.py --live` — it re-extracts every pill and destroys the frozen
 extractions. Grade pill-vs-live drift read-only with `tools/ask_live_vs_frozen.py` (Haiku is
 non-deterministic even at temperature 0 — use `--k 3` before trusting a per-pill delta). Both the
 generator and the grader resolve keywords against `serving/` alone (`Serving(serving_only=True)`) —
@@ -51,14 +51,3 @@ different result ("ancient Rome" → Rome-the-city / Italian cinema, but "roman 
 - **Traps:** "scientists" floods sci-fi (say "mathematicians, professors"); "real"/"biopic" phrasing
   trips the based-on-true-story filter; a bare "dramas" head-noun wants an explicit Drama genre gate;
   seed anchors also *remove* those exact films from the visible board (they count as watched history).
-
-## Curator overrides (hand-tuned, keep them)
-A few extractions were hand-corrected because fresh Haiku extraction is stochastic and picked a weaker
-route than the traced v3 boards. Preserve these on any refresh:
-- `r5c1` (time loops), `r6c3` (alien invasion), `r6c5` (wasteland): moved the theme into a **hard**
-  `require_keyword_concepts` (`time loop` / `alien invasion` / `post-apocalyptic`) — resolver keys in
-  `src/llm_frontend.py` `KEYWORD_CONCEPTS`.
-- `r4c2` (Kurosawa): anchored on his actual films (the `require_people` person filter didn't resolve).
-- `r1c3` (American animation): intentionally keeps `require_country=['American']` → a benign `fallback`
-  flag (debug-panel only), because its fallback board — the Toy Story→Up canon — is the better *visible*
-  board.
