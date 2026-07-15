@@ -759,12 +759,12 @@ def _llm_daily_budget():
 
 @st.cache_resource
 def _load_ask_examples():
-    """serving/ask_examples.json — the pre-generated example-chip boards (7 theme roots × 6
+    """serving/ask_examples.json — the pre-generated example boards (7 theme roots × 6
     related-prompt children, built by tools/gen_ask_examples.py through the same extract→recommend pipeline the
-    live path runs). A chip click replays a stored report with zero API cost, so the tour works
-    with no key, off the daily budget, and with deterministic boards for live demos. Returns None
-    when the artifact is absent — the chips simply don't render. Ids missing from 'examples'
-    (a partially regenerated artifact) are filtered out rather than crashing a chip."""
+    live path runs). A theme-card / riffing-chip click replays a stored report with zero API cost,
+    so the tour works with no key, off the daily budget, and with deterministic boards for live
+    demos. Returns None when the artifact is absent — the cards simply don't render. Ids missing
+    from 'examples' (a partially regenerated artifact) are filtered out rather than crashing."""
     try:
         with open('serving/ask_examples.json') as f:
             data = json.load(f)
@@ -832,44 +832,39 @@ def _render_ask_debug(report):
 
 
 def _ask_clear_results():
-    """Wipe the results panel — heading, relaxed note, 'how it was interpreted' box, poster grid —
-    back to the first-load empty state. Called when deselecting a pill collapses the suggestions to
-    nothing lit, so the page looks as it did on arrival."""
-    for k in ('ask_report', 'ask_title', 'ask_ex_active', 'ask_df', 'ask_shown'):
+    """Wipe the active board — report, title, riffing row, poster feed — returning the tab
+    to the landing view (theme cards + search bar). on_click for the results view's
+    '← Back' escape hatch."""
+    for k in ('ask_report', 'ask_title', 'ask_theme', 'ask_df', 'ask_shown'):
         st.session_state.pop(k, None)
 
 
-def _on_ask_theme_change():
-    """on_change for the theme pills. Records which theme's related row to show ('ask_open_theme')
-    and clears that theme's related pick, so (re)selecting a theme always lands on its own headline
-    example. Deselecting the lit theme (theme is None) collapses to the first-load layout AND clears
-    the results. Fires only on a genuine user change to the theme pills — programmatic writes (like
-    the de-select in _on_ask_leaf_change) do NOT trigger it, so the two callbacks never cascade."""
-    theme = st.session_state.get('ask_ex_root')
-    st.session_state['ask_open_theme'] = theme
-    if theme is not None:
-        st.session_state[f'ask_ex_children_{theme}'] = None
-    else:
-        _ask_clear_results()
+def _ask_open_board(examples, fs, example_id):
+    """Activate one pre-generated example board (zero API cost): on_click for the landing's
+    theme cards and the workhorse of the riffing chips' on_change. Writes the same session keys
+    the live path writes — the results view can't tell canned from live — plus 'ask_theme', the
+    root whose riffing row to show: the id itself for a root, its parent for a leaf, so the
+    sibling chips stay on screen while one of them is active."""
+    entry = examples['examples'][example_id]
+    st.session_state['ask_report'] = entry['report']
+    st.session_state['ask_title']  = entry['query']    # heading echoes the full prompt
+    theme = (example_id if example_id in examples['tree'] else
+             next((r for r, kids in examples['tree'].items() if example_id in kids), None))
+    st.session_state['ask_theme'] = theme
+    if theme:
+        # Seed the riffing row's selection (legal — callbacks run before widgets instantiate)
+        # so a leaf opened straight from the landing grid renders lit among its siblings; a
+        # root leaves the row unlit. Via the riff on_change this writes the value the widget
+        # already holds — a no-op.
+        st.session_state[f'ask_riff_{theme}'] = example_id if example_id != theme else None
+    _store_results(_report_to_df(entry['report'], fs), 'ask')
 
 
-def _on_ask_leaf_change():
-    """on_change for the related-prompt pills. A related prompt is a standalone query, not a
-    refinement of the theme — so exactly one pill should ever be lit (the active board). Picking a
-    prompt de-selects the theme pill (set 'ask_ex_root' to None) so only the prompt is highlighted;
-    'ask_open_theme' keeps the related row on screen while a prompt is active, so it doesn't vanish
-    when the theme goes dark. Re-clicking the active prompt toggles it off and COLLAPSES the related
-    row back to the first-load layout (theme row only, nothing lit), matching a root-pill deselect."""
-    theme = st.session_state.get('ask_open_theme')
-    if not theme:
-        return
-    leaf = st.session_state.get(f'ask_ex_children_{theme}')
-    if leaf:
-        st.session_state['ask_ex_root'] = None          # a prompt is active → the theme pill goes dark
-    else:
-        st.session_state['ask_open_theme'] = None        # prompt toggled off → hide the related row
-        st.session_state['ask_ex_root']    = None        # and clear the theme, back to first load
-        _ask_clear_results()                             # and wipe the results, like a fresh page
+def _on_ask_riff_change(examples, fs, theme):
+    """on_change for the riffing chips: swap boards in place, staying on the results view. A
+    chip toggled OFF falls back to the theme's own headline board rather than an empty panel."""
+    leaf = st.session_state.get(f'ask_riff_{theme}')
+    _ask_open_board(examples, fs, leaf or theme)
 
 
 def _ask_title(query):
@@ -882,160 +877,237 @@ def _ask_title(query):
     return q[:80].rsplit(' ', 1)[0] + "…"
 
 
-def tab_ask(art, posters, tmdb_ids):
-    fs = art.fs
-    st.caption(
-        "Describe what you're in the mood for in plain English — name a few films you love, a vibe, "
-        "an era, genres to include or avoid. A small, fast LLM (Claude Haiku) translates your words "
-        "into the model's input; the **trained two-tower model does all the recommending**."
+_ASK_CATALOG_NOTE = ("Disclaimer: catalog is MovieLens 32M (movies with 200+ ratings) — coverage "
+                     "effectively ends around 2019, so most films after that simply aren't in the "
+                     "dataset.")
+
+# Two leaf boards promoted to the landing so the grid lands as a full 3×3, YouTube-style —
+# picked for genre spread the seven roots don't cover. Temporary: once two more roots exist
+# in ask_examples.json, drop this and let the roots fill the grid alone.
+_ASK_LANDING_EXTRAS = ('r5c3', 'r4c1')   # Voyages into deep space · Old-school kung fu
+
+# Invitation copy, not a canned example: nudges the query shapes that work (a vibe, an
+# era, named favorites) without pushing one specific board.
+_ASK_PLACEHOLDER = "What are you in the mood for? A vibe, an era, a few films you love…"
+
+
+def _ask_handle_live(art, fs, utterance):
+    """One live request: budget gates → hosted Haiku extraction → recommend(). The tab
+    renders one shared search bar over both views (chat_input is a trigger widget — it
+    returns the submitted text once and None on every other rerun, so this fires exactly
+    once per submit); notices render at the call site. On success, writes the same session
+    keys a card writes and reruns straight into the (fresh) results view."""
+    if not utterance:
+        return
+    api_key = _anthropic_api_key()
+    calls   = st.session_state.get('ask_calls', 0)
+    budget  = _llm_daily_budget()
+    with budget['lock']:   # roll the day + read together; check-then-increment races
+        today = datetime.date.today().isoformat()   # are tolerable (friction, not a
+        if budget['date'] != today:                 # security boundary)
+            budget['date'], budget['count'] = today, 0
+        daily_used = budget['count']
+    if api_key is None:
+        st.info(
+            "The conversational tab needs an Anthropic API key. Set `ANTHROPIC_API_KEY` in "
+            "`.streamlit/secrets.toml` (or the environment) — see the README. The manual "
+            "**Recommend** tab works without a key."
+        )
+    elif calls >= _LLM_SESSION_CAP:
+        st.warning(
+            f"Per-session limit reached ({_LLM_SESSION_CAP} requests). Refresh to start over "
+            "— this cap keeps the demo's API cost negligible."
+        )
+    elif daily_used >= _LLM_DAILY_CAP:
+        st.warning(
+            "Today's demo budget is used up — the **Recommend** tab works without the LLM, "
+            "or come back tomorrow."
+        )
+    else:
+        extraction = None
+        try:
+            with st.spinner("Understanding your request…"):
+                extraction = extract_query(utterance, fs, api_key=api_key)
+        except Exception as exc:  # surface, never crash the app
+            st.error(f"Couldn't reach the language model — try again in a moment. "
+                     f"({type(exc).__name__})")
+        if extraction is not None:
+            st.session_state['ask_calls'] = calls + 1
+            with budget['lock']:
+                budget['count'] += 1
+            report = recommend(art.frontend_ctx, extraction, top_n=_TOTAL_RESULTS)
+            _store_results(_report_to_df(report, fs), 'ask')
+            st.session_state['ask_report'] = report
+            st.session_state['ask_title']  = _ask_title(utterance)   # heading echoes the prompt
+            st.session_state['ask_theme']  = None                    # live boards have no riff row
+            st.rerun()   # this run already drew the current view — repaint as the fresh results
+
+
+def _ask_landing(fs, examples):
+    """The Ask tab's first page: heading + subtitle and a 3-across grid of theme cards (one
+    per example root plus the promoted leaves, each card its full prompt — a click opens the
+    frozen board through _ask_open_board). The floating search bar and the footer are shared
+    with the results view and rendered by tab_ask."""
+    st.markdown("## Ask")
+    st.markdown(
+        "Describe what you're in the mood for — a few films you love, a vibe, an era, "
+        "genres to include or avoid."
     )
-    # (The MovieLens-catalog caveat renders as a footnote at the bottom of the tab — it's a
-    # caveat, not a headline, and the old second caption pushed the input box below the fold
-    # on phones.)
-
-    # ── Search bar (Enter to submit; no button) ───────────────────────────────
-    # An st.chat_input styled like Claude/ChatGPT/Gemini: a single rounded field with a
-    # built-in send arrow that submits on Enter (Shift+Enter inserts a newline). Its slot is
-    # reserved at the TOP of the tab here, but the widget is rendered into it further down —
-    # AFTER the example pills — because the live-submit handler needs the currently-selected
-    # chip (sel_example) to pin the ingest guard, and the pills are drawn under the bar.
-    # Rendering after the pills also lets a chip seed st.session_state['ask_chat'] BEFORE the
-    # widget is instantiated (Streamlit forbids writing a widget's state after it renders), so
-    # the box pre-fills with the chip's query for tweak-and-rerun. chat_input is a trigger
-    # widget: it shows the seeded text but clears it internally, so a prefill never auto-submits.
-    # Nesting chat_input in a container makes it render inline at this position instead of
-    # pinned to the page bottom (its default in the main body).
-    search_slot = st.container()
-
-    # ── Suggestions UNDER the bar: a pre-computed 7×6 tour of the pipeline ─────
-    # A shallow tree: a row of THEMES, each revealing a row of related prompts — each prompt a
-    # standalone query with its own board, thematically adjacent to the theme, NOT a refinement of
-    # it. Exactly ONE pill is ever lit = the active board: selecting a theme shows its headline and
-    # lights the theme; selecting a related prompt shows that prompt and lights ONLY it (the theme
-    # de-selects, since the prompt isn't anchored on the theme). 'ask_open_theme' (owned by the
-    # on_change callbacks above) keeps the related row on screen independent of which pill is lit,
-    # so the row survives the theme going dark. De-selecting either pill (re-clicking the lit theme,
-    # or toggling the active prompt off) collapses the row back to the first-load layout (theme row
-    # only, nothing lit). The ingest guard ('ask_ex_active') fires only on
-    # selection CHANGE, so reruns don't clobber results, and the live path pins it so a
-    # still-highlighted chip can't reclaim live results.
-    examples    = _load_ask_examples()
-    # First load only: light the Samurai theme pill so the landing tab opens with a board
-    # already on screen instead of an empty panel. Widget state is seeded BEFORE st.pills
-    # renders (legal); programmatic writes don't fire on_change, so 'ask_open_theme' is set by
-    # hand. The one-shot guard keeps a user's deliberate deselect-to-empty from re-seeding.
-    if examples and not st.session_state.get('_ask_seeded'):
-        st.session_state['_ask_seeded'] = True
-        if 'ask_ex_root' not in st.session_state and 'ask_report' not in st.session_state:
-            default = 'r4' if 'r4' in examples['examples'] else examples['roots'][0]
-            st.session_state['ask_ex_root']    = default   # "Samurai duels & honor"
-            st.session_state['ask_open_theme'] = default
-    sel_example = None
     if examples:
-        st.caption("**Suggested prompts** — try one, results are instant.")
-        root_sel = st.pills(
-            "Themes", examples['roots'], selection_mode="single",
+        # Roots first, then the promoted leaves (skipping any id a partially regenerated
+        # artifact dropped). One st.columns row per 3 cards (not one st.columns(3) filled
+        # column-major): the desktop grid is identical either way, but on phones the rows
+        # stack in reading order instead of column-by-column.
+        cards = examples['roots'] + [i for i in _ASK_LANDING_EXTRAS
+                                     if i in examples['examples']]
+        with st.container(key='ask_cards'):
+            for row in range(0, len(cards), 3):
+                cols = st.columns(3)
+                for col, card in zip(cols, cards[row:row + 3]):
+                    col.button(
+                        examples['examples'][card]['query'], key=f'ask_card_{card}',
+                        use_container_width=True, on_click=_ask_open_board,
+                        args=(examples, fs, card),
+                    )
+
+
+def _ask_results(fs, examples, posters, tmdb_ids):
+    """The board view: '← Back' top-left (the escape hatch to the landing), the prompt as
+    the board title, and — canned boards only — a 'More:' chip row of the theme's sibling
+    boards, inline on one line. Each chip is a standalone board swapped in place at zero
+    API cost (deliberate drifts off the theme, not refinements); live prompts carry no
+    theme, so no row. Below: the unchanged results stack (relaxed-constraint notice,
+    'under the hood' expander, poster feed). The floating search bar and the footer are
+    shared with the landing and rendered by tab_ask, so a new search can start from
+    anywhere in the feed."""
+    st.button("← Back", key='ask_back', on_click=_ask_clear_results)
+    st.markdown(f"## {st.session_state.get('ask_title', '')}")
+    theme = st.session_state.get('ask_theme')
+    if examples and examples['tree'].get(theme):
+        st.pills(
+            "More:", examples['tree'][theme], selection_mode="single",
             format_func=lambda i: examples['examples'][i]['label'],
-            key='ask_ex_root', on_change=_on_ask_theme_change, label_visibility="collapsed",
+            key=f'ask_riff_{theme}', on_change=_on_ask_riff_change,
+            args=(examples, fs, theme),
         )
-        # The related row follows 'ask_open_theme' (set by the callbacks), NOT the live theme
-        # selection — so it stays on screen even after a related-prompt pick de-selects the theme.
-        open_theme = st.session_state.get('ask_open_theme')
-        child_sel  = None
-        if open_theme:
-            # Row keyed by open theme: switching themes swaps the widget, resetting the pick. The
-            # visible "Riffing on: <theme>" label ties the row to the theme that opened it —
-            # without it, the second pill row reads as disconnected. ("Riffing", not "Similar":
-            # the children are deliberate drifts off the theme, not refinements of it.)
-            child_sel = st.pills(
-                f"Riffing on: **{examples['examples'][open_theme]['label']}**",
-                examples['tree'].get(open_theme, []), selection_mode="single",
-                format_func=lambda i: examples['examples'][i]['label'],
-                key=f'ask_ex_children_{open_theme}', on_change=_on_ask_leaf_change,
-            )
-        sel_example = child_sel or root_sel
-        if sel_example and st.session_state.get('ask_ex_active') != sel_example:
-            entry = examples['examples'][sel_example]
-            st.session_state['ask_ex_active'] = sel_example
-            st.session_state['ask_chat']      = entry['query']   # prefill the bar (editable; won't auto-submit)
-            st.session_state['ask_report']    = entry['report']
-            st.session_state['ask_title']     = entry['label']   # heading echoes the short chip label
-            _store_results(_report_to_df(entry['report'], fs), 'ask')
-
-    # Render the search bar into its top slot now that sel_example is known. chat_input
-    # returns the submitted text only on the run the user hits Enter (None otherwise), so the
-    # block below fires once per submit and never re-runs the pipeline on incidental reruns.
-    with search_slot:
-        utterance = st.chat_input(
-            "e.g. Slow, atmospheric sci-fi like Blade Runner and Arrival — "
-            "nothing before 2000, and no horror.",
-            key='ask_chat',
-        )
-    if utterance:
-        api_key = _anthropic_api_key()
-        calls   = st.session_state.get('ask_calls', 0)
-        budget  = _llm_daily_budget()
-        with budget['lock']:   # roll the day + read together; check-then-increment races
-            today = datetime.date.today().isoformat()   # are tolerable (friction, not a
-            if budget['date'] != today:                 # security boundary)
-                budget['date'], budget['count'] = today, 0
-            daily_used = budget['count']
-        if api_key is None:
-            st.info(
-                "The conversational tab needs an Anthropic API key. Set `ANTHROPIC_API_KEY` in "
-                "`.streamlit/secrets.toml` (or the environment) — see the README. The manual "
-                "**Recommend** tab works without a key."
-            )
-        elif calls >= _LLM_SESSION_CAP:
-            st.warning(
-                f"Per-session limit reached ({_LLM_SESSION_CAP} requests). Refresh to start over "
-                "— this cap keeps the demo's API cost negligible."
-            )
-        elif daily_used >= _LLM_DAILY_CAP:
-            st.warning(
-                "Today's demo budget is used up — the **Recommend** tab works without the LLM, "
-                "or come back tomorrow."
-            )
-        else:
-            extraction = None
-            try:
-                with st.spinner("Understanding your request…"):
-                    extraction = extract_query(utterance, fs, api_key=api_key)
-            except Exception as exc:  # surface, never crash the app
-                st.error(f"Couldn't reach the language model — try again in a moment. "
-                         f"({type(exc).__name__})")
-            if extraction is not None:
-                st.session_state['ask_calls'] = calls + 1
-                with budget['lock']:
-                    budget['count'] += 1
-                # Live results own the panel: pin the ingest guard to the current chip
-                # selection so a still-highlighted chip can't re-ingest next rerun.
-                st.session_state['ask_ex_active'] = sel_example
-                report = recommend(art.frontend_ctx, extraction, top_n=_TOTAL_RESULTS)
-                _store_results(_report_to_df(report, fs), 'ask')
-                st.session_state['ask_report'] = report
-                st.session_state['ask_title']  = _ask_title(utterance)   # heading echoes the prompt
-
-    report = st.session_state.get('ask_report')
-    if report is not None:
-        title = st.session_state.get('ask_title')
-        if title:
-            # h4, not st.subheader — the full prompt already sits in the input box just above,
-            # so a smaller echo is enough to anchor the results.
-            st.markdown(f"#### Recommendations for: {title}")
-        relaxed = report.get('relaxed_constraints') or []
-        if relaxed:
-            labels = {'require_attributes': 'format', 'require_genome_tags': 'vibe/setting',
-                      'require_genres': 'genre', 'require_keyword_concepts': 'topic'}
-            dropped = ", ".join(labels.get(r, r) for r in relaxed)
-            st.info(f"No exact matches for every constraint — showing the closest titles, with these "
-                    f"relaxed: **{dropped}**. Identity filters (people, franchise, rating, year) were kept.")
-        _render_ask_debug(report)
+    report  = st.session_state['ask_report']
+    relaxed = report.get('relaxed_constraints') or []
+    if relaxed:
+        labels = {'require_attributes': 'format', 'require_genome_tags': 'vibe/setting',
+                  'require_genres': 'genre', 'require_keyword_concepts': 'topic'}
+        dropped = ", ".join(labels.get(r, r) for r in relaxed)
+        st.info(f"No exact matches for every constraint — showing the closest titles, with these "
+                f"relaxed: **{dropped}**. Identity filters (people, franchise, rating, year) were kept.")
+    _render_ask_debug(report)
     _show_results('ask', posters, fs, tmdb_ids)
-    st.caption(
-        "Catalog: MovieLens 32M (movies with 200+ ratings) — coverage effectively ends around "
-        "2019, so most films after that simply aren't in the dataset."
-    )
+
+
+def tab_ask(art, posters, tmdb_ids):
+    """Two views, switched on whether a board is active (st.session_state['ask_report']): the
+    LANDING (theme-card grid) and the RESULTS view (back button, prompt echo, 'More:' chips,
+    poster grid) — an in-tab page pair, YouTube-"Ask"-style, with ONE search bar floating
+    pinned to the viewport bottom over both. Cards and chips replay frozen
+    serving/ask_examples.json boards for free; only the typed path calls the hosted LLM.
+    '← Back' returns to the first page; the bar starts a fresh live board from either view."""
+    fs = art.fs
+    st.markdown("""
+        <style>
+        /* Landing theme cards: filled rounded tiles, tall enough that the grid lands as even
+           rows, prompt text left-aligned and wrapping. color-mix over currentColor gives a
+           subtle fill that tracks the theme (dark AND light) without hardcoding either. */
+        .st-key-ask_cards { gap: 0.75rem; }
+        .st-key-ask_cards button {
+            min-height: 4.25rem;
+            border-radius: 1rem;
+            padding: 0.6rem 1rem;
+            border: none;
+            background: color-mix(in srgb, currentColor 8%, transparent);
+        }
+        .st-key-ask_cards button:hover {
+            background: color-mix(in srgb, currentColor 14%, transparent);
+        }
+        /* Left-align the prompt text: Streamlit's generated button styles center the label
+           through a wrapper-div → span → markdown-container chain (and win the specificity
+           coin-toss), so force every layer full-width and left-aligned. */
+        .st-key-ask_cards button,
+        .st-key-ask_cards button * { text-align: left !important; }
+        .st-key-ask_cards button > div,
+        .st-key-ask_cards button span,
+        .st-key-ask_cards button div[data-testid="stMarkdownContainer"] {
+            display: block;
+            width: 100%;
+        }
+        .st-key-ask_cards button p { font-size: 1.02rem; }
+        /* The one search bar (both views): floats pinned to the viewport bottom,
+           YouTube-style. Legal inside st.tabs: the bar lives in the Ask tab panel, and
+           hidden panels hide their fixed children — so it vanishes whenever another tab
+           is active. */
+        .st-key-ask_search {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(44rem, calc(100vw - 2rem));
+            z-index: 100;
+        }
+        /* Taller, more visible composer: room for ~3 lines, placeholder up top. (No
+           align-items here — stChatInput is a COLUMN flex; flex-end would collapse and
+           right-shove its content column.) */
+        .st-key-ask_search [data-testid="stChatInput"] {
+            min-height: 6.5rem;
+            position: relative;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+        }
+        .st-key-ask_search [data-testid="stChatInput"] textarea {
+            min-height: 4.75rem;
+            padding-right: 3.5rem;   /* text never runs under the corner-pinned arrow */
+        }
+        /* Reserve room so the cards / last poster row / footer scroll clear of the bar. */
+        [data-baseweb="tab-panel"]:has(.st-key-ask_search) { padding-bottom: 10rem; }
+        /* The send arrow: bigger, pinned to the box's bottom-right corner (its native flex
+           row hugs the top of the tall composer, so flex alignment can't reach the bottom). */
+        .st-key-ask_search [data-testid="stChatInputSubmitButton"] {
+            width: 2.75rem;
+            height: 2.75rem;
+            position: absolute;
+            right: 0.5rem;
+            bottom: 0.5rem;
+        }
+        .st-key-ask_search [data-testid="stChatInputSubmitButton"] svg {
+            width: 1.75rem;
+            height: 1.75rem;
+        }
+        /* 'More:' riffing row: label and chips inline on one line (wrapping on phones). */
+        [class*="st-key-ask_riff_"] [data-testid="stButtonGroup"] {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            column-gap: 0.6rem;
+        }
+        [class*="st-key-ask_riff_"] [data-testid="stWidgetLabel"] { flex: 0 0 auto; }
+        [class*="st-key-ask_riff_"] [data-testid="stWidgetLabel"] p {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        /* Results view: '← Back' reads better a notch larger than a default button. */
+        .st-key-ask_back button { font-size: 1.05rem; padding: 0.45rem 1rem; }
+        </style>
+    """, unsafe_allow_html=True)
+    examples = _load_ask_examples()
+    if st.session_state.get('ask_report') is None:
+        _ask_landing(fs, examples)
+    else:
+        _ask_results(fs, examples, posters, tmdb_ids)
+    # ── Search bar (Enter to submit; no button) ───────────────────────────────
+    # One st.chat_input for both views, floating pinned to the viewport bottom (the
+    # position:fixed lives on the keyed container — this DOM slot only decides where its
+    # budget/error notices flow: below, in normal flow above the footer). Submitting starts
+    # a fresh live board wherever the user is.
+    with st.container(key='ask_search'):
+        utterance = st.chat_input(_ASK_PLACEHOLDER, key='ask_chat')
+    _ask_handle_live(art, fs, utterance)
+    st.caption(_ASK_CATALOG_NOTE)   # footer disclaimer, both views
 
 
 # ── Tab: Similar ──────────────────────────────────────────────────────────────
@@ -1653,8 +1725,8 @@ def tab_about():
             "model still does all the retrieval; the LLM's output is consumed internally and never "
             "shown (the *Under the hood* expander on each result reveals the parsed fields, for "
             "the curious).\n"
-            "- **The suggested-prompt boards are pre-generated.** Every theme pill and related "
-            "prompt replays a board computed offline through the same extract → recommend pipeline "
+            "- **The suggested-prompt boards are pre-generated.** Every theme card and riffing "
+            "chip replays a board computed offline through the same extract → recommend pipeline "
             "as a live query — instant, deterministic, and **no API key needed**.\n"
             "- **Typed queries are budgeted.** Free-form requests call the hosted LLM behind "
             "per-session and global daily caps, which keeps the demo's API cost negligible."
