@@ -949,9 +949,10 @@ def _ask_landing(fs, examples):
     frozen board through _ask_open_board). The floating search bar and the footer are shared
     with the results view and rendered by tab_ask."""
     st.markdown("## Ask")
+    # Subtitle = the payoff (what you get back); the search-bar placeholder covers what to
+    # type — the two deliberately don't repeat each other (YouTube's Ask split).
     st.markdown(
-        "Describe what you're in the mood for — a few films you love, a vibe, an era, "
-        "genres to include or avoid."
+        "Describe a movie mood in plain English — get an instant board of matching films."
     )
     if examples:
         # Roots first, then the promoted leaves (skipping any id a partially regenerated
