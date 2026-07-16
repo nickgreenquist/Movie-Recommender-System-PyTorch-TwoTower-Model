@@ -1,28 +1,16 @@
 {
-  "liked_items": [
-    "Bad Santa (2003)",
-    "Gremlins (1984)",
-    "Krampus (2015)"
+ "genome_tags": [
+  "dark",
+  "cynical",
+  "irreverent"
+ ],
+ "hard_constraints": {
+  "require_genres": [
+   "Comedy"
   ],
-  "genome_tags": [
-    "dark comedy",
-    "dark humor",
-    "cynical",
-    "irreverent"
+  "require_keyword_concepts": [
+   "christmas"
   ],
-  "liked_genres": [
-    "Comedy"
-  ],
-  "disliked_genres": [],
-  "mood": "dark, cynical, irreverent",
-  "hard_constraints": {
-    "require_keyword_concepts": [
-      "christmas"
-    ],
-    "require_min_rating": "R",
-    "exclude_genres": [
-      "Children",
-      "Musical"
-    ]
-  }
+  "require_min_rating": "R"
+ }
 }

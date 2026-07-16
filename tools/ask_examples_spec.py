@@ -2,8 +2,8 @@
 tools/ask_examples_spec.py — hand-curated query tree for the Ask tab's example chips.
 
 STRUCTURE
-    7 roots × 6 children = 42 SHOWN queries, + 4 backburner leaves (generated but not
-    surfaced). Each root is a theme; its children are REFINEMENTS — the natural follow-up
+    9 roots, 53 SHOWN children (r1–r7 six each, r8 five, r9 six), + 5 backburner leaves
+    (generated but not surfaced). Each root is a theme; its children are REFINEMENTS — the natural follow-up
     asks — each phrased as a full standalone query so it (a) pre-generates independently,
     (b) reads correctly when it back-fills the Ask text box, and (c) still works if a user
     edits it and reruns live. Every leaf below was traced through the real Haiku→two-tower
@@ -11,12 +11,14 @@ STRUCTURE
 
     id      stable key ('r3', 'r3c2', …) — the artifact and the UI reference queries by id,
             so labels/queries can be reworded without invalidating a pre-generated report.
-    label   short chip text (st.pills); the full query is what actually runs. Chip voice: a few
-            evocative words lifted from the query where possible; exclusions ('no X') belong in
-            the query, not the label.
-    query   the standalone natural-language request that was / will be pre-generated.
+    label   legacy field — the two-view Ask UI (landing cards + 'More:' riff chips) renders the
+            QUERY itself (whitespace-collapsed, truncated at a word boundary if long), NOT this
+            field. New entries (r8/r9) set label == query; older r1–r7 still carry their
+            pre-redesign short-chip labels. streamlit_app.py never reads label.
+    query   the standalone natural-language request that runs — AND the pill/card text the user
+            actually sees.
 
-CAPABILITY MAP (why these seven — the leaves fan across extraction ROUTES, not all "like X")
+CAPABILITY MAP (why these nine — the leaves fan across extraction ROUTES, not all "like X")
     r1  Anime       attributes (anime / stop-motion / american animation) + soft genre
     r2  Christmas   occasion keyword + max_rating (kid-safe / PG) + tone exclude (R) + B&W era
     r3  Good cry    subject/mood + exclude-genre ("no comedies") + based-on-true keyword
@@ -24,12 +26,18 @@ CAPABILITY MAP (why these seven — the leaves fan across extraction ROUTES, not
     r5  Time travel keyword topics + anchors + subject (academia) — one continuous pipeline
     r6  End of world sub-genre keyword topics (zombie / pandemic / kaiju) + anchors
     r7  Gritty NYC  place + year fence + person (Scorsese, Woody Allen) + keyword resolver (disco)
+    r8  Sharks      keyword-topic resolver across a creature-&-sea family (shark / dinosaur /
+                    ocean / surfing / creature / pirate) + tone exclude ("no comedies")
+    r9  Sports      per-sport keyword gates (boxing / baseball / american football / basketball)
+                    + genome (underdog / sports / racing) + anchors ("more than the game") +
+                    death-game concept w/ Horror exclude (competition to the death)
 
 BACKBURNER (see BACKBURNER below)
     Traced-good leaves the curator wants pre-generated but NOT shown yet: Grief (r3c7),
     Isolation (r6c7), Adult cartoons (r1c7 — edgy non-Disney/Pixar American animation),
     Kids Halloween (r2c6 — kid-safe G/PG; broadening it kept pulling adult/off-theme films, so
-    the clean-but-thin board is generated and held back rather than shown).
+    the clean-but-thin board is generated and held back rather than shown), Basketball (r9c7 —
+    a spare sixth Sports leaf held in reserve behind boxing / baseball / football / racing).
     all_entries() yields them so gen_ask_examples.py writes their boards into
     serving/ask_examples.json['examples'], but they are absent from every root's `children`, so
     the generated `tree` (which the Ask tab renders pills from) never surfaces them. To promote
@@ -61,21 +69,20 @@ CURATION RULES (enforced by the generation + review pass, not by this file)
 ROOTS = [
     {
         'id': 'r1', 'label': 'Anime, Ghibli to Akira',
-        'query': ("Breathtaking anime films, from Studio Ghibli's warmth to the "
-                  "neon chaos of Akira and Ghost in the Shell."),
+        'query': "Breathtaking anime films.",
         'children': [
             {'id': 'r1c1', 'label': 'Studio Ghibli classics',
-             'query': 'Studio Ghibli movies like Spirited Away and My Neighbor Totoro.'},
+             'query': 'The lush, hand-drawn worlds of Studio Ghibli.'},
             {'id': 'r1c2', 'label': 'Dark, violent adult anime',
-             'query': 'Dark, violent adult anime like Akira, Ghost in the Shell, and Ninja Scroll.'},
+             'query': 'Dark and violent anime.'},
             {'id': 'r1c3', 'label': 'American animation, Pixar to Shrek',
-             'query': 'American animated films like Toy Story, The Lion King, and Shrek.'},
+             'query': 'Heartwarming American animated movies for the whole family.'},
             {'id': 'r1c4', 'label': 'Handmade stop-motion worlds',
-             'query': 'Stop-motion animated films like Coraline and Fantastic Mr. Fox.'},
+             'query': 'Charming handmade stop-motion movies.'},
             {'id': 'r1c5', 'label': 'High-energy anime action',
-             'query': 'High-energy anime action like Cowboy Bebop and Redline.'},
+             'query': 'High-energy anime action.'},
             {'id': 'r1c6', 'label': 'Anime love stories',
-             'query': 'Romantic anime love stories like Your Name and Whisper of the Heart.'},
+             'query': 'Achingly romantic anime love stories.'},
         ],
     },
     {
@@ -83,8 +90,7 @@ ROOTS = [
         'query': 'Cozy Christmas movies to watch by the tree.',
         'children': [
             {'id': 'r2c1', 'label': 'R-rated, nothing wholesome',
-             'query': ('Dark, cynical, irreverent R-rated Christmas comedies like Bad Santa, '
-                       'Gremlins, and Krampus. Nothing sentimental or wholesome.')},
+             'query': 'Dark, cynical, irreverent R-rated Christmas comedies.'},
             {'id': 'r2c2', 'label': 'Safe for little kids',
              'query': 'Christmas movies safe for little kids.'},
             {'id': 'r2c3', 'label': 'Starring Santa himself',
@@ -102,15 +108,13 @@ ROOTS = [
         'query': 'A devastating drama that will absolutely make me sob.',
         'children': [
             {'id': 'r3c1', 'label': 'The human cost of war',
-             'query': ('Harrowing anti-war films about the human cost of combat, like The Pianist, '
-                       'Come and See, and Grave of the Fireflies. War genre only, no comedies, '
-                       'cartoons, or documentaries.')},
+             'query': 'Harrowing anti-war films about the human cost of combat.'},
             {'id': 'r3c2', 'label': 'Illness dramas that wreck you',
              'query': 'Cancer and terminal-illness dramas that wreck you.'},
             {'id': 'r3c3', 'label': 'Heartbreaking true stories',
-             'query': "Heartbreaking dramas based on real, true events like 12 Years a Slave and Schindler's List."},
+             'query': 'Heartbreaking dramas based on a true story.'},
             {'id': 'r3c4', 'label': 'Dogs that break your heart',
-             'query': "Emotional dramas about the bond between a person and their dog, like Hachi: A Dog's Story and My Dog Skip. No comedies."},
+             'query': 'Emotional dramas about the bond between a person and their dog.'},
             {'id': 'r3c5', 'label': 'Father–son gut punches',
              'query': 'Father-and-son dramas that hit hard.'},
             {'id': 'r3c6', 'label': 'Be a better person',
@@ -122,74 +126,105 @@ ROOTS = [
         'query': 'Classic samurai films full of sword duels and honor.',
         'children': [
             {'id': 'r4c1', 'label': 'Old-school kung fu',
-             'query': 'Classic kung-fu movies like Enter the Dragon and Drunken Master.'},
+             'query': 'Classic kung-fu movies.'},
             {'id': 'r4c2', 'label': 'Directed by Kurosawa',
-             'query': 'Movies directed by Akira Kurosawa, like Rashomon, Ran, and Ikiru.'},
+             'query': 'Movies directed by Akira Kurosawa, like Rashomon and Ran.'},
             {'id': 'r4c3', 'label': 'Knights & medieval battles',
-             'query': 'Knights and medieval battles like Braveheart and Kingdom of Heaven.'},
+             'query': 'Sweeping tales of knights and medieval battle.'},
             {'id': 'r4c4', 'label': 'Westerns, the American samurai',
              'query': 'Lone-gunslinger Westerns — the American samurai.'},
             {'id': 'r4c5', 'label': 'Gladiators & Roman epics',
-             'query': 'Epic movies set in ancient Rome, no cartoons or animation'},
+             'query': 'Movies set in ancient Rome.'},
             {'id': 'r4c6', 'label': 'Real soldiers, true stories',
-             'query': 'Modern combat movies about real soldiers based on true events, like Lone Survivor, American Sniper, and Black Hawk Down. No science fiction.'},
+             'query': 'Combat movies about real soldiers based on true events.'},
         ],
     },
     {
         'id': 'r5', 'label': 'Nothing but time travel',
-        'query': 'Movies where time travel is the whole point, like Back to the Future and Primer.',
+        'query': 'Movies where time travel is the whole point.',
         'children': [
             {'id': 'r5c1', 'label': 'Stuck in a time loop',
-             'query': 'Groundhog Day-style time loops, like Edge of Tomorrow.'},
+             'query': 'Groundhog Day-style time loops.'},
             {'id': 'r5c2', 'label': 'Time travel, played for laughs',
-             'query': 'Time-travel comedies like Bill & Ted and Hot Tub Time Machine.'},
+             'query': "Time-travel comedies that don't take themselves too seriously."},
             {'id': 'r5c3', 'label': 'Voyages into deep space',
-             'query': 'Space travel movies like Interstellar and Gravity.'},
+             'query': 'Breathtaking, visually stunning movies about deep space travel. No horror.'},
             {'id': 'r5c4', 'label': 'Wanderlust & far-off places',
-             'query': ('Movies about traveling around the world to far-off places, like Around the '
-                       'World in 80 Days, Romancing the Stone, and The Secret Life of Walter Mitty. '
-                       'No science fiction, fantasy, documentaries, or comedies.')},
+             'query': 'Movies about traveling around the world to far-off places.'},
             {'id': 'r5c5', 'label': 'Beautiful minds & mathematicians',
-             'query': 'Movies about mathematicians, no documentaries or sci-fi.'},
+             'query': 'Movies about brilliant, driven mathematicians.'},
             {'id': 'r5c6', 'label': 'Brain-melting physics puzzles',
              'query': 'Brain-melting physics puzzles like Primer.'},
         ],
     },
     {
         'id': 'r6', 'label': "Humanity's final days",
-        'query': ("End-of-the-world movies about humanity's final days, "
-                  "like Children of Men and The Road."),
+        'query': "End-of-the-world movies about humanity's final days.",
         'children': [
-            {'id': 'r6c1', 'label': 'Full-on zombie apocalypse',
-             'query': 'Zombie apocalypse movies like 28 Days Later and Dawn of the Dead.'},
+            {'id': 'r6c1', 'label': 'Gory zombie horror',
+             'query': 'Blood-soaked, gory zombie horror.'},
             {'id': 'r6c2', 'label': 'Grounded pandemic dramas',
-             'query': 'Grounded dramas about a deadly pandemic and epidemic spreading, like Contagion and Outbreak. No creature features, zombies, aliens, comedies, or animation.'},
+             'query': 'Grounded dramas about a deadly pandemic spreading. No zombies or creature features.'},
             {'id': 'r6c3', 'label': 'Alien invasions of Earth',
-             'query': 'Alien invasion of Earth movies, like War of the Worlds and Independence Day. No horror or comedy.'},
+             'query': 'When alien armadas invade Earth.'},
             {'id': 'r6c4', 'label': 'Epic disaster spectacle',
-             'query': 'Epic disaster movies like Twister, Armageddon, and San Andreas'},
+             'query': 'Epic, city-flattening disaster spectacle.'},
             {'id': 'r6c5', 'label': 'Bleak wasteland survival',
-             'query': 'Bleak post-apocalyptic wasteland survival, like Mad Max and The Road.'},
+             'query': 'Bleak post-apocalyptic wasteland survival.'},
             {'id': 'r6c6', 'label': 'Giant monsters level cities',
-             'query': 'Giant monster destruction movies like Godzilla and Cloverfield.'},
+             'query': 'Giant monsters leveling entire cities.'},
         ],
     },
     {
         'id': 'r7', 'label': 'Gritty pre-2000 New York',
-        'query': 'Gritty New York City movies from before 2000, no musicals.',
+        'query': 'Gritty New York City movies from before 2000.',
         'children': [
             {'id': 'r7c1', 'label': "Paranoid '70s conspiracy thrillers",
-             'query': "Paranoid 1970s and 80s conspiracy thrillers like All the President's Men and Three Days of the Condor."},
+             'query': 'Paranoid 1970s and 80s conspiracy thrillers.'},
             {'id': 'r7c2', 'label': "Scorsese's New York",
              'query': "Martin Scorsese's New York movies."},
             {'id': 'r7c3', 'label': 'Disco & nightclub nightlife',
-             'query': 'Movies about the disco scene and nightclub nightlife, like Saturday Night Fever and The Last Days of Disco.'},
+             'query': 'Movies about the disco scene and nightclub nightlife.'},
             {'id': 'r7c4', 'label': "Woody Allen's New York",
              'query': "Woody Allen's New York comedies."},
             {'id': 'r7c5', 'label': 'Smoky 1960s Paris',
              'query': 'Atmospheric older films set in 1960s Paris.'},
             {'id': 'r7c6', 'label': 'Grime, crime & decay',
              'query': 'Grimy, decaying-city crime dramas of the 70s and 80s.'},
+        ],
+    },
+    {
+        'id': 'r8', 'label': 'Bloodthirsty sharks that make you afraid to get back in the water.',
+        'query': 'Bloodthirsty sharks that make you afraid to get back in the water.',
+        'children': [
+            {'id': 'r8c1', 'label': 'Dinosaurs brought back to life and running wild.',
+             'query': 'Dinosaurs brought back to life and running wild.'},
+            {'id': 'r8c2', 'label': 'Ocean survival movies about people struggling to stay alive out on the open water. No comedies or cartoons.',
+             'query': 'Ocean survival movies about people struggling to stay alive out on the open water. No comedies or cartoons.'},
+            {'id': 'r8c3', 'label': 'Surf movies about chasing the perfect wave.',
+             'query': 'Surf movies about chasing the perfect wave.'},
+            {'id': 'r8c4', 'label': 'Horror movies about a deadly creature on the loose.',
+             'query': 'Horror movies about a deadly creature on the loose.'},
+            {'id': 'r8c5', 'label': 'Swashbuckling pirate adventures on the high seas.',
+             'query': 'Swashbuckling pirate adventures on the high seas.'},
+        ],
+    },
+    {
+        'id': 'r9', 'label': 'Underdog sports movies where the longshot goes the distance.',
+        'query': 'Underdog sports movies where the longshot goes the distance.',
+        'children': [
+            {'id': 'r9c1', 'label': 'Boxing movies about leaving it all in the ring.',
+             'query': 'Boxing movies about leaving it all in the ring.'},
+            {'id': 'r9c2', 'label': 'Baseball movies about the boys of summer.',
+             'query': 'Baseball movies about the boys of summer.'},
+            {'id': 'r9c3', 'label': 'American football movies about leaving it all on the field, from Friday night lights to the NFL.',
+             'query': 'American football movies about leaving it all on the field, from Friday night lights to the NFL.'},
+            {'id': 'r9c4', 'label': 'Racing movies about fast cars and the drivers who live for the track.',
+             'query': 'Racing movies about fast cars and the drivers who live for the track.'},
+            {'id': 'r9c5', 'label': 'Sports movies that are really about life, not just the game, like Million Dollar Baby, Moneyball, and The Wrestler.',
+             'query': 'Sports movies that are really about life, not just the game, like Million Dollar Baby, Moneyball, and The Wrestler.'},
+            {'id': 'r9c6', 'label': 'Brutal death-game thrillers where contestants are forced to fight to the death. No gory torture horror.',
+             'query': 'Brutal death-game thrillers where contestants are forced to fight to the death. No gory torture horror.'},
         ],
     },
 ]
@@ -202,12 +237,13 @@ BACKBURNER = [
     {'id': 'r3c7', 'label': 'Grief and moving on', 'parent': 'r3',
      'query': 'Aching movies about grief and moving on.'},
     {'id': 'r6c7', 'label': 'Alone in the wilderness', 'parent': 'r6',
-     'query': 'Solitary survival movies about a person alone in the wilderness, like Into the Wild and Never Cry Wolf. No documentaries.'},
+     'query': 'Survival movies about someone stranded alone in the wilderness. No documentaries.'},
     {'id': 'r1c7', 'label': 'Animation for grownups', 'parent': 'r1',
-     'query': 'Satirical adult animated comedies like South Park, Rejected, and Team America — animation for grownups, not kids.'},
+     'query': 'Satirical adult animated comedies — animation for grownups, not kids.'},
     {'id': 'r2c6', 'label': 'Halloween without the horror', 'parent': 'r2',
-     'query': ('Halloween movies for children rated G or PG only. No scariness, '
-               'no horror. Like Hocus Pocus and Casper.')},
+     'query': 'Halloween movies for kids, nothing scary or gory.'},
+    {'id': 'r9c7', 'label': 'Basketball movies about making it on the court.', 'parent': 'r9',
+     'query': 'Basketball movies about making it on the court.'},
 ]
 
 

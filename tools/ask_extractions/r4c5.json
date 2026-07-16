@@ -1,10 +1,7 @@
 {
-  "hard_constraints": {
-    "require_keyword_concepts": [
-      "ancient rome"
-    ],
-    "exclude_genres": [
-      "Animation"
-    ]
-  }
+ "hard_constraints": {
+  "require_keyword_concepts": [
+   "ancient rome"
+  ]
+ }
 }

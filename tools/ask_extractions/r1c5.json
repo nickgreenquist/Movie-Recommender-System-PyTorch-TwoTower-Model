@@ -1,1 +1,14 @@
-{"liked_items": ["Cowboy Bebop: The Movie (2001)", "Redline (2009)"], "mood": ["high-energy"], "hard_constraints": {"require_genres": ["Action"], "require_attributes": ["anime"]}}
+{
+ "genome_tags": [
+  "action packed",
+  "exciting"
+ ],
+ "hard_constraints": {
+  "require_genres": [
+   "Action"
+  ],
+  "require_attributes": [
+   "anime"
+  ]
+ }
+}

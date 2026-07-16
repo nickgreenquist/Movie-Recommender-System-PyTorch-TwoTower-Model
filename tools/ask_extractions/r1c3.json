@@ -1,15 +1,17 @@
 {
-  "liked_items": [
-    "Toy Story (1995)",
-    "The Lion King (1994)",
-    "Shrek (2001)"
+ "genome_tags": [
+  "heartwarming"
+ ],
+ "mood": [
+  "wholesome"
+ ],
+ "hard_constraints": {
+  "require_genres": [
+   "Animation"
   ],
-  "hard_constraints": {
-    "require_genres": [
-      "Animation"
-    ],
-    "require_country": [
-      "American"
-    ]
-  }
+  "require_country": [
+   "American"
+  ],
+  "require_max_rating": "PG"
+ }
 }

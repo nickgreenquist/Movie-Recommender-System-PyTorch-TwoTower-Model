@@ -1,16 +1,13 @@
 {
-  "liked_items": [
-    "Bill & Ted's Excellent Adventure (1989)",
-    "Hot Tub Time Machine (2010)"
+ "genome_tags": [
+  "quirky"
+ ],
+ "hard_constraints": {
+  "require_genres": [
+   "Comedy"
   ],
-  "disliked_items": [],
-  "liked_genres": [],
-  "disliked_genres": [],
-  "genome_tags": [],
-  "mood": "fun",
-  "hard_constraints": {
-    "require_genres": ["Comedy"],
-    "require_keyword_concepts": ["time travel"]
-  },
-  "unsupported_notes": ""
+  "require_keyword_concepts": [
+   "time travel"
+  ]
+ }
 }

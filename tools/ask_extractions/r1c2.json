@@ -1,11 +1,13 @@
 {
-  "liked_items": ["Akira (1987)", "Ghost in the Shell (1995)", "Ninja Scroll (1993)"],
-  "disliked_items": [],
-  "genome_tags": [],
-  "liked_genres": [],
-  "disliked_genres": [],
-  "mood": [],
-  "hard_constraints": {
-    "require_attributes": ["anime"]
-  }
+ "hard_constraints": {
+  "require_attributes": [
+   "anime"
+  ]
+ },
+ "genome_tags": [
+  "violent"
+ ],
+ "mood": [
+  "dark"
+ ]
 }

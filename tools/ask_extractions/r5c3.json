@@ -1,13 +1,18 @@
 {
-  "liked_items": ["Interstellar (2014)", "Gravity (2013)"],
-  "disliked_items": [],
-  "genome_tags": [],
-  "liked_genres": [],
-  "disliked_genres": [],
-  "mood": "",
-  "hard_constraints": {
-    "require_keyword_concepts": ["space travel"]
-  },
-  "out_of_domain": false,
-  "unsupported_notes": ""
+ "genome_tags": [
+  "breathtaking",
+  "visually stunning",
+  "space travel"
+ ],
+ "liked_genres": [
+  "Sci-Fi"
+ ],
+ "hard_constraints": {
+  "exclude_genres": [
+   "Horror"
+  ],
+  "require_keyword_concepts": [
+   "space travel"
+  ]
+ }
 }

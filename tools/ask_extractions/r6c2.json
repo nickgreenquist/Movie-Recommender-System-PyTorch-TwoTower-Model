@@ -1,24 +1,17 @@
 {
- "liked_items": [
-  "Contagion (2011)",
-  "Outbreak (1995)"
+ "genome_tags": [
+  "realistic"
  ],
  "hard_constraints": {
   "require_genres": [
    "Drama"
   ],
   "require_keyword_concepts": [
-   "pandemic",
-   "epidemic"
-  ],
-  "exclude_genres": [
-   "Comedy",
-   "Animation"
+   "pandemic"
   ],
   "exclude_keyword_concepts": [
    "zombie",
-   "alien",
-   "creature feature"
+   "creature"
   ]
  }
 }

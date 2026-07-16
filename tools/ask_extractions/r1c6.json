@@ -1,18 +1,18 @@
 {
-  "liked_items": [
-    "Your Name (2016)",
-    "Whisper of the Heart (1995)"
+ "genome_tags": [
+  "intimate",
+  "emotional",
+  "bittersweet"
+ ],
+ "mood": [
+  "achingly romantic"
+ ],
+ "hard_constraints": {
+  "require_genres": [
+   "Romance"
   ],
-  "liked_genres": [
-    "Romance"
-  ],
-  "mood": [],
-  "hard_constraints": {
-    "require_attributes": [
-      "anime"
-    ],
-    "require_genres": [
-      "Romance"
-    ]
-  }
+  "require_attributes": [
+   "anime"
+  ]
+ }
 }

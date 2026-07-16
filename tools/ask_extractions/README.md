@@ -1,7 +1,7 @@
 # Ask-tab example-chip extractions (committed, canonical)
 
-One `<id>.json` per query in `tools/ask_examples_spec.py` (`all_entries()` — 7 roots + 42 shown
-children + 4 backburner = 53). Each file is the **extraction object** the LLM front-end produces
+One `<id>.json` per query in `tools/ask_examples_spec.py` (`all_entries()` — 9 roots + 53 shown
+children + 5 backburner = 67). Each file is the **extraction object** the LLM front-end produces
 for that query (the "front bookend" output: liked/disliked items, genome tags, soft/hard genres,
 require/exclude people, keyword concepts, year fences, rating caps, …).
 

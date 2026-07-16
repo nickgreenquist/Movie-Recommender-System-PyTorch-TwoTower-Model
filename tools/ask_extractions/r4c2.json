@@ -1,12 +1,11 @@
 {
-  "liked_items": [
-    "Rashomon (1950)",
-    "Ran (1985)",
-    "Ikiru (1952)"
-  ],
-  "hard_constraints": {
-    "require_people": [
-      "Akira Kurosawa"
-    ]
-  }
+ "liked_items": [
+  "Rashomon (1950)",
+  "Ran (1985)"
+ ],
+ "hard_constraints": {
+  "require_people": [
+   "Akira Kurosawa"
+  ]
+ }
 }

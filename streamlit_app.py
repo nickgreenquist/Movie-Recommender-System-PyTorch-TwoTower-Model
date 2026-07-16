@@ -759,7 +759,7 @@ def _llm_daily_budget():
 
 @st.cache_resource
 def _load_ask_examples():
-    """serving/ask_examples.json — the pre-generated example boards (7 theme roots × 6
+    """serving/ask_examples.json — the pre-generated example boards (9 theme roots, each with 5–6
     related-prompt children, built by tools/gen_ask_examples.py through the same extract→recommend pipeline the
     live path runs). A theme-card / riffing-chip click replays a stored report with zero API cost,
     so the tour works with no key, off the daily budget, and with deterministic boards for live
@@ -870,21 +870,37 @@ def _on_ask_riff_change(examples, fs, theme):
 def _ask_title(query):
     """Results-heading text for a LIVE request: the prompt itself, whitespace-collapsed and capped
     at a word boundary so a long sentence stays a tidy heading that never cuts mid-title
-    ("…Hachi: A Do…"). Canned chips skip this and echo their short pill label instead."""
+    ("…Hachi: A Do…"). Canned chips use _ask_pill_text (the query, truncated) instead."""
     q = " ".join((query or "").split())
     if len(q) <= 80:
         return q
     return q[:80].rsplit(' ', 1)[0] + "…"
 
 
+# 'More:' riffing chips show the query itself (never a separate summary that could drift out of
+# sync with the prompt), truncated to keep the row tidy. 48 ≈ the median leaf-query length, so
+# most chips read in full and only the long anchored ones get an ellipsis.
+_ASK_PILL_MAXLEN = 48
+
+
+def _ask_pill_text(query):
+    """A 'More:' chip's text: the query, whitespace-collapsed and cut at a word boundary to
+    _ASK_PILL_MAXLEN. It is a PREFIX of the real prompt (and of the board title the chip loads),
+    so the chip and the prompt can never say different things — the ellipsis only caps width."""
+    q = " ".join((query or "").split())
+    if len(q) <= _ASK_PILL_MAXLEN:
+        return q
+    return q[:_ASK_PILL_MAXLEN].rsplit(' ', 1)[0] + "…"
+
+
 _ASK_CATALOG_NOTE = ("Disclaimer: catalog is MovieLens 32M (movies with 200+ ratings) — coverage "
                      "effectively ends around 2019, so most films after that simply aren't in the "
                      "dataset.")
 
-# Two leaf boards promoted to the landing so the grid lands as a full 3×3, YouTube-style —
-# picked for genre spread the seven roots don't cover. Temporary: once two more roots exist
-# in ask_examples.json, drop this and let the roots fill the grid alone.
-_ASK_LANDING_EXTRAS = ('r5c3', 'r4c1')   # Voyages into deep space · Old-school kung fu
+# The nine roots (r1–r9) now fill the landing grid as a clean 3×3 on their own. Earlier, with
+# only seven roots, two leaf boards were promoted here to round the grid out to 9; adding the
+# Sharks (r8) and Sports (r9) roots retired that stopgap.
+_ASK_LANDING_EXTRAS = ()
 
 # Invitation copy, not a canned example: nudges the query shapes that work (a vibe, an
 # era, named favorites) without pushing one specific board.
@@ -986,8 +1002,11 @@ def _ask_results(fs, examples, posters, tmdb_ids):
     theme = st.session_state.get('ask_theme')
     if examples and examples['tree'].get(theme):
         st.pills(
+            # Chip text is the query itself (truncated) — a 'More:' pill reads as a PREFIX of the
+            # exact prompt it loads (and the board title it becomes), so it can never drift out of
+            # sync the way a separate short label did. The `label` field is no longer surfaced.
             "More:", examples['tree'][theme], selection_mode="single",
-            format_func=lambda i: examples['examples'][i]['label'],
+            format_func=lambda i: _ask_pill_text(examples['examples'][i]['query']),
             key=f'ask_riff_{theme}', on_change=_on_ask_riff_change,
             args=(examples, fs, theme),
         )

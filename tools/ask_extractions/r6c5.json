@@ -1,1 +1,14 @@
-{"liked_items": ["Mad Max (1979)", "The Road (2009)"], "disliked_items": [], "genome_tags": [], "liked_genres": [], "disliked_genres": [], "mood": "", "hard_constraints": {"require_keyword_concepts": ["post-apocalyptic"]}, "out_of_domain": false, "unsupported_notes": ""}
+{
+ "mood": [
+  "bleak"
+ ],
+ "hard_constraints": {
+  "require_genome_tags": [
+   "post-apocalyptic"
+  ],
+  "require_keyword_concepts": [
+   "wasteland",
+   "survival"
+  ]
+ }
+}

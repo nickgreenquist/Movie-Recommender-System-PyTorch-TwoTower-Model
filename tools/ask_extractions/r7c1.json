@@ -1,17 +1,11 @@
 {
- "liked_items": [
-  "All the President's Men (1976)",
-  "Three Days of the Condor (1975)"
- ],
- "liked_genres": [
-  "Thriller"
- ],
  "genome_tags": [
-  "paranoid",
-  "conspiracy",
-  "noir"
+  "paranoid"
  ],
  "hard_constraints": {
+  "require_genres": [
+   "Thriller"
+  ],
   "require_keyword_concepts": [
    "conspiracy"
   ],

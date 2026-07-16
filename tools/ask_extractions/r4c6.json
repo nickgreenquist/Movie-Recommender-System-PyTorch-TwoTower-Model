@@ -1,22 +1,13 @@
 {
- "liked_items": [
-  "Lone Survivor (2013)",
-  "American Sniper (2014)",
-  "Black Hawk Down (2001)"
- ],
- "liked_genres": [
-  "War",
-  "Action",
-  "Drama"
- ],
  "hard_constraints": {
+  "require_genres": [
+   "War"
+  ],
   "require_keyword_concepts": [
-   "military",
-   "true story"
+   "soldiers"
   ],
-  "exclude_genres": [
-   "Sci-Fi"
-  ],
-  "year_min": 1990
+  "require_attributes": [
+   "based on a true story"
+  ]
  }
 }

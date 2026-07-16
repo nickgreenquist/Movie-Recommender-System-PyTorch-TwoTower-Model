@@ -1,0 +1,7 @@
+{
+  "genome_tags": ["creepy", "eerie", "tense", "visceral"],
+  "mood": ["scary"],
+  "hard_constraints": {
+    "require_keyword_concepts": ["shark"]
+  }
+}

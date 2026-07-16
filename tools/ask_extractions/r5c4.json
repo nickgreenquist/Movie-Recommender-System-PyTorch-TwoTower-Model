@@ -1,18 +1,7 @@
 {
- "liked_items": [
-  "Around the World in 80 Days (1956)",
-  "Romancing the Stone (1984)",
-  "The Secret Life of Walter Mitty (2013)"
- ],
  "hard_constraints": {
   "require_keyword_concepts": [
    "travel"
-  ],
-  "exclude_genres": [
-   "Sci-Fi",
-   "Fantasy",
-   "Documentary",
-   "Comedy"
   ]
  }
 }

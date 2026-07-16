@@ -1,24 +1,12 @@
 {
-  "liked_items": [
-    "Hocus Pocus (1993)",
-    "Casper (1995)"
+ "hard_constraints": {
+  "require_keyword_concepts": [
+   "halloween"
   ],
-  "liked_genres": [
-    "Comedy",
-    "Family",
-    "Fantasy"
-  ],
-  "mood": [
-    "fun",
-    "family-friendly"
-  ],
-  "hard_constraints": {
-    "require_keyword_concepts": [
-      "halloween"
-    ],
-    "require_max_rating": "PG",
-    "exclude_genres": [
-      "Horror"
-    ]
-  }
+  "require_max_rating": "PG",
+  "exclude_genome_tags": [
+   "scary",
+   "gory"
+  ]
+ }
 }

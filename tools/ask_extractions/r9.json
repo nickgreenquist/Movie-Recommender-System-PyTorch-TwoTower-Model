@@ -1,7 +1,11 @@
 {
  "hard_constraints": {
   "require_keyword_concepts": [
-   "alien invasion"
+   "underdog",
+   "sports"
   ]
- }
+ },
+ "mood": [
+  "uplifting"
+ ]
 }

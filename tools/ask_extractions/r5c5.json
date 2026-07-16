@@ -1,11 +1,7 @@
 {
-  "hard_constraints": {
-    "require_keyword_concepts": [
-      "mathematician"
-    ],
-    "exclude_genres": [
-      "Documentary",
-      "Sci-Fi"
-    ]
-  }
+ "hard_constraints": {
+  "require_keyword_concepts": [
+   "mathematician"
+  ]
+ }
 }

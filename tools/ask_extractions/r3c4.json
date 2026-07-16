@@ -1,18 +1,13 @@
 {
-  "liked_items": [
-    "Hachi: A Dog's Story",
-    "My Dog Skip"
+ "genome_tags": [
+  "emotional"
+ ],
+ "hard_constraints": {
+  "require_genres": [
+   "Drama"
   ],
-  "liked_genres": [
-    "Drama"
-  ],
-  "mood": "emotional",
-  "hard_constraints": {
-    "require_keyword_concepts": [
-      "dog"
-    ],
-    "exclude_genres": [
-      "Comedy"
-    ]
-  }
+  "require_keyword_concepts": [
+   "dog"
+  ]
+ }
 }

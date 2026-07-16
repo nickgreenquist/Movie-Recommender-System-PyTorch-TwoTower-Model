@@ -1,13 +1,13 @@
 {
-  "liked_items": ["28 Days Later (2002)", "Dawn of the Dead (2004)"],
-  "disliked_items": [],
-  "liked_genres": [],
-  "disliked_genres": [],
-  "genome_tags": [],
-  "mood": [],
-  "hard_constraints": {
-    "require_keyword_concepts": ["zombie"]
-  },
-  "out_of_domain": false,
-  "unsupported_notes": ""
+ "genome_tags": [
+  "gory"
+ ],
+ "hard_constraints": {
+  "require_genres": [
+   "Horror"
+  ],
+  "require_keyword_concepts": [
+   "zombie"
+  ]
+ }
 }

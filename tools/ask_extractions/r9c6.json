@@ -1,0 +1,22 @@
+{
+ "liked_genres": [
+  "Thriller"
+ ],
+ "genome_tags": [
+  "brutal"
+ ],
+ "hard_constraints": {
+  "require_keyword_concepts": [
+   "death game"
+  ],
+  "exclude_genres": [
+   "Horror"
+  ],
+  "exclude_genome_tags": [
+   "gory"
+  ],
+  "exclude_keyword_concepts": [
+   "torture"
+  ]
+ }
+}

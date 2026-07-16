@@ -1,20 +1,12 @@
 {
-  "liked_items": [
-    "Coraline (2009)",
-    "Fantastic Mr. Fox (2009)"
-  ],
-  "disliked_items": [],
-  "liked_genres": [],
-  "disliked_genres": [],
-  "genome_tags": [],
-  "mood": "",
-  "hard_constraints": {
-    "require_genres": [
-      "Animation"
-    ],
-    "require_attributes": [
-      "stop motion"
-    ]
-  },
-  "out_of_domain": false
+ "hard_constraints": {
+  "require_attributes": [
+   "stop motion"
+  ]
+ },
+ "genome_tags": [
+  "feel-good",
+  "heartwarming",
+  "whimsical"
+ ]
 }

@@ -1,11 +1,12 @@
 {
  "liked_genres": [
   "Action",
+  "Adventure",
   "Sci-Fi"
  ],
  "hard_constraints": {
   "require_keyword_concepts": [
-   "giant monster"
+   "dinosaur"
   ]
  }
 }
